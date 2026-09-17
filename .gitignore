@@ -1,0 +1,12 @@
+# Temporary extract
+_zip_preview/
+
+# Meeting recordings (exceed GitHub file size limits)
+meet/
+*.mkv
+*.mp3
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store

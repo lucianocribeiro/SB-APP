@@ -1,0 +1,4651 @@
+{
+  "name": "MyIVA_PROD_APP_J",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// CORRECTED UPSTREAM CODE - DATA VENTAS AGGREGATION WITH PERIOD FILTERING\n// ✅ NEW: Automatic period detection based on majority transactions\n// ✅ NEW: Filters all transactions (FC, NC, CR) by detected period\n// ✅ FIXED: Only processes transactions from the correct period\n\n// Get input data\nconst items = $input.all();\n\n// Define the columns to process\nconst columns = [\n  \"Neto 21%\", \"IVA 21%\", \"Neto 10.5%\", \"IVA 10.5%\", \"Neto 27%\", \"IVA 27%\",\n  \"Neto 0%\", \"IVA 0%\", \"Neto 2.5%\", \"IVA 2.5%\", \"Neto 5%\", \"IVA 5%\",\n  \"Importe operaciones exportación\", \"Importe Exento\", \"Importe No Alcanzado\",\n  \"Importe no gravado\", \"Importe Impuestos Internos\", \"Percepciones IIBB\",\n  \"Percepciones IVA\", \"Otras Percepciones\", \"Otros regímenes especiales\",\n  \"Total Comprobante\"\n];\n\n// ========================================\n// HELPER FUNCTION: Convert date to MM/YYYY\n// ========================================\nfunction convertirFechaPeriodo(fecha) {\n  if (!fecha || fecha === \"TOTALES\") {\n    return null;\n  }\n  \n  // Case A: Excel Serial Number (e.g., 45870)\n  if (typeof fecha === 'number') {\n    const dateObj = new Date((fecha - 25569) * 86400 * 1000);\n    const month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0');\n    const year = dateObj.getUTCFullYear();\n    return `${month}/${year}`;\n  }\n  \n  // Case B: String format \"DD/MM/YYYY\"\n  if (typeof fecha === 'string' && fecha.includes('/')) {\n    const dateParts = fecha.split('/');\n    if (dateParts.length === 3) {\n      return `${dateParts[1]}/${dateParts[2]}`;\n    }\n  }\n  \n  return null;\n}\n\n// ========================================\n// PASADA 1: Detect majority period\n// ========================================\nconst periodCount = {};\n\nitems.forEach(item => {\n  const data = item.json;\n  const periodo = convertirFechaPeriodo(data.Fecha);\n  \n  if (periodo) {\n    periodCount[periodo] = (periodCount[periodo] || 0) + 1;\n  }\n});\n\n// Find the period with most transactions\nlet periodoMayoritario = null;\nlet maxCount = 0;\n\nObject.keys(periodCount).forEach(periodo => {\n  if (periodCount[periodo] > maxCount) {\n    maxCount = periodCount[periodo];\n    periodoMayoritario = periodo;\n  }\n});\n\n// ========================================\n// Initialize result object\n// ========================================\nconst result = {\n  \"V-Periodo\": periodoMayoritario || \"\",\n  \"V-Retenciones CR - Total\": 0\n};\n\n// Initialize all columns (positive and negative) to 0\ncolumns.forEach(col => {\n  result[`V-${col} - Positivo`] = 0;\n  result[`V-${col} - Negativo`] = 0;\n});\n\n// ========================================\n// PASADA 2: Process only majority period\n// ========================================\nitems.forEach(item => {\n  const data = item.json;\n  \n  // Skip TOTALES row\n  if (data.Fecha === \"TOTALES\") {\n    return;\n  }\n  \n  // Get period of this transaction\n  const periodoTransaccion = convertirFechaPeriodo(data.Fecha);\n  \n  // 🔧 CRITICAL: Only process if transaction is from majority period\n  if (periodoTransaccion !== periodoMayoritario) {\n    return; // Skip transactions from other periods\n  }\n  \n  const tc = data.TC;\n  \n  // Process each column\n  columns.forEach(col => {\n    const value = data[col] || 0;\n    \n    // FC/ND/CF/FE → Positivo (with Math.abs to ensure positive)\n    if ([\"FC\", \"ND\", \"CF\", \"FE\"].includes(tc)) {\n      result[`V-${col} - Positivo`] += Math.abs(value);\n    }\n    \n    // NC → Negativo (with Math.abs to ensure positive storage)\n    if (tc === \"NC\") {\n      result[`V-${col} - Negativo`] += Math.abs(value);\n    }\n  });\n  \n  // 🔧 CR (Constancia de Retención) - NOW FILTERED BY PERIOD\n  if (tc === \"CR\") {\n    const totalComprobante = data[\"Total Comprobante\"] || 0;\n    result[\"V-Retenciones CR - Total\"] += Math.abs(totalComprobante);\n  }\n});\n\n// Return single item\nreturn [\n  {\n    json: result\n  }\n];\n\n// 🚨 IMPLEMENTATION NOTES:\n//\n// 1. ✅ NEW: Two-pass algorithm\n//    - PASS 1: Count transactions per period\n//    - PASS 2: Process only majority period\n//\n// 2. ✅ NEW: convertirFechaPeriodo() helper function\n//    - Handles Excel serial dates (e.g., 45870)\n//    - Handles string dates (e.g., \"28/07/2025\")\n//    - Returns MM/YYYY format\n//\n// 3. ✅ FIXED: Period filtering for ALL transaction types\n//    - FC, ND, CF, FE: Only from majority period\n//    - NC: Only from majority period\n//    - CR: Only from majority period ← THIS WAS THE BUG\n//\n// 4. Example with your data:\n//    INPUT (07/2025 file):\n//      - Transactions with dates in 07/2025: 8 records\n//      - CR with date 45836 (05/2025): 1 record ❌\n//      - CR with date 45897 (08/2025): 1 record ❌\n//      - CR with date 28/07/2025 (07/2025): 1 record ✅\n//    \n//    PERIOD COUNT:\n//      { \"07/2025\": 8, \"05/2025\": 1, \"08/2025\": 1 }\n//    \n//    MAJORITY PERIOD: \"07/2025\" (8 transactions)\n//    \n//    OUTPUT:\n//      - V-Periodo: \"07/2025\"\n//      - V-Retenciones CR - Total: 800000 (only the 28/07/2025 CR)\n//      - Other CR transactions IGNORED ✅\n//\n// 5. Edge cases handled:\n//    - Mixed date formats (Excel serial + string)\n//    - TOTALES row ignored\n//    - Null/undefined dates ignored\n//    - Automatic period detection (no manual input needed)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        -1200
+      ],
+      "id": "310d34e3-e52f-4acd-a5b0-0188a6eed8f7",
+      "name": "Data Ventas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input data\nconst items = $input.all();\n\n// Define the columns to process\nconst columns = [\n  \"Neto 21%\",\n  \"IVA 21%\",\n  \"Neto 10.5%\",\n  \"IVA 10.5%\",\n  \"Neto 27%\",\n  \"IVA 27%\",\n  \"Neto 0%\",\n  \"IVA 0%\",\n  \"Neto 2.5%\",\n  \"IVA 2.5%\",\n  \"Neto 5%\",\n  \"IVA 5%\",\n  \"Importe Exento\",\n  \"Importe No Alcanzado\",\n  \"Importe no gravado\",\n  \"Compras a exentos, monotributistas y otros\",\n  \"Importe Impuestos Internos\",\n  \"Percepciones IIBB\",\n  \"Percepciones IVA\",\n  \"Otras Percepciones\",\n  \"Otros regímenes especiales\",\n  \"Total Comprobante\"\n];\n\n// Initialize result object with Periodo\nconst result = {\n  \"C-Periodo\": \"\"\n};\n\n// Initialize all columns (positive and negative absolute) to 0 with C- prefix\ncolumns.forEach(col => {\n  result[`C-${col} - Positivo`] = 0;\n  result[`C-${col} - Negativo`] = 0;\n});\n\n// Extract period from the first valid date\nlet periodExtracted = false;\n\n// Process each item\nitems.forEach(item => {\n  const data = item.json;\n  \n  // Skip the TOTALES row\n  if (data.Fecha === \"TOTALES\") {\n    return;\n  }\n  \n  // --- DATE LOGIC FIX START ---\n  // Extract period from first valid date\n  if (!periodExtracted && data.Fecha) {\n    \n    // Case A: It is an Excel Serial Number (e.g., 45870)\n    if (typeof data.Fecha === 'number') {\n       // Convert Excel serial to JS Date (Excel starts 1900, JS starts 1970)\n       // 25569 is the day offset, 86400 seconds/day, 1000 ms/second\n       const dateObj = new Date((data.Fecha - 25569) * 86400 * 1000);\n       \n       // Add 1 to month because JS months are 0-indexed (0 = Jan, 11 = Dec)\n       const month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0');\n       const year = dateObj.getUTCFullYear();\n       \n       result[\"C-Periodo\"] = `${month}/${year}`;\n       periodExtracted = true;\n    }\n    // Case B: It is a String (e.g., \"20/08/2025\")\n    else if (typeof data.Fecha === 'string' && data.Fecha.includes('/')) {\n      const dateParts = data.Fecha.split('/');\n      if (dateParts.length === 3) {\n        result[\"C-Periodo\"] = `${dateParts[1]}/${dateParts[2]}`; // MM/YYYY\n        periodExtracted = true;\n      }\n    }\n  }\n  // --- DATE LOGIC FIX END ---\n  \n  // Process each column\n  columns.forEach(col => {\n    const value = data[col] || 0;\n    \n    // If value is positive, add to positive column\n    if (value > 0) {\n      result[`C-${col} - Positivo`] += value;\n    }\n    // If value is negative, add absolute value to negative column\n    else if (value < 0) {\n      result[`C-${col} - Negativo`] += Math.abs(value);\n    }\n  });\n});\n\n// Return single item with all columns split\nreturn [\n  {\n    json: result\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        -1008
+      ],
+      "id": "51604478-8afd-4b88-9378-74779e56f914",
+      "name": "Data Compras"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        176,
+        -1104
+      ],
+      "id": "fb9150b1-aefd-4a2e-a427-05d921f80104",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "IVA_COMPRAS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -240
+      ],
+      "id": "1a4bd571-2602-4190-93a0-e6b133292131",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74f327f2-0172-4d9c-a8f2-1fdd658cfa31",
+              "name": "IVA_COMPRAS",
+              "value": "IVA_COMPRAS",
+              "type": "binary"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        -240
+      ],
+      "id": "d1cea852-bc76-4c27-ab90-07abf2a1186a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4753bfc9-9415-4cc8-aead-22a306cd7956",
+              "name": "Ventas",
+              "value": "IVA_VENTAS",
+              "type": "binary"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        -1200
+      ],
+      "id": "303af0ac-021d-45c2-a68a-259df4c22d10",
+      "name": "Ventas"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c9209510-a899-4c94-83eb-2564428e66d0",
+              "name": "Compras",
+              "value": "IVA_COMPRAS",
+              "type": "binary"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        -1008
+      ],
+      "id": "449deeae-af15-476d-8d17-72e1e1c1c25f",
+      "name": "Compras"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "Ventas",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -1200
+      ],
+      "id": "54c86dfe-703f-4a83-9952-9c51abc3c79e",
+      "name": "Extract from Ventas"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "Compras",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -1008
+      ],
+      "id": "aa89eab1-d5f4-4f25-9f92-90f9d29625ad",
+      "name": "Extract from Compras"
+    },
+    {
+      "parameters": {
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "CUIT",
+              "field2": "CUIT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.compareDatasets",
+      "typeVersion": 2.3,
+      "position": [
+        1440,
+        -208
+      ],
+      "id": "06463f2b-c85e-43c5-916c-b982c1a47507",
+      "name": "Compare Datasets"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HQvjZxm_qNA-Zbhj-bcmSulU1c42fBe-RvgPF9NMARY",
+          "mode": "list",
+          "cachedResultName": "APOC_n8n",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HQvjZxm_qNA-Zbhj-bcmSulU1c42fBe-RvgPF9NMARY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 889681478,
+          "mode": "list",
+          "cachedResultName": "Hoja1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HQvjZxm_qNA-Zbhj-bcmSulU1c42fBe-RvgPF9NMARY/edit#gid=889681478"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        -48
+      ],
+      "id": "3589fb4d-f0cf-40d5-a4e4-73c575665524",
+      "name": "Base APOC",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check CUIT format from Input A (COMPRAS)\nconst items = $input.all();\n\nitems.forEach((item, index) => {\n  if (index < 3) { // Check first 3 items\n    console.log('CUIT:', item.json.CUIT);\n    console.log('Type:', typeof item.json.CUIT);\n    console.log('Length:', String(item.json.CUIT).length);\n    console.log('---');\n  }\n});\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "35d72cfb-a106-4f35-944c-05e2f7c7a679",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop through all input items\nconst results = $input.all().map(item => {\n  return {\n    json: {\n      // Extract only the CUIT column\n      \"CUIT\": item.json[\"CUIT\"]\n    }\n  };\n});\n\n// Filter out rows where CUIT is undefined (e.g., the \"TOTALES\" row)\n// to ensure you get a clean list of identifiers.\nconst cleanResults = results.filter(item => item.json[\"CUIT\"] !== undefined);\n\nreturn cleanResults;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -240
+      ],
+      "id": "2d152470-d05c-4f1b-97c4-3d62783b5c14",
+      "name": "Extract CUIT"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check CUIT format from Input A (COMPRAS)\nconst items = $input.all();\n\nitems.forEach((item, index) => {\n  if (index < 3) { // Check first 3 items\n    console.log('CUIT:', item.json.CUIT);\n    console.log('Type:', typeof item.json.CUIT);\n    console.log('Length:', String(item.json.CUIT).length);\n    console.log('---');\n  }\n});\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        -240
+      ],
+      "id": "733cf586-efae-41e7-bda8-fb239906e65c",
+      "name": "Normalize1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CORRECTED N8N JAVASCRIPT CODE - MAIN CALCULATION NODE\n// This code matches Excel formulas exactly from Referencia_JSNode_V1_.xlsx\n// ✅ UPDATED: Compras No Gravadas now ONLY includes 3 fields (Exento, No Alcanzado, No Gravado)\n// ✅ UPDATED: NC Ventas and VAT now output as POSITIVE values (Removed *-1)\n\n// Get input data\nconst items = $input.all();\n\n// Merge all input items into a single object\nlet data = {};\nitems.forEach(item => {\n    Object.assign(data, item.json);\n});\n\n// Helper function to safely get number values (default to 0)\nconst get = (key) => {\n    const val = data[key];\n    return typeof val === 'number' ? val : 0;\n};\n\n// --- PERIOD HANDLING ---\nconst periodStr = data[\"V-Periodo\"] || \"\";\nlet periodDate = \"\";\nif (periodStr) {\n    periodDate = periodStr; \n}\n\n// --- SALES CALCULATIONS (Ventas) ---\nconst v_neto_21_pos = get(\"V-Neto 21% - Positivo\");\nconst v_neto_105_pos = get(\"V-Neto 10.5% - Positivo\");\nconst v_neto_27_pos = get(\"V-Neto 27% - Positivo\");\nconst v_iva_21_pos = get(\"V-IVA 21% - Positivo\");\nconst v_iva_105_pos = get(\"V-IVA 10.5% - Positivo\");\nconst v_iva_27_pos = get(\"V-IVA 27% - Positivo\");\n\nconst v_neto_21_neg = get(\"V-Neto 21% - Negativo\");\nconst v_neto_105_neg = get(\"V-Neto 10.5% - Negativo\");\nconst v_neto_27_neg = get(\"V-Neto 27% - Negativo\");\nconst v_iva_21_neg = get(\"V-IVA 21% - Negativo\");\nconst v_iva_105_neg = get(\"V-IVA 10.5% - Negativo\");\nconst v_iva_27_neg = get(\"V-IVA 27% - Negativo\");\n\n// --- PURCHASES CALCULATIONS (Compras) ---\nconst c_neto_21_pos = get(\"C-Neto 21% - Positivo\");\nconst c_neto_105_pos = get(\"C-Neto 10.5% - Positivo\");\nconst c_neto_27_pos = get(\"C-Neto 27% - Positivo\");\nconst c_iva_21_pos = get(\"C-IVA 21% - Positivo\");\nconst c_iva_105_pos = get(\"C-IVA 10.5% - Positivo\");\nconst c_iva_27_pos = get(\"C-IVA 27% - Positivo\");\n\nconst c_monotributo = get(\"C-Compras a exentos, monotributistas y otros - Positivo\");\n\nconst c_neto_nc_total = \n    get(\"C-Neto 21% - Negativo\") + get(\"C-Neto 10.5% - Negativo\") + get(\"C-Neto 27% - Negativo\") +\n    get(\"C-Neto 0% - Negativo\") + get(\"C-Neto 2.5% - Negativo\") + get(\"C-Neto 5% - Negativo\");\n\nconst c_iva_nc_total = \n    get(\"C-IVA 21% - Negativo\") + get(\"C-IVA 10.5% - Negativo\") + get(\"C-IVA 27% - Negativo\") +\n    get(\"C-IVA 0% - Negativo\") + get(\"C-IVA 2.5% - Negativo\") + get(\"C-IVA 5% - Negativo\");\n\nconst c_perc_iva = get(\"C-Percepciones IVA - Positivo\") - get(\"C-Percepciones IVA - Negativo\");\nconst retenciones = 1 * get(\"V-Retenciones CR - Total\");\n\n// --- AGGREGATIONS & CORE CALCULATIONS ---\nconst total_ventas_netas = v_neto_21_pos + v_neto_105_pos + v_neto_27_pos;\nconst debito_t_gral = v_iva_21_pos + v_iva_105_pos + v_iva_27_pos;\n\nconst v_exento = get(\"V-Importe Exento - Positivo\") - get(\"V-Importe Exento - Negativo\");\nconst v_no_gravado = (get(\"V-Importe no gravado - Positivo\") - get(\"V-Importe no gravado - Negativo\")) + \n                     (get(\"V-Neto 0% - Positivo\") - get(\"V-Neto 0% - Negativo\"));\nconst v_no_alcanzado = get(\"V-Importe No Alcanzado - Positivo\") - get(\"V-Importe No Alcanzado - Negativo\");\nconst v_exportacion = get(\"V-Importe operaciones exportación - Positivo\") - get(\"V-Importe operaciones exportación - Negativo\");\nconst v_impuestos_internos = get(\"V-Importe Impuestos Internos - Positivo\") - get(\"V-Importe Impuestos Internos - Negativo\");\nconst v_perc_iibb = get(\"V-Percepciones IIBB - Positivo\") - get(\"V-Percepciones IIBB - Negativo\");\nconst v_perc_iva = get(\"V-Percepciones IVA - Positivo\") - get(\"V-Percepciones IVA - Negativo\");\nconst v_otras_perc = get(\"V-Otras Percepciones - Positivo\") - get(\"V-Otras Percepciones - Negativo\");\nconst v_regimenes_esp = get(\"V-Otros regímenes especiales - Positivo\") - get(\"V-Otros regímenes especiales - Negativo\");\n\nconst venta_exenta_ng = v_exento + v_no_gravado + v_no_alcanzado + v_exportacion + v_impuestos_internos + v_perc_iibb + v_perc_iva + v_otras_perc + v_regimenes_esp;\n\n// 🔧 ADJUSTED: Compras No Gravadas (Excel: V4) - Sum of U, V, W only\nconst compras_no_gravadas = \n    (get(\"C-Importe Exento - Positivo\") - get(\"C-Importe Exento - Negativo\")) +             \n    (get(\"C-Importe No Alcanzado - Positivo\") - get(\"C-Importe No Alcanzado - Negativo\")) + \n    (get(\"C-Importe no gravado - Positivo\") - get(\"C-Importe no gravado - Negativo\"));     \n\nconst total_credito = c_iva_21_pos + c_iva_105_pos + c_iva_27_pos;\n\n// --- FISCAL CALCULATIONS ---\nconst total_debito_fiscal = debito_t_gral + c_iva_nc_total;\n// total_credito_fiscal correctly adds the positive NC values from sales\nconst total_credito_fiscal = total_credito + v_iva_21_neg + v_iva_105_neg + v_iva_27_neg;\nconst total_ret_perc = c_perc_iva + retenciones;\n\nconst prev_saldo_1_parrafo = 0;\nconst prev_saldo_2_parrafo = 0;\n\nconst saldo_1_parrafo = prev_saldo_1_parrafo < 0 ? \n    (total_credito_fiscal - total_debito_fiscal) : \n    (total_credito_fiscal - total_debito_fiscal + prev_saldo_1_parrafo);\n\nconst saldo_2_parrafo = prev_saldo_2_parrafo < 0 ?\n    (saldo_1_parrafo < 0 ? saldo_1_parrafo + total_ret_perc : total_ret_perc) :\n    (saldo_1_parrafo < 0 ? prev_saldo_2_parrafo + saldo_1_parrafo + total_ret_perc : total_ret_perc + prev_saldo_2_parrafo);\n\nconst saldo_a_pagar = saldo_2_parrafo < 0 ? saldo_2_parrafo : 0;\n\n// --- OUTPUT CONSTRUCTION ---\nconst result = {\n    \"Periodo\": periodDate,\n    \"Cliente\": data[\"Cliente\"] || \"\",\n    \"Venta Neta 21%\": v_neto_21_pos,\n    \"Venta Neta 10.5%\": v_neto_105_pos,\n    \"Venta Neta 27%\": v_neto_27_pos,\n    \"Total Ventas Netas\": total_ventas_netas,\n    \"Débito Ventas 21%\": v_iva_21_pos,\n    \"Débito Ventas 10.5%\": v_iva_105_pos,\n    \"Débito Ventas 27%\": v_iva_27_pos,\n    \"Debito T. Gral.\": debito_t_gral,\n    \"V-Exento\": v_exento,\n    \"V-No Gravado\": v_no_gravado,\n    \"V-No Alcanzado\": v_no_alcanzado,\n    \"V-Exportación\": v_exportacion,\n    \"V-Impuestos Internos\": v_impuestos_internos,\n    \"V-Percepciones IIBB\": v_perc_iibb,\n    \"V-Percepciones IVA\": v_perc_iva,\n    \"V-Otras Percepciones\": v_otras_perc,\n    \"V-Regímenes Especiales\": v_regimenes_esp,\n    \"Total V-Otros NG/NA/Exento\": venta_exenta_ng,\n    \"Neto NC Compras\": c_neto_nc_total,\n    \"Débito NC Compras\": c_iva_nc_total,\n    \"Compras No Gravadas\": compras_no_gravadas,\n    \"Compras Monotributo\": c_monotributo,\n    \"IVA No Computable\": 0,\n    \"Compras Neto 21%\": c_neto_21_pos,\n    \"Compras Neto 10.5%\": c_neto_105_pos,\n    \"Compras Neto 27%\": c_neto_27_pos,\n    \"IVA CF 21%\": c_iva_21_pos,\n    \"IVA CF 10.5%\": c_iva_105_pos,\n    \"IVA CF 27%\": c_iva_27_pos,\n    \"Total Crédito\": total_credito,\n    \n    // 🔧 Sales - Credit Notes (Outputs as positive values for report clarity)\n    \"NC Ventas Neto 21%\": v_neto_21_neg,\n    \"NC Ventas Neto 10.5%\": v_neto_105_neg,\n    \"NC Ventas Neto 27%\": v_neto_27_neg,\n    \"CF NC Ventas 21%\": v_iva_21_neg,\n    \"CF NC Ventas 10.5%\": v_iva_105_neg,\n    \"CF NC Ventas 27%\": v_iva_27_neg,\n    \n    \"Percepciones\": c_perc_iva,\n    \"Retenciones\": retenciones,\n    \"Total Débito Fiscal\": total_debito_fiscal,\n    \"Total Crédito Fiscal\": total_credito_fiscal,\n    \"Total Retenciones y Percecpiones\": total_ret_perc,\n    \"Saldo 1 Párrafo\": saldo_1_parrafo,\n    \"Saldo 2 Párrafo\": saldo_2_parrafo,\n    \"Saldo a pagar\": saldo_a_pagar\n};\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -1088
+      ],
+      "id": "2baf142e-4809-4acc-a142-7358b54422bc",
+      "name": "Calculo"
+    },
+    {
+      "parameters": {
+        "sendTo": "julietad@blasco.com.ar",
+        "subject": "CUIT ENCONTRADO ",
+        "emailType": "text",
+        "message": "=Hola,\n\nLos CUITs abajo fueron encontrados en la base APOC.\n\n{{ $(\"Compare Datasets\").all().map(item => item.json.keys.CUIT).filter(c => c).join(', ') }}\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1744,
+        -160
+      ],
+      "id": "b0823dab-08f9-4065-ac60-0eb498052c88",
+      "name": "Send a message",
+      "webhookId": "996a47cf-7d69-4f28-beed-de45047ee94f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4an9D4TfhQdST6iA",
+          "name": "NoReply_Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "MyIVA - ESTUDIO BLASCO",
+        "formDescription": "Hola Julieta,\n\nBienvenido al liquidador de IVA automático del Estudio Blasco. La liquidación incluye el cruce con la base APOC. Cualquier detección será informada al correo electrónico del usuario",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "IVA VENTAS",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "IVA COMPRAS",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "CLIENTE",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "CAZATUR SA"
+                  },
+                  {
+                    "option": "DACKET SA"
+                  },
+                  {
+                    "option": "DASYC SRL"
+                  },
+                  {
+                    "option": "NOVALUX S.A."
+                  },
+                  {
+                    "option": "FIDEICOMISO PAMPA PILAR"
+                  },
+                  {
+                    "option": "RODIALE SA"
+                  },
+                  {
+                    "option": "IDEA 2 SA"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "ENVIAR",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Su archivo fue enviado."
+            }
+          },
+          "customCss": ":root {\n\t--font-family: 'Open Sans', sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\t--font-size-body: 12px;\n\t--font-size-label: 14px;\n\t--font-size-test-notice: 12px;\n\t--font-size-input: 14px;\n\t--font-size-header: 20px;\n\t--font-size-paragraph: 14px;\n\t--font-size-link: 12px;\n\t--font-size-error: 12px;\n\t--font-size-html-h1: 28px;\n\t--font-size-html-h2: 20px;\n\t--font-size-html-h3: 16px;\n\t--font-size-html-h4: 14px;\n\t--font-size-html-h5: 12px;\n\t--font-size-html-h6: 10px;\n\t--font-size-subheader: 14px;\n\n    /* --- REVERSED COLORS --- */\n\t--color-background: #1e293b;        /* Background is now Dark Gray/Slate */\n\t--color-card-bg: #0f172a;           /* Card is now Dark Blue */\n\t--color-card-border: #334155;       \n\t--color-card-shadow: rgba(0, 0, 0, 0.4);\n\n    /* Text Colors (Light) */\n\t--color-header: #f1f5f9;\n\t--color-label: #e2e8f0;\n\t--color-paragraph: #cbd5e1;\n\t--color-header-subtext: #94a3b8;\n\t--color-html-text: #e2e8f0;\n\n    /* Input Fields (Switched to match main background for contrast) */\n\t--color-input-bg: #1e293b;          \n\t--color-input-border: #475569;\n\t--color-input-text: #f1f5f9;\n\t--color-focus-border: #3b82f6;      \n\n    /* Buttons & Links */\n\t--color-submit-btn-bg: #2563eb;     \n\t--color-submit-btn-text: #ffffff;\n\t--color-link: #60a5fa;              \n\t--color-clear-button-bg: #334155;\n\n    /* Notices & Errors */\n\t--color-test-notice-text: #e2e8f0;\n\t--color-test-notice-bg: #1e293b;\n\t--color-test-notice-border: #334155;\n\t--color-error: #f87171;             \n\t--color-required: #f87171;\n\t--color-html-link: #60a5fa;\n\n\t/* Border Radii */\n\t--border-radius-card: 8px;\n\t--border-radius-input: 6px;\n\t--border-radius-clear-btn: 50%;\n\t--card-border-radius: 8px;\n\n\t/* Spacing */\n\t--padding-container-top: 24px;\n\t--padding-card: 24px;\n\t--padding-test-notice-vertical: 12px;\n\t--padding-test-notice-horizontal: 24px;\n\t--margin-bottom-card: 16px;\n\t--padding-form-input: 12px;\n\t--card-padding: 24px;\n\t--card-margin-bottom: 16px;\n\n\t/* Dimensions */\n\t--container-width: 582px;\n\t--submit-btn-height: 48px;\n\t--checkbox-size: 18px;\n\n\t/* Others */\n\t--box-shadow-card: 0px 4px 16px 0px var(--color-card-shadow);\n\t--opacity-placeholder: 0.5;\n}"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -976,
+        -496
+      ],
+      "id": "5ef524b5-2211-402e-88ec-5298c8cf1c5b",
+      "name": "On form submission",
+      "webhookId": "61baf8d4-fe6a-4c2f-b85d-ec2c2ef5658e",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ccab829-5dba-4894-b040-8f50ed3a85a9",
+              "name": "Cliente",
+              "value": "={{ $json.CLIENTE }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -816
+      ],
+      "id": "ca51eb8f-56be-454d-998f-ae04cf0fd4f0",
+      "name": "Cliente"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "CAZATUR SA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "fd72edfe-5f1c-47ed-a3c0-34db7f04649a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CAZATUR SA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8470f40f-a953-41ca-8308-50b1927f6ab3",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "DACKET SA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DACKET SA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "44485808-f652-4cfe-af4d-414ceb7a2c7e",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "DASYC SRL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DASYC SRL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "79cb4560-469f-4f23-bb9f-d345498d096d",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "NOVALUX S.A.",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NOVALUX S.A."
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "51f9c5c3-7948-4ee9-a999-348e8ffd4458",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "FIDEICOMISO PAMPA PILAR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FIDEICOMISO PAMPA PILAR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "70e817ce-c362-43dc-9531-53506cebd7ce",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "RODIALE SA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RODIALE SA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9b1a0981-6227-4985-98a9-fad4cbbb8842",
+                    "leftValue": "={{ $json.Cliente }}",
+                    "rightValue": "IDEA 2 SA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IDEA 2 SA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        688,
+        -1168
+      ],
+      "id": "4f183e72-92bc-47bc-890e-ab85e370c05a",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZbuaKmHBpaNw0ECUeqldYbLsa8ano61D8AQSKtk6njs",
+          "mode": "list",
+          "cachedResultName": "NOVALUX S.A.",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZbuaKmHBpaNw0ECUeqldYbLsa8ano61D8AQSKtk6njs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -1296
+      ],
+      "id": "31204b72-b1e7-4523-bae5-822da7bd7a56",
+      "name": "NOVALUX S.A.1",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1CC6-pjjOcgr_bpSrXwGgFl9r4oID7PG4hg7Dyxz19FI",
+          "mode": "list",
+          "cachedResultName": "CAZATUR SA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CC6-pjjOcgr_bpSrXwGgFl9r4oID7PG4hg7Dyxz19FI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -1840
+      ],
+      "id": "5287ab4b-e448-444a-98d3-4b3ae74c076b",
+      "name": "CAZATUR SA",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "156gefNZtPXcBLCoj235WF2Yvo0ZqudnCm317NQ5DV8c",
+          "mode": "list",
+          "cachedResultName": "DACKET SA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/156gefNZtPXcBLCoj235WF2Yvo0ZqudnCm317NQ5DV8c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -1664
+      ],
+      "id": "44256c5d-9907-45a2-9e39-e2254441ad7b",
+      "name": "DACKET SA",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1BjCFcACRo1K855GgneeJSu24NbcUvE7p-qj7bm4acFk",
+          "mode": "list",
+          "cachedResultName": "DASYC SRL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BjCFcACRo1K855GgneeJSu24NbcUvE7p-qj7bm4acFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -1488
+      ],
+      "id": "85cb420e-920a-459a-b434-5efbadff5776",
+      "name": "DASYC SRL",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1C6l8ywn2IhO6lIH-mccM5qCminuv2I-37GMQOObOtWs",
+          "mode": "list",
+          "cachedResultName": "FIDEICOMISO PAMPA PILAR",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1C6l8ywn2IhO6lIH-mccM5qCminuv2I-37GMQOObOtWs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -1088
+      ],
+      "id": "d376712d-af14-4540-99a8-7cf9e2ce93bf",
+      "name": "FIDEICOMISO PAMPA PILAR",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ubJDH5-0xw5yBi2CYzMcxdNC-VApRDPfC4OlZ6LOJ6o",
+          "mode": "list",
+          "cachedResultName": "RODIALE SA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ubJDH5-0xw5yBi2CYzMcxdNC-VApRDPfC4OlZ6LOJ6o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        -880
+      ],
+      "id": "31e1cf06-a1e9-4015-ab0f-b55483db0814",
+      "name": "RODIALE SA",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "12YNSgNA-wpCz_spIoGeAXLzAAqdT2TVdBQA-XfWaorE",
+          "mode": "list",
+          "cachedResultName": "IDEA 2 SA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12YNSgNA-wpCz_spIoGeAXLzAAqdT2TVdBQA-XfWaorE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "2025-26",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_JuoMO7jm8cBmi2Z9sY4IjnyQOKxl6xLS4L4U-S_9po/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Periodo": "={{ $json.Periodo }}",
+            "Venta Neta 21%": "={{ $json['Venta Neta 21%'] }}",
+            "Venta Neta 10.5%": "={{ $json['Venta Neta 10.5%'] }}",
+            "Venta Neta 27%": "={{ $json['Venta Neta 27%'] }}",
+            "Débito Ventas 21%": "={{ $json['Débito Ventas 21%'] }}",
+            "Débito Ventas 10.5%": "={{ $json['Débito Ventas 10.5%'] }}",
+            "Débito Ventas 27%": "={{ $json['Débito Ventas 27%'] }}",
+            "Debito T. Gral.": "={{ $json['Debito T. Gral.'] }}",
+            "Neto NC Compras": "={{ $json['Neto NC Compras'] }}",
+            "Débito NC Compras": "={{ $json['Débito NC Compras'] }}",
+            "Compras No Gravadas": "={{ $json['Compras No Gravadas'] }}",
+            "Compras Monotributo": "={{ $json['Compras Monotributo'] }}",
+            "Compras Neto 21%": "={{ $json['Compras Neto 21%'] }}",
+            "Compras Neto 10.5%": "={{ $json['Compras Neto 10.5%'] }}",
+            "Compras Neto 27%": "={{ $json['Compras Neto 27%'] }}",
+            "IVA CF 21%": "={{ $json['IVA CF 21%'] }}",
+            "IVA CF 10.5%": "={{ $json['IVA CF 10.5%'] }}",
+            "IVA CF 27%": "={{ $json['IVA CF 27%'] }}",
+            "Total Crédito": "={{ $json['Total Crédito'] }}",
+            "NC Ventas Neto 21%": "={{ $json['NC Ventas Neto 21%'] }}",
+            "NC Ventas Neto 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "NC Ventas Neto 27%": "={{ $json['NC Ventas Neto 27%'] }}",
+            "CF NC Ventas 21%": "={{ $json['CF NC Ventas 21%'] }}",
+            "CF NC Ventas 10.5%": "={{ $json['NC Ventas Neto 10.5%'] }}",
+            "CF NC Ventas 27%": "={{ $json[\"CF NC Ventas 27%\"] }}",
+            "Percepciones": "={{ $json.Percepciones }}",
+            "Retenciones": "={{ $json.Retenciones }}",
+            "Total Débito Fiscal": "={{ $json['Total Débito Fiscal'] }}",
+            "Total Crédito Fiscal": "={{ $json['Total Crédito Fiscal'] }}",
+            "Total Retenciones y Percecpiones": "={{ $json['Total Retenciones y Percecpiones'] }}",
+            "V - Exenta": "={{ $json['V-Exento'] }}",
+            "V - No alcanzada": "={{ $json['V-No Alcanzado'] }}",
+            "V - No gravada": "={{ $json['V-No Gravado'] }}",
+            "V - Exportac.": "={{ $json['V-Exportación'] }}",
+            "V - Impuestos Internos": "={{ $json['V-Impuestos Internos'] }}",
+            "V - Percep. IIBB": "={{ $json['V-Percepciones IIBB'] }}",
+            "V - Percep. IVA": "={{ $json['V-Percepciones IVA'] }}",
+            "V - Otras percep.": "={{ $json['V-Otras Percepciones'] }}",
+            "V - Regímenes especiales": "={{ $json['V-Regímenes Especiales'] }}",
+            "Total Ventas Netas Gravadas": "={{ $json[\"Total Ventas Netas\"] }}",
+            "Subtotal V - Otros NG/NA/Exento": "={{ $json[\"Total V-Otros NG/NA/Exento\"] }}"
+          },
+          "matchingColumns": [
+            "Periodo"
+          ],
+          "schema": [
+            {
+              "id": "Periodo",
+              "displayName": "Periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Venta Neta 21%",
+              "displayName": "Venta Neta 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 10.5%",
+              "displayName": "Venta Neta 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Venta Neta 27%",
+              "displayName": "Venta Neta 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Ventas Netas Gravadas",
+              "displayName": "Total Ventas Netas Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Débito Ventas 21%",
+              "displayName": "Débito Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 10.5%",
+              "displayName": "Débito Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito Ventas 27%",
+              "displayName": "Débito Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Debito T. Gral.",
+              "displayName": "Debito T. Gral.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "V - Exenta",
+              "displayName": "V - Exenta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No gravada",
+              "displayName": "V - No gravada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - No alcanzada",
+              "displayName": "V - No alcanzada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Exportac.",
+              "displayName": "V - Exportac.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Impuestos Internos",
+              "displayName": "V - Impuestos Internos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IIBB",
+              "displayName": "V - Percep. IIBB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Percep. IVA",
+              "displayName": "V - Percep. IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Otras percep.",
+              "displayName": "V - Otras percep.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "V - Regímenes especiales",
+              "displayName": "V - Regímenes especiales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtotal V - Otros NG/NA/Exento",
+              "displayName": "Subtotal V - Otros NG/NA/Exento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Neto NC Compras",
+              "displayName": "Neto NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Débito NC Compras",
+              "displayName": "Débito NC Compras",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras No Gravadas",
+              "displayName": "Compras No Gravadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Monotributo",
+              "displayName": "Compras Monotributo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 21%",
+              "displayName": "Compras Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 10.5%",
+              "displayName": "Compras Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Compras Neto 27%",
+              "displayName": "Compras Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 21%",
+              "displayName": "IVA CF 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 10.5%",
+              "displayName": "IVA CF 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IVA CF 27%",
+              "displayName": "IVA CF 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito",
+              "displayName": "Total Crédito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 21%",
+              "displayName": "NC Ventas Neto 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 10.5%",
+              "displayName": "NC Ventas Neto 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NC Ventas Neto 27%",
+              "displayName": "NC Ventas Neto 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 21%",
+              "displayName": "CF NC Ventas 21%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 10.5%",
+              "displayName": "CF NC Ventas 10.5%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CF NC Ventas 27%",
+              "displayName": "CF NC Ventas 27%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Percepciones",
+              "displayName": "Percepciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Retenciones",
+              "displayName": "Retenciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Débito Fiscal",
+              "displayName": "Total Débito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal",
+              "displayName": "Total Crédito Fiscal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Crédito Fiscal Computable",
+              "displayName": "Total Crédito Fiscal Computable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total Retenciones y Percecpiones",
+              "displayName": "Total Retenciones y Percecpiones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Saldo 1 Párrafo",
+              "displayName": "Saldo 1 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo 2 Párrafo",
+              "displayName": "Saldo 2 Párrafo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo a pagar",
+              "displayName": "Saldo a pagar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Validacion",
+              "displayName": "Validacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1424,
+        -672
+      ],
+      "id": "ac34bb2c-3818-4966-b99c-9ac038155541",
+      "name": "IDEA2 SA",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gJoofx2oC8fXtGz4",
+          "name": "Kairos"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Data Ventas": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Compras": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Calculo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Extract CUIT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ventas": {
+      "main": [
+        [
+          {
+            "node": "Extract from Ventas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compras": {
+      "main": [
+        [
+          {
+            "node": "Extract from Compras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Ventas": {
+      "main": [
+        [
+          {
+            "node": "Data Ventas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Compras": {
+      "main": [
+        [
+          {
+            "node": "Data Compras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Datasets": {
+      "main": [
+        [],
+        [],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Base APOC": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract CUIT": {
+      "main": [
+        [
+          {
+            "node": "Normalize1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize1": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculo": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Ventas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compras",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Base APOC",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cliente": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "CAZATUR SA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DACKET SA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DASYC SRL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NOVALUX S.A.1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FIDEICOMISO PAMPA PILAR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RODIALE SA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IDEA2 SA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CAZATUR SA": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "katyhhTMsglnOjCI"
+  },
+  "versionId": "b6765762-e892-49e0-9156-460b91f63eff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d752a7c30de4fca996a5b3ee0d7b393ba2b9e0231c428c7b9ae01b8e52fce1fe"
+  },
+  "id": "katyhhTMsglnOjCI",
+  "tags": [
+    {
+      "updatedAt": "2026-01-20T01:23:24.354Z",
+      "createdAt": "2026-01-20T01:23:24.354Z",
+      "id": "mr0MlIg888iHUv4D",
+      "name": "julieta"
+    },
+    {
+      "updatedAt": "2025-10-10T20:06:59.591Z",
+      "createdAt": "2025-10-10T20:06:59.591Z",
+      "id": "yokBQKQh60rrwq4A",
+      "name": "Estudio Blasco"
+    }
+  ]
+}

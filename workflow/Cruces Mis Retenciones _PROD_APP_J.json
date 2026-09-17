@@ -1,0 +1,380 @@
+{
+  "name": "Cruces Mis Retenciones _PROD_APP_J",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "MIS RETENCIONES",
+        "formDescription": "Hola Julieta,\n\nCruce de reportes \"Mis Retenciones\" con los correspondientes Subdiarios. Eventuales diferencias serán notificadas al correo electrónico del usuario.\n\n",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "IVA COMPRAS",
+              "fieldType": "file",
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "IVA VENTAS",
+              "fieldType": "file",
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "MIS RETENCIONES",
+              "fieldType": "file",
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "ENVIAR",
+          "customCss": ":root {\n\t--font-family: 'Open Sans', sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\t--font-size-body: 12px;\n\t--font-size-label: 14px;\n\t--font-size-test-notice: 12px;\n\t--font-size-input: 14px;\n\t--font-size-header: 20px;\n\t--font-size-paragraph: 14px;\n\t--font-size-link: 12px;\n\t--font-size-error: 12px;\n\t--font-size-html-h1: 28px;\n\t--font-size-html-h2: 20px;\n\t--font-size-html-h3: 16px;\n\t--font-size-html-h4: 14px;\n\t--font-size-html-h5: 12px;\n\t--font-size-html-h6: 10px;\n\t--font-size-subheader: 14px;\n\t\n    /* --- UPDATED COLORS (Dark Blue & Gray Theme) --- */\n\t--color-background: #0f172a;        /* Dark Blue Background */\n\t--color-card-bg: #1e293b;           /* Dark Gray/Slate Card */\n\t--color-card-border: #334155;       /* Subtle border for dark mode */\n\t--color-card-shadow: rgba(0, 0, 0, 0.4);\n    \n    /* Text Colors (Switched to Light for Contrast) */\n\t--color-header: #f1f5f9;\n\t--color-label: #e2e8f0;\n\t--color-paragraph: #cbd5e1;\n\t--color-header-subtext: #94a3b8;\n\t--color-html-text: #e2e8f0;\n    \n    /* Input Fields */\n\t--color-input-bg: #0f172a;          /* Dark input background */\n\t--color-input-border: #475569;\n\t--color-input-text: #f1f5f9;\n\t--color-focus-border: #3b82f6;      /* Bright Blue focus */\n    \n    /* Buttons & Links */\n\t--color-submit-btn-bg: #2563eb;     /* Brighter Blue for visibility */\n\t--color-submit-btn-text: #ffffff;\n\t--color-link: #60a5fa;              /* Light Blue link */\n\t--color-clear-button-bg: #475569;\n    \n    /* Notices & Errors */\n\t--color-test-notice-text: #e2e8f0;\n\t--color-test-notice-bg: #334155;\n\t--color-test-notice-border: #475569;\n\t--color-error: #f87171;             /* Light Red */\n\t--color-required: #f87171;\n\t--color-html-link: #60a5fa;\n\n\t/* Border Radii */\n\t--border-radius-card: 8px;\n\t--border-radius-input: 6px;\n\t--border-radius-clear-btn: 50%;\n\t--card-border-radius: 8px;\n    \n\t/* Spacing */\n\t--padding-container-top: 24px;\n\t--padding-card: 24px;\n\t--padding-test-notice-vertical: 12px;\n\t--padding-test-notice-horizontal: 24px;\n\t--margin-bottom-card: 16px;\n\t--padding-form-input: 12px;\n\t--card-padding: 24px;\n\t--card-margin-bottom: 16px;\n    \n\t/* Dimensions */\n\t--container-width: 582px;\n\t--submit-btn-height: 48px;\n\t--checkbox-size: 18px;\n    \n\t/* Others */\n\t--box-shadow-card: 0px 4px 16px 0px var(--color-card-shadow);\n\t--opacity-placeholder: 0.5;\n}"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        224
+      ],
+      "id": "0568a758-ff6e-4025-af3d-4ca903d1160d",
+      "name": "On form submission",
+      "webhookId": "ee70b638-ce79-4381-a7ac-2f1f0f605118",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// IVA COMPRA 2 - FILTRO - VERSION 1.3\n// Purpose: Extract perceptions preserving decimal format from Excel\n// Last Updated: 2026-01-25\n// Fix: Properly handle Excel decimal format (dot as decimal separator)\n// ============================================================\n\nfunction formatDate(value) {\n  if (!value) return null;\n  \n  if (typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && !value.includes('/'))) {\n    const date = new Date(Math.round((parseFloat(value) - 25569) * 86400 * 1000));\n    return date.toISOString().split('T')[0];\n  }\n  \n  if (typeof value === 'string' && value.includes('/')) {\n    const parts = value.split('/');\n    if (parts.length === 3) {\n      const date = new Date(parts[2], parts[1] - 1, parts[0]); \n      return date.toISOString().split('T')[0];\n    }\n  }\n  \n  return value;\n}\n\n// Fixed normalization - Excel uses dot as decimal separator\nfunction normalizeAmount(value) {\n  if (value === undefined || value === null || value === '') return 0;\n  \n  // If already a number, just round it\n  if (typeof value === 'number') {\n    return Math.round(value * 100) / 100;\n  }\n  \n  // If string, parse it directly (Excel exports use dot as decimal)\n  const numValue = parseFloat(value);\n  return isNaN(numValue) ? 0 : Math.round(numValue * 100) / 100;\n}\n\nconst items = $input.all();\n\nreturn items.flatMap(item => {\n  const data = item.json;\n\n  const fechaStr = (data[\"Fecha\"] || \"\").toString().toUpperCase();\n  if (fechaStr.includes(\"TOTAL\")) return [];\n\n  const headerDate   = \"Fecha\";\n  const headerNumber = \"Nro. Desde\";\n  const headerCUIT   = \"CUIT\";\n  const headerPerc   = \"Percepciones IVA\";\n\n  const valPerc = data[headerPerc];\n  const numPerc = normalizeAmount(valPerc);\n\n  if (!isNaN(numPerc) && numPerc !== 0) {\n    return {\n      json: {\n        \"Fecha\": formatDate(data[headerDate]),\n        \"Nro. Desde\": data[headerNumber],\n        \"CUIT\": data[headerCUIT],\n        \"Percepciones IVA\": numPerc,\n        \"Razón Social\": data[\"Razón Social\"] || data[\"Razon Social\"] || \"N/A\"\n      }\n    };\n  }\n\n  return [];\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        224
+      ],
+      "id": "ad017d84-fe84-4845-b032-8770af2f068b",
+      "name": "IVA COMPRA 2 - Filtro"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. HELPER: Función para formatear fechas (OBLIGATORIO en cada nodo de código)\nfunction formatDate(value) {\n  if (!value) return null;\n  \n  // Caso: Número de serie de Excel (ej: 45840)\n  if (typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && !value.includes('/'))) {\n    const date = new Date(Math.round((parseFloat(value) - 25569) * 86400 * 1000));\n    return date.toISOString().split('T')[0]; // Retorna YYYY-MM-DD\n  }\n  \n  // Caso: Fecha en formato texto (ej: \"01/07/2025\")\n  if (typeof value === 'string' && value.includes('/')) {\n    const parts = value.split('/');\n    if (parts.length === 3) {\n      const date = new Date(parts[2], parts[1] - 1, parts[0]); \n      return date.toISOString().split('T')[0];\n    }\n  }\n  \n  return value;\n}\n\n// 2. LÓGICA PRINCIPAL\nconst items = $input.all();\n\nreturn items.flatMap(item => {\n  const data = item.json;\n\n  // --- FILTRO 1: Ignorar filas de totales ---\n  const fechaStr = (data[\"Fecha\"] || \"\").toString().toUpperCase();\n  if (fechaStr.includes(\"TOTAL\")) return [];\n\n  // --- FILTRO 2: Solo comprobantes tipo 'CR' (Retenciones en Ventas) ---\n  if (data[\"TC\"] === 'CR') {\n    const valAmount = data[\"Total Comprobante\"];\n    \n    // Transformación: Invertir el signo (de negativo a positivo)\n    const numericAmount = (typeof valAmount === 'number') ? valAmount : parseFloat(valAmount || 0);\n    const finalAmount = Math.abs(numericAmount); // Usamos Math.abs para asegurar que sea positivo\n\n    // --- SALIDA ---\n    return {\n      json: {\n        \"Fecha\": formatDate(data[\"Fecha\"]),\n        \"TC\": data[\"TC\"],\n        \"CUIT\": data[\"CUIT\"],\n        \"Total Comprobante\": finalAmount,\n        // Captura Razón Social con soporte para variaciones de encabezado\n        \"Razón Social\": data[\"Razón Social\"] || data[\"Razon Social\"] || \"N/A\"\n      }\n    };\n  }\n\n  // Descartar si no es 'CR'\n  return [];\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        416
+      ],
+      "id": "900f07ec-c430-4000-ad6f-d256bf219720",
+      "name": "IVA VENTAS-Filtro"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// MIS RETENCIONES-FILTRO - VERSION 1.3\n// Purpose: Extract data preserving decimal format from Excel\n// Last Updated: 2026-01-25\n// Fix: Properly handle Excel decimal format (dot as decimal separator)\n// ============================================================\n\nfunction formatDate(value) {\n  if (!value) return null;\n  \n  if (typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && !value.includes('/'))) {\n    const date = new Date(Math.round((parseFloat(value) - 25569) * 86400 * 1000));\n    return date.toISOString().split('T')[0];\n  }\n  \n  if (typeof value === 'string' && value.includes('/')) {\n    const parts = value.split('/');\n    if (parts.length === 3) {\n      const date = new Date(parts[2], parts[1] - 1, parts[0]); \n      return date.toISOString().split('T')[0];\n    }\n  }\n  \n  return value;\n}\n\n// Fixed normalization - Excel uses dot as decimal separator\nfunction normalizeAmount(value) {\n  if (value === undefined || value === null || value === '') return 0;\n  \n  // If already a number, just round it\n  if (typeof value === 'number') {\n    return Math.round(value * 100) / 100;\n  }\n  \n  // If string, parse it directly (Excel exports use dot as decimal)\n  const numValue = parseFloat(value);\n  return isNaN(numValue) ? 0 : Math.round(numValue * 100) / 100;\n}\n\nconst items = $input.all();\n\nconst results = items.map(item => {\n  return {\n    json: {\n      \"CUIT Agente Ret./Perc.\": item.json[\"CUIT Agente Ret./Perc.\"],\n      \"Razón Social\": item.json[\"Denominación o Razón Social\"],\n      \"Fecha Ret./Perc.\": formatDate(item.json[\"Fecha Ret./Perc.\"]),\n      \"Descripción Operación\": item.json[\"Descripción Operación\"],\n      \"Importe Ret./Perc.\": normalizeAmount(item.json[\"Importe Ret./Perc.\"]),\n      \"Número Comprobante\": item.json[\"Número Comprobante\"]\n    }\n  };\n});\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        32
+      ],
+      "id": "dcf24db9-4ea4-487e-a2ac-d27100e5a578",
+      "name": "MIS RETENCIONES-Filtro"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        208
+      ],
+      "id": "a32ca907-5441-4975-8869-1853184693db",
+      "name": "Merge 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// COMPARE 2 - VERSION 1.4\n// Purpose: Cross-check with tolerance and show ALL matches\n// Last Updated: 2026-01-25\n// Changes: Show both perfect matches AND matches with differences\n// ============================================================\n\n// --- 1. HELPER FUNCTIONS ---\n\nconst normalizeAmount = (val) => {\n  if (val === undefined || val === null || val === '') return 0;\n  let num = typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;\n  return Math.round(num * 100) / 100;\n};\n\nconst normalizeDate = (val) => {\n  if (!val) return '';\n  if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];\n  return val;\n};\n\nconst normalizeCUIT = (val) => {\n  if (!val) return '';\n  return val.toString().replace(/-/g, '').trim();\n};\n\nconst getStandardInvoice = (val) => {\n  if (!val) return '0';\n  let str = val.toString().replace(/\\D/g, '');\n  if (str.length > 8) str = str.slice(-8);\n  const numberValue = parseInt(str, 10);\n  return isNaN(numberValue) ? '0' : numberValue.toString();\n};\n\n// --- 2. SEPARATE INPUTS & CALCULATE TOTALS ---\n\nconst allItems = $input.all();\nconst misRetenciones = [];\nconst ivaCompras = [];\nconst ivaVentas = [];\n\nlet totalMisRet_Retencion = 0;\nlet totalMisRet_Percepcion = 0;\nlet totalIvaVentas_CR = 0;\nlet totalIvaCompras_Perc = 0;\n\nfor (const item of allItems) {\n  const data = item.json;\n\n  const dateVal = (data['Fecha'] || data['Fecha Ret./Perc.'] || '').toString().toUpperCase();\n  if (dateVal.includes('TOTAL')) continue;\n\n  if (data['Descripción Operación']) {\n    const amount = normalizeAmount(data['Importe Ret./Perc.']);\n    misRetenciones.push(data);\n    \n    const desc = data['Descripción Operación'].toUpperCase();\n    if (desc.includes('RETENCION') || desc.includes('RETENCIÓN')) {\n      totalMisRet_Retencion += amount;\n    } else if (desc.includes('PERCEPCION') || desc.includes('PERCEPCIÓN')) {\n      totalMisRet_Percepcion += amount;\n    }\n  } \n  else if (data['Percepciones IVA'] !== undefined) {\n    const amount = normalizeAmount(data['Percepciones IVA']);\n    ivaCompras.push({ ...data, _matched: false });\n    totalIvaCompras_Perc += amount;\n  } \n  else if (data['TC'] !== undefined || data['Total Comprobante'] !== undefined) {\n    const amount = normalizeAmount(data['Total Comprobante']);\n    ivaVentas.push({ ...data, _matched: false });\n    totalIvaVentas_CR += amount;\n  }\n}\n\n// --- 3. BUILD INDEXES WITH TOLERANCE ---\n\nconst TOLERANCE = 0.03;\n\nconst mapIvaCompras = new Map();\nfor (const item of ivaCompras) {\n  const cuit = normalizeCUIT(item['CUIT']);\n  if (!mapIvaCompras.has(cuit)) mapIvaCompras.set(cuit, []);\n  mapIvaCompras.get(cuit).push(item);\n}\n\nconst mapIvaVentas = new Map();\nfor (const item of ivaVentas) {\n  const cuit = normalizeCUIT(item['CUIT']);\n  if (!mapIvaVentas.has(cuit)) mapIvaVentas.set(cuit, []);\n  mapIvaVentas.get(cuit).push(item);\n}\n\n// --- 4. PERFORM CROSS-CHECK WITH TOLERANCE ---\n\nconst discrepancies = [];\n\n// A) Check: MIS RETENCIONES -> LEDGERS\nfor (const item of misRetenciones) {\n  const desc = item['Descripción Operación'] ? item['Descripción Operación'].toUpperCase() : '';\n  const date = normalizeDate(item['Fecha Ret./Perc.']);\n  const cuit = normalizeCUIT(item['CUIT Agente Ret./Perc.']);\n  const amount = normalizeAmount(item['Importe Ret./Perc.']);\n  const invoiceStd = getStandardInvoice(item['Número Comprobante']);\n  const razonSocial = item['Razón Social'] || \"N/A\";\n\n  let matchFound = false;\n\n  // CASE: RETENCION (Check vs IVA VENTAS)\n  if (desc.includes('RETENCION') || desc.includes('RETENCIÓN')) {\n    const potentialMatches = mapIvaVentas.get(cuit) || [];\n\n    for (const candidate of potentialMatches) {\n      if (candidate._matched) continue;\n      \n      const candidateAmount = normalizeAmount(candidate['Total Comprobante']);\n      const candidateDate = normalizeDate(candidate['Fecha']);\n      \n      if (Math.abs(amount - candidateAmount) <= TOLERANCE) {\n        candidate._matched = true;\n        matchFound = true;\n        \n        // Check for differences\n        const differences = [];\n        if (date !== candidateDate) differences.push(`Fecha`);\n        if (Math.abs(amount - candidateAmount) > 0.001) differences.push(`Importe`);\n        \n        // ✅ V1.4: Store ALL matches (perfect and with differences)\n        discrepancies.push({\n          Origen: \"Mis Retenciones\",\n          Falta_En: differences.length > 0 ? \"Coincide con diferencias\" : \"Coincide exactamente\",\n          Causa: differences.length > 0 ? \"Encontrado con diferencias\" : \"Match perfecto\",\n          Razón_Social: razonSocial,\n          Datos_ARCA: {\n            Fecha: date,\n            CUIT: cuit,\n            Importe: amount,\n            Comprobante: invoiceStd,\n            Fuente: \"ARCA\"\n          },\n          Datos_Sistema: {\n            Fecha: candidateDate,\n            CUIT: cuit,\n            Importe: candidateAmount,\n            Comprobante: candidate['Nro. Desde'] || \"N/A\",\n            Fuente: \"IVA Ventas\"\n          },\n          Diferencias: differences.length > 0 ? differences.join(\", \") : \"\"\n        });\n        break;\n      }\n    }\n\n    if (!matchFound) {\n      discrepancies.push({\n        Origen: \"Mis Retenciones\",\n        Falta_En: \"IVA Ventas\",\n        Causa: \"No se encontraron los datos exactos en IVA Ventas\",\n        Razón_Social: razonSocial,\n        Datos_Buscados: {\n          Fecha: date,\n          CUIT: cuit,\n          Importe: amount\n        }\n      });\n    }\n  }\n\n  // CASE: PERCEPCION (Check vs IVA COMPRAS)\n  else if (desc.includes('PERCEPCION') || desc.includes('PERCEPCIÓN')) {\n    const potentialMatches = mapIvaCompras.get(cuit) || [];\n\n    for (const candidate of potentialMatches) {\n      if (candidate._matched) continue;\n      \n      const candidateAmount = normalizeAmount(candidate['Percepciones IVA']);\n      const candidateDate = normalizeDate(candidate['Fecha']);\n      const candidateInvoice = getStandardInvoice(candidate['Nro. Desde']);\n      \n      if (Math.abs(amount - candidateAmount) <= TOLERANCE) {\n        candidate._matched = true;\n        matchFound = true;\n        \n        // Check for differences\n        const differences = [];\n        if (date !== candidateDate) differences.push(`Fecha`);\n        if (invoiceStd !== candidateInvoice) differences.push(`Nro`);\n        if (Math.abs(amount - candidateAmount) > 0.001) differences.push(`Importe`);\n        \n        // ✅ V1.4: Store ALL matches (perfect and with differences)\n        discrepancies.push({\n          Origen: \"Mis Retenciones\",\n          Falta_En: differences.length > 0 ? \"Coincide con diferencias\" : \"Coincide exactamente\",\n          Causa: differences.length > 0 ? \"Encontrado con diferencias\" : \"Match perfecto\",\n          Razón_Social: razonSocial,\n          Datos_ARCA: {\n            Fecha: date,\n            CUIT: cuit,\n            Importe: amount,\n            Comprobante: invoiceStd,\n            Fuente: \"ARCA\"\n          },\n          Datos_Sistema: {\n            Fecha: candidateDate,\n            CUIT: cuit,\n            Importe: candidateAmount,\n            Comprobante: candidateInvoice,\n            Fuente: \"IVA Compras\"\n          },\n          Diferencias: differences.length > 0 ? differences.join(\", \") : \"\"\n        });\n        break;\n      }\n    }\n\n    if (!matchFound) {\n      discrepancies.push({\n        Origen: \"Mis Retenciones\",\n        Falta_En: \"IVA Compras\",\n        Causa: \"No se encontraron los datos exactos en IVA Compras\",\n        Razón_Social: razonSocial,\n        Datos_Buscados: {\n          Fecha: date,\n          CUIT: cuit,\n          Importe: amount,\n          Comprobante_Std: invoiceStd\n        }\n      });\n    }\n  }\n}\n\n// B) Check: LEDGERS -> MIS RETENCIONES (Reverse Check)\n\nfor (const item of ivaVentas) {\n  if (!item._matched) {\n    discrepancies.push({\n      Origen: \"IVA Ventas\",\n      Falta_En: \"Mis Retenciones\",\n      Causa: \"El registro existe en Contabilidad pero no en Mis Retenciones\",\n      Razón_Social: item['Razón Social'] || \"N/A\",\n      Datos_Buscados: {\n        Fecha: normalizeDate(item['Fecha']),\n        CUIT: item['CUIT'],\n        Importe: normalizeAmount(item['Total Comprobante']),\n        TC: item['TC']\n      }\n    });\n  }\n}\n\nfor (const item of ivaCompras) {\n  if (!item._matched) {\n    discrepancies.push({\n      Origen: \"IVA Compras\",\n      Falta_En: \"Mis Retenciones\",\n      Causa: \"El registro existe en Contabilidad pero no en Mis Retenciones\",\n      Razón_Social: item['Razón Social'] || \"N/A\",\n      Datos_Buscados: {\n        Fecha: normalizeDate(item['Fecha']),\n        CUIT: item['CUIT'],\n        Importe: normalizeAmount(item['Percepciones IVA']),\n        Comprobante: getStandardInvoice(item['Nro. Desde'])\n      }\n    });\n  }\n}\n\n// --- 5. FINAL OUTPUT CONSTRUCTION ---\n\nconst report = {\n  Totales: {\n    \"MisRetenciones_Subtotal_Retencion\": Math.round(totalMisRet_Retencion * 100) / 100,\n    \"MisRetenciones_Subtotal_Percepcion\": Math.round(totalMisRet_Percepcion * 100) / 100,\n    \"IvaVentas_Total_CR\": Math.round(totalIvaVentas_CR * 100) / 100,\n    \"IvaCompras_Total_Percepciones\": Math.round(totalIvaCompras_Perc * 100) / 100\n  },\n  Discrepancias: discrepancies,\n  Cantidad_Discrepancias: discrepancies.length\n};\n\nreturn [{ json: report }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        224
+      ],
+      "id": "de48095c-49b1-4c08-bb1e-fa2fdbb6c7e4",
+      "name": "Compare 2"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "MIS_RETENCIONES",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        32
+      ],
+      "id": "04a932f6-be18-4601-9627-29af11685b21",
+      "name": "MIS_RETENCIONES"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "IVA_COMPRAS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        224
+      ],
+      "id": "c6e3d689-af10-4172-923f-201ccf5cc042",
+      "name": "IVA_COMPRAS_2"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "IVA_VENTAS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        416
+      ],
+      "id": "57512cdf-1a25-4878-bc7a-60c8e7c7dc4d",
+      "name": "IVA_VENTAS"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FLATTERING - VERSION 1.3.1\n// Purpose: Flatten discrepancies with specific source labels\n// Last Updated: 2026-01-25\n// Changes: Show \"Mis Retenciones\" vs \"IVA Compras\" or \"IVA Ventas\"\n// ============================================================\n\nconst inputData = $input.first().json;\n\nif (!inputData || !inputData.Discrepancias) {\n  throw new Error('No se encontró la estructura esperada. Verifica que Compare 2 esté conectado correctamente.');\n}\n\nconst discrepancies = inputData.Discrepancias;\n\nif (!discrepancies || discrepancies.length === 0) {\n  return [{\n    json: {\n      \"Origen\": \"Sin discrepancias encontradas\",\n      \"Falta En\": \"-\",\n      \"Causa\": \"-\",\n      \"Razón Social\": \"-\",\n      \"Fecha\": \"-\",\n      \"CUIT\": \"-\",\n      \"Importe\": 0,\n      \"Comprobante\": \"-\",\n      \"Diferencias\": \"-\"\n    }\n  }];\n}\n\nconst results = [];\n\nfor (const d of discrepancies) {\n  // ✅ V1.3.1: Check if this has BOTH records (matched with differences)\n  if (d.Datos_ARCA && d.Datos_Sistema) {\n    // Create TWO rows - one for ARCA, one for Sistema\n    \n    // Row 1: ARCA data\n    results.push({\n      json: {\n        \"Origen\": \"Mis Retenciones\",  // ✅ More specific\n        \"Falta En\": d.Falta_En || \"N/A\",\n        \"Causa\": d.Causa || \"N/A\",\n        \"Razón Social\": d.Razón_Social || \"N/A\",\n        \"Fecha\": d.Datos_ARCA.Fecha || \"N/A\",\n        \"CUIT\": d.Datos_ARCA.CUIT || \"N/A\",\n        \"Importe\": d.Datos_ARCA.Importe || 0,\n        \"Comprobante\": d.Datos_ARCA.Comprobante || \"N/A\",\n        \"Diferencias\": d.Diferencias || \"\"\n      }\n    });\n    \n    // Row 2: Sistema data (IVA Compras or IVA Ventas)\n    results.push({\n      json: {\n        \"Origen\": d.Datos_Sistema.Fuente || \"Sistema\",  // ✅ Use specific source\n        \"Falta En\": d.Falta_En || \"N/A\",\n        \"Causa\": d.Causa || \"N/A\",\n        \"Razón Social\": d.Razón_Social || \"N/A\",\n        \"Fecha\": d.Datos_Sistema.Fecha || \"N/A\",\n        \"CUIT\": d.Datos_Sistema.CUIT || \"N/A\",\n        \"Importe\": d.Datos_Sistema.Importe || 0,\n        \"Comprobante\": d.Datos_Sistema.Comprobante || \"N/A\",\n        \"Diferencias\": d.Diferencias || \"\"\n      }\n    });\n  } \n  else {\n    // Single row for regular discrepancies (not found cases)\n    results.push({\n      json: {\n        \"Origen\": d.Origen || \"N/A\",\n        \"Falta En\": d.Falta_En || \"N/A\",\n        \"Causa\": d.Causa || \"N/A\",\n        \"Razón Social\": d.Razón_Social || \"N/A\",\n        \"Fecha\": d.Datos_Buscados?.Fecha || \"N/A\",\n        \"CUIT\": d.Datos_Buscados?.CUIT || \"N/A\",\n        \"Importe\": d.Datos_Buscados?.Importe || 0,\n        \"Comprobante\": d.Datos_Buscados?.Comprobante || d.Datos_Buscados?.Comprobante_Std || \"N/A\",\n        \"Diferencias\": d.Datos_Buscados?.Diferencias || \"\"\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "21a35320-87cd-48a7-bfd7-f2d0b80e6f02",
+      "name": "Flattering"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        224
+      ],
+      "id": "6aad9466-e842-4f18-8b3b-9b7b80238986",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "name": "={{ 'Cruce_Mis_Retenciones_' + $now.format('yyyy-MM-dd_HH-mm') + '.xlsx' }}",
+        "driveId": {
+          "__rl": true,
+          "value": "0ACTi3Xlfc2GfUk9PVA",
+          "mode": "list",
+          "cachedResultName": "Kairos Lab",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/0ACTi3Xlfc2GfUk9PVA"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1KlTHbv4m2nzCxGeeFwlPdQxcgxGGLjrh",
+          "mode": "list",
+          "cachedResultName": "JULIETA_C",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KlTHbv4m2nzCxGeeFwlPdQxcgxGGLjrh"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1552,
+        224
+      ],
+      "id": "8736308b-ac3a-4f64-b41b-fc611e4d3097",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "WwtUdKg13XWu4X2a",
+          "name": "Kairos"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "MIS_RETENCIONES",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IVA_COMPRAS_2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IVA_VENTAS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IVA COMPRA 2 - Filtro": {
+      "main": [
+        [
+          {
+            "node": "Merge 2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "IVA VENTAS-Filtro": {
+      "main": [
+        [
+          {
+            "node": "Merge 2",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "MIS RETENCIONES-Filtro": {
+      "main": [
+        [
+          {
+            "node": "Merge 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 2": {
+      "main": [
+        [
+          {
+            "node": "Compare 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare 2": {
+      "main": [
+        [
+          {
+            "node": "Flattering",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MIS_RETENCIONES": {
+      "main": [
+        [
+          {
+            "node": "MIS RETENCIONES-Filtro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IVA_COMPRAS_2": {
+      "main": [
+        [
+          {
+            "node": "IVA COMPRA 2 - Filtro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IVA_VENTAS": {
+      "main": [
+        [
+          {
+            "node": "IVA VENTAS-Filtro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flattering": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "AD450K9swsktIkMa"
+  },
+  "versionId": "92785eff-fbdd-4549-ba1b-120db57f28e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d752a7c30de4fca996a5b3ee0d7b393ba2b9e0231c428c7b9ae01b8e52fce1fe"
+  },
+  "id": "OfDdhoXKgKp70Nzz",
+  "tags": [
+    {
+      "updatedAt": "2026-01-20T01:23:24.354Z",
+      "createdAt": "2026-01-20T01:23:24.354Z",
+      "id": "mr0MlIg888iHUv4D",
+      "name": "julieta"
+    },
+    {
+      "updatedAt": "2025-10-10T20:06:59.591Z",
+      "createdAt": "2025-10-10T20:06:59.591Z",
+      "id": "yokBQKQh60rrwq4A",
+      "name": "Estudio Blasco"
+    }
+  ]
+}

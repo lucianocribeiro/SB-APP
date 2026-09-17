@@ -1,0 +1,293 @@
+{
+  "name": "Cruces Mis Comprobantes_PROD_APP_J",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "MIS COMPROBANTES RECIBIDOS.",
+        "formDescription": "Hola Julieta,\n\nCruce de reportes \"Mis Comprobantes Recibidos\" con los correspondientes Subdiarios. Eventuales diferencias serán notificadas al correo electrónico del usuario.\n\n",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "IVA COMPRAS",
+              "fieldType": "file",
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "MIS COMPROBANTES ",
+              "fieldType": "file",
+              "acceptFileTypes": ".xls, .xlsx",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "ENVIAR",
+          "customCss": ":root {\n\t--font-family: 'Open Sans', sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\t--font-size-body: 12px;\n\t--font-size-label: 14px;\n\t--font-size-test-notice: 12px;\n\t--font-size-input: 14px;\n\t--font-size-header: 20px;\n\t--font-size-paragraph: 14px;\n\t--font-size-link: 12px;\n\t--font-size-error: 12px;\n\t--font-size-html-h1: 28px;\n\t--font-size-html-h2: 20px;\n\t--font-size-html-h3: 16px;\n\t--font-size-html-h4: 14px;\n\t--font-size-html-h5: 12px;\n\t--font-size-html-h6: 10px;\n\t--font-size-subheader: 14px;\n\t\n    /* --- UPDATED COLORS (Dark Blue & Gray Theme) --- */\n\t--color-background: #0f172a;        /* Dark Blue Background */\n\t--color-card-bg: #1e293b;           /* Dark Gray/Slate Card */\n\t--color-card-border: #334155;       /* Subtle border for dark mode */\n\t--color-card-shadow: rgba(0, 0, 0, 0.4);\n    \n    /* Text Colors (Switched to Light for Contrast) */\n\t--color-header: #f1f5f9;\n\t--color-label: #e2e8f0;\n\t--color-paragraph: #cbd5e1;\n\t--color-header-subtext: #94a3b8;\n\t--color-html-text: #e2e8f0;\n    \n    /* Input Fields */\n\t--color-input-bg: #0f172a;          /* Dark input background */\n\t--color-input-border: #475569;\n\t--color-input-text: #f1f5f9;\n\t--color-focus-border: #3b82f6;      /* Bright Blue focus */\n    \n    /* Buttons & Links */\n\t--color-submit-btn-bg: #2563eb;     /* Brighter Blue for visibility */\n\t--color-submit-btn-text: #ffffff;\n\t--color-link: #60a5fa;              /* Light Blue link */\n\t--color-clear-button-bg: #475569;\n    \n    /* Notices & Errors */\n\t--color-test-notice-text: #e2e8f0;\n\t--color-test-notice-bg: #334155;\n\t--color-test-notice-border: #475569;\n\t--color-error: #f87171;             /* Light Red */\n\t--color-required: #f87171;\n\t--color-html-link: #60a5fa;\n\n\t/* Border Radii */\n\t--border-radius-card: 8px;\n\t--border-radius-input: 6px;\n\t--border-radius-clear-btn: 50%;\n\t--card-border-radius: 8px;\n    \n\t/* Spacing */\n\t--padding-container-top: 24px;\n\t--padding-card: 24px;\n\t--padding-test-notice-vertical: 12px;\n\t--padding-test-notice-horizontal: 24px;\n\t--margin-bottom-card: 16px;\n\t--padding-form-input: 12px;\n\t--card-padding: 24px;\n\t--card-margin-bottom: 16px;\n    \n\t/* Dimensions */\n\t--container-width: 582px;\n\t--submit-btn-height: 48px;\n\t--checkbox-size: 18px;\n    \n\t/* Others */\n\t--box-shadow-card: 0px 4px 16px 0px var(--color-card-shadow);\n\t--opacity-placeholder: 0.5;\n}"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        -464
+      ],
+      "id": "655aabc3-955c-488b-8187-bbdb0678b54e",
+      "name": "On form submission",
+      "webhookId": "da244389-3b70-4d4b-9883-10cde735ae0d",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\nlet rawData = [];\n\n// 1. Descubrimiento de datos\nif (Array.isArray(inputData) && inputData.length > 0) {\n    rawData = Array.isArray(inputData[0].json) ? inputData[0].json : inputData.map(item => item.json);\n}\n\n// 2. Mapeo de Columnas\nconst columnMapping = {\n    '__EMPTY': 'Tipo',\n    '__EMPTY_1': 'Punto de Venta',\n    '__EMPTY_2': 'Número Desde',\n    '__EMPTY_6': 'Nro. Doc. Emisor',\n    '__EMPTY_7': 'Denominación Emisor',\n    '__EMPTY_10': 'Tipo Cambio',\n    '__EMPTY_11': 'Moneda',\n    '__EMPTY_27': 'Total IVA',\n    '__EMPTY_28': 'Imp. Total'\n};\n\n// Buscar dinámicamente la columna de Fecha\nconst firstRow = rawData[0] || {};\nconst dateKey = Object.keys(firstRow).find(key => key.includes('Mis Comprobantes Recibidos'));\nif (dateKey) columnMapping[dateKey] = 'Fecha';\n\n// 3. Helper para números (Maneja strings con formato AR o números directos)\nconst parseNumber = (val) => {\n    if (val === null || val === undefined || val === '') return 0;\n    if (typeof val === 'number') return val;\n    let cleanVal = val.toString().replace(/\\./g, '').replace(',', '.');\n    return parseFloat(cleanVal) || 0;\n};\n\n// 4. Procesamiento Multimoneda\nconst result = rawData\n    .slice(1) \n    .map(row => {\n        const newRow = {};\n        \n        for (const [oldKey, newKey] of Object.entries(columnMapping)) {\n            newRow[newKey] = row[oldKey] ?? null;\n        }\n\n        const tc = parseNumber(newRow['Tipo Cambio']);\n        const moneda = (newRow['Moneda'] || '').trim();\n        const impTotalOriginal = parseNumber(newRow['Imp. Total']);\n        const ivaTotalOriginal = parseNumber(newRow['Total IVA']);\n\n        // LÓGICA UNIVERSAL: \n        // Si la moneda NO es pesos ($) y el Tipo de Cambio es mayor a 1, convertimos.\n        if (moneda !== '$' && tc > 1) {\n            newRow['Imp. Total'] = Math.round(impTotalOriginal * tc * 100) / 100;\n            newRow['Total IVA'] = Math.round(ivaTotalOriginal * tc * 100) / 100;\n            newRow['Observaciones_Moneda'] = `Convertido de ${moneda} a ARS (TC: ${tc})`;\n        } else {\n            // Si ya está en pesos o no hay TC válido, mantenemos el valor original\n            newRow['Imp. Total'] = impTotalOriginal;\n            newRow['Total IVA'] = ivaTotalOriginal;\n        }\n\n        return { json: newRow };\n    });\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -368
+      ],
+      "id": "813b18a4-eaad-4ce7-888e-30a9f2a0aef5",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        -384
+      ],
+      "id": "f71f19e7-58c7-4921-8c0c-ddd0cc2c5ed3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CRUCE ARCA - Comprobantes (SIGNOS, TOLERANCIA 0.03 & IVA TOTAL)\n// ============================================================\n\nconst toNumber = (val) => {\n  if (val === null || val === undefined || val === '') return 0;\n  const num = typeof val === 'number' ? val : parseFloat(val);\n  return isNaN(num) ? 0 : Math.round(num * 100) / 100;\n};\n\n// 1. DICCIONARIO DE EQUIVALENCIAS\nconst arcaToNorm = {\n  \"1\": \"FCA\", \"2\": \"NDA\", \"3\": \"NCA\", \"4\": \"RCA\", \"6\": \"FCB\", \"7\": \"NDB\", \"8\": \"NCB\", \"9\": \"RCB\", \"11\": \"FCC\", \"12\": \"NDC\", \"13\": \"NCC\", \"15\": \"RCC\",\n  \"81\": \"TKA\", \"82\": \"TKB\", \"109\": \"TKC\", \"111\": \"TKC\", \"195\": \"FCT\", \"196\": \"NDT\", \"197\": \"NCT\",\n  \"201\": \"FCA\", \"202\": \"NDA\", \"203\": \"NCA\", \"206\": \"FCB\", \"207\": \"NDB\", \"208\": \"NCB\", \"211\": \"FCC\", \"212\": \"NDC\", \"213\": \"NCC\"\n};\n\nconst ivaToNorm = {\n  \"FC A\": \"FCA\", \"ND A\": \"NDA\", \"NC A\": \"NCA\", \"RC A\": \"RCA\", \"FC B\": \"FCB\", \"ND B\": \"NDB\", \"NC B\": \"NCB\", \"RC B\": \"RCB\", \"FC C\": \"FCC\", \"ND C\": \"NDC\", \"NC C\": \"NCC\", \"RC C\": \"RCC\",\n  \"TK A\": \"TKA\", \"TK B\": \"TKB\", \"TK C\": \"TKC\", \"FT T\": \"FCT\", \"ND T\": \"NDT\", \"CT T\": \"NCT\", \"FC\": \"FCA\", \"NC\": \"NCA\", \"ND\": \"NDA\"\n};\n\nconst normalizeType = (tc, letra, source) => {\n  if (source === 'ARCA') {\n    const code = tc.toString().split(' ')[0];\n    return arcaToNorm[code] || tc.toString();\n  } else {\n    const key = `${tc} ${letra || ''}`.trim();\n    return ivaToNorm[key] || ivaToNorm[tc] || key.replace(/\\s/g, '');\n  }\n};\n\nconst allItems = $input.all();\nconst ivaCompras = [];\nconst arcaRecords = [];\n\n// 2. SEPARAR Y NORMALIZAR DATOS\nfor (const item of allItems) {\n  const data = item.json;\n  if (data.TC !== undefined && data.CUIT) {\n    const tipoNorm = normalizeType(data.TC, data.Letra, 'IVA');\n    \n    // NUEVO: Sumamos todas las alícuotas de IVA del sistema para obtener el Total\n    const ivaTotalSist = toNumber(data['IVA 21%']) + toNumber(data['IVA 10.5%']) + toNumber(data['IVA 27%']) + toNumber(data['IVA 5%']) + toNumber(data['IVA 2.5%']);\n\n    ivaCompras.push({\n      ...data,\n      _tipoNorm: tipoNorm,\n      _importe: toNumber(data['Total Comprobante']),\n      _ivaTotal: ivaTotalSist, // Guardamos el IVA calculado\n      _cuit: data.CUIT.toString().replace(/\\D/g,''),\n      matched: false\n    });\n  } else if (data['Nro. Doc. Emisor'] !== undefined) {\n    const tipoNorm = normalizeType(data['Tipo'], null, 'ARCA');\n    arcaRecords.push({\n      ...data,\n      _tipoNorm: tipoNorm,\n      _importe: toNumber(data['Imp. Total']),\n      _ivaTotal: toNumber(data['Total IVA']), // Capturamos el IVA de ARCA\n      _cuit: data['Nro. Doc. Emisor'].toString().replace(/\\D/g,''),\n      _pv: data['Punto de Venta'],\n      _nro: data['Número Desde'],\n      matched: false\n    });\n  }\n}\n\nconst results = [];\n\n// 3. CRUCE LÓGICO\nfor (const comp of ivaCompras) {\n  const razonSocial = comp['Razón Social'] || comp['Nombre o Razón Social'] || \"N/A\";\n  \n  // Intento 1: Match Exacto (Signos y Tolerancia 0.03)\n  let match = arcaRecords.find(a => \n    !a.matched && a._cuit === comp._cuit && a._tipoNorm === comp._tipoNorm &&\n    a._pv == comp['Pto. Vta.'] && a._nro == comp['Nro. Desde'] &&\n    Math.abs(Math.abs(a._importe) - Math.abs(comp._importe)) <= 0.031\n  );\n\n  if (match) {\n    match.matched = true;\n    results.push({\n      json: {\n        Fecha: comp.Fecha, Razon_Social: razonSocial, CUIT: comp.CUIT,\n        Comprobante: `${comp.TC}${comp.Letra} ${comp['Pto. Vta.']}-${comp['Nro. Desde']}`,\n        Importe: comp._importe, \n        IVA_Total: comp._ivaTotal, // PASAMOS EL IVA\n        Estado_Cruce: \"Encontrados sin diferencias\", Observaciones: \"Coincidencia exacta\"\n      }\n    });\n    continue;\n  }\n\n  // Intento 2: Match Parcial\n  match = arcaRecords.find(a => !a.matched && a._cuit === comp._cuit && Math.abs(Math.abs(a._importe) - Math.abs(comp._importe)) <= 0.031);\n  if (match) {\n    match.matched = true;\n    results.push({\n      json: {\n        Fecha: comp.Fecha, Razon_Social: razonSocial, CUIT: comp.CUIT,\n        Comprobante: `Sist: ${comp.TC}${comp.Letra} ${comp['Pto. Vta.']}-${comp['Nro. Desde']} / ARCA: ${match._pv}-${match._nro}`,\n        Importe: comp._importe, \n        IVA_Total: comp._ivaTotal, // PASAMOS EL IVA\n        Estado_Cruce: \"Encontrados con diferencias\",\n        Observaciones: `Diferencia en Tipo (${comp._tipoNorm} vs ${match._tipoNorm}) o Numeración`\n      }\n    });\n    continue;\n  }\n\n  // Falta en ARCA\n  results.push({\n    json: {\n      Fecha: comp.Fecha, Razon_Social: razonSocial, CUIT: comp.CUIT,\n      Comprobante: `${comp.TC}${comp.Letra} ${comp['Pto. Vta.']}-${comp['Nro. Desde']}`,\n      Importe: comp._importe, \n      IVA_Total: comp._ivaTotal, // PASAMOS EL IVA\n      Estado_Cruce: \"Falta en ARCA\", Observaciones: \"No se encontró el CUIT con ese importe\"\n    }\n  });\n}\n\n// 4. HUÉRFANOS ARCA\nfor (const a of arcaRecords) {\n  if (!a.matched) {\n    results.push({\n      json: {\n        Fecha: a.Fecha, Razon_Social: a['Denominación Emisor'], CUIT: a._cuit,\n        Comprobante: `${a._tipoNorm} ${a._pv}-${a._nro}`, \n        Importe: a._importe, \n        IVA_Total: a._ivaTotal, // PASAMOS EL IVA\n        Estado_Cruce: \"Falta en IVA Compras\", Observaciones: \"Registrado en AFIP pero no localmente\"\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -384
+      ],
+      "id": "ef6678ed-5895-440e-aa23-c1c76189b7d9",
+      "name": "Compare"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "MIS_COMPROBANTES_",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        -368
+      ],
+      "id": "30080ee3-9e1b-4bda-93f3-b390bba4f5cd",
+      "name": "MIS_COMPROBANTES"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "IVA_COMPRAS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        -608
+      ],
+      "id": "3b93fad9-9904-4755-9137-c7d2b821b3c9",
+      "name": "IVA_COMPRAS"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        -384
+      ],
+      "id": "41c0e87f-5bc7-4437-b822-41d6f4f66ecd",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items\nconst items = $input.all();\nconst codigosAExcluir = ['CG', 'IB', 'IR', 'CB', 'CR'];\n\nreturn items\n  .filter(item => {\n    const data = item.json;\n    const isSummary = !!data.Resumen;\n    const isExactMatch = data.Estado_Cruce === \"Encontrados sin diferencias\";\n    const comprobanteStr = (data.Comprobante || \"\").toString().toUpperCase();\n    const debeSerExcluido = codigosAExcluir.some(codigo => comprobanteStr.includes(codigo));\n    \n    return !isSummary && !isExactMatch && !debeSerExcluido;\n  })\n  .map(item => {\n    const d = item.json;\n    \n    let origenDato = \"\";\n    if (d.Estado_Cruce === \"Falta en ARCA\") {\n      origenDato = \"Sistema Contable\";\n    } else if (d.Estado_Cruce === \"Falta en IVA Compras\") {\n      origenDato = \"ARCA (AFIP)\";\n    } else {\n      origenDato = \"Diferencia detectada\";\n    }\n\n    return {\n      json: {\n        \"Fecha\": d.Fecha,\n        \"Razon Social\": d.Razon_Social,\n        \"CUIT\": d.CUIT,\n        \"Comprobante\": d.Comprobante,\n        \"Importe\": d.Importe,\n        \"IVA Total\": d.IVA_Total, // AHORA ESTA COLUMNA APARECERÁ EN EL EXCEL\n        \"Estado Cruce\": d.Estado_Cruce,\n        \"Observaciones\": d.Observaciones,\n        \"Origen Dato\": origenDato\n      }\n    };\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -384
+      ],
+      "id": "be8bea3e-fe91-4838-9ae8-24a5a09337f8",
+      "name": "Flattering1"
+    },
+    {
+      "parameters": {
+        "name": "={{ 'Cruce_Mis_Comprobantes_' + $now.format('yyyy-MM-dd_HH-mm') + '.xlsx' }}",
+        "driveId": {
+          "__rl": true,
+          "value": "0ACTi3Xlfc2GfUk9PVA",
+          "mode": "list",
+          "cachedResultName": "Kairos Lab",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/0ACTi3Xlfc2GfUk9PVA"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1KlTHbv4m2nzCxGeeFwlPdQxcgxGGLjrh",
+          "mode": "list",
+          "cachedResultName": "JULIETA_C",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KlTHbv4m2nzCxGeeFwlPdQxcgxGGLjrh"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1488,
+        -384
+      ],
+      "id": "ac583044-0d2d-4573-8a76-93cb21b5df9a",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "WwtUdKg13XWu4X2a",
+          "name": "Kairos"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "IVA_COMPRAS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MIS_COMPROBANTES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare": {
+      "main": [
+        [
+          {
+            "node": "Flattering1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MIS_COMPROBANTES": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IVA_COMPRAS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flattering1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "AD450K9swsktIkMa"
+  },
+  "versionId": "4fdbe749-2df3-47ab-bc60-5a42b303a535",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d752a7c30de4fca996a5b3ee0d7b393ba2b9e0231c428c7b9ae01b8e52fce1fe"
+  },
+  "id": "1hdS2rWljJVMfsha",
+  "tags": [
+    {
+      "updatedAt": "2026-01-20T01:23:24.354Z",
+      "createdAt": "2026-01-20T01:23:24.354Z",
+      "id": "mr0MlIg888iHUv4D",
+      "name": "julieta"
+    },
+    {
+      "updatedAt": "2025-10-10T20:06:59.591Z",
+      "createdAt": "2025-10-10T20:06:59.591Z",
+      "id": "yokBQKQh60rrwq4A",
+      "name": "Estudio Blasco"
+    }
+  ]
+}
