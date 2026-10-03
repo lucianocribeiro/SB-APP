@@ -351,6 +351,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <table style="width:100%;border-collapse:collapse;min-width:760px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
@@ -361,6 +362,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-for list="{{ liqCliente }}" as="r" hint-placeholder-count="5">
 <tr style-hover="background:#FAFBFD">
 <td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ go.liqResultado }}" style="cursor:pointer;color:#14395C">{{ r.per }}</span></td>
+<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
@@ -503,12 +505,15 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>2026</option><option>2025</option></select>
 </div>
 </div>
-<div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9 17H3zM12 9v5M12 17v.5"></path></svg>
-<div>
-<div style="font:600 13px/1.4 'Open Sans';color:#8F5F14">Ya existe una liquidación para CAZATUR SA · 08/2026</div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#8F5F14;margin-top:4px">Procesada el 04/09/2026 14:22 por M. Duarte. Si continuás, se reemplaza el resultado y queda registrado en auditoría.</div>
-<label style="display:flex;align-items:center;gap:8px;font:600 12.5px 'Open Sans';color:#8F5F14;margin-top:10px;cursor:pointer"><input type="checkbox" style="accent-color:#B7791F">Reemplazar la liquidación existente</label>
+<div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="flex:1">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+<div style="font:600 13px/1.4 'Open Sans';color:#14395C">CAZATUR SA · 08/2026 ya tiene {{ seqPrevLabel }}</div>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#14395C;color:#fff;border:1px solid #14395C;white-space:nowrap">Se generará la Secuencia {{ seqNext }}</span>
+</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la Secuencia {{ seqPrev }}, procesada el {{ seqPrevFecha }}. Si continuás, se genera una nueva secuencia y las anteriores quedan guardadas en el historial.</div>
+<div style="font:400 12px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">La primera vez que se procesa un período para un cliente se genera la Secuencia 0; cada nuevo proceso del mismo período suma una secuencia.</div>
 </div>
 </div>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
@@ -610,7 +615,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ upCountLabel }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · Secuencia {{ seqNext }} · {{ upCountLabel }}</div>
 </div>
 
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
@@ -711,14 +716,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
 <div style="width:34px;height:34px;border:3px solid #E3E8EE;border-top-color:#14395C;border-radius:20px;animation:spin 900ms linear infinite"></div>
 <div style="font:600 15px 'Open Sans'">Procesando liquidación</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 — no cierres esta pantalla.</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · Secuencia {{ seqCur }} — no cierres esta pantalla.</div>
 <div style="width:100%;max-width:420px;height:6px;background:#EEF1F4;border-radius:4px;overflow:hidden"><div style="width:40%;height:100%;background:#14395C;animation:bar 1.6s ease-in-out infinite"></div></div>
 </div>
 </sc-if>
 <sc-if value="{{ procIs.done }}">
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#E8F3EE;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
-<div style="font:600 16px 'Open Sans'">Liquidación completada</div>
+<div style="font:600 16px 'Open Sans'">Liquidación completada · Secuencia {{ seqCur }}</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar 1.632.105,25 · 3.401 registros procesados</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
@@ -747,8 +752,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:10px">
 <div style="font:600 20px/1.2 'Open Sans'">CAZATUR SA</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Completado</span>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">Secuencia {{ seqPrev }}</span>
 </div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · Procesado por M. Duarte el 04/09/2026 14:22</div>
+<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · Secuencia {{ seqPrev }} · Procesado por M. Duarte el {{ seqPrevFecha }}</div>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
@@ -899,7 +905,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de liquidaciones</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">142 liquidaciones registradas</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histCount }} liquidaciones registradas</div>
 </div>
 <div style="display:flex;gap:9px">
 <button onClick="{{ toastXls }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar selección (2)</button>
@@ -912,6 +918,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option><option>07/2026</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><option>M. Duarte</option><option>L. Peralta</option><option>S. Ibarra</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Secuencia: todas</option><option>Sólo la última</option><option>Secuencia 0</option><option>Secuencia 1 o más</option></select>
 <div style="flex:1"></div>
 <span style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Limpiar filtros</span>
 </div>
@@ -922,6 +929,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
@@ -936,6 +944,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
@@ -955,7 +964,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE;flex-wrap:wrap;gap:10px">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 seleccionadas · mostrando 1–7 de 142</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 seleccionadas · mostrando 1–8 de {{ histCount }}</div>
 <div style="display:flex;gap:6px;align-items:center">
 <div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
 <div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
@@ -1860,7 +1869,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 16px 'Open Sans'">Confirmar acción</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a reemplazar el resultado existente de CAZATUR SA para el período 08/2026. La versión anterior queda registrada en auditoría.</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Esta acción queda registrada en auditoría. Si es un reproceso de una liquidación, se genera una nueva secuencia del período y las anteriores quedan guardadas en el historial.</div>
 </div>
 </div>
 <div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
@@ -1908,7 +1917,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 trasladando los saldos del período anterior:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 como <b style="color:#1B2733">Secuencia {{ seqNext }}</b>, trasladando los saldos del período anterior:</div>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -1975,7 +1984,7 @@ class Component extends DCLogic {
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
-    prevSaldo: 'favor', cruSaved: false,
+    prevSaldo: 'favor', cruSaved: false, liqSaved: false,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
@@ -2047,6 +2056,12 @@ class Component extends DCLogic {
   }
   showToast(kind, t, d) {
     return () => this.setState({ toast: { kind, t, d } });
+  }
+
+  seqChip(seq) {
+    return seq > 0
+      ? { seq: String(seq), seqBg: '#E6EDF4', seqFg: '#14395C', seqBd: '#CBD9E6' }
+      : { seq: '0', seqBg: '#F5F7FA', seqFg: '#5A6B7B', seqBd: '#E3E8EE' };
   }
 
   cruRun() {
@@ -2268,13 +2283,15 @@ class Component extends DCLogic {
         { t: 'Reporte Papel de trabajo exportado', when: '30/08/2026' },
         { t: 'Liquidación 07/2026 completada por L. Peralta', when: '14/08/2026' }
       ],
-      liqCliente: [
-        { per: '08/2026', fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', fecha: '14/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '1.297.413,35', sc: '#B3261E', est: 'Completado' },
-        { per: '06/2026', fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '-297.827,45', sc: '#2E7D5B', est: 'Completado' },
-        { per: '05/2026', fecha: '16/06/2026', df: '2.877.010,25', cf: '2.140.908,60', saldo: '736.101,65', sc: '#B3261E', est: 'Completado con diferencias' },
-        { per: '04/2026', fecha: '15/05/2026', df: '2.455.702,90', cf: '1.988.442,10', saldo: '467.260,80', sc: '#B3261E', est: 'Completado' }
-      ].map(r => Object.assign({}, r, { st: E[r.est] })),
+      liqCliente: (s.liqSaved ? [
+        { per: '08/2026', seq: 1, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
+      ] : []).concat([
+        { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
+        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '1.297.413,35', sc: '#B3261E', est: 'Completado' },
+        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
+        { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
+        { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '-297.827,45', sc: '#2E7D5B', est: 'Completado' }
+      ]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
       crucesCliente: [
         { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
@@ -2381,15 +2398,18 @@ class Component extends DCLogic {
       };
     });
 
-    const histFilas = [
-      { cliente: 'CAZATUR SA', per: '08/2026', fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
-      { cliente: 'DACKET SA', per: '08/2026', fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', saldo: '-259.287,85', sc: '#2E7D5B', est: 'Completado con diferencias' },
-      { cliente: 'DASYC SRL', per: '08/2026', fecha: '03/09/2026', user: 'M. Duarte', df: '1.455.230,10', cf: '987.640,55', saldo: '467.589,55', sc: '#B3261E', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', per: '08/2026', fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', saldo: '—', sc: '#9AA9B7', est: 'Con errores' },
-      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', fecha: '02/09/2026', user: 'S. Ibarra', df: '6.330.447,00', cf: '5.118.902,35', saldo: '1.211.544,65', sc: '#B3261E', est: 'Completado' },
-      { cliente: 'RODIALE SA', per: '07/2026', fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', saldo: '67.885,30', sc: '#B3261E', est: 'Completado' },
-      { cliente: 'IDEA 2 SA', per: '05/2026', fecha: '16/06/2026', user: 'M. Duarte', df: '1.044.900,00', cf: '1.250.330,15', saldo: '-205.430,15', sc: '#2E7D5B', est: 'Completado' }
-    ].map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav('liqResultado') }));
+    const seqPrev = s.liqSaved ? 1 : 0;
+    const histFilas = (s.liqSaved ? [
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
+    ] : []).concat([
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', saldo: '-259.287,85', sc: '#2E7D5B', est: 'Completado con diferencias' },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'L. Peralta', df: '2.894.020,15', cf: '3.166.402,70', saldo: '-272.382,55', sc: '#2E7D5B', est: 'Completado con diferencias' },
+      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'M. Duarte', df: '1.455.230,10', cf: '987.640,55', saldo: '467.589,55', sc: '#B3261E', est: 'Completado' },
+      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', saldo: '—', sc: '#9AA9B7', est: 'Con errores' },
+      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'S. Ibarra', df: '6.330.447,00', cf: '5.118.902,35', saldo: '1.211.544,65', sc: '#B3261E', est: 'Completado' },
+      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', saldo: '67.885,30', sc: '#B3261E', est: 'Completado' }
+    ]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est], ver: this.nav('liqResultado') }));
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
@@ -2426,7 +2446,11 @@ class Component extends DCLogic {
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
-      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run' }),
+      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true }),
+      seqPrev: String(seqPrev), seqNext: String(seqPrev + 1), seqCur: String(s.liqSaved ? seqPrev : seqPrev + 1),
+      seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
+      seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
+      histCount: String(142 + (s.liqSaved ? 1 : 0)),
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
