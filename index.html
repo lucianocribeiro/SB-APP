@@ -52,7 +52,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Usuario</div>
-<input value="admin@estudioblasco.com.ar" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
+<input value="admin@blasco.com.ar" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Contraseña</div>
@@ -420,7 +420,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 14.5px 'Open Sans';margin:20px 0 12px">Mails de notificación</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <div style="font:400 13px 'Open Sans';color:#1B2733">administracion@cazatur.com.ar</div>
-<div style="font:400 13px 'Open Sans';color:#1B2733">julieta@estudioblasco.com.ar</div>
+<div style="font:400 13px 'Open Sans';color:#1B2733">julietad@blasco.com.ar</div>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
@@ -936,7 +936,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histScope }} · Para rectificar un período, iniciá una nueva liquidación: se genera la siguiente secuencia (hasta 9 rectificativas).</div>
 </div>
 <div style="display:flex;gap:9px">
-<button onClick="{{ toastXls }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar selección (2)</button>
+<button onClick="{{ histExport }}" title="Exporta a Excel los períodos seleccionados de un único cliente" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">{{ histSelLabel }}</button>
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
@@ -956,7 +956,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="overflow-x:auto">
 <table style="width:100%;border-collapse:collapse;min-width:1200px">
 <thead><tr>
-<th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></th>
+<th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ histAllSel }}" onChange="{{ histToggleAll }}" title="Seleccionar todas las visibles" style="accent-color:#14395C;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
@@ -975,7 +975,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ r.sel }}" onChange="{{ r.toggle }}" style="accent-color:#14395C;cursor:pointer"></td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
@@ -1001,7 +1001,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE;flex-wrap:wrap;gap:10px">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 seleccionadas · mostrando 1–{{ histShown }} de {{ histCount }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ histSelCount }} seleccionadas · mostrando 1–{{ histShown }} de {{ histCount }} · Para exportar, seleccioná uno o más períodos de un único cliente.</div>
 <div style="display:flex;gap:6px;align-items:center">
 <div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
 <div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
@@ -1739,7 +1739,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Notificaciones</div>
 <div style="margin-top:13px">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mails destinatarios</div>
-<input placeholder="mail@cliente.com.ar, contador@estudioblasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="mail@cliente.com.ar, contador@blasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 <div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios destinatarios con coma.</div>
 </div>
 </div>
@@ -1766,7 +1766,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mail</div>
-<input placeholder="nombre@estudioblasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="nombre@blasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Rol</div>
@@ -1959,7 +1959,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '',
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {},
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2040,13 +2040,180 @@ class Component extends DCLogic {
     ['Rubén', ['GLOBAL MARKETING BUREAU S.A.', 'BCBT S.A.U.', 'BBI SA', 'MEDICAL LOGISTIC S.A.', 'BLASCO_SERGIO', 'NALAPO SA']]
   ];
 
+  MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
+
   mailDe(nombre) {
-    return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() + '@estudioblasco.com.ar';
+    return this.MAILS[nombre] || nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() + '@blasco.com.ar';
+  }
+
+  NOVALUX_COLS = [
+    ['B', 'Venta Neta 21%'], ['C', 'Venta Neta 10.5%'], ['D', 'Venta Neta 27%'], ['E', 'Total Ventas Netas Gravadas'],
+    ['F', 'Débito Ventas 21%'], ['G', 'Débito Ventas 10.5%'], ['H', 'Débito Ventas 27%'], ['I', 'Debito T. Gral.'],
+    ['J', 'V - Exenta'], ['K', 'V - No gravada'], ['L', 'V - No alcanzada'], ['M', 'V - Exportac.'], ['N', 'V - Impuestos Internos'],
+    ['O', 'V - Percep. IIBB'], ['P', 'V - Percep. IVA'], ['Q', 'V - Otras percep.'], ['R', 'V - Regímenes especiales'],
+    ['S', 'Subtotal V - Otros NG/NA/Exento'], ['T', 'Neto NC Compras'], ['U', 'Débito NC Compras'], ['V', 'Compras No Gravadas'],
+    ['W', 'Compras Monotributo'], ['X', 'Compras Neto 21%'], ['Y', 'Compras Neto 10.5%'], ['Z', 'Compras Neto 27%'],
+    ['AA', 'IVA CF 21%'], ['AB', 'IVA CF 10.5%'], ['AC', 'IVA CF 27%'], ['AD', 'Total Crédito'],
+    ['AE', 'NC Ventas Neto 21%'], ['AF', 'NC Ventas Neto 10.5%'], ['AG', 'NC Ventas Neto 27%'],
+    ['AH', 'CF NC Ventas 21%'], ['AI', 'CF NC Ventas 10.5%'], ['AJ', 'CF NC Ventas 27%'],
+    ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AM', 'Total Débito Fiscal'], ['AN', 'Total Crédito Fiscal'],
+    ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
+    ['AS', 'Total Crédito Fiscal Computable'], ['AT', 'Total Crédito Fiscal No Computable'], ['AU', 'Ajustes Prorrateo'],
+    ['AV', 'Total Retenciones y Percecpiones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'],
+    ['AZ', 'Débito Fiscal'], ['BA', 'Crédito Fiscal'], ['BB', 'Saldo anterior'], ['BC', 'Saldo técnico a favor ARCA (D)'],
+    ['BD', 'Saldo técnico a favor ARCA (PM)'], ['BE', 'SLD anterior'], ['BF', 'Retenciones y Perc.'], ['BG', 'Saldo a favor ARCA']
+  ];
+
+  colNum(l) { return l.split('').reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0); }
+
+  colLet(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+
+  novaluxXlsx(cliente, rows) {
+    const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const split = (tot, parts) => { const out = parts.map(p => r2(tot * p)); out[out.length - 1] = r2(tot - out.slice(0, -1).reduce((a, b) => a + b, 0)); return out; };
+    const C = (orig) => this.colLet(this.colNum(orig) + 1);
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const pk = (r) => r.per.slice(3) + r.per.slice(0, 2) + String(r.seq).padStart(2, '0');
+    const data = rows.slice().sort((a, b) => pk(a).localeCompare(pk(b)));
+    const serial = (per) => (Date.UTC(+per.slice(3), +per.slice(0, 2) - 1, 1) - Date.UTC(1899, 11, 30)) / 86400000;
+    const ST = { head: 1, date: 2, money: 3, seq: 4, pct: 5, totLabel: 6, totMoney: 7, totPct: 8, dataEmpty: 10, totEmpty: 11 };
+    const cell = (ref, s, o) => {
+      if (o && o.f !== undefined) return `<c r="${ref}" s="${s}"><f>${esc(o.f)}</f></c>`;
+      if (o && o.t !== undefined) return `<c r="${ref}" s="${s}" t="inlineStr"><is><t>${esc(o.t)}</t></is></c>`;
+      if (o && o.v !== undefined) return `<c r="${ref}" s="${s}"><v>${o.v}</v></c>`;
+      return `<c r="${ref}" s="${s}"/>`;
+    };
+    const lastCol = C('BG'), first = 3, last = first + data.length - 1, tot = last + 1;
+    const rowsXml = [];
+    rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
+      .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
+    const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
+    for (let n = 2; n <= this.colNum(lastCol); n++) {
+      const L = this.colLet(n);
+      if (L === C('AZ')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 1er párrafo' }));
+      else if (L === C('BD')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 2do párrafo' }));
+      else r2cells.push(cell(L + '2', ST.dataEmpty));
+    }
+    rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
+    data.forEach((d, i) => {
+      const r = first + i, p = r - 1, df = num(d.df), cf = num(d.cf), rp = num(d.rp);
+      const [F, G, H] = split(df, [0.93, 0.05, 0.02]);
+      const [AA, AB, AC] = split(cf, [0.9, 0.07, 0.03]);
+      const [AK, AL] = split(rp, [0.7, 0.3]);
+      const v = {
+        B: r2(F / 0.21), C: r2(G / 0.105), D: r2(H / 0.27), F, G, H, I: df,
+        J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, T: 0, U: 0, V: 0, W: 0,
+        X: r2(AA / 0.21), Y: r2(AB / 0.105), Z: r2(AC / 0.27), AA, AB, AC, AD: cf,
+        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AK, AL, AM: df, AN: cf, AV: rp
+      };
+      v.E = r2(v.B + v.C + v.D);
+      const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
+      const f = {
+        AO: `1-${ratio}`,
+        AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
+        AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
+        AW: `IF(${C('AW')}${p}<0,-${C('AN')}${r}+${C('AT')}${r}+${C('AM')}${r}+${C('AW')}${p},-${C('AN')}${r}+${C('AT')}${r}+${C('AM')}${r})`,
+        AX: `IF(${C('AX')}${p}>=0,IF(${C('AW')}${r}>0,${C('AW')}${r}-${C('AV')}${r},-${C('AV')}${r}),IF(${C('AW')}${r}>0,${C('AX')}${p}+${C('AW')}${r}-${C('AV')}${r},-${C('AV')}${r}+${C('AX')}${p}))`,
+        AY: `IF(${C('AX')}${r}>0,${C('AX')}${r},0)`
+      };
+      const cs = [cell('A' + r, ST.date, { v: serial(d.per) }), cell('B' + r, ST.seq, { v: d.seq })];
+      this.NOVALUX_COLS.forEach(([o]) => {
+        const ref = C(o) + r;
+        if (f[o]) cs.push(cell(ref, o === 'AO' ? ST.pct : ST.money, { f: f[o] }));
+        else if (v[o] !== undefined) cs.push(cell(ref, ST.money, { v: v[o] }));
+        else cs.push(cell(ref, ST.dataEmpty));
+      });
+      rowsXml.push(`<row r="${r}">${cs.join('')}</row>`);
+    });
+    const tc = [cell('A' + tot, ST.totLabel, { t: 'Total año fiscal' }), cell('B' + tot, ST.totEmpty)];
+    const tRatio = `IFERROR((${C('J')}${tot}+${C('K')}${tot})/(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot}),0)`;
+    this.NOVALUX_COLS.forEach(([o]) => {
+      const L = C(o), ref = L + tot, n = this.colNum(o);
+      if (o === 'AO') tc.push(cell(ref, ST.totPct, { f: `1-${tRatio}` }));
+      else if (o === 'AW' || o === 'AX') tc.push(cell(ref, ST.totMoney, { f: `${L}${last}` }));
+      else if (o === 'AU' || n > this.colNum('AY')) tc.push(cell(ref, ST.totEmpty));
+      else tc.push(cell(ref, ST.totMoney, { f: `SUM(${L}${first}:${L}${last})` }));
+    });
+    rowsXml.push(`<row r="${tot}">${tc.join('')}</row>`);
+
+    const yrs = [...new Set(data.map(d => d.per.slice(3)))].sort();
+    const hoja = yrs.length > 1 ? yrs[0] + '-' + yrs[yrs.length - 1].slice(2) : yrs[0];
+    const cols = `<cols><col min="1" max="1" width="11" customWidth="1"/><col min="2" max="2" width="11" customWidth="1"/><col min="3" max="${this.colNum(lastCol)}" width="15.5" customWidth="1"/></cols>`;
+    const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', RNS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${tot}"/>`
+      + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
+      + `<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml.join('')}</sheetData>`
+      + `<mergeCells count="2"><mergeCell ref="${C('AZ')}2:${C('BC')}2"/><mergeCell ref="${C('BD')}2:${C('BG')}2"/></mergeCells></worksheet>`;
+    const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
+      + `<numFmts count="2"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/></numFmts>`
+      + `<fonts count="3"><font><sz val="10"/><color rgb="FF000000"/><name val="Arial"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font></fonts>`
+      + `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF073763"/><bgColor rgb="FF073763"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9FC5E8"/><bgColor rgb="FF9FC5E8"/></patternFill></fill></fills>`
+      + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border></borders>`
+      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="12">`
+      + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
+      + xf(0, 1, 2, '<alignment horizontal="center" vertical="center" wrapText="1"/>')
+      + xf(165, 2, 3, '<alignment horizontal="left"/>')
+      + xf(164, 2, 3)
+      + xf(1, 2, 3, '<alignment horizontal="center"/>')
+      + xf(10, 2, 3)
+      + xf(0, 1, 2)
+      + xf(164, 1, 2, '<alignment horizontal="right"/>')
+      + xf(10, 1, 2)
+      + xf(0, 1, 2)
+      + xf(0, 2, 3)
+      + xf(0, 1, 2)
+      + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    const files = [
+      ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
+      ['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RNS}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+      ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${NS}" xmlns:r="${RNS}"><sheets><sheet name="${esc(hoja)}" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`],
+      ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RNS}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${RNS}/styles" Target="styles.xml"/></Relationships>`],
+      ['xl/styles.xml', styles],
+      ['xl/worksheets/sheet1.xml', sheet]
+    ];
+    const pers = data.map(d => d.per);
+    const name = cliente + ' - IVA ' + (pers[0] === pers[pers.length - 1] ? pers[0] : pers[0] + ' a ' + pers[pers.length - 1]).replace(/\//g, '-') + '.xlsx';
+    return { name, bytes: this.zipStore(files) };
+  }
+
+  zipStore(files) {
+    const enc = new TextEncoder();
+    const crcT = this._crcT || (this._crcT = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; }));
+    const crc32 = (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = crcT[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+    const parts = [], central = [];
+    let off = 0;
+    const u16 = (v) => [v & 0xFF, (v >>> 8) & 0xFF], u32 = (v) => [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF];
+    files.forEach(([name, txt]) => {
+      const nb = enc.encode(name), db = enc.encode(txt), crc = crc32(db);
+      const common = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(db.length), ...u32(db.length), ...u16(nb.length), ...u16(0)];
+      const local = Uint8Array.from([...u32(0x04034b50), ...common]);
+      parts.push(local, nb, db);
+      central.push(Uint8Array.from([...u32(0x02014b50), ...u16(20), ...common, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nb);
+      off += local.length + nb.length + db.length;
+    });
+    const cdSize = central.reduce((a, b) => a + b.length, 0);
+    const end = Uint8Array.from([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(off), ...u16(0)]);
+    const all = parts.concat(central, [end]), out = new Uint8Array(all.reduce((a, b) => a + b.length, 0));
+    let p = 0;
+    all.forEach(b => { out.set(b, p); p += b.length; });
+    return out;
+  }
+
+  descargar(name, bytes) {
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
 
   me() {
     return this.state.role === 'admin'
-      ? { ini: 'AD', short: 'Administrador', full: 'Administrador', mail: 'admin@estudioblasco.com.ar' }
+      ? { ini: 'AD', short: 'Administrador', full: 'Administrador', mail: 'admin@blasco.com.ar' }
       : { ini: 'JU', short: 'Julieta', full: 'Julieta', mail: this.mailDe('Julieta') };
   }
 
@@ -2265,7 +2432,7 @@ class Component extends DCLogic {
     ];
 
     const usuarios = [
-      { nombre: 'Administrador', mail: 'admin@estudioblasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
+      { nombre: 'Administrador', mail: 'admin@blasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
     ].concat(this.CARTERA.map(([u, cs]) => ({
       nombre: u, mail: this.mailDe(u), rol: 'Usuario',
       clientes: cs.length + ' clientes · ' + cs.slice(0, 2).join(', ') + (cs.length > 2 ? ' y ' + (cs.length - 2) + ' más' : ''),
@@ -2559,11 +2726,15 @@ class Component extends DCLogic {
     ]).filter(r => histAdmin || r.user === me.short);
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
+    const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    const sel = s.histSel;
+    const histPick = histFilas.filter(r => sel[rid(r)]);
     const histVis = histFilas
       .filter(r => s.histSeq === '' || (s.histSeq === 'ult' ? r.seq === ultSeq[r.cliente + '|' + r.per] : r.seq === Number(s.histSeq)))
       .map(r => {
-        const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0);
+        const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0), id = rid(r);
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
+          sel: !!sel[id], toggle: () => this.setState(st => ({ histSel: Object.assign({}, st.histSel, { [id]: !st.histSel[id] }) })),
           st: E[r.est], ver: this.nav('liqResultado'),
           hasErr: n > 0, errLabel: 'Errores de cruce (' + n + ')',
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg)
@@ -2633,6 +2804,28 @@ class Component extends DCLogic {
       seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
       histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
       histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
+      histSelCount: String(histPick.length),
+      histSelLabel: histPick.length ? 'Exportar selección (' + histPick.length + ')' : 'Exportar selección',
+      histAllSel: histVis.length > 0 && histVis.every(r => r.sel),
+      histToggleAll: () => {
+        const all = histVis.length > 0 && histVis.every(r => r.sel);
+        this.setState(st => {
+          const next = Object.assign({}, st.histSel);
+          histVis.forEach(r => { next[rid(r)] = !all; });
+          return { histSel: next };
+        });
+      },
+      histExport: () => {
+        const warn = (t, d) => this.setState({ toast: { kind: 'warn', t, d } });
+        if (!histPick.length) return warn('Seleccioná al menos un período', 'Marcá uno o más períodos de un mismo cliente para exportar el Excel.');
+        const clis = [...new Set(histPick.map(r => r.cliente))];
+        if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
+        const sinDatos = histPick.filter(r => r.df === '—');
+        if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar. Quitalo de la selección.');
+        const x = this.novaluxXlsx(clis[0], histPick);
+        this.descargar(x.name, x.bytes);
+        this.setState({ toast: { kind: 'ok', t: 'Excel generado', d: x.name + ' · ' + histPick.length + (histPick.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna.' } });
+      },
       histVacio: histVis.length === 0, histSeqLimpiar: () => this.setState({ histSeq: '' }),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
@@ -2843,10 +3036,10 @@ class Component extends DCLogic {
       })),
       cfgTab,
       eventos: [
-        { ev: 'Diferencias detectadas en un cruce', dest: 'admin@estudioblasco.com.ar, julieta@estudioblasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
-        { ev: 'Liquidación completada', dest: 'admin@estudioblasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
-        { ev: 'Alertas de CUITs observados', dest: 'admin@estudioblasco.com.ar', asunto: '[MyIVA] CUITs observados — {cliente}' },
-        { ev: 'Error de procesamiento', dest: 'sistemas@estudioblasco.com.ar', asunto: '[MyIVA] Error al procesar {cliente} {periodo}' }
+        { ev: 'Diferencias detectadas en un cruce', dest: 'admin@blasco.com.ar, julietad@blasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
+        { ev: 'Liquidación completada', dest: 'admin@blasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
+        { ev: 'Alertas de CUITs observados', dest: 'admin@blasco.com.ar', asunto: '[MyIVA] CUITs observados — {cliente}' },
+        { ev: 'Error de procesamiento', dest: 'sistemas@blasco.com.ar', asunto: '[MyIVA] Error al procesar {cliente} {periodo}' }
       ],
       auditoria: [
         { f: '04/09/2026 14:22', u: 'Administrador', a: 'Liquidación ejecutada', c: 'CAZATUR SA', p: '08/2026', r: 'Completado', ip: '190.15.44.12' },
