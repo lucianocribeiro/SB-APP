@@ -776,7 +776,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
-<button onClick="{{ openConfirm }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Reprocesar</button>
 <button onClick="{{ toastXls }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar PDF</button>
 <button onClick="{{ toastXls }}" style="padding:9px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Exportar Excel</button>
 </div>
@@ -923,7 +922,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de liquidaciones</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histCount }} liquidaciones registradas</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histCount }} liquidaciones registradas · Para rectificar un período, iniciá una nueva liquidación: se genera la siguiente secuencia (hasta 9 rectificativas).</div>
 </div>
 <div style="display:flex;gap:9px">
 <button onClick="{{ toastXls }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar selección (2)</button>
@@ -973,7 +972,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
 <span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
-<span onClick="{{ openConfirm }}" style="font:600 12.5px 'Open Sans';color:#5A6B7B;cursor:pointer">Reprocesar</span>
 </div>
 </td>
 </tr>
@@ -1887,7 +1885,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 16px 'Open Sans'">Confirmar acción</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Esta acción queda registrada en auditoría. Si es un reproceso de una liquidación, se genera una nueva secuencia del período y las anteriores quedan guardadas en el historial.</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">¿Está seguro de que desea continuar? Esta acción queda registrada en auditoría.</div>
 </div>
 </div>
 <div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
