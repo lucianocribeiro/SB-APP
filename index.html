@@ -249,11 +249,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
 <div style="display:flex;align-items:center;gap:8px;border:1px solid #E3E8EE;border-radius:6px;padding:8px 11px;min-width:260px;flex:1">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.3-4.3"></path></svg>
-<input placeholder="Buscar por razón social o CUIT" style="border:0;outline:0;font:400 13.5px 'Open Sans';flex:1;min-width:0;color:#1B2733">
+<input placeholder="Buscar por razón social o CUIT" value="{{ cliF.q }}" onChange="{{ cliBuscar }}" style="border:0;outline:0;font:400 13.5px 'Open Sans';flex:1;min-width:0;color:#1B2733">
 </div>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Estado: todos</option><option>Activo</option><option>Inactivo</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Último período: todos</option><option>08/2026</option><option>07/2026</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Usuario asignado: todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option>{{ o.n }}</option></sc-for></select>
+<select value="{{ cliF.est }}" onChange="{{ cliFiltroEst }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Estado: todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select>
+<select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Último período: todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Usuario asignado: todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
@@ -268,7 +268,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Acciones</th>
 </tr></thead>
 <tbody>
-<sc-for list="{{ clientes }}" as="c" hint-placeholder-count="7">
+<sc-if value="{{ cliVacio }}">
+<tr><td colspan="7" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
+</sc-if>
+<sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
 <td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span onClick="{{ go.clienteFicha }}" style="cursor:pointer;color:#14395C">{{ c.rz }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
@@ -1953,6 +1956,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
+    cliF: { q: '', est: '', per: '', usr: '' },
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2225,6 +2229,16 @@ class Component extends DCLogic {
       return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'] };
     });
 
+    const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const F = s.cliF, q = norm(F.q.trim()), qDig = F.q.replace(/\D/g, '');
+    const clientesVis = clientes.filter(c =>
+      (!q || norm(c.rz).indexOf(q) >= 0 || (qDig.length > 0 && c.cuit.replace(/\D/g, '').indexOf(qDig) >= 0)) &&
+      (!F.est || c.est === F.est) &&
+      (!F.per || c.per === F.per) &&
+      (!F.usr || c.users === F.usr));
+    const setF = (k) => (e) => { const val = e.target.value; this.setState(st => ({ cliF: Object.assign({}, st.cliF, { [k]: val }) })); };
+    const pers = [...new Set(clientes.map(c => c.per))].sort((a, b) => (a === '—') - (b === '—') || b.slice(3).localeCompare(a.slice(3)) || b.localeCompare(a));
+
     const isAdmin = s.role === 'admin', me = this.me();
     const procesos = [
       { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', est: 'Completado' },
@@ -2315,7 +2329,13 @@ class Component extends DCLogic {
       ],
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
-      cliMostrando: 'Mostrando 1–' + clientes.length + ' de ' + clientes.length,
+      cliMostrando: clientesVis.length === clientes.length
+        ? 'Mostrando 1–' + clientes.length + ' de ' + clientes.length
+        : 'Mostrando ' + clientesVis.length + ' de ' + clientes.length + ' (filtrado)',
+      clientesVis, cliVacio: clientesVis.length === 0, cliF: F,
+      cliBuscar: setF('q'), cliFiltroEst: setF('est'), cliFiltroPer: setF('per'), cliFiltroUsr: setF('usr'),
+      cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '' } }),
+      cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
       usrResumen: usuarios.length + ' usuarios · ' + usrNombres.length + ' con clientes asignados',
       meMail: me.mail,
       inicioScope: isAdmin ? 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026' : 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026 · Mostrando sólo tus operaciones',
