@@ -607,37 +607,89 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 
 <sc-if value="{{ stepIs.p3 }}">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:860px">
-<div style="font:600 15.5px 'Open Sans';margin-bottom:16px">Paso 3 — Resumen previo</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+<div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ upCountLabel }}</div>
+</div>
+
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
+<div>
+<div style="font:600 14px 'Open Sans'">Saldos a favor del período anterior</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">Tomados de la última secuencia liquidada: 07/2026 · Secuencia 2 · 12/08/2026</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Resultado 07/2026</span>
+<div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
+<sc-for list="{{ prevModes }}" as="m" hint-placeholder-count="2">
+<div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-top:14px">
+<sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
+<div style="border:1px solid {{ p.bd }};background:{{ p.bg }};border-radius:6px;padding:14px">
+<div style="font:600 11px/1.35 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ p.label }}</div>
+<div style="font:600 24px/1 'Open Sans';margin-top:10px;color:{{ p.fg }};font-variant-numeric:tabular-nums">{{ p.value }}</div>
+<div style="font:400 12px/1.4 'Open Sans';color:#5A6B7B;margin-top:7px">{{ p.sub }}</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ prevPagar }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9 17H3zM12 9v5M12 17v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">La última secuencia de 07/2026 resultó a pagar: no hay saldos a favor para trasladar, por eso se informan en $ 0.</div>
+</div>
+</sc-if>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px;margin-top:16px">
+<sc-for list="{{ cruKpis }}" as="k" hint-placeholder-count="4">
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Registros de ventas</div>
-<div style="font:600 26px/1 'Open Sans';margin-top:9px">2.117</div>
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 24px/1 'Open Sans';margin-top:9px;color:{{ k.color }};font-variant-numeric:tabular-nums">{{ k.value }}</div>
 </div>
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Registros de compras</div>
-<div style="font:600 26px/1 'Open Sans';margin-top:9px">1.284</div>
+</sc-for>
 </div>
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Período detectado</div>
-<div style="font:600 26px/1 'Open Sans';margin-top:9px">08/2026</div>
+
+<div style="margin-top:16px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
+<div style="padding:11px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;font:600 13px 'Open Sans'">Resultado de los cruces</div>
+<sc-for list="{{ cruRows }}" as="c" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #EEF1F4">
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span>
+<div style="min-width:0;flex:1">
+<div style="font:600 13px/1.35 'Open Sans'">{{ c.t }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:2px">{{ c.resumen }}</div>
 </div>
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Cliente</div>
-<div style="font:600 17px/1.2 'Open Sans';margin-top:11px">CAZATUR SA</div>
+<sc-if value="{{ c.hasDif }}">
+<span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<sc-if value="{{ cruIncCount }}">
+<div style="margin-top:16px;border:1px solid #F0E0BC;border-radius:6px;overflow:hidden">
+<div style="padding:11px 14px;background:#FBF3E3;font:600 13px 'Open Sans';color:#8F5F14;border-bottom:1px solid #F0E0BC">{{ cruIncLabel }}</div>
+<div style="padding:4px 14px 8px;background:#FEFBF4">
+<sc-for list="{{ cruInc }}" as="i" hint-placeholder-count="3">
+<div style="padding:9px 0;border-bottom:1px solid #F5EBD7;font:400 13px/1.45 'Open Sans';color:#8F5F14">{{ i.t }}</div>
+</sc-for>
 </div>
 </div>
-<div style="margin-top:18px;border:1px solid #F0E0BC;border-radius:6px;overflow:hidden">
-<div style="padding:11px 14px;background:#FBF3E3;font:600 13px 'Open Sans';color:#8F5F14;border-bottom:1px solid #F0E0BC">3 advertencias antes de procesar</div>
-<div style="padding:4px 14px 12px;background:#FEFBF4">
-<div style="padding:9px 0;border-bottom:1px solid #F5EBD7;font:400 13px/1.45 'Open Sans';color:#8F5F14">12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.</div>
-<div style="padding:9px 0;border-bottom:1px solid #F5EBD7;font:400 13px/1.45 'Open Sans';color:#8F5F14">La alícuota 5% aparece en 2 comprobantes de compras y no está habilitada para el cliente.</div>
-<div style="padding:9px 0;font:400 13px/1.45 'Open Sans';color:#8F5F14">3 proveedores figuran en la lista de CUITs observados.</div>
+</sc-if>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding:12px 14px;background:#E8F3EE;border:1px solid #C7E3D6;border-radius:6px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.2" stroke-linecap="round" style="flex:none"><path d="M20 6L9 17l-5-5"></path></svg>
+<div style="flex:1;min-width:220px;font:400 12.5px/1.45 'Open Sans';color:#1F5A41">El resultado de los cruces y su reporte quedaron guardados en <span onClick="{{ go.crucesHistorial }}" style="font-weight:600;color:#2E7D5B;text-decoration:underline;cursor:pointer">Historial de cruces</span>.</div>
+<button onClick="{{ toastReporte }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #C7E3D6;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Descargar reporte de diferencias</button>
 </div>
-</div>
+
 <div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
-<button onClick="{{ stepNext }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar liquidación</button>
+<button onClick="{{ openLiqConfirm }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar liquidación</button>
 </div>
 </div>
 </sc-if>
@@ -1452,7 +1504,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de cruces</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">318 cruces ejecutados</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }}</div>
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option></select>
@@ -1487,6 +1539,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
+<sc-if value="{{ r.hasDif }}">
+<span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Reporte de diferencias</span>
+</sc-if>
 <span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 </div>
 </td>
@@ -1843,6 +1898,34 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ liqConfirm }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:18px 20px;display:flex;gap:13px">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#E9F1F8;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1F6795" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2M12 17v.5"></path></svg>
+</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 trasladando los saldos del período anterior:</div>
+<div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
+<sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
+<div style="font:400 12.5px/1.35 'Open Sans';color:#5A6B7B">{{ p.label }}</div>
+<div style="font:600 13px 'Open Sans';white-space:nowrap;font-variant-numeric:tabular-nums">{{ p.value }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:10px">La ejecución queda registrada en auditoría.</div>
+</div>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<button onClick="{{ liqConfirmOk }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Sí, procesar liquidación</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ notif }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.28);z-index:60"></div>
 <div style="position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-2px 0 12px rgba(27,39,51,.14)">
@@ -1890,7 +1973,8 @@ class Component extends DCLogic {
     step: 1, dz: 'loaded', proc: 'run', exec: 'run',
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
-    drawer: false, modal: false, confirm: false, upConfirm: false, notif: false, toast: null,
+    drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
+    prevSaldo: 'favor', cruSaved: false,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     alic: { '21%': 1, '10,5%': 1, '27%': 1, '5%': 0, '2,5%': 0, '0%': 1 },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
@@ -1903,6 +1987,7 @@ class Component extends DCLogic {
     'Con errores': { label: 'Con errores', bg: '#FBE9E7', fg: '#B3261E', bd: '#F3CFCB' },
     'Procesando': { label: 'Procesando', bg: '#E9F1F8', fg: '#1F6795', bd: '#CFE2F0' },
     'En cola': { label: 'En cola', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
+    'Omitido': { label: 'Omitido', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Activo': { label: 'Activo', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
     'Inactivo': { label: 'Inactivo', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Invitación pendiente': { label: 'Invitación pendiente', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
@@ -1951,7 +2036,7 @@ class Component extends DCLogic {
     if (Object.keys(st).length) this.setState(st);
   }
 
-  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false }); }
+  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false }); }
   tset(k, v) { return () => this.setState({ [k]: v }); }
   flip(group, key) {
     return () => this.setState(s => {
@@ -1962,6 +2047,41 @@ class Component extends DCLogic {
   }
   showToast(kind, t, d) {
     return () => this.setState({ toast: { kind, t, d } });
+  }
+
+  cruRun() {
+    const s = this.state, E = this.EST;
+    const has = (k) => (k === 'compras' ? s.dz : s.up[k]) === 'loaded';
+    const num = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const def = [
+      { t: 'Mis Comprobantes Emitidos vs IVA Ventas', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1 },
+      { t: 'Mis Comprobantes Recibidos vs IVA Compras', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2 },
+      { t: 'Mis Percepciones vs IVA Compras', tipo: 'Percepciones vs IVA Compras', need: [['percep', 'Mis Percepciones'], ['compras', 'IVA Compras']], regs: 64, ok: 62, dif: 2, falt: 0 },
+      { t: 'Mis Percepciones Aduaneras vs IVA Compras', tipo: 'Percepciones aduaneras vs IVA Compras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['compras', 'IVA Compras']], regs: 9, ok: 9, dif: 0, falt: 0 },
+      { t: 'IVA Digital vs subdiarios de IVA', tipo: 'IVA Digital vs subdiarios', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 2, ok: 1, dif: 1, falt: 0 }
+    ];
+    const rows = def.map(c => {
+      const falta = c.need.filter(([k]) => !has(k)).map(([, l]) => l);
+      const run = falta.length === 0;
+      const est = !run ? 'Omitido' : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado');
+      return {
+        t: c.t, tipo: c.tipo, run, st: E[est], est,
+        regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
+        hasDif: run && c.dif + c.falt > 0,
+        resumen: run
+          ? num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes')
+          : 'No se procesó: falta ' + falta.join(' y ') + '.'
+      };
+    });
+    const inc = [];
+    if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
+    if (has('compras')) inc.push({ t: 'La alícuota 5% aparece en 2 comprobantes de compras y no está habilitada para el cliente.' });
+    if (has('compras')) inc.push({ t: '3 proveedores figuran en la lista de CUITs observados.' });
+    const done = rows.filter(r => r.run);
+    return {
+      rows, inc, done,
+      tot: { regs: num(done.reduce((a, r) => a + r.regs, 0)), dif: done.reduce((a, r) => a + r.dif, 0), falt: done.reduce((a, r) => a + r.falt, 0) }
+    };
   }
 
   navModel() {
@@ -2091,7 +2211,8 @@ class Component extends DCLogic {
       openDrawer: () => this.setState({ drawer: true }),
       openModal: () => this.setState({ modal: true }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, notif: false }),
+      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false }),
+      toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
       saveCliente: () => this.setState({ drawer: false, toast: { kind: 'ok', t: 'Cliente guardado', d: 'Ya podés liquidar períodos para este cliente.' } }),
       saveInvite: () => this.setState({ modal: false, toast: { kind: 'ok', t: 'Invitación enviada', d: 'El usuario recibirá un mail para definir su contraseña.' } }),
@@ -2172,7 +2293,20 @@ class Component extends DCLogic {
 
   liqVals() {
     const s = this.state, E = this.EST;
-    const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Resumen previo'], [4, 'Procesamiento']];
+    const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
+    const cru = this.cruRun();
+    const prevPagar = s.prevSaldo === 'pagar';
+    const prevSaldos = [
+      { label: 'Saldo técnico a favor del período anterior', amount: '$ 297.827,45' },
+      { label: 'Saldo a favor de libre disponibilidad del período anterior', amount: '$ 42.180,00' }
+    ].map(p => ({
+      label: p.label,
+      value: prevPagar ? '$ 0' : p.amount,
+      sub: prevPagar ? 'El período anterior resultó a pagar' : 'Se traslada a la liquidación de 08/2026',
+      fg: prevPagar ? '#5A6B7B' : '#2E7D5B',
+      bg: prevPagar ? '#F5F7FA' : '#F3FAF6',
+      bd: prevPagar ? '#E3E8EE' : '#C7E3D6'
+    }));
     const upDef = [
       ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
@@ -2275,7 +2409,24 @@ class Component extends DCLogic {
       openUpConfirm: () => upLoaded.length
         ? this.setState({ upConfirm: true })
         : this.setState({ toast: { kind: 'warn', t: 'No hay archivos cargados', d: 'Cargá al menos un archivo para procesar los cruces.' } }),
-      upConfirmOk: () => this.setState({ upConfirm: false, step: 3, toast: { kind: 'ok', t: 'Archivos confirmados', d: 'Revisá el resumen previo antes de procesar.' } }),
+      upConfirmOk: () => this.setState({ upConfirm: false, step: 3, cruSaved: true, toast: { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' } }),
+      prevPagar, prevSaldos,
+      prevModes: [['favor', 'A favor'], ['pagar', 'A pagar']].map(([k, label]) => ({
+        label, go: this.tset('prevSaldo', k),
+        bg: s.prevSaldo === k ? '#14395C' : '#FFFFFF', fg: s.prevSaldo === k ? '#FFFFFF' : '#5A6B7B'
+      })),
+      cruRows: cru.rows,
+      cruKpis: [
+        { label: 'Cruces procesados', value: cru.done.length + ' de 5', color: '#1B2733' },
+        { label: 'Registros cruzados', value: cru.tot.regs, color: '#1B2733' },
+        { label: 'Con diferencias', value: String(cru.tot.dif - cru.tot.falt), color: cru.tot.dif - cru.tot.falt ? '#B7791F' : '#2E7D5B' },
+        { label: 'Faltantes', value: String(cru.tot.falt), color: cru.tot.falt ? '#B3261E' : '#2E7D5B' }
+      ],
+      cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
+      cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
+      liqConfirm: s.liqConfirm,
+      openLiqConfirm: () => this.setState({ liqConfirm: true }),
+      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run' }),
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
@@ -2371,6 +2522,10 @@ class Component extends DCLogic {
 
   cruVals() {
     const s = this.state, E = this.EST;
+    const savedCru = s.cruSaved ? this.cruRun().done.map(r => ({
+      cliente: 'CAZATUR SA', tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: 'M. Duarte',
+      regs: r.regs.toLocaleString('es-AR'), dif: String(r.dif), est: r.est, hasDif: r.hasDif
+    })) : [];
     const bloques = [
       { n: '1', t: 'Cruce Mis Comprobantes Recibidos vs IVA Compras', st: 'dif', r: '1.284 registros · 1.278 exactas · 3 con diferencias · 3 faltantes' },
       { n: '2', t: 'Cruce Mis Comprobantes Emitidos vs IVA Ventas', st: 'ok', r: '2.117 registros · 2.117 exactas · 0 con diferencias · 0 faltantes' },
@@ -2464,14 +2619,15 @@ class Component extends DCLogic {
         { label: 'Total percepciones IVA Compras', value: '24.000,00', color: '#1B2733' },
         { label: 'Diferencia', value: '10.104,15', color: '#B3261E' }
       ],
-      cruHist: [
+      cruHistLabel: (318 + savedCru.length) + ' cruces ejecutados',
+      cruHist: savedCru.concat([
         { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
         { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'M. Duarte', regs: '2.117', dif: '0', est: 'Completado' },
         { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', regs: '96', dif: '2', est: 'Completado con diferencias' },
         { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'M. Duarte', regs: '844', dif: '0', est: 'Completado' },
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'S. Ibarra', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'S. Ibarra', regs: '112', dif: '2', est: 'Procesando' }
-      ].map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav('cruceResultado') }))
+      ].map(r => Object.assign({}, r, { hasDif: r.est === 'Completado con diferencias' }))).map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav('cruceResultado') }))
     };
   }
 
