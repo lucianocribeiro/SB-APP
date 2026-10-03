@@ -137,7 +137,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div onClick="{{ setAdmin }}" style="padding:7px 11px;font:600 12px/1 'Open Sans';cursor:pointer;background:{{ rolAdminBg }};color:{{ rolAdminFg }}">Admin</div>
-<div onClick="{{ setEmpleado }}" style="padding:7px 11px;font:600 12px/1 'Open Sans';cursor:pointer;border-left:1px solid #E3E8EE;background:{{ rolEmpBg }};color:{{ rolEmpFg }}">Empleado</div>
+<div onClick="{{ setEmpleado }}" style="padding:7px 11px;font:600 12px/1 'Open Sans';cursor:pointer;border-left:1px solid #E3E8EE;background:{{ rolEmpBg }};color:{{ rolEmpFg }}">Usuario</div>
 </div>
 <div onClick="{{ toggleNotif }}" style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="1.8" stroke-linecap="round"><path d="M18 15V10a6 6 0 10-12 0v5l-2 3h16zM10 21h4"></path></svg>
@@ -1851,7 +1851,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;gap:10px">
 <label style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid #2F80B7;border-radius:6px;background:#F4F9FD;cursor:pointer">
 <input type="radio" name="rol" defaultChecked style="accent-color:#14395C;margin-top:2px">
-<span><span style="font:600 13px 'Open Sans';display:block">Empleado</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">Liquida y cruza sus clientes asignados.</span></span>
+<span><span style="font:600 13px 'Open Sans';display:block">Usuario</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">Liquida y cruza sus clientes asignados.</span></span>
 </label>
 <label style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer">
 <input type="radio" name="rol" style="accent-color:#14395C;margin-top:2px">
@@ -1992,7 +1992,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;rolInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Administrador&quot;,&quot;Empleado&quot;],&quot;default&quot;:&quot;Administrador&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;pantallaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Login&quot;,&quot;Inicio&quot;],&quot;default&quot;:&quot;Login&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;sidebarColapsado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototipo&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;rolInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Administrador&quot;,&quot;Usuario&quot;],&quot;default&quot;:&quot;Administrador&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;pantallaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Login&quot;,&quot;Inicio&quot;],&quot;default&quot;:&quot;Login&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;sidebarColapsado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototipo&quot;}}">
 class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', collapsed: false, loginErr: false,
@@ -2018,7 +2018,7 @@ class Component extends DCLogic {
     'Invitación pendiente': { label: 'Invitación pendiente', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
     'Suspendido': { label: 'Suspendido', bg: '#FBE9E7', fg: '#B3261E', bd: '#F3CFCB' },
     'Administrador': { label: 'Administrador', bg: '#E6EDF4', fg: '#14395C', bd: '#CBD9E6' },
-    'Empleado': { label: 'Empleado', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' }
+    'Usuario': { label: 'Usuario', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' }
   };
 
   ICON = {
@@ -2056,7 +2056,7 @@ class Component extends DCLogic {
     const p = this.props || {};
     const st = {};
     if (p.pantallaInicial === 'Inicio') st.screen = 'inicio';
-    if (p.rolInicial === 'Empleado') st.role = 'empleado';
+    if (p.rolInicial === 'Usuario' || p.rolInicial === 'Empleado') st.role = 'empleado';
     if (p.sidebarColapsado) st.collapsed = true;
     if (Object.keys(st).length) this.setState(st);
   }
@@ -2209,10 +2209,10 @@ class Component extends DCLogic {
 
     const usuarios = [
       { nombre: 'Mariela Duarte', mail: 'mduarte@estudioblasco.com.ar', rol: 'Administrador', clientes: 'Todos (7)', acceso: '04/09/2026 14:20', est: 'Activo' },
-      { nombre: 'Lucas Peralta', mail: 'lperalta@estudioblasco.com.ar', rol: 'Empleado', clientes: 'CAZATUR SA, DACKET SA', acceso: '04/09/2026 11:02', est: 'Activo' },
-      { nombre: 'Sofía Ibarra', mail: 'sibarra@estudioblasco.com.ar', rol: 'Empleado', clientes: 'NOVALUX S.A., FIDEICOMISO PAMPA PILAR', acceso: '03/09/2026 18:44', est: 'Activo' },
-      { nombre: 'Carla Vega', mail: 'cvega@estudioblasco.com.ar', rol: 'Empleado', clientes: 'RODIALE SA', acceso: '29/08/2026 09:15', est: 'Suspendido' },
-      { nombre: 'Nicolás Bravo', mail: 'nbravo@estudioblasco.com.ar', rol: 'Empleado', clientes: '—', acceso: 'Nunca', est: 'Invitación pendiente' }
+      { nombre: 'Lucas Peralta', mail: 'lperalta@estudioblasco.com.ar', rol: 'Usuario', clientes: 'CAZATUR SA, DACKET SA', acceso: '04/09/2026 11:02', est: 'Activo' },
+      { nombre: 'Sofía Ibarra', mail: 'sibarra@estudioblasco.com.ar', rol: 'Usuario', clientes: 'NOVALUX S.A., FIDEICOMISO PAMPA PILAR', acceso: '03/09/2026 18:44', est: 'Activo' },
+      { nombre: 'Carla Vega', mail: 'cvega@estudioblasco.com.ar', rol: 'Usuario', clientes: 'RODIALE SA', acceso: '29/08/2026 09:15', est: 'Suspendido' },
+      { nombre: 'Nicolás Bravo', mail: 'nbravo@estudioblasco.com.ar', rol: 'Usuario', clientes: '—', acceso: 'Nunca', est: 'Invitación pendiente' }
     ].map(u => Object.assign({}, u, { st: E[u.est], rb: E[u.rol] }));
 
     const cliTabsDef = [['resumen', 'Resumen'], ['liquidaciones', 'Liquidaciones'], ['cruces', 'Cruces'], ['config', 'Configuración']];
@@ -2235,7 +2235,7 @@ class Component extends DCLogic {
       toggleSb: () => this.setState(st2 => ({ collapsed: !st2.collapsed })),
       nav: this.navModel(), navMini: this.navMiniModel(),
       crumbA: crumb[0], crumbB: crumb[1],
-      rolLabel: s.role === 'admin' ? 'Administrador' : 'Empleado',
+      rolLabel: s.role === 'admin' ? 'Administrador' : 'Usuario',
       rolAdminBg: s.role === 'admin' ? '#14395C' : '#FFFFFF',
       rolAdminFg: s.role === 'admin' ? '#FFFFFF' : '#5A6B7B',
       rolEmpBg: s.role === 'empleado' ? '#14395C' : '#FFFFFF',
@@ -2325,7 +2325,7 @@ class Component extends DCLogic {
       chipsCount: selCount + ' de 7 clientes seleccionados',
       asignados: [
         { ini: 'MD', nombre: 'Mariela Duarte', rol: 'Administrador' },
-        { ini: 'LP', nombre: 'Lucas Peralta', rol: 'Empleado' }
+        { ini: 'LP', nombre: 'Lucas Peralta', rol: 'Usuario' }
       ]
     });
   }
