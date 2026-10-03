@@ -686,6 +686,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 13px/1.35 'Open Sans'">{{ c.t }}</div>
 <div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:2px">{{ c.resumen }}</div>
 </div>
+<sc-if value="{{ c.hasErr }}">
+<span onClick="{{ c.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer;white-space:nowrap">{{ c.errLabel }}</span>
+</sc-if>
 <sc-if value="{{ c.hasDif }}">
 <span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
 </sc-if>
@@ -975,6 +978,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
+<sc-if value="{{ r.hasErr }}">
+<span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
+</sc-if>
 <span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 </div>
 </td>
@@ -1622,6 +1628,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
+<sc-if value="{{ r.hasErr }}">
+<span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
+</sc-if>
 <sc-if value="{{ r.hasDif }}">
 <span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Reporte de diferencias</span>
 </sc-if>
@@ -2010,6 +2019,42 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ errOpen }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:16px 20px;display:flex;gap:13px;align-items:flex-start;border-bottom:1px solid #E3E8EE">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#FBE9E7;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>
+</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 16px/1.3 'Open Sans'">{{ errTitle }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ errSub }} · {{ errCount }}</div>
+</div>
+<span onClick="{{ closeAll }}" style="font:400 22px/1 'Open Sans';color:#5A6B7B;cursor:pointer;padding:2px 4px">×</span>
+</div>
+<div style="overflow:auto;padding:4px 20px 8px">
+<sc-for list="{{ errRows }}" as="e" hint-placeholder-count="4">
+<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #EEF1F4">
+<span style="display:inline-block;flex:none;width:150px;padding:3px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ e.kb }};color:{{ e.kc }};text-align:center">{{ e.k }}</span>
+<div style="min-width:0;flex:1">
+<div style="font:600 13px/1.35 'Open Sans'">{{ e.comp }} <span style="font-weight:400;color:#5A6B7B">· {{ e.ter }}</span></div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:2px">{{ e.det }}</div>
+<div style="font:400 11.5px/1.4 'Open Sans';color:#9AA9B7;margin-top:2px">Cruce: {{ e.cruce }}</div>
+</div>
+<div style="flex:none;text-align:right">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Diferencia</div>
+<div style="font:600 13px 'Open Sans';margin-top:5px;font-variant-numeric:tabular-nums">{{ e.imp }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="padding:13px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cerrar</button>
+<button onClick="{{ toastReporte }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Descargar reporte de errores</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ notif }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.28);z-index:60"></div>
 <div style="position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-2px 0 12px rgba(27,39,51,.14)">
@@ -2058,7 +2103,7 @@ class Component extends DCLogic {
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
-    prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null,
+    prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
@@ -2071,6 +2116,7 @@ class Component extends DCLogic {
     'Procesando': { label: 'Procesando', bg: '#E9F1F8', fg: '#1F6795', bd: '#CFE2F0' },
     'En cola': { label: 'En cola', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Omitido': { label: 'Omitido', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
+    'Pendiente de liquidar': { label: 'Pendiente de liquidar', bg: '#E9F1F8', fg: '#1F6795', bd: '#CFE2F0' },
     'Activo': { label: 'Activo', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
     'Inactivo': { label: 'Inactivo', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Invitación pendiente': { label: 'Invitación pendiente', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
@@ -2150,10 +2196,59 @@ class Component extends DCLogic {
       : { seq: '0', seqTipo: this.seqTipo(0), seqBg: '#F5F7FA', seqFg: '#5A6B7B', seqBd: '#E3E8EE' };
   }
 
+  ERRS = {
+    emi: [
+      { k: 'Diferencia de importe', comp: 'FC A 0003-00012845', ter: 'LOGÍSTICA SUR SA', det: 'IVA en ARCA 21.000,00 · en IVA Ventas 20.790,00', imp: '210,00' },
+      { k: 'Diferencia de alícuota', comp: 'FC B 0003-00012910', ter: 'Consumidor final', det: 'ARCA informa 21 % · IVA Ventas registra 10,5 %', imp: '1.155,00' },
+      { k: 'Faltante en IVA Ventas', comp: 'FC A 0003-00013002', ter: 'GRUPO ANDINO SRL', det: 'Emitido en ARCA y no registrado en el subdiario', imp: '8.400,00' }
+    ],
+    rec: [
+      { k: 'Diferencia de importe', comp: 'FC A 0012-00045871', ter: 'DISTRIBUIDORA NORTE SA', det: 'IVA en ARCA 15.330,00 · en IVA Compras 15.120,00', imp: '210,00' },
+      { k: 'Diferencia de importe', comp: 'FC A 0004-00009124', ter: 'TRANSPORTES DEL LITORAL SRL', det: 'Neto en ARCA 82.000,00 · en IVA Compras 80.200,00', imp: '378,00' },
+      { k: 'Diferencia de alícuota', comp: 'FC A 0021-00000318', ter: 'AGROINSUMOS PAMPA SA', det: 'ARCA informa 10,5 % · IVA Compras registra 21 %', imp: '4.620,00' },
+      { k: 'Faltante en IVA Compras', comp: 'FC A 0007-00031077', ter: 'SERVICIOS INTEGRALES SA', det: 'Recibido en ARCA y no registrado en el subdiario', imp: '12.180,00' },
+      { k: 'Faltante en ARCA', comp: 'FC A 0002-00004410', ter: 'IMPRENTA CENTRAL SRL', det: 'Registrado en IVA Compras y no informado en ARCA', imp: '3.570,00' }
+    ],
+    per: [
+      { k: 'Diferencia de importe', comp: 'Percepción IVA 000-0044518', ter: 'METALÚRGICA ROSARIO SA', det: 'ARCA 3.150,00 · IVA Compras 3.000,00', imp: '150,00' },
+      { k: 'Diferencia de importe', comp: 'Percepción IVA 000-0044902', ter: 'QUÍMICA DEL SUR SA', det: 'ARCA 1.890,00 · IVA Compras 1.980,00', imp: '90,00' }
+    ],
+    adu: [],
+    dig: [
+      { k: 'Diferencia de importe', comp: 'DDJJ IVA Digital 08/2026', ter: 'Débito fiscal total', det: 'IVA Digital 4.182.905,60 · IVA Ventas 4.181.750,60', imp: '1.155,00' }
+    ],
+    ret: [
+      { k: 'Diferencia de importe', comp: 'Retención IVA 2026-000812', ter: 'SUPERMERCADOS DEL ESTE SA', det: 'ARCA 6.300,00 · IVA Ventas 6.000,00', imp: '300,00' },
+      { k: 'Faltante en IVA Ventas', comp: 'Retención IVA 2026-000877', ter: 'CONSTRUCTORA OESTE SA', det: 'Informada en ARCA y no registrada en el subdiario', imp: '2.100,00' }
+    ]
+  };
+
+  ERR_TIPO = { 'Emitidos vs IVA Ventas': 'emi', 'Recibidos vs IVA Compras': 'rec', 'Percepciones vs IVA Compras': 'per', 'Percepciones aduaneras vs IVA Compras': 'adu', 'IVA Digital vs subdiarios': 'dig', 'Retenciones vs IVA Ventas / Compras': 'ret' };
+
+  errFile(file, cruce) {
+    return [{ k: 'Error de archivo', comp: file, ter: cruce, det: 'El archivo no tiene un formato válido. El cruce no se ejecutó.', imp: '—' }];
+  }
+
+  openErr(title, sub, groups) {
+    const rows = [];
+    groups.forEach(g => g.errs.forEach(e => rows.push(Object.assign({}, e, {
+      cruce: g.cruce,
+      kc: e.k.indexOf('Diferencia') === 0 ? '#8F5F14' : '#B3261E',
+      kb: e.k.indexOf('Diferencia') === 0 ? '#FBF3E3' : '#FBE9E7'
+    }))));
+    return () => this.setState({ errView: { title, sub, rows } });
+  }
+
   cruRun() {
     const s = this.state, E = this.EST;
-    const has = (k) => (k === 'compras' ? s.dz : s.up[k]) === 'loaded';
+    const fst = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
+    const has = (k) => fst(k) === 'loaded';
     const num = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const ERRF = {
+      ventas: 'CAZATUR_IVA_VENTAS_082026.docx', compras: 'CAZATUR_IVA_COMPRAS_082026.docx',
+      emitidos: 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.docx', recibidos: 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.docx',
+      percep: 'CAZATUR_MIS_PERCEPCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_IVA_DIGITAL_082026.jpg'
+    };
     const def = [
       { t: 'Mis Comprobantes Emitidos vs IVA Ventas', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1 },
       { t: 'Mis Comprobantes Recibidos vs IVA Compras', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2 },
@@ -2163,15 +2258,21 @@ class Component extends DCLogic {
     ];
     const rows = def.map(c => {
       const falta = c.need.filter(([k]) => !has(k)).map(([, l]) => l);
-      const run = falta.length === 0;
-      const est = !run ? 'Omitido' : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado');
+      const malos = c.need.filter(([k]) => fst(k) === 'error');
+      const run = falta.length === 0, isErr = malos.length > 0 && malos.length === falta.length;
+      const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado'));
+      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile(ERRF[k], c.t))) : (run ? this.ERRS[this.ERR_TIPO[c.tipo]] : []);
       return {
-        t: c.t, tipo: c.tipo, run, st: E[est], est,
+        t: c.t, tipo: c.tipo, run, isErr, st: E[est], est,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
         hasDif: run && c.dif + c.falt > 0,
-        resumen: run
-          ? num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes')
-          : 'No se procesó: falta ' + falta.join(' y ') + '.'
+        errs, hasErr: errs.length > 0, errLabel: 'Ver errores (' + errs.length + ')',
+        verErr: this.openErr(c.t, 'CAZATUR SA · 08/2026', [{ cruce: c.t, errs }]),
+        resumen: isErr
+          ? 'No se procesó: ' + malos.map(([, l]) => l).join(' y ') + (malos.length > 1 ? ' tienen' : ' tiene') + ' errores de archivo.'
+          : (run
+            ? num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes')
+            : 'No se procesó: falta ' + falta.join(' y ') + '.')
       };
     });
     const inc = [];
@@ -2179,8 +2280,9 @@ class Component extends DCLogic {
     if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
     if (has('compras')) inc.push({ t: '3 proveedores figuran en la lista de CUITs observados.' });
     const done = rows.filter(r => r.run);
+    const errGroups = rows.filter(r => r.hasErr).map(r => ({ cruce: r.t, errs: r.errs }));
     return {
-      rows, inc, done,
+      rows, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0),
       tot: { regs: num(done.reduce((a, r) => a + r.regs, 0)), dif: done.reduce((a, r) => a + r.dif, 0), falt: done.reduce((a, r) => a + r.falt, 0) }
     };
   }
@@ -2324,7 +2426,10 @@ class Component extends DCLogic {
       openDrawer: () => this.setState({ drawer: true }),
       openModal: () => this.setState({ modal: true }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false }),
+      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null }),
+      errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
+      errRows: s.errView ? s.errView.rows : [],
+      errCount: s.errView ? (s.errView.rows.length === 1 ? '1 error registrado' : s.errView.rows.length + ' errores registrados') : '',
       toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
       saveCliente: () => this.setState({ drawer: false, toast: { kind: 'ok', t: 'Cliente guardado', d: 'Ya podés liquidar períodos para este cliente.' } }),
@@ -2546,21 +2651,31 @@ class Component extends DCLogic {
       const saldo = num(r.df) - num(r.cf) - num(r.rp);
       return Object.assign({}, r, { saldo: fmt(saldo), sc: saldo < 0 ? '#2E7D5B' : '#B3261E' });
     };
-    const histFilas = (s.liqSaved ? [
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado' }
-    ] : []).concat([
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado' },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias' },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'L. Peralta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias' },
+    const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
+    const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
+    const curRow = s.liqSaved
+      ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
+      : (curPend ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
+    const histFilas = curRow.concat([
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'L. Peralta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
       { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'M. Duarte', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', est: 'Con errores' },
+      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
       { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'S. Ibarra', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'M. Duarte', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'L. Peralta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias' }
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'L. Peralta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
     ]).filter(r => histAdmin || r.user === me.short)
-      .map(r => Object.assign({}, conSaldo(r), this.seqChip(r.seq), { st: E[r.est], ver: this.nav('liqResultado') }));
-    const histTotal = (histAdmin ? 142 : 37) + (s.liqSaved ? 1 : 0);
+      .map(r => {
+        const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0);
+        return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
+          st: E[r.est], ver: this.nav('liqResultado'),
+          hasErr: n > 0, errLabel: 'Errores de cruce (' + n + ')',
+          verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg)
+        });
+      });
+    const histTotal = (histAdmin ? 142 : 37) + (curRow.length ? 1 : 0);
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
@@ -2580,7 +2695,12 @@ class Component extends DCLogic {
       openUpConfirm: () => upLoaded.length
         ? this.setState({ upConfirm: true })
         : this.setState({ toast: { kind: 'warn', t: 'No hay archivos cargados', d: 'Cargá al menos un archivo para procesar los cruces.' } }),
-      upConfirmOk: () => this.setState({ upConfirm: false, step: 3, cruSaved: true, toast: { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' } }),
+      upConfirmOk: () => this.setState({
+        upConfirm: false, step: 3, cruSaved: true,
+        toast: cru.nErr
+          ? { kind: 'warn', t: 'Cruces procesados con errores', d: cru.nErr + (cru.nErr === 1 ? ' error quedó registrado' : ' errores quedaron registrados') + ' en Historial de cruces y en Historial de liquidaciones.' }
+          : { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' }
+      }),
       prevPagar, prevSaldos,
       prevModes: [['favor', 'A favor'], ['pagar', 'A pagar']].map(([k, label]) => ({
         label, go: this.tset('prevSaldo', k),
@@ -2720,9 +2840,9 @@ class Component extends DCLogic {
   cruVals() {
     const s = this.state, E = this.EST;
     const cruAdmin = s.role === 'admin', me = this.me();
-    const savedCru = s.cruSaved ? this.cruRun().done.map(r => ({
+    const savedCru = s.cruSaved ? this.cruRun().rows.filter(r => r.run || r.isErr).map(r => ({
       cliente: 'CAZATUR SA', tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: me.short,
-      regs: r.regs.toLocaleString('es-AR'), dif: String(r.dif), est: r.est, hasDif: r.hasDif
+      regs: r.isErr ? '—' : r.regs.toLocaleString('es-AR'), dif: r.isErr ? '—' : String(r.dif), est: r.est, hasDif: r.hasDif, errs: r.errs
     })) : [];
     const bloques = [
       { n: '1', t: 'Cruce Mis Comprobantes Recibidos vs IVA Compras', st: 'dif', r: '1.284 registros · 1.278 exactas · 3 con diferencias · 3 faltantes' },
@@ -2820,15 +2940,24 @@ class Component extends DCLogic {
       cruHistLabel: cruAdmin ? (318 + savedCru.length) + ' cruces ejecutados' : 'Tus cruces · ' + (74 + savedCru.length) + ' ejecutados',
       cruHist: savedCru.concat([
         { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'L. Peralta', regs: '1.012', dif: '0', est: 'Completado' },
-        { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
+        { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
         { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'M. Duarte', regs: '2.117', dif: '0', est: 'Completado' },
         { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', regs: '96', dif: '2', est: 'Completado con diferencias' },
         { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'M. Duarte', regs: '844', dif: '0', est: 'Completado' },
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'S. Ibarra', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'S. Ibarra', regs: '112', dif: '2', est: 'Procesando' }
-      ].map(r => Object.assign({}, r, { hasDif: r.est === 'Completado con diferencias' })))
+      ].map(r => Object.assign({}, r, {
+        hasDif: r.est === 'Completado con diferencias',
+        errs: r.est === 'Con errores'
+          ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras')
+          : (r.est === 'Completado con diferencias' ? this.ERRS[this.ERR_TIPO[r.tipo]] : [])
+      })))
         .filter(r => cruAdmin || r.user === me.short)
-        .map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav('cruceResultado') }))
+        .map(r => Object.assign({}, r, {
+          st: E[r.est], ver: this.nav('cruceResultado'),
+          hasErr: r.errs.length > 0, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')',
+          verErr: this.openErr('Errores de cruce · ' + r.tipo, r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user, [{ cruce: r.tipo, errs: r.errs }])
+        }))
     };
   }
 
