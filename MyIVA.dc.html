@@ -161,7 +161,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ inicioScope }}</div>
 </div>
 <div style="display:flex;gap:9px">
-<button onClick="{{ go.crucesCompleto }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Correr proceso completo</button>
+<button onClick="{{ go.crucesHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Historial de cruces</button>
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
@@ -1242,157 +1242,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
-<sc-if value="{{ scr.crucesCompleto }}">
-<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
-<div>
-<div style="font:600 22px/1.2 'Open Sans'">Proceso completo</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Los tres cruces contra ARCA más la liquidación de IVA, en una sola corrida.</div>
-</div>
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Estado de la corrida</span>
-<div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<sc-for list="{{ execModes }}" as="m" hint-placeholder-count="3">
-<div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
-</sc-for>
-</div>
-</div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
-<div style="font:600 15.5px 'Open Sans';margin-bottom:14px">Cliente y período</div>
-<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px;max-width:760px">
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>CAZATUR SA — 30-71234567-8</option><option>DACKET SA — 30-70998877-2</option></select>
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>08 — Agosto</option></select>
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>2026</option></select>
-</div>
-<div style="font:600 15.5px 'Open Sans';margin:22px 0 14px">Carga de archivos</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
-<sc-for list="{{ archivosCompleto }}" as="f" hint-placeholder-count="5">
-<div style="border:1px dashed #D5DEE7;border-radius:6px;padding:13px;display:flex;align-items:center;gap:11px">
-<div style="width:32px;height:32px;border-radius:6px;background:#E8F3EE;display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
-<div style="min-width:0;flex:1">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ f.label }}</div>
-<div style="font:600 13px/1.35 'Open Sans';margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.file }}</div>
-<div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:2px">{{ f.meta }}</div>
-</div>
-<span style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reemplazar</span>
-</div>
-</sc-for>
-</div>
-<div style="display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #E3E8EE">
-<button style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ejecutar proceso completo</button>
-</div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
-<div style="font:600 14.5px 'Open Sans'">Ejecución — CAZATUR SA · 08/2026</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">4 bloques encadenados</div>
-</div>
-<sc-for list="{{ bloques }}" as="b" hint-placeholder-count="4">
-<div style="padding:15px 16px;border-bottom:1px solid #EEF1F4;display:flex;gap:13px;align-items:flex-start">
-<div style="width:28px;height:28px;border-radius:15px;flex:none;display:flex;align-items:center;justify-content:center;font:600 12.5px 'Open Sans';background:{{ b.stb.bg }};color:{{ b.stb.fg }};border:1px solid {{ b.stb.bd }}">{{ b.n }}</div>
-<div style="flex:1;min-width:0">
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<div style="font:600 13.5px/1.35 'Open Sans'">{{ b.t }}</div>
-<span style="padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ b.stb.bg }};color:{{ b.stb.fg }};border:1px solid {{ b.stb.bd }};white-space:nowrap">{{ b.stb.label }}</span>
-</div>
-<sc-if value="{{ b.done }}">
-<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">{{ b.r }}</div>
-<div onClick="{{ go.cruceResultado }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;margin-top:7px">Ver detalle</div>
-</sc-if>
-<sc-if value="{{ b.running }}">
-<div style="width:100%;max-width:360px;height:5px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin-top:9px"><div style="width:35%;height:100%;background:#2F80B7;animation:bar 1.6s ease-in-out infinite"></div></div>
-</sc-if>
-<sc-if value="{{ b.errored }}">
-<div style="font:400 12.5px/1.5 'Open Sans';color:#B3261E;margin-top:6px">El archivo de Mis Retenciones no pudo leerse. El resto de los bloques ya finalizó.</div>
-<button style="margin-top:9px;padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer">Reintentar bloque</button>
-</sc-if>
-</div>
-</div>
-</sc-for>
-</div>
-<sc-if value="{{ execDone }}">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<div style="padding:15px 16px;border-bottom:1px solid #E3E8EE;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
-<div>
-<div style="font:600 15.5px 'Open Sans'">Resumen consolidado</div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">CAZATUR SA · 08/2026 · finalizado el 04/09/2026 14:22 — 2 bloques con diferencias</div>
-</div>
-<div style="display:flex;gap:9px;flex-wrap:wrap">
-<button onClick="{{ toastXls }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Enviar por mail</button>
-<button onClick="{{ toastXls }}" style="padding:9px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Descargar todo (ZIP)</button>
-</div>
-</div>
-<sc-for list="{{ bloques }}" as="b" hint-placeholder-count="4">
-<div style="padding:13px 16px;border-bottom:1px solid #EEF1F4;display:flex;align-items:center;gap:13px;flex-wrap:wrap">
-<span style="padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ b.stb.bg }};color:{{ b.stb.fg }};border:1px solid {{ b.stb.bd }};white-space:nowrap">{{ b.stb.label }}</span>
-<div style="min-width:220px;flex:1">
-<div style="font:600 13.5px 'Open Sans'">{{ b.t }}</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ b.r }}</div>
-</div>
-<span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Descargar Excel</span>
-</div>
-</sc-for>
-</div>
-</sc-if>
-</sc-if>
-
-<sc-if value="{{ scr.crucesInd }}">
-<div>
-<div style="font:600 22px/1.2 'Open Sans'">Cruces individuales</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Elegí el cruce que querés correr por separado.</div>
-</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
-<sc-for list="{{ tarjetasCruce }}" as="c" hint-placeholder-count="3">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px">
-<div style="display:flex;align-items:center;gap:11px">
-<div style="width:30px;height:30px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 13px 'Open Sans'">{{ c.l }}</div>
-<div style="font:600 14.5px/1.3 'Open Sans'">{{ c.t }}</div>
-</div>
-<div style="font:400 13px/1.55 'Open Sans';color:#5A6B7B">{{ c.d }}</div>
-<div style="padding:10px 12px;background:#F5F7FA;border-radius:6px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Archivos requeridos</div>
-<div style="font:400 12.5px/1.5 'Open Sans';margin-top:5px">{{ c.files }}</div>
-</div>
-<div style="flex:1"></div>
-<button onClick="{{ c.go }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ejecutar</button>
-</div>
-</sc-for>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-<span style="padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">Cruce A seleccionado</span>
-<div style="font:600 15.5px 'Open Sans'">Mis Comprobantes Recibidos vs IVA Compras</div>
-</div>
-<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px;max-width:760px">
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>CAZATUR SA — 30-71234567-8</option></select>
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>08 — Agosto</option></select>
-<select style="padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>2026</option></select>
-</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:16px">
-<div style="border:1px dashed #D5DEE7;border-radius:6px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:7px">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
-<div style="font:600 13px 'Open Sans'">Mis Comprobantes Recibidos</div>
-<div style="font:400 12px 'Open Sans';color:#5A6B7B">.xls / .xlsx — arrastrá o hacé clic</div>
-</div>
-<div style="border:1px dashed #D5DEE7;border-radius:6px;padding:13px;display:flex;align-items:center;gap:11px">
-<div style="width:32px;height:32px;border-radius:6px;background:#E8F3EE;display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
-<div style="min-width:0;flex:1">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">IVA Compras</div>
-<div style="font:600 13px/1.35 'Open Sans';margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">CAZATUR_IVA_COMPRAS_082026.xlsx</div>
-<div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:2px">0,9 MB · 1.284 filas</div>
-</div>
-</div>
-</div>
-<div style="display:flex;align-items:center;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid #E3E8EE">
-<div style="width:22px;height:22px;border:3px solid #E3E8EE;border-top-color:#14395C;border-radius:14px;animation:spin 900ms linear infinite"></div>
-<div style="font:600 13.5px 'Open Sans'">Ejecutando cruce</div>
-<div style="flex:1;max-width:320px;height:5px;background:#EEF1F4;border-radius:4px;overflow:hidden"><div style="width:45%;height:100%;background:#14395C;animation:bar 1.6s ease-in-out infinite"></div></div>
-<div style="flex:1"></div>
-<button onClick="{{ go.cruceResultado }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
-</div>
-</div>
-</sc-if>
-
 <sc-if value="{{ scr.cruceResultado }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:17px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
@@ -2099,7 +1948,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', collapsed: false, loginErr: false,
-    step: 1, dz: 'loaded', proc: 'run', exec: 'run',
+    step: 1, dz: 'loaded', proc: 'run',
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
@@ -2145,10 +1994,8 @@ class Component extends DCLogic {
     liqHistorial: ['Liquidador IVA', 'Historial de liquidaciones'],
     liqDashboard: ['Liquidador IVA', 'Dashboard de liquidaciones'],
     liqReportes: ['Liquidador IVA', 'Reportes'],
-    crucesCompleto: ['Cruces', 'Proceso completo'],
-    crucesInd: ['Cruces', 'Cruces individuales'],
-    cruceResultado: ['Cruces', 'Resultado de cruce'],
-    crucesHistorial: ['Cruces', 'Historial de cruces'],
+    cruceResultado: ['Liquidador IVA', 'Resultado de cruce'],
+    crucesHistorial: ['Liquidador IVA', 'Historial de cruces'],
     config: ['MyIVA', 'Configuración'],
     auditoria: ['MyIVA', 'Auditoría'],
     perfil: ['MyIVA', 'Mi perfil']
@@ -2295,13 +2142,10 @@ class Component extends DCLogic {
       { k: 'link', label: 'Inicio', key: 'inicio', icon: I.home },
       { k: 'group', label: 'Liquidador IVA', icon: I.file },
       { k: 'sub', label: 'Nueva liquidación', key: 'liqNueva' },
+      { k: 'sub', label: 'Historial de cruces', key: 'crucesHistorial' },
       { k: 'sub', label: 'Historial de liquidaciones', key: 'liqHistorial' },
       { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' },
-      { k: 'sub', label: 'Reportes', key: 'liqReportes' },
-      { k: 'group', label: 'Cruces', icon: I.cross },
-      { k: 'sub', label: 'Proceso completo', key: 'crucesCompleto' },
-      { k: 'sub', label: 'Cruces individuales', key: 'crucesInd' },
-      { k: 'sub', label: 'Historial de cruces', key: 'crucesHistorial' }
+      { k: 'sub', label: 'Reportes', key: 'liqReportes' }
     ];
     if (admin) raw.push(
       { k: 'link', label: 'Clientes', key: 'clientes', icon: I.users },
@@ -2327,8 +2171,7 @@ class Component extends DCLogic {
     const active = this.ALIAS[s.screen] || s.screen;
     const items = [
       { label: 'Inicio', key: 'inicio', icon: I.home },
-      { label: 'Liquidador IVA', key: 'liqHistorial', icon: I.file },
-      { label: 'Cruces', key: 'crucesCompleto', icon: I.cross }
+      { label: 'Liquidador IVA', key: 'liqHistorial', icon: I.file }
     ];
     if (s.role === 'admin') items.push(
       { label: 'Clientes', key: 'clientes', icon: I.users },
@@ -2336,7 +2179,7 @@ class Component extends DCLogic {
       { label: 'Configuración', key: 'config', icon: I.gear },
       { label: 'Auditoría', key: 'auditoria', icon: I.audit }
     );
-    const fam = { liqNueva: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesInd: 'crucesCompleto', crucesHistorial: 'crucesCompleto', cruceResultado: 'crucesCompleto', clienteFicha: 'clientes' };
+    const fam = { liqNueva: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'clientes' };
     const act = fam[active] || active;
     return items.map(it => ({
       label: it.label, icon: it.icon, go: this.nav(it.key),
@@ -2348,7 +2191,7 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const scr = {};
-    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqDashboard', 'liqReportes', 'crucesCompleto', 'crucesInd', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
+    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqDashboard', 'liqReportes', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
     const E = this.EST;
     const go = {};
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
@@ -2367,7 +2210,7 @@ class Component extends DCLogic {
     const isAdmin = s.role === 'admin', me = this.me();
     const procesos = [
       { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', est: 'Completado' },
-      { cliente: 'DACKET SA', proc: 'Proceso completo', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', est: 'Completado con diferencias' },
+      { cliente: 'DACKET SA', proc: 'Cruces de liquidación', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', est: 'Completado con diferencias' },
       { cliente: 'DASYC SRL', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'M. Duarte', est: 'Completado' },
       { cliente: 'NOVALUX S.A.', proc: 'Liquidación IVA', per: '08/2026', fecha: '03/09/2026 09:12', user: 'S. Ibarra', est: 'Con errores' },
       { cliente: 'FIDEICOMISO PAMPA PILAR', proc: 'Cruce Retenciones', per: '07/2026', fecha: '02/09/2026 16:31', user: 'S. Ibarra', est: 'Procesando' },
@@ -2454,7 +2297,7 @@ class Component extends DCLogic {
       procesos, clientes, usuarios,
       alertas: alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0),
       notifs: [
-        { t: 'Proceso completo finalizado con diferencias', d: 'DACKET SA · 08/2026', when: 'hace 12 min', bg: '#F4F9FD', dot: '#B7791F' },
+        { t: 'Cruces finalizados con diferencias', d: 'DACKET SA · 08/2026', when: 'hace 12 min', bg: '#F4F9FD', dot: '#B7791F' },
         { t: 'Liquidación completada', d: 'CAZATUR SA · 08/2026 · saldo a pagar 1.738.389,40', when: 'hace 2 h', bg: '#F4F9FD', dot: '#2E7D5B' },
         { t: 'Error al procesar IVA Ventas', d: 'NOVALUX S.A. · 08/2026', when: 'ayer', bg: '#F4F9FD', dot: '#B3261E' },
         { t: 'Reporte exportado', d: 'Evolución de saldos · 01/2026–08/2026', when: '02/09/2026', bg: '#FFFFFF', dot: '#DDE3E9' },
@@ -2844,15 +2687,7 @@ class Component extends DCLogic {
       cliente: 'CAZATUR SA', tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: me.short,
       regs: r.isErr ? '—' : r.regs.toLocaleString('es-AR'), dif: r.isErr ? '—' : String(r.dif), est: r.est, hasDif: r.hasDif, errs: r.errs
     })) : [];
-    const bloques = [
-      { n: '1', t: 'Cruce Mis Comprobantes Recibidos vs IVA Compras', st: 'dif', r: '1.284 registros · 1.278 exactas · 3 con diferencias · 3 faltantes' },
-      { n: '2', t: 'Cruce Mis Comprobantes Emitidos vs IVA Ventas', st: 'ok', r: '2.117 registros · 2.117 exactas · 0 con diferencias · 0 faltantes' },
-      { n: '3', t: 'Cruce Mis Retenciones vs IVA Ventas / IVA Compras', st: s.exec === 'error' ? 'err' : (s.exec === 'run' ? 'run' : 'dif'), r: '96 registros · 94 exactas · 2 con diferencias · 0 faltantes' },
-      { n: '4', t: 'Liquidación de IVA', st: s.exec === 'done' ? 'ok' : 'pend', r: 'Saldo a pagar 1.632.105,25 · 08/2026' }
-    ];
     const STB = {
-      pend: { label: 'Pendiente', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
-      run: { label: 'En curso', bg: '#E9F1F8', fg: '#1F6795', bd: '#CFE2F0' },
       ok: { label: 'Completado', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
       dif: { label: 'Completado con diferencias', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
       err: { label: 'Con error', bg: '#FBE9E7', fg: '#B3261E', bd: '#F3CFCB' }
@@ -2891,26 +2726,12 @@ class Component extends DCLogic {
     const filtros = ['todos', 'exactas', 'diferencias', 'faltaArca', 'faltaSub'];
     const fLabel = { todos: 'Todos (1.284)', exactas: 'Sin diferencias (1.278)', diferencias: 'Con diferencias (3)', faltaArca: 'Falta en ARCA (2)', faltaSub: 'Falta en el subdiario (1)' };
     return {
-      bloques: bloques.map(b => Object.assign({}, b, { stb: STB[b.st], done: b.st === 'ok' || b.st === 'dif', running: b.st === 'run', errored: b.st === 'err' })),
-      execModes: ['run', 'done', 'error'].map(k => ({
-        label: { run: 'En curso', done: 'Finalizado', error: 'Bloque con error' }[k],
-        go: this.tset('exec', k),
-        bg: s.exec === k ? '#14395C' : '#FFFFFF', fg: s.exec === k ? '#FFFFFF' : '#5A6B7B'
-      })),
-      execDone: s.exec === 'done',
       cruTabs: tabs.map(([k, label]) => ({
         label, go: this.tset('cruceTab', k),
         fg: s.cruceTab === k ? '#14395C' : '#5A6B7B',
         bar: s.cruceTab === k ? '#14395C' : 'transparent'
       })),
       cruTab, rowsA, rowsB, rowsC,
-      archivosCompleto: [
-        { label: 'IVA Ventas', file: 'CAZATUR_IVA_VENTAS_082026.xlsx', meta: '1,4 MB · 2.117 filas' },
-        { label: 'IVA Compras', file: 'CAZATUR_IVA_COMPRAS_082026.xlsx', meta: '0,9 MB · 1.284 filas' },
-        { label: 'Mis Comprobantes Emitidos', file: 'MCE_30712345678_082026.xlsx', meta: '1,1 MB · 2.117 filas' },
-        { label: 'Mis Comprobantes Recibidos', file: 'MCR_30712345678_082026.xlsx', meta: '0,8 MB · 1.281 filas' },
-        { label: 'Mis Retenciones', file: 'MIS_RETENCIONES_082026.xlsx', meta: '124 KB · 96 filas' }
-      ],
       cruceTitulo: s.cruceTab === 'A' ? 'Mis Comprobantes Recibidos vs IVA Compras' : (s.cruceTab === 'B' ? 'Mis Comprobantes Emitidos vs IVA Ventas' : 'Mis Retenciones vs IVA Ventas / IVA Compras'),
       kpisCruce: [
         { label: 'Registros procesados', value: '1.284', color: '#1B2733' },
@@ -2925,11 +2746,6 @@ class Component extends DCLogic {
         fg: s.cruceFiltro === f ? '#FFFFFF' : '#5A6B7B',
         bd: s.cruceFiltro === f ? '#14395C' : '#E3E8EE'
       })),
-      tarjetasCruce: [
-        { l: 'A', t: 'Mis Comprobantes Recibidos vs IVA Compras', d: 'Contrasta los comprobantes recibidos informados en ARCA contra el subdiario de compras del cliente.', files: 'Mis Comprobantes Recibidos · IVA Compras' },
-        { l: 'B', t: 'Mis Comprobantes Emitidos vs IVA Ventas', d: 'Contrasta los comprobantes emitidos informados en ARCA contra el subdiario de ventas, alícuota por alícuota.', files: 'Mis Comprobantes Emitidos · IVA Ventas' },
-        { l: 'C', t: 'Mis Retenciones vs IVA Ventas / IVA Compras', d: 'Verifica retenciones y percepciones informadas en ARCA contra las registradas en ambos subdiarios.', files: 'Mis Retenciones · IVA Ventas · IVA Compras' }
-      ].map(c => Object.assign({}, c, { go: this.nav('cruceResultado') })),
       totalesControl: [
         { label: 'Subtotal retenciones', value: '42.180,00', color: '#1B2733' },
         { label: 'Subtotal percepciones', value: '64.104,15', color: '#1B2733' },
