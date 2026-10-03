@@ -401,7 +401,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ cliTab.config }}">
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
-<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Alícuotas habilitadas</div>
+<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Alícuotas (se aplican todas)</div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
 <div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
@@ -1555,7 +1555,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ scr.config }}">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Configuración</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Parámetros generales del estudio. Los clientes pueden sobreescribir alícuotas en su ficha.</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Parámetros generales del estudio.</div>
 </div>
 <div style="display:flex;gap:2px;border-bottom:1px solid #E3E8EE">
 <sc-for list="{{ cfgTabs }}" as="t" hint-placeholder-count="3">
@@ -1564,10 +1564,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <sc-if value="{{ cfgTab.params }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px;max-width:760px">
-<div style="font:600 14.5px 'Open Sans'">Alícuotas habilitadas por defecto</div>
+<div style="font:600 14.5px 'Open Sans'">Alícuotas</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Todas las alícuotas vigentes se aplican siempre en las liquidaciones y cruces.</div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
 <sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
-<div onClick="{{ al.toggle }}" style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
+<div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
 </sc-for>
 </div>
 <div style="height:1px;background:#E3E8EE;margin:20px 0"></div>
@@ -1780,10 +1781,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Parámetros de liquidación</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin:11px 0 9px">Alícuotas habilitadas</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin:11px 0 9px">Alícuotas (se aplican todas)</div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
-<div onClick="{{ al.toggle }}" style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
+<div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
 </sc-for>
 </div>
 </div>
@@ -1976,7 +1977,6 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
-    alic: { '21%': 1, '10,5%': 1, '27%': 1, '5%': 0, '2,5%': 0, '0%': 1 },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
   };
@@ -2075,7 +2075,7 @@ class Component extends DCLogic {
     });
     const inc = [];
     if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
-    if (has('compras')) inc.push({ t: 'La alícuota 5% aparece en 2 comprobantes de compras y no está habilitada para el cliente.' });
+    if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
     if (has('compras')) inc.push({ t: '3 proveedores figuran en la lista de CUITs observados.' });
     const done = rows.filter(r => r.run);
     return {
@@ -2258,13 +2258,13 @@ class Component extends DCLogic {
         { k: 'CUIT', v: '30-71234567-8' },
         { k: 'Condición frente al IVA', v: 'Responsable Inscripto' },
         { k: 'Inicio de ejercicio', v: '01/01' },
-        { k: 'Alícuotas habilitadas', v: '21% · 10,5% · 27% · 0%' },
+        { k: 'Alícuotas', v: '21% · 10,5% · 27% · 5% · 2,5% · 0%' },
         { k: 'Mails de notificación', v: '2 destinatarios' }
       ],
       actividadCliente: [
         { t: 'Liquidación 08/2026 completada por M. Duarte', when: 'hace 2 h' },
         { t: 'Cruce Recibidos vs IVA Compras · 3 diferencias', when: 'hace 2 h' },
-        { t: 'Parámetro modificado: alícuota 0% habilitada', when: '01/09/2026' },
+        { t: 'Parámetro modificado: mail de notificación agregado', when: '01/09/2026' },
         { t: 'Reporte Papel de trabajo exportado', when: '30/08/2026' },
         { t: 'Liquidación 07/2026 completada por L. Peralta', when: '14/08/2026' }
       ],
@@ -2280,7 +2280,7 @@ class Component extends DCLogic {
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
         { tipo: 'Mis Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026', regs: '96', dif: '2', est: 'Completado con diferencias' }
       ].map(r => Object.assign({}, r, { st: E[r.est] })),
-      alicuotas: ['21%', '10,5%', '27%', '5%', '2,5%', '0%'].map(a => Object.assign({ label: a, toggle: this.flip('alic', a) }, chip(s.alic[a]))),
+      alicuotas: ['21%', '10,5%', '27%', '5%', '2,5%', '0%'].map(a => Object.assign({ label: a }, chip(1))),
       usuariosChips: ['M. Duarte', 'L. Peralta', 'S. Ibarra', 'C. Vega'].map(n => Object.assign({ nombre: n, toggle: this.flip('asign', n) }, chip(s.asign[n]))),
       clientesChips: clientes.map(c => Object.assign({ rz: c.rz, toggle: this.flip('cliSel', c.rz) }, chip(s.cliSel[c.rz]))),
       chipsCount: selCount + ' de 7 clientes seleccionados',
@@ -2653,7 +2653,7 @@ class Component extends DCLogic {
         { f: '04/09/2026 14:22', u: 'M. Duarte', a: 'Liquidación ejecutada', c: 'CAZATUR SA', p: '08/2026', r: 'Completado', ip: '190.15.44.12' },
         { f: '04/09/2026 14:20', u: 'M. Duarte', a: 'Cruce ejecutado', c: 'CAZATUR SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.12' },
         { f: '04/09/2026 11:05', u: 'L. Peralta', a: 'Cruce ejecutado', c: 'DACKET SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.30' },
-        { f: '03/09/2026 18:02', u: 'M. Duarte', a: 'Parámetro modificado', c: 'CAZATUR SA', p: '—', r: 'Alícuota 0% habilitada', ip: '190.15.44.12' },
+        { f: '03/09/2026 18:02', u: 'M. Duarte', a: 'Parámetro modificado', c: 'CAZATUR SA', p: '—', r: 'Mail de notificación agregado', ip: '190.15.44.12' },
         { f: '03/09/2026 09:12', u: 'S. Ibarra', a: 'Liquidación ejecutada', c: 'NOVALUX S.A.', p: '08/2026', r: 'Con errores', ip: '181.44.20.7' },
         { f: '02/09/2026 16:40', u: 'S. Ibarra', a: 'Reporte exportado', c: 'Varios (3)', p: '01/2026–08/2026', r: 'Excel generado', ip: '181.44.20.7' },
         { f: '28/08/2026 10:11', u: 'M. Duarte', a: 'Cliente creado', c: 'FIDEICOMISO PAMPA PILAR', p: '—', r: 'Alta confirmada', ip: '190.15.44.12' }
