@@ -753,7 +753,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#E8F3EE;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
 <div style="font:600 16px 'Open Sans'">Liquidación completada · {{ seqCurTxt }}</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar 1.632.105,25 · 3.401 registros procesados</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar -1.632.105,25 · 3.401 registros procesados</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
 <button onClick="{{ go.liqResultado }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
@@ -1074,7 +1074,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="font:600 14.5px 'Open Sans'">Evolución del saldo</div>
-<div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:3px">Positivo = a pagar · negativo = a favor</div>
+<div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:3px">Negativo = a pagar · positivo = a favor</div>
 <div style="position:relative;margin-top:10px">
 <svg viewBox="0 0 640 210" style="width:100%;height:auto;display:block">
 <line x1="14" y1="{{ zeroY }}" x2="626" y2="{{ zeroY }}" stroke="#D5DEE7" stroke-width="1" stroke-dasharray="4 4"></line>
@@ -1231,7 +1231,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.ret }}</td>
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.saldo }}</td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
 </tr>
 </sc-for>
 </tbody>
@@ -2077,7 +2077,7 @@ class Component extends DCLogic {
     const pk = (r) => r.per.slice(3) + r.per.slice(0, 2) + String(r.seq).padStart(2, '0');
     const data = rows.slice().sort((a, b) => pk(a).localeCompare(pk(b)));
     const serial = (per) => (Date.UTC(+per.slice(3), +per.slice(0, 2) - 1, 1) - Date.UTC(1899, 11, 30)) / 86400000;
-    const ST = { head: 1, date: 2, money: 3, seq: 4, pct: 5, totLabel: 6, totMoney: 7, totPct: 8, dataEmpty: 10, totEmpty: 11 };
+    const ST = { head: 1, date: 2, money: 3, seq: 4, pct: 5, totLabel: 6, totMoney: 7, totPct: 8, dataEmpty: 10, totEmpty: 11, saldo: 12 };
     const cell = (ref, s, o) => {
       if (o && o.f !== undefined) return `<c r="${ref}" s="${s}"><f>${esc(o.f)}</f></c>`;
       if (o && o.t !== undefined) return `<c r="${ref}" s="${s}" t="inlineStr"><is><t>${esc(o.t)}</t></is></c>`;
@@ -2113,14 +2113,15 @@ class Component extends DCLogic {
         AO: `1-${ratio}`,
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
         AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
-        AW: `IF(${C('AW')}${p}<0,-${C('AN')}${r}+${C('AT')}${r}+${C('AM')}${r}+${C('AW')}${p},-${C('AN')}${r}+${C('AT')}${r}+${C('AM')}${r})`,
-        AX: `IF(${C('AX')}${p}>=0,IF(${C('AW')}${r}>0,${C('AW')}${r}-${C('AV')}${r},-${C('AV')}${r}),IF(${C('AW')}${r}>0,${C('AX')}${p}+${C('AW')}${r}-${C('AV')}${r},-${C('AV')}${r}+${C('AX')}${p}))`,
-        AY: `IF(${C('AX')}${r}>0,${C('AX')}${r},0)`
+        AW: `IF(${C('AW')}${p}>0,${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r}+${C('AW')}${p},${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r})`,
+        AX: `IF(${C('AX')}${p}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}),IF(${C('AW')}${r}<0,${C('AX')}${p}+${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}+${C('AX')}${p}))`,
+        AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
       };
+      const SALDO = { AW: 1, AX: 1, AY: 1 };
       const cs = [cell('A' + r, ST.date, { v: serial(d.per) }), cell('B' + r, ST.seq, { v: d.seq })];
       this.NOVALUX_COLS.forEach(([o]) => {
         const ref = C(o) + r;
-        if (f[o]) cs.push(cell(ref, o === 'AO' ? ST.pct : ST.money, { f: f[o] }));
+        if (f[o]) cs.push(cell(ref, o === 'AO' ? ST.pct : (SALDO[o] ? ST.saldo : ST.money), { f: f[o] }));
         else if (v[o] !== undefined) cs.push(cell(ref, ST.money, { v: v[o] }));
         else cs.push(cell(ref, ST.dataEmpty));
       });
@@ -2147,11 +2148,11 @@ class Component extends DCLogic {
       + `<mergeCells count="2"><mergeCell ref="${C('AZ')}2:${C('BC')}2"/><mergeCell ref="${C('BD')}2:${C('BG')}2"/></mergeCells></worksheet>`;
     const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
-      + `<numFmts count="2"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/></numFmts>`
+      + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;$&quot;#,##0.00"/></numFmts>`
       + `<fonts count="3"><font><sz val="10"/><color rgb="FF000000"/><name val="Arial"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font></fonts>`
       + `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF073763"/><bgColor rgb="FF073763"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9FC5E8"/><bgColor rgb="FF9FC5E8"/></patternFill></fill></fills>`
       + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border></borders>`
-      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="12">`
+      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13">`
       + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
       + xf(0, 1, 2, '<alignment horizontal="center" vertical="center" wrapText="1"/>')
       + xf(165, 2, 3, '<alignment horizontal="left"/>')
@@ -2164,6 +2165,7 @@ class Component extends DCLogic {
       + xf(0, 1, 2)
       + xf(0, 2, 3)
       + xf(0, 1, 2)
+      + xf(166, 2, 3)
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
     const files = [
       ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
@@ -2513,7 +2515,7 @@ class Component extends DCLogic {
       alertas: alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0),
       notifs: [
         { t: 'Cruces finalizados con diferencias', d: 'DACKET SA · 08/2026', when: 'hace 12 min', bg: '#F4F9FD', dot: '#B7791F' },
-        { t: 'Liquidación completada', d: 'CAZATUR SA · 08/2026 · saldo a pagar 1.738.389,40', when: 'hace 2 h', bg: '#F4F9FD', dot: '#2E7D5B' },
+        { t: 'Liquidación completada', d: 'CAZATUR SA · 08/2026 · saldo a pagar -1.738.389,40', when: 'hace 2 h', bg: '#F4F9FD', dot: '#2E7D5B' },
         { t: 'Error al procesar IVA Ventas', d: 'NOVALUX S.A. · 08/2026', when: 'ayer', bg: '#F4F9FD', dot: '#B3261E' },
         { t: 'Reporte exportado', d: 'Evolución de saldos · 01/2026–08/2026', when: '02/09/2026', bg: '#FFFFFF', dot: '#DDE3E9' },
         { t: 'Cliente creado', d: 'FIDEICOMISO PAMPA PILAR', when: '28/08/2026', bg: '#FFFFFF', dot: '#DDE3E9' }
@@ -2526,7 +2528,7 @@ class Component extends DCLogic {
       })),
       cliTab,
       kpisCliente: [
-        { label: 'Último saldo a pagar', value: '1.738.389,40', color: '#B3261E' },
+        { label: 'Último saldo a pagar', value: '-1.738.389,40', color: '#B3261E' },
         { label: 'Liquidaciones registradas', value: '8', color: '#1B2733' },
         { label: 'Cruces del período', value: '3', color: '#1B2733' },
         { label: 'Alertas abiertas', value: '1', color: '#B7791F' }
@@ -2546,13 +2548,13 @@ class Component extends DCLogic {
         { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
       ],
       liqCliente: (s.liqSaved ? [
-        { per: '08/2026', seq: 1, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
+        { per: '08/2026', seq: 1, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
       ] : []).concat([
-        { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '1.297.413,35', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
-        { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
-        { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '-297.827,45', sc: '#2E7D5B', est: 'Completado' }
+        { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
+        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '-1.297.413,35', sc: '#B3261E', est: 'Completado' },
+        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '-1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
+        { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
+        { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
       ]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
       crucesCliente: [
         { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
@@ -2623,7 +2625,8 @@ class Component extends DCLogic {
       { per: '06/2026', df: 3104288, cf: 3402115.45, rp: 79330, a21: 2820000, a105: 260000, a27: 24288 },
       { per: '07/2026', df: 3908744.15, cf: 2611330.8, rp: 92775.4, a21: 3600000, a105: 285000, a27: 23744 },
       { per: '08/2026', df: 4182905.6, cf: 2444516.2, rp: 106284.15, a21: 3979500, a105: 176400, a27: 26005 }
-    ].map(d => Object.assign({}, d, { saldo: Math.round((d.df - d.cf - d.rp) * 100) / 100 }));
+    ].map(d => Object.assign({}, d, { saldo: Math.round((d.cf + d.rp - d.df) * 100) / 100 }));
+    const saldoC = (v) => v < 0 ? '#B3261E' : '#2E7D5B';
     const fmt = (n) => {
       const neg = n < 0; n = Math.abs(n);
       const parts = n.toFixed(2).split('.');
@@ -2644,11 +2647,11 @@ class Component extends DCLogic {
       hl: isHov('b', i) ? '#EEF3F8' : 'transparent', lab: isHov('b', i) ? '#14395C' : '#5A6B7B',
       enter: enter('b', i)
     }));
-    const lo = -600000, hi = 2000000;
+    const lo = -2000000, hi = 600000;
     const ly = (v) => 178 - (v - lo) / (hi - lo) * 150;
     const pts = serie.map((d, i) => (36 + i * 112) + ',' + ly(d.saldo).toFixed(1)).join(' ');
     const dots = serie.map((d, i) => ({
-      cx: 36 + i * 112, cy: ly(d.saldo), per: d.per, val: fmt(d.saldo), c: d.saldo < 0 ? '#2E7D5B' : '#B3261E',
+      cx: 36 + i * 112, cy: ly(d.saldo), per: d.per, val: fmt(d.saldo), c: saldoC(d.saldo),
       hitx: 36 + i * 112 - 56,
       r: isHov('l', i) ? 6.5 : 4.5, sw: isHov('l', i) ? 2 : 0,
       guide: isHov('l', i) ? '#9AA9B7' : 'transparent', lab: isHov('l', i) ? '#14395C' : '#5A6B7B',
@@ -2680,7 +2683,7 @@ class Component extends DCLogic {
         { l: 'Débito fiscal', v: fmt(d.df), c: '#14395C' },
         { l: 'Crédito fiscal', v: fmt(d.cf), c: '#2F80B7' },
         { l: 'Retenciones + Percepciones', v: fmt(d.rp), c: '#9FC4DD' },
-        { l: d.saldo < 0 ? 'Saldo a favor' : 'Saldo a pagar', v: fmt(d.saldo), c: d.saldo < 0 ? '#2E7D5B' : '#B3261E' }
+        { l: d.saldo < 0 ? 'Saldo a pagar' : 'Saldo a favor', v: fmt(d.saldo), c: saldoC(d.saldo) }
       ] : [
         { l: '21%', v: fmt(d.a21), c: '#14395C' },
         { l: '10,5%', v: fmt(d.a105), c: '#2F80B7' },
@@ -2694,9 +2697,9 @@ class Component extends DCLogic {
       const varp = prev ? ((d.saldo - prev.saldo) / Math.abs(prev.saldo) * 100) : null;
       return {
         per: d.per, df: fmt(d.df), cf: fmt(d.cf), rp: fmt(d.rp), saldo: fmt(d.saldo),
-        sc: d.saldo < 0 ? '#2E7D5B' : '#B3261E',
+        sc: saldoC(d.saldo),
         vr: varp === null ? '—' : (varp > 0 ? '+' : '') + fmt(d.saldo - prev.saldo) + ' (' + (varp > 0 ? '+' : '') + varp.toFixed(1).replace('.', ',') + ' %)',
-        vc: varp === null ? '#9AA9B7' : (varp > 0 ? '#B3261E' : '#2E7D5B')
+        vc: varp === null ? '#9AA9B7' : saldoC(varp)
       };
     });
 
@@ -2705,8 +2708,8 @@ class Component extends DCLogic {
     const num = (v) => parseFloat(v.replace(/\./g, '').replace(',', '.'));
     const conSaldo = (r) => {
       if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7' });
-      const saldo = num(r.df) - num(r.cf) - num(r.rp);
-      return Object.assign({}, r, { saldo: fmt(saldo), sc: saldo < 0 ? '#2E7D5B' : '#B3261E' });
+      const saldo = num(r.cf) + num(r.rp) - num(r.df);
+      return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo) });
     };
     const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
     const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
@@ -2856,11 +2859,11 @@ class Component extends DCLogic {
         { label: 'Total débito fiscal', value: '4.182.905,60', color: '#1B2733' },
         { label: 'Total crédito fiscal', value: '2.444.516,20', color: '#1B2733' },
         { label: 'Retenciones y percepciones', value: '106.284,15', color: '#1B2733' },
-        { label: 'Saldo a pagar', value: '1.632.105,25', color: '#B3261E' }
+        { label: 'Saldo a pagar', value: '-1.632.105,25', color: '#B3261E' }
       ],
       saldos: [
-        { label: 'Saldo 1° párrafo', value: '1.738.389,40', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' },
-        { label: 'Saldo 2° párrafo', value: '1.632.105,25', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
+        { label: 'Saldo 1° párrafo', value: '-1.738.389,40', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' },
+        { label: 'Saldo 2° párrafo', value: '-1.632.105,25', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
       ],
       ventasRows: [
         { c: 'Neto gravado 21%', n: '18.950.000,00', d: '3.979.500,00', b: 0 },
@@ -2923,12 +2926,12 @@ class Component extends DCLogic {
       repTipo: s.repTipo,
       repCols: ['Cliente', 'CUIT', 'Período', 'Débito fiscal', 'Crédito fiscal', 'Retenciones', 'Saldo 1° párrafo', 'Saldo 2° párrafo', 'Estado'],
       repPreview: [
-        { cliente: 'CAZATUR SA', per: '08/2026', df: '4.182.905,60', cf: '2.444.516,20', ret: '106.284,15', saldo: '1.632.105,25' },
-        { cliente: 'DACKET SA', per: '08/2026', df: '2.907.114,85', cf: '3.166.402,70', ret: '54.220,00', saldo: '-313.507,85' },
-        { cliente: 'DASYC SRL', per: '08/2026', df: '1.455.230,10', cf: '987.640,55', ret: '22.140,80', saldo: '445.448,75' },
-        { cliente: 'CAZATUR SA', per: '07/2026', df: '3.908.744,15', cf: '2.611.330,80', ret: '98.410,05', saldo: '1.199.003,30' },
-        { cliente: 'DACKET SA', per: '07/2026', df: '2.744.900,00', cf: '2.408.115,40', ret: '48.900,00', saldo: '287.884,60' }
-      ]
+        { cliente: 'CAZATUR SA', per: '08/2026', df: '4.182.905,60', cf: '2.444.516,20', ret: '106.284,15', saldo: '-1.632.105,25' },
+        { cliente: 'DACKET SA', per: '08/2026', df: '2.907.114,85', cf: '3.166.402,70', ret: '54.220,00', saldo: '313.507,85' },
+        { cliente: 'DASYC SRL', per: '08/2026', df: '1.455.230,10', cf: '987.640,55', ret: '22.140,80', saldo: '-445.448,75' },
+        { cliente: 'CAZATUR SA', per: '07/2026', df: '3.908.744,15', cf: '2.611.330,80', ret: '98.410,05', saldo: '-1.199.003,30' },
+        { cliente: 'DACKET SA', per: '07/2026', df: '2.744.900,00', cf: '2.408.115,40', ret: '48.900,00', saldo: '-287.884,60' }
+      ].map(r => Object.assign({}, r, { sc: r.saldo[0] === '-' ? '#B3261E' : '#2E7D5B' }))
     };
   }
 
