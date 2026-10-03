@@ -992,7 +992,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ r.hasErr }}">
 <span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
 </sc-if>
-<span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
+<span onClick="{{ r.xls }}" title="Descargar el Excel de este período" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 </div>
 </td>
 </tr>
@@ -2729,12 +2729,28 @@ class Component extends DCLogic {
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
     const sel = s.histSel;
     const histPick = histFilas.filter(r => sel[rid(r)]);
+    const exportar = (rows) => {
+      const warn = (t, d) => this.setState({ toast: { kind: 'warn', t, d } });
+      if (!rows.length) return warn('Seleccioná al menos un período', 'Marcá uno o más períodos de un mismo cliente para exportar el Excel.');
+      const clis = [...new Set(rows.map(r => r.cliente))];
+      if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
+      const sinDatos = rows.filter(r => r.df === '—');
+      if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar.' + (rows.length > 1 ? ' Quitalo de la selección.' : ''));
+      try {
+        const x = this.novaluxXlsx(clis[0], rows);
+        this.descargar(x.name, x.bytes);
+        this.setState({ toast: { kind: 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna.' } });
+      } catch (err) {
+        this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
+      }
+    };
     const histVis = histFilas
       .filter(r => s.histSeq === '' || (s.histSeq === 'ult' ? r.seq === ultSeq[r.cliente + '|' + r.per] : r.seq === Number(s.histSeq)))
       .map(r => {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0), id = rid(r);
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
           sel: !!sel[id], toggle: () => this.setState(st => ({ histSel: Object.assign({}, st.histSel, { [id]: !st.histSel[id] }) })),
+          xls: () => exportar([r]),
           st: E[r.est], ver: this.nav('liqResultado'),
           hasErr: n > 0, errLabel: 'Errores de cruce (' + n + ')',
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg)
@@ -2815,17 +2831,7 @@ class Component extends DCLogic {
           return { histSel: next };
         });
       },
-      histExport: () => {
-        const warn = (t, d) => this.setState({ toast: { kind: 'warn', t, d } });
-        if (!histPick.length) return warn('Seleccioná al menos un período', 'Marcá uno o más períodos de un mismo cliente para exportar el Excel.');
-        const clis = [...new Set(histPick.map(r => r.cliente))];
-        if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
-        const sinDatos = histPick.filter(r => r.df === '—');
-        if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar. Quitalo de la selección.');
-        const x = this.novaluxXlsx(clis[0], histPick);
-        this.descargar(x.name, x.bytes);
-        this.setState({ toast: { kind: 'ok', t: 'Excel generado', d: x.name + ' · ' + histPick.length + (histPick.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna.' } });
-      },
+      histExport: () => exportar(histPick),
       histVacio: histVis.length === 0, histSeqLimpiar: () => this.setState({ histSeq: '' }),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
