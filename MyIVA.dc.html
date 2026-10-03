@@ -362,7 +362,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-for list="{{ liqCliente }}" as="r" hint-placeholder-count="5">
 <tr style-hover="background:#FAFBFD">
 <td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ go.liqResultado }}" style="cursor:pointer;color:#14395C">{{ r.per }}</span></td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }}</span></td>
+<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
@@ -510,15 +510,33 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="flex:1">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
 <div style="font:600 13px/1.4 'Open Sans';color:#14395C">CAZATUR SA · 08/2026 ya tiene {{ seqPrevLabel }}</div>
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#14395C;color:#fff;border:1px solid #14395C;white-space:nowrap">Se generará la Secuencia {{ seqNext }}</span>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#14395C;color:#fff;border:1px solid #14395C;white-space:nowrap">Se generará la {{ seqNextTxt }}</span>
 </div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la Secuencia {{ seqPrev }}, procesada el {{ seqPrevFecha }}. Si continuás, se genera una nueva secuencia y las anteriores quedan guardadas en el historial.</div>
-<div style="font:400 12px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">La primera vez que se procesa un período para un cliente se genera la Secuencia 0; cada nuevo proceso del mismo período suma una secuencia.</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la {{ seqPrevTxt }}, procesada el {{ seqPrevFecha }}. Si continuás, se genera una nueva secuencia y las anteriores quedan guardadas en el historial.</div>
+<div style="font:400 12px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">La Secuencia 0 es la declaración jurada original; de la 1 a la 9 son rectificativas (máximo 9 rectificativas por período).</div>
 </div>
 </div>
+<div style="margin-top:16px">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:8px">Secuencias del período</div>
+<div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px">
+<sc-for list="{{ seqTrack }}" as="q" hint-placeholder-count="10">
+<div style="border:1px solid {{ q.bd }};background:{{ q.bg }};border-radius:6px;padding:7px 4px;text-align:center">
+<div style="font:600 15px/1 'Open Sans';color:{{ q.fg }}">{{ q.n }}</div>
+<div style="font:600 10px/1.2 'Open Sans';color:{{ q.fg }};margin-top:4px;opacity:.85">{{ q.tipo }}</div>
+<div style="font:400 10px/1.2 'Open Sans';color:{{ q.sub }};margin-top:3px">{{ q.tag }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ seqMax }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">Este período ya tiene 9 rectificativas. No se pueden generar más secuencias.</div>
+</div>
+</sc-if>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ stepNext }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Continuar</button>
+<button onClick="{{ step1Next }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Continuar</button>
 </div>
 </div>
 </sc-if>
@@ -615,14 +633,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · Secuencia {{ seqNext }} · {{ upCountLabel }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
 <div>
 <div style="font:600 14px 'Open Sans'">Saldos a favor del período anterior</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">Tomados de la última secuencia liquidada: 07/2026 · Secuencia 2 · 12/08/2026</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">Tomados de la última secuencia liquidada: 07/2026 · Secuencia 2 · Rectificativa · 12/08/2026</div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
 <span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Resultado 07/2026</span>
@@ -716,14 +734,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
 <div style="width:34px;height:34px;border:3px solid #E3E8EE;border-top-color:#14395C;border-radius:20px;animation:spin 900ms linear infinite"></div>
 <div style="font:600 15px 'Open Sans'">Procesando liquidación</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · Secuencia {{ seqCur }} — no cierres esta pantalla.</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ seqCurTxt }} — no cierres esta pantalla.</div>
 <div style="width:100%;max-width:420px;height:6px;background:#EEF1F4;border-radius:4px;overflow:hidden"><div style="width:40%;height:100%;background:#14395C;animation:bar 1.6s ease-in-out infinite"></div></div>
 </div>
 </sc-if>
 <sc-if value="{{ procIs.done }}">
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#E8F3EE;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
-<div style="font:600 16px 'Open Sans'">Liquidación completada · Secuencia {{ seqCur }}</div>
+<div style="font:600 16px 'Open Sans'">Liquidación completada · {{ seqCurTxt }}</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar 1.632.105,25 · 3.401 registros procesados</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
@@ -752,9 +770,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:10px">
 <div style="font:600 20px/1.2 'Open Sans'">CAZATUR SA</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Completado</span>
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">Secuencia {{ seqPrev }}</span>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">{{ seqPrevTxt }}</span>
 </div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · Secuencia {{ seqPrev }} · Procesado por M. Duarte el {{ seqPrevFecha }}</div>
+<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por M. Duarte el {{ seqPrevFecha }}</div>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
@@ -944,7 +962,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }}</span></td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
@@ -1917,7 +1935,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 como <b style="color:#1B2733">Secuencia {{ seqNext }}</b>, trasladando los saldos del período anterior:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -2058,10 +2076,16 @@ class Component extends DCLogic {
     return () => this.setState({ toast: { kind, t, d } });
   }
 
+  SEQ_MAX = 9;
+
+  seqTipo(seq) { return seq === 0 ? 'Original' : 'Rectificativa'; }
+
+  seqTxt(seq) { return 'Secuencia ' + seq + ' · ' + this.seqTipo(seq); }
+
   seqChip(seq) {
     return seq > 0
-      ? { seq: String(seq), seqBg: '#E6EDF4', seqFg: '#14395C', seqBd: '#CBD9E6' }
-      : { seq: '0', seqBg: '#F5F7FA', seqFg: '#5A6B7B', seqBd: '#E3E8EE' };
+      ? { seq: String(seq), seqTipo: this.seqTipo(seq), seqBg: '#E6EDF4', seqFg: '#14395C', seqBd: '#CBD9E6' }
+      : { seq: '0', seqTipo: this.seqTipo(0), seqBg: '#F5F7FA', seqFg: '#5A6B7B', seqBd: '#E3E8EE' };
   }
 
   cruRun() {
@@ -2447,7 +2471,23 @@ class Component extends DCLogic {
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true }),
-      seqPrev: String(seqPrev), seqNext: String(seqPrev + 1), seqCur: String(s.liqSaved ? seqPrev : seqPrev + 1),
+      seqPrevTxt: this.seqTxt(seqPrev), seqNextTxt: this.seqTxt(Math.min(seqPrev + 1, this.SEQ_MAX)),
+      seqCurTxt: this.seqTxt(s.liqSaved ? seqPrev : seqPrev + 1),
+      seqMax: seqPrev >= this.SEQ_MAX,
+      seqTrack: Array.from({ length: this.SEQ_MAX + 1 }, (_, n) => {
+        const done = n <= seqPrev, next = n === seqPrev + 1;
+        return {
+          n: String(n), tipo: n === 0 ? 'Original' : 'Rectif.',
+          tag: done ? 'Liquidada' : (next ? 'A generar' : 'Disponible'),
+          bg: next ? '#14395C' : (done ? '#E8F3EE' : '#FFFFFF'),
+          bd: next ? '#14395C' : (done ? '#C7E3D6' : '#E3E8EE'),
+          fg: next ? '#FFFFFF' : (done ? '#2E7D5B' : '#9AA9B7'),
+          sub: next ? 'rgba(255,255,255,.8)' : (done ? '#2E7D5B' : '#9AA9B7')
+        };
+      }),
+      step1Next: () => seqPrev >= this.SEQ_MAX
+        ? this.setState({ toast: { kind: 'err', t: 'Máximo de rectificativas alcanzado', d: 'El período ya tiene 9 rectificativas.' } })
+        : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
       seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
       histCount: String(142 + (s.liqSaved ? 1 : 0)),
