@@ -9,7 +9,7 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap">
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#F5F7FA;font-family:'Open Sans',system-ui,sans-serif;color:#1B2733;-webkit-font-smoothing:antialiased}
@@ -27,7 +27,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ scr.login }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;min-height:100vh">
 <div style="flex:0 0 42%;min-width:320px;background:#14395C;color:#fff;padding:52px 48px;display:flex;flex-direction:column;justify-content:space-between">
-<div style="border:1px dashed rgba(255,255,255,.5);padding:16px 20px;width:168px;text-align:center;font:600 12px/1.2 'Open Sans';letter-spacing:.14em;color:rgba(255,255,255,.85)">LOGO ACÁ</div>
+<svg viewBox="0 0 216 80" role="img" aria-label="Estudio Blasco · Contadores públicos · Consultores en administración" style="width:250px;max-width:100%;height:auto;display:block">
+<text x="108" y="15" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font:400 9.5px 'Open Sans'">CONTADORES PUBLICOS</text>
+<text x="108" y="47" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font-family:'Open Sans';font-size:21px"><tspan style="font-weight:300">ESTUDIO</tspan><tspan style="font-weight:700"> • </tspan><tspan style="font-weight:700">BLASCO</tspan></text>
+<text x="108" y="72" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font:400 9.5px 'Open Sans'">CONSULTORES EN ADMINISTRACION</text>
+</svg>
 <div>
 <div style="font:600 48px/1 'Open Sans';letter-spacing:-.015em">MyIVA</div>
 <div style="height:3px;width:56px;background:#2F80B7;margin:20px 0 18px"></div>
@@ -72,7 +76,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ sbWide }}">
 <div style="flex:0 0 252px;width:252px;background:#14395C;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto">
 <div style="padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.12)">
-<div style="border:1px dashed rgba(255,255,255,.45);padding:11px;text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.14em;color:rgba(255,255,255,.8)">LOGO ACÁ</div>
+<svg viewBox="0 0 216 80" role="img" aria-label="Estudio Blasco · Contadores públicos · Consultores en administración" style="width:100%;height:auto;display:block">
+<text x="108" y="15" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font:400 9.5px 'Open Sans'">CONTADORES PUBLICOS</text>
+<text x="108" y="47" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font-family:'Open Sans';font-size:21px"><tspan style="font-weight:300">ESTUDIO</tspan><tspan style="font-weight:700"> • </tspan><tspan style="font-weight:700">BLASCO</tspan></text>
+<text x="108" y="72" text-anchor="middle" textLength="196" lengthAdjust="spacing" fill="#FFFFFF" style="font:400 9.5px 'Open Sans'">CONSULTORES EN ADMINISTRACION</text>
+</svg>
 <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:14px">
 <div style="font:600 19px/1 'Open Sans';color:#fff;letter-spacing:-.01em">MyIVA</div>
 <div style="font:400 11px/1 'Open Sans';color:rgba(255,255,255,.5)">Estudio Blasco</div>
@@ -107,7 +115,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ sbMini }}">
 <div style="flex:0 0 64px;width:64px;background:#14395C;display:flex;flex-direction:column;align-items:center;position:sticky;top:0;height:100vh;gap:2px">
 <div style="padding:14px 0 12px;border-bottom:1px solid rgba(255,255,255,.12);width:100%;display:flex;justify-content:center">
-<div style="border:1px dashed rgba(255,255,255,.45);width:40px;height:40px;display:flex;align-items:center;justify-content:center;font:600 8px/1 'Open Sans';letter-spacing:.05em;color:rgba(255,255,255,.8);text-align:center">LOGO<br>ACÁ</div>
+<svg viewBox="0 0 40 40" role="img" aria-label="Estudio Blasco" style="width:40px;height:40px;display:block">
+<rect x="0.75" y="0.75" width="38.5" height="38.5" rx="5" fill="#1F5797" stroke="rgba(255,255,255,.35)" stroke-width="1"></rect>
+<text x="20" y="25.5" text-anchor="middle" fill="#FFFFFF" style="font-family:'Open Sans';font-size:14px"><tspan style="font-weight:300">E</tspan><tspan style="font-weight:700">•B</tspan></text>
+</svg>
 </div>
 <div style="padding:10px 0;display:flex;flex-direction:column;gap:4px;flex:1">
 <sc-for list="{{ navMini }}" as="it" hint-placeholder-count="6">
