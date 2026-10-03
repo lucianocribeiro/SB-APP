@@ -144,9 +144,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="position:absolute;top:4px;right:5px;min-width:15px;height:15px;padding:0 3px;background:#B3261E;color:#fff;border-radius:8px;font:600 9.5px/15px 'Open Sans';text-align:center">3</span>
 </div>
 <div onClick="{{ goPerfil }}" style="display:flex;align-items:center;gap:9px;padding:5px 8px 5px 5px;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
-<div style="width:29px;height:29px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">MD</div>
+<div style="width:29px;height:29px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">{{ meIni }}</div>
 <div style="line-height:1.15">
-<div style="font:600 12.5px 'Open Sans';color:#1B2733">M. Duarte</div>
+<div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ meShort }}</div>
 <div style="font:400 11px 'Open Sans';color:#5A6B7B">{{ rolLabel }}</div>
 </div>
 </div>
@@ -922,7 +922,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de liquidaciones</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histCount }} liquidaciones registradas · Para rectificar un período, iniciá una nueva liquidación: se genera la siguiente secuencia (hasta 9 rectificativas).</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ histScope }} · Para rectificar un período, iniciá una nueva liquidación: se genera la siguiente secuencia (hasta 9 rectificativas).</div>
 </div>
 <div style="display:flex;gap:9px">
 <button onClick="{{ toastXls }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar selección (2)</button>
@@ -934,7 +934,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde: 01/2026</option><option>01/2025</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option><option>07/2026</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select>
+<sc-if value="{{ histAdmin }}">
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><option>M. Duarte</option><option>L. Peralta</option><option>S. Ibarra</option></select>
+</sc-if>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Secuencia: todas</option><option>Sólo la última</option><option>Secuencia 0</option><option>Secuencia 1 o más</option></select>
 <div style="flex:1"></div>
 <span style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Limpiar filtros</span>
@@ -980,7 +982,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE;flex-wrap:wrap;gap:10px">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 seleccionadas · mostrando 1–8 de {{ histCount }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 seleccionadas · mostrando 1–{{ histShown }} de {{ histCount }}</div>
 <div style="display:flex;gap:6px;align-items:center">
 <div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
 <div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
@@ -1720,7 +1722,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:13px">
 <div style="width:52px;height:52px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px 'Open Sans'">MD</div>
 <div>
-<div style="font:600 17px 'Open Sans'">Mariela Duarte</div>
+<div style="font:600 17px 'Open Sans'">{{ meFull }}</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ rolLabel }} · último acceso 04/09/2026 14:20</div>
 </div>
 </div>
@@ -1728,7 +1730,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Nombre y apellido</div>
-<input value="Mariela Duarte" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input value="{{ meFull }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mail</div>
@@ -2074,6 +2076,12 @@ class Component extends DCLogic {
     return () => this.setState({ toast: { kind, t, d } });
   }
 
+  me() {
+    return this.state.role === 'admin'
+      ? { ini: 'MD', short: 'M. Duarte', full: 'Mariela Duarte' }
+      : { ini: 'LP', short: 'L. Peralta', full: 'Lucas Peralta' };
+  }
+
   SEQ_MAX = 9;
 
   seqTipo(seq) { return seq === 0 ? 'Original' : 'Rectificativa'; }
@@ -2236,6 +2244,7 @@ class Component extends DCLogic {
       nav: this.navModel(), navMini: this.navMiniModel(),
       crumbA: crumb[0], crumbB: crumb[1],
       rolLabel: s.role === 'admin' ? 'Administrador' : 'Usuario',
+      meIni: this.me().ini, meShort: this.me().short, meFull: this.me().full,
       rolAdminBg: s.role === 'admin' ? '#14395C' : '#FFFFFF',
       rolAdminFg: s.role === 'admin' ? '#FFFFFF' : '#5A6B7B',
       rolEmpBg: s.role === 'empleado' ? '#14395C' : '#FFFFFF',
@@ -2421,8 +2430,9 @@ class Component extends DCLogic {
     });
 
     const seqPrev = s.liqSaved ? 1 : 0;
+    const histAdmin = s.role === 'admin', me = this.me();
     const histFilas = (s.liqSaved ? [
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
     ] : []).concat([
       { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.738.389,40', sc: '#B3261E', est: 'Completado' },
       { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', saldo: '-259.287,85', sc: '#2E7D5B', est: 'Completado con diferencias' },
@@ -2430,8 +2440,12 @@ class Component extends DCLogic {
       { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'M. Duarte', df: '1.455.230,10', cf: '987.640,55', saldo: '467.589,55', sc: '#B3261E', est: 'Completado' },
       { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', saldo: '—', sc: '#9AA9B7', est: 'Con errores' },
       { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'S. Ibarra', df: '6.330.447,00', cf: '5.118.902,35', saldo: '1.211.544,65', sc: '#B3261E', est: 'Completado' },
-      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', saldo: '67.885,30', sc: '#B3261E', est: 'Completado' }
-    ]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est], ver: this.nav('liqResultado') }));
+      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', saldo: '67.885,30', sc: '#B3261E', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'M. Duarte', df: '3.908.744,15', cf: '2.611.330,80', saldo: '1.297.413,35', sc: '#B3261E', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'L. Peralta', df: '3.902.110,40', cf: '2.611.330,80', saldo: '1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' }
+    ]).filter(r => histAdmin || r.user === me.short)
+      .map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est], ver: this.nav('liqResultado') }));
+    const histTotal = (histAdmin ? 142 : 37) + (s.liqSaved ? 1 : 0);
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
@@ -2488,7 +2502,8 @@ class Component extends DCLogic {
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
       seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
-      histCount: String(142 + (s.liqSaved ? 1 : 0)),
+      histAdmin, histCount: String(histTotal), histShown: String(histFilas.length),
+      histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
