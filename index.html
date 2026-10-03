@@ -472,7 +472,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ scr.liqNueva }}">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Nueva liquidación</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Cargá los subdiarios de IVA Ventas e IVA Compras para generar la liquidación del período.</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Cargá los subdiarios de IVA y los archivos de ARCA para generar la liquidación y los cruces del período.</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
 <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
@@ -523,7 +523,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 2 — Carga de archivos</div>
 <div style="display:flex;align-items:center;gap:8px">
-<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Estado de la dropzone</span>
+<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Estado de la dropzone · IVA Compras</span>
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ dzModes }}" as="m" hint-placeholder-count="4">
 <div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
@@ -531,72 +531,77 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 </div>
+<div style="display:flex;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">Todos los archivos son opcionales. Se procesan los cruces disponibles según los archivos que cargues.</div>
+</div>
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+<sc-for list="{{ upFiles }}" as="f" hint-placeholder-count="7">
 <div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:8px">IVA Ventas · .xls / .xlsx</div>
-<div style="border:1px dashed #D5DEE7;border-radius:6px;padding:18px;background:#fff">
-<div style="display:flex;align-items:center;gap:12px">
-<div style="width:38px;height:38px;border-radius:6px;background:#E8F3EE;display:flex;align-items:center;justify-content:center;flex:none">
-<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px">
+<div style="font:600 12px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ f.n }}) {{ f.label }} · {{ f.ext }}</div>
+<div style="font:400 11.5px/1.3 'Open Sans';color:#9AA9B7;white-space:nowrap">{{ f.hint }}</div>
+</div>
+<div style="border:1px dashed {{ f.bd }};border-radius:6px;padding:14px 16px;background:{{ f.bg }}">
+<sc-if value="{{ f.isEmpty }}">
+<div onClick="{{ f.load }}" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+<div style="width:38px;height:38px;border-radius:6px;background:#F5F7FA;display:flex;align-items:center;justify-content:center;flex:none">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
 </div>
 <div style="min-width:0">
-<div style="font:600 13.5px 'Open Sans';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">CAZATUR_IVA_VENTAS_082026.xlsx</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">1,4 MB · 2.117 filas detectadas</div>
-</div>
-<div style="flex:1"></div>
-<button style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar</button>
-</div>
-</div>
-</div>
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:8px">IVA Compras · .xls / .xlsx</div>
-<div style="border:1px dashed {{ dzc.bd }};border-radius:6px;padding:18px;background:{{ dzc.bg }}">
-<sc-if value="{{ dzc.isEmpty }}">
-<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0">
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
 <div style="font:600 13.5px 'Open Sans'">Arrastrá el archivo o hacé clic para buscarlo</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">Formatos aceptados: .xls, .xlsx — hasta 20 MB</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">Formatos aceptados: {{ f.ext }} — hasta 20 MB</div>
+</div>
 </div>
 </sc-if>
-<sc-if value="{{ dzc.isDrag }}">
-<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0">
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
+<sc-if value="{{ f.isDrag }}">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:38px;height:38px;border-radius:6px;background:#E9F1F8;display:flex;align-items:center;justify-content:center;flex:none">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
+</div>
+<div style="min-width:0">
 <div style="font:600 13.5px 'Open Sans';color:#1F6795">Soltá el archivo para cargarlo</div>
-<div style="font:400 12.5px 'Open Sans';color:#2F80B7">CAZATUR_IVA_COMPRAS_082026.xlsx</div>
+<div style="font:400 12.5px 'Open Sans';color:#2F80B7;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.file }}</div>
+</div>
 </div>
 </sc-if>
-<sc-if value="{{ dzc.isLoaded }}">
+<sc-if value="{{ f.isLoaded }}">
 <div style="display:flex;align-items:center;gap:12px">
 <div style="width:38px;height:38px;border-radius:6px;background:#E8F3EE;display:flex;align-items:center;justify-content:center;flex:none">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>
 </div>
 <div style="min-width:0">
-<div style="font:600 13.5px 'Open Sans';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">CAZATUR_IVA_COMPRAS_082026.xlsx</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">0,9 MB · 1.284 filas detectadas</div>
+<div style="font:600 13.5px 'Open Sans';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.file }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ f.meta }}</div>
 </div>
 <div style="flex:1"></div>
-<button style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar</button>
+<button onClick="{{ f.load }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar</button>
+<button onClick="{{ f.clear }}" style="padding:7px 10px;background:#fff;color:#5A6B7B;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#B3261E;color:#B3261E">Quitar</button>
 </div>
 </sc-if>
-<sc-if value="{{ dzc.isErr }}">
+<sc-if value="{{ f.isErr }}">
 <div style="display:flex;align-items:center;gap:12px">
 <div style="width:38px;height:38px;border-radius:6px;background:#FBE9E7;display:flex;align-items:center;justify-content:center;flex:none">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
 </div>
 <div style="min-width:0">
-<div style="font:600 13.5px 'Open Sans';color:#B3261E">Formato inválido: CAZATUR_COMPRAS.csv</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E;margin-top:3px">El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.</div>
+<div style="font:600 13.5px 'Open Sans';color:#B3261E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Formato inválido: {{ f.errFile }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E;margin-top:3px">{{ f.errMsg }}</div>
 </div>
 <div style="flex:1"></div>
-<button style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar</button>
+<button onClick="{{ f.load }}" style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar</button>
 </div>
 </sc-if>
 </div>
 </div>
+</sc-for>
 </div>
-<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
-<button onClick="{{ stepNext }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Continuar</button>
+<div style="display:flex;align-items:center;gap:14px">
+<span style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ upCountLabel }}</span>
+<button onClick="{{ openUpConfirm }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar cruces</button>
+</div>
 </div>
 </div>
 </sc-if>
@@ -1809,6 +1814,35 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ upConfirm }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:18px 20px;display:flex;gap:13px">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#E9F1F8;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1F6795" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2M12 17v.5"></path></svg>
+</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar los cruces?</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de CAZATUR SA · 08/2026 con {{ upCountLabel }}:</div>
+<div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
+<sc-for list="{{ upLoaded }}" as="u" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:9px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round" style="flex:none"><path d="M20 6L9 17l-5-5"></path></svg>
+<div style="font:600 12.5px 'Open Sans';white-space:nowrap">{{ u.label }}</div>
+<div style="font:400 12px 'Open Sans';color:#5A6B7B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.file }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:10px">Los archivos no cargados se omiten. La ejecución queda registrada en auditoría.</div>
+</div>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<button onClick="{{ upConfirmOk }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Sí, procesar cruces</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ notif }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.28);z-index:60"></div>
 <div style="position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-2px 0 12px rgba(27,39,51,.14)">
@@ -1856,7 +1890,8 @@ class Component extends DCLogic {
     step: 1, dz: 'loaded', proc: 'run', exec: 'run',
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
-    drawer: false, modal: false, confirm: false, notif: false, toast: null,
+    drawer: false, modal: false, confirm: false, upConfirm: false, notif: false, toast: null,
+    up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     alic: { '21%': 1, '10,5%': 1, '27%': 1, '5%': 0, '2,5%': 0, '0%': 1 },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
@@ -1916,7 +1951,7 @@ class Component extends DCLogic {
     if (Object.keys(st).length) this.setState(st);
   }
 
-  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false }); }
+  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false }); }
   tset(k, v) { return () => this.setState({ [k]: v }); }
   flip(group, key) {
     return () => this.setState(s => {
@@ -2056,7 +2091,7 @@ class Component extends DCLogic {
       openDrawer: () => this.setState({ drawer: true }),
       openModal: () => this.setState({ modal: true }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, notif: false }),
+      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, notif: false }),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
       saveCliente: () => this.setState({ drawer: false, toast: { kind: 'ok', t: 'Cliente guardado', d: 'Ya podés liquidar períodos para este cliente.' } }),
       saveInvite: () => this.setState({ modal: false, toast: { kind: 'ok', t: 'Invitación enviada', d: 'El usuario recibirá un mail para definir su contraseña.' } }),
@@ -2138,12 +2173,33 @@ class Component extends DCLogic {
   liqVals() {
     const s = this.state, E = this.EST;
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Resumen previo'], [4, 'Procesamiento']];
-    const dzKind = s.dz;
-    const dzc = {
-      isEmpty: dzKind === 'empty', isDrag: dzKind === 'drag', isLoaded: dzKind === 'loaded', isErr: dzKind === 'error',
-      bd: dzKind === 'error' ? '#B3261E' : (dzKind === 'drag' ? '#2F80B7' : '#D5DEE7'),
-      bg: dzKind === 'error' ? '#FDF5F4' : (dzKind === 'drag' ? '#F4F9FD' : '#FFFFFF')
+    const upDef = [
+      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
+      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
+      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · se cruza con IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
+      ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · se cruza con IVA Compras', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
+      ['percep', 'Mis Percepciones', '.xls / .xlsx / .csv', 'Opcional', 'CAZATUR_MIS_PERCEPCIONES_082026.xlsx', '48 KB · 64 registros', 'El archivo debe ser el export de Mis Retenciones / Percepciones de ARCA.'],
+      ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
+      ['ivadig', 'IVA Digital', '.pdf', 'Opcional', 'CAZATUR_IVA_DIGITAL_082026.pdf', '310 KB · 4 páginas', 'El archivo debe ser el PDF de la declaración jurada de IVA Digital.']
+    ];
+    const upState = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
+    const setUp = (k, v) => () => {
+      if (k === 'compras') this.setState({ dz: v });
+      else this.setState(st => ({ up: Object.assign({}, st.up, { [k]: v }) }));
     };
+    const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
+      const kind = upState(k);
+      return {
+        n: String(i + 1), label, ext, hint, file, meta, errMsg,
+        errFile: file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
+        isEmpty: kind === 'empty', isDrag: kind === 'drag', isLoaded: kind === 'loaded', isErr: kind === 'error',
+        bd: kind === 'error' ? '#B3261E' : (kind === 'drag' ? '#2F80B7' : '#D5DEE7'),
+        bg: kind === 'error' ? '#FDF5F4' : (kind === 'drag' ? '#F4F9FD' : '#FFFFFF'),
+        load: setUp(k, 'loaded'), clear: setUp(k, 'empty')
+      };
+    });
+    const upLoaded = upFiles.filter(f => f.isLoaded).map(f => ({ label: f.label, file: f.file }));
+    const upCountLabel = upLoaded.length === 1 ? '1 de 7 archivos cargado' : upLoaded.length + ' de 7 archivos cargados';
     const tabsDef = [['ventas', 'Ventas'], ['compras', 'Compras'], ['nc', 'Notas de crédito'], ['retper', 'Retenciones y percepciones'], ['alertas', 'Alertas']];
     const liqTab = {};
     tabsDef.forEach(([k]) => { liqTab[k] = s.liqTab === k; });
@@ -2215,7 +2271,12 @@ class Component extends DCLogic {
       stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4 },
       stepNext: () => this.setState(st => ({ step: Math.min(4, st.step + 1) })),
       stepPrev: () => this.setState(st => ({ step: Math.max(1, st.step - 1) })),
-      dzc, dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
+      upFiles, upLoaded, upCountLabel, upConfirm: s.upConfirm,
+      openUpConfirm: () => upLoaded.length
+        ? this.setState({ upConfirm: true })
+        : this.setState({ toast: { kind: 'warn', t: 'No hay archivos cargados', d: 'Cargá al menos un archivo para procesar los cruces.' } }),
+      upConfirmOk: () => this.setState({ upConfirm: false, step: 3, toast: { kind: 'ok', t: 'Archivos confirmados', d: 'Revisá el resumen previo antes de procesar.' } }),
+      dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
         bg: s.dz === k ? '#14395C' : '#FFFFFF', fg: s.dz === k ? '#FFFFFF' : '#5A6B7B'
