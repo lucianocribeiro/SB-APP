@@ -52,7 +52,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Usuario</div>
-<input value="mduarte@estudioblasco.com.ar" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
+<input value="admin@estudioblasco.com.ar" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Contraseña</div>
@@ -242,7 +242,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Clientes</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">7 clientes · 6 activos</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cliResumen }}</div>
 </div>
 <button onClick="{{ openDrawer }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nuevo cliente</button>
 </div>
@@ -253,7 +253,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Estado: todos</option><option>Activo</option><option>Inactivo</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Último período: todos</option><option>08/2026</option><option>07/2026</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Usuario asignado: todos</option><option>M. Duarte</option><option>L. Peralta</option><option>S. Ibarra</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option>Usuario asignado: todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option>{{ o.n }}</option></sc-for></select>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
@@ -288,7 +288,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">Mostrando 1–7 de 7</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ cliMostrando }}</div>
 <div style="display:flex;gap:6px">
 <div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
 <div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
@@ -417,7 +417,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 14.5px 'Open Sans';margin:20px 0 12px">Mails de notificación</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <div style="font:400 13px 'Open Sans';color:#1B2733">administracion@cazatur.com.ar</div>
-<div style="font:400 13px 'Open Sans';color:#1B2733">mduarte@estudioblasco.com.ar</div>
+<div style="font:400 13px 'Open Sans';color:#1B2733">julieta@estudioblasco.com.ar</div>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
@@ -439,7 +439,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Usuarios y roles</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">5 usuarios · 1 invitación pendiente</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ usrResumen }}</div>
 </div>
 <button onClick="{{ openModal }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Invitar usuario</button>
 </div>
@@ -499,7 +499,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cliente</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>CAZATUR SA — 30-71234567-8</option><option>DACKET SA — 30-70998877-2</option><option>DASYC SRL — 33-69887766-9</option><option>NOVALUX S.A. — 30-71559900-4</option><option>FIDEICOMISO PAMPA PILAR — 30-71802233-1</option><option>RODIALE SA — 33-70445566-3</option></select>
+<select defaultValue="CAZATUR SA" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mes</div>
@@ -780,7 +780,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Completado</span>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">{{ seqPrevTxt }}</span>
 </div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por M. Duarte el {{ seqPrevFecha }}</div>
+<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por Administrador el {{ seqPrevFecha }}</div>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
@@ -938,12 +938,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><option>CAZATUR SA</option><option>DACKET SA</option><option>DASYC SRL</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde: 01/2026</option><option>01/2025</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option><option>07/2026</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select>
 <sc-if value="{{ histAdmin }}">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><option>M. Duarte</option><option>L. Peralta</option><option>S. Ibarra</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select>
 </sc-if>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Secuencia: todas</option><option>Sólo la última</option><option>Secuencia 0</option><option>Secuencia 1 o más</option></select>
 <div style="flex:1"></div>
@@ -1016,12 +1016,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <button onClick="{{ toggleDash }}" style="padding:9px 14px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:400 12.5px 'Open Sans';cursor:pointer" style-hover="color:#14395C;border-color:#14395C">Alternar estado vacío</button>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-<sc-if value="{{ histAdmin }}">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>CAZATUR SA</option><option>DACKET SA</option><option>DASYC SRL</option></select>
-</sc-if>
-<sc-if value="{{ dashUser }}">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>CAZATUR SA</option><option>DACKET SA</option></select>
-</sc-if>
+<select defaultValue="CAZATUR SA" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde: 03/2026</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option></select>
 <button style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar</button>
@@ -1251,7 +1246,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:17px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 20px/1.25 'Open Sans'">{{ cruceTitulo }}</div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CAZATUR SA · CUIT 30-71234567-8 · Período 08/2026 · Ejecutado por M. Duarte el 04/09/2026 14:22</div>
+<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CAZATUR SA · CUIT 30-71234567-8 · Período 08/2026 · Ejecutado por Administrador el 04/09/2026 14:22</div>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ openConfirm }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Reprocesar</button>
@@ -1450,7 +1445,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }}</div>
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Tipo de cruce: todos</option><option>Recibidos vs IVA Compras</option><option>Emitidos vs IVA Ventas</option><option>Retenciones</option></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option></select>
 </div>
@@ -1594,9 +1589,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Registro cronológico de acciones sobre clientes, liquidaciones y parámetros.</div>
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><option>M. Duarte</option><option>L. Peralta</option><option>S. Ibarra</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select>
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Acción: todas</option><option>Liquidación ejecutada</option><option>Cruce ejecutado</option><option>Cliente creado</option><option>Parámetro modificado</option><option>Reporte exportado</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option></select>
+<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
 <button onClick="{{ toastXls }}" style="padding:8px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar log</button>
 </div>
 </div>
@@ -1639,7 +1634,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
 <div style="display:flex;align-items:center;gap:13px">
-<div style="width:52px;height:52px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px 'Open Sans'">MD</div>
+<div style="width:52px;height:52px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px 'Open Sans'">{{ meIni }}</div>
 <div>
 <div style="font:600 17px 'Open Sans'">{{ meFull }}</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ rolLabel }} · último acceso 04/09/2026 14:20</div>
@@ -1653,7 +1648,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mail</div>
-<input value="mduarte@estudioblasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input value="{{ meMail }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 </div>
 <div style="font:600 14.5px 'Open Sans';margin:22px 0 12px">Cambio de contraseña</div>
@@ -1959,8 +1954,8 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
-    asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
-    cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
+    asign: { 'Julieta': 1 },
+    cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
   };
 
   EST = {
@@ -2030,10 +2025,22 @@ class Component extends DCLogic {
     return () => this.setState({ toast: { kind, t, d } });
   }
 
+  CARTERA = [
+    ['Agustín', ['LANES SA', 'JUANA Y SUS HERMANAS SRL', 'LHS WORLDWIDE SA', 'SEOB SA']],
+    ['Candelaria', ['CLAMACO S.A.', 'BOVENCO S.A.', 'FASECO S.A.', 'VMP SA', 'CREARFULL SAS', 'REINA MARIA DEL PLATA I. Y C. S.C.A.', 'WAHREN SA', 'INVERCOSUD S.A.', 'ADVITA SA', 'KOI SRL', 'MEDA Y CIA SCA']],
+    ['Ivanna', ['INVOINET SAU', 'AFARTE', 'INVOTRADE SA', 'GLOBAL DUNNING S.A.', 'FINVOI CAPITAL SA', 'ANDALUX SA', 'SIOMAA S.A.', 'SANTA CLARA DE ZAVALIA SRL', 'FABIALVA SRL', 'ZAGAR SRL']],
+    ['Julieta', ['IDEA 2 SA', 'NOVALUX S.A.', 'FIDEICOMISO PAMPA PILAR', 'DASYC SRL', 'DACKET SA', 'CAZATUR SA', 'RODIALE SA']],
+    ['Rubén', ['GLOBAL MARKETING BUREAU S.A.', 'BCBT S.A.U.', 'BBI SA', 'MEDICAL LOGISTIC S.A.', 'BLASCO_SERGIO', 'NALAPO SA']]
+  ];
+
+  mailDe(nombre) {
+    return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() + '@estudioblasco.com.ar';
+  }
+
   me() {
     return this.state.role === 'admin'
-      ? { ini: 'MD', short: 'M. Duarte', full: 'Mariela Duarte' }
-      : { ini: 'LP', short: 'L. Peralta', full: 'Lucas Peralta' };
+      ? { ini: 'AD', short: 'Administrador', full: 'Administrador', mail: 'admin@estudioblasco.com.ar' }
+      : { ini: 'JU', short: 'Julieta', full: 'Julieta', mail: this.mailDe('Julieta') };
   }
 
   SEQ_MAX = 9;
@@ -2202,29 +2209,37 @@ class Component extends DCLogic {
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
     const crumb = this.CRUMB[s.screen] || ['MyIVA', ''];
 
-    const clientes = [
-      { rz: 'CAZATUR SA', cuit: '30-71234567-8', cond: 'Responsable Inscripto', per: '08/2026', users: 'M. Duarte, L. Peralta', est: 'Activo' },
-      { rz: 'DACKET SA', cuit: '30-70998877-2', cond: 'Responsable Inscripto', per: '08/2026', users: 'L. Peralta', est: 'Activo' },
-      { rz: 'DASYC SRL', cuit: '33-69887766-9', cond: 'Responsable Inscripto', per: '08/2026', users: 'M. Duarte', est: 'Activo' },
-      { rz: 'NOVALUX S.A.', cuit: '30-71559900-4', cond: 'Responsable Inscripto', per: '08/2026', users: 'S. Ibarra, M. Duarte', est: 'Activo' },
-      { rz: 'FIDEICOMISO PAMPA PILAR', cuit: '30-71802233-1', cond: 'Responsable Inscripto', per: '07/2026', users: 'S. Ibarra', est: 'Activo' },
-      { rz: 'RODIALE SA', cuit: '33-70445566-3', cond: 'Exento', per: '07/2026', users: 'C. Vega', est: 'Activo' },
-      { rz: 'IDEA 2 SA', cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026', users: '—', est: 'Inactivo' }
-    ].map(c => Object.assign({}, c, { st: E[c.est] }));
+    const owner = {};
+    this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
+    const fiscal = {
+      'CAZATUR SA': { cuit: '30-71234567-8', cond: 'Responsable Inscripto', per: '08/2026' },
+      'DACKET SA': { cuit: '30-70998877-2', cond: 'Responsable Inscripto', per: '08/2026' },
+      'DASYC SRL': { cuit: '33-69887766-9', cond: 'Responsable Inscripto', per: '08/2026' },
+      'NOVALUX S.A.': { cuit: '30-71559900-4', cond: 'Responsable Inscripto', per: '08/2026' },
+      'FIDEICOMISO PAMPA PILAR': { cuit: '30-71802233-1', cond: 'Responsable Inscripto', per: '07/2026' },
+      'RODIALE SA': { cuit: '33-70445566-3', cond: 'Exento', per: '07/2026' },
+      'IDEA 2 SA': { cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026' }
+    };
+    const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
+      const f = fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
+      return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'] };
+    });
 
     const isAdmin = s.role === 'admin', me = this.me();
     const procesos = [
-      { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', est: 'Completado' },
-      { cliente: 'DACKET SA', proc: 'Cruces de liquidación', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', est: 'Completado con diferencias' },
-      { cliente: 'DASYC SRL', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'M. Duarte', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', proc: 'Liquidación IVA', per: '08/2026', fecha: '03/09/2026 09:12', user: 'S. Ibarra', est: 'Con errores' },
-      { cliente: 'FIDEICOMISO PAMPA PILAR', proc: 'Cruce Retenciones', per: '07/2026', fecha: '02/09/2026 16:31', user: 'S. Ibarra', est: 'Procesando' },
-      { cliente: 'RODIALE SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '02/09/2026 10:58', user: 'C. Vega', est: 'En cola' },
-      { cliente: 'DACKET SA', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'L. Peralta', est: 'Completado' },
-      { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '08/08/2026 10:14', user: 'L. Peralta', est: 'Completado con diferencias' }
+      { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', est: 'Completado' },
+      { cliente: 'DACKET SA', proc: 'Cruces de liquidación', per: '08/2026', fecha: '04/09/2026 11:05', user: 'Julieta', est: 'Completado con diferencias' },
+      { cliente: 'DASYC SRL', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', est: 'Completado' },
+      { cliente: 'NOVALUX S.A.', proc: 'Liquidación IVA', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', est: 'Con errores' },
+      { cliente: 'FIDEICOMISO PAMPA PILAR', proc: 'Cruce Retenciones', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', est: 'Procesando' },
+      { cliente: 'RODIALE SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '02/09/2026 10:58', user: 'Julieta', est: 'En cola' },
+      { cliente: 'DACKET SA', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', est: 'Completado' },
+      { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '08/08/2026 10:14', user: 'Julieta', est: 'Completado con diferencias' }
     ].filter(r => isAdmin || r.user === me.short)
       .map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav(r.proc.indexOf('Cruce') === 0 ? 'cruceResultado' : 'liqResultado') }));
-    const misClientes = ['CAZATUR SA', 'DACKET SA'];
+    const misClientes = clientes.filter(c => c.users === me.short).map(c => c.rz);
+    const cliOpts = (isAdmin ? clientes : clientes.filter(c => c.users === me.short)).map(c => ({ rz: c.rz }));
+    const usrNombres = this.CARTERA.map(([u]) => u);
     const alertasTodas = [
       { cli: 'CAZATUR SA', t: 'CUITs observados en IVA Compras', d: 'CAZATUR SA · 08/2026 · 3 proveedores por $ 842.190,55', when: 'hace 2 h', color: '#B7791F' },
       { cli: 'DACKET SA', t: 'Diferencias en Mis Comprobantes Emitidos', d: 'DACKET SA · 08/2026 · 11 comprobantes con diferencia', when: 'hace 5 h', color: '#B7791F' },
@@ -2233,12 +2248,12 @@ class Component extends DCLogic {
     ];
 
     const usuarios = [
-      { nombre: 'Mariela Duarte', mail: 'mduarte@estudioblasco.com.ar', rol: 'Administrador', clientes: 'Todos (7)', acceso: '04/09/2026 14:20', est: 'Activo' },
-      { nombre: 'Lucas Peralta', mail: 'lperalta@estudioblasco.com.ar', rol: 'Usuario', clientes: 'CAZATUR SA, DACKET SA', acceso: '04/09/2026 11:02', est: 'Activo' },
-      { nombre: 'Sofía Ibarra', mail: 'sibarra@estudioblasco.com.ar', rol: 'Usuario', clientes: 'NOVALUX S.A., FIDEICOMISO PAMPA PILAR', acceso: '03/09/2026 18:44', est: 'Activo' },
-      { nombre: 'Carla Vega', mail: 'cvega@estudioblasco.com.ar', rol: 'Usuario', clientes: 'RODIALE SA', acceso: '29/08/2026 09:15', est: 'Suspendido' },
-      { nombre: 'Nicolás Bravo', mail: 'nbravo@estudioblasco.com.ar', rol: 'Usuario', clientes: '—', acceso: 'Nunca', est: 'Invitación pendiente' }
-    ].map(u => Object.assign({}, u, { st: E[u.est], rb: E[u.rol] }));
+      { nombre: 'Administrador', mail: 'admin@estudioblasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
+    ].concat(this.CARTERA.map(([u, cs]) => ({
+      nombre: u, mail: this.mailDe(u), rol: 'Usuario',
+      clientes: cs.length + ' clientes · ' + cs.slice(0, 2).join(', ') + (cs.length > 2 ? ' y ' + (cs.length - 2) + ' más' : ''),
+      acceso: u === 'Julieta' ? '04/09/2026 11:02' : '—', est: 'Activo'
+    }))).map(u => Object.assign({}, u, { st: E[u.est], rb: E[u.rol] }));
 
     const cliTabsDef = [['resumen', 'Resumen'], ['liquidaciones', 'Liquidaciones'], ['cruces', 'Cruces'], ['config', 'Configuración']];
     const cliTab = {};
@@ -2288,16 +2303,21 @@ class Component extends DCLogic {
       closeToast: () => this.setState({ toast: null }),
 
       kpisInicio: isAdmin ? [
-        { label: 'Liquidaciones del período en curso', value: '18', hint: 'de 21 clientes', color: '#1B2733' },
+        { label: 'Liquidaciones del período en curso', value: '18', hint: 'de ' + clientes.length + ' clientes', color: '#1B2733' },
         { label: 'Cruces con diferencias pendientes', value: '6', hint: 'requieren revisión', color: '#B7791F' },
-        { label: 'Clientes activos', value: '6', hint: 'de 7 en el estudio', color: '#1B2733' },
+        { label: 'Clientes activos', value: String(clientes.length), hint: 'de ' + clientes.length + ' en el estudio', color: '#1B2733' },
         { label: 'Alertas abiertas', value: '3', hint: 'CUITs observados', color: '#B3261E' }
       ] : [
-        { label: 'Mis liquidaciones del período en curso', value: '1', hint: 'de 2 clientes asignados', color: '#1B2733' },
-        { label: 'Mis cruces con diferencias pendientes', value: '1', hint: 'requieren revisión', color: '#B7791F' },
-        { label: 'Clientes asignados', value: '2', hint: 'CAZATUR SA · DACKET SA', color: '#1B2733' },
-        { label: 'Alertas abiertas', value: '2', hint: 'de mis clientes', color: '#B3261E' }
+        { label: 'Mis liquidaciones del período en curso', value: '4', hint: 'de ' + misClientes.length + ' clientes asignados', color: '#1B2733' },
+        { label: 'Mis cruces con diferencias pendientes', value: '2', hint: 'requieren revisión', color: '#B7791F' },
+        { label: 'Clientes asignados', value: String(misClientes.length), hint: misClientes.slice(0, 2).join(' · ') + (misClientes.length > 2 ? ' y ' + (misClientes.length - 2) + ' más' : ''), color: '#1B2733' },
+        { label: 'Alertas abiertas', value: '4', hint: 'de mis clientes', color: '#B3261E' }
       ],
+      cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
+      cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
+      cliMostrando: 'Mostrando 1–' + clientes.length + ' de ' + clientes.length,
+      usrResumen: usuarios.length + ' usuarios · ' + usrNombres.length + ' con clientes asignados',
+      meMail: me.mail,
       inicioScope: isAdmin ? 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026' : 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026 · Mostrando sólo tus operaciones',
       procesos, clientes, usuarios,
       alertas: alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0),
@@ -2329,11 +2349,11 @@ class Component extends DCLogic {
         { k: 'Mails de notificación', v: '2 destinatarios' }
       ],
       actividadCliente: [
-        { t: 'Liquidación 08/2026 completada por M. Duarte', when: 'hace 2 h' },
+        { t: 'Liquidación 08/2026 completada por Administrador', when: 'hace 2 h' },
         { t: 'Cruce Recibidos vs IVA Compras · 3 diferencias', when: 'hace 2 h' },
         { t: 'Parámetro modificado: mail de notificación agregado', when: '01/09/2026' },
         { t: 'Reporte Papel de trabajo exportado', when: '30/08/2026' },
-        { t: 'Liquidación 07/2026 completada por L. Peralta', when: '14/08/2026' }
+        { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
       ],
       liqCliente: (s.liqSaved ? [
         { per: '08/2026', seq: 1, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '1.632.105,25', sc: '#B3261E', est: 'Completado' }
@@ -2350,12 +2370,11 @@ class Component extends DCLogic {
         { tipo: 'Mis Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026', regs: '96', dif: '2', est: 'Completado con diferencias' }
       ].map(r => Object.assign({}, r, { st: E[r.est] })),
       alicuotas: ['21%', '10,5%', '27%', '5%', '2,5%', '0%'].map(a => Object.assign({ label: a }, chip(1))),
-      usuariosChips: ['M. Duarte', 'L. Peralta', 'S. Ibarra', 'C. Vega'].map(n => Object.assign({ nombre: n, toggle: this.flip('asign', n) }, chip(s.asign[n]))),
+      usuariosChips: usrNombres.map(n => Object.assign({ nombre: n, toggle: this.flip('asign', n) }, chip(s.asign[n]))),
       clientesChips: clientes.map(c => Object.assign({ rz: c.rz, toggle: this.flip('cliSel', c.rz) }, chip(s.cliSel[c.rz]))),
-      chipsCount: selCount + ' de 7 clientes seleccionados',
+      chipsCount: selCount + ' de ' + clientes.length + ' clientes seleccionados',
       asignados: [
-        { ini: 'MD', nombre: 'Mariela Duarte', rol: 'Administrador' },
-        { ini: 'LP', nombre: 'Lucas Peralta', rol: 'Usuario' }
+        { ini: 'JU', nombre: owner['CAZATUR SA'], rol: 'Usuario' }
       ]
     });
   }
@@ -2505,15 +2524,15 @@ class Component extends DCLogic {
       ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
       : (curPend ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
     const histFilas = curRow.concat([
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'M. Duarte', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'L. Peralta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'L. Peralta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'M. Duarte', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'S. Ibarra', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
-      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'S. Ibarra', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
-      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'C. Vega', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'M. Duarte', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'L. Peralta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Administrador', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
+      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
+      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
+      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
     ]).filter(r => histAdmin || r.user === me.short)
       .map(r => {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0);
@@ -2660,7 +2679,6 @@ class Component extends DCLogic {
       ],
       histFilas,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
-      dashUser: s.role !== 'admin',
       dashScope: s.role === 'admin' ? 'CAZATUR SA · 03/2026 – 08/2026' : 'CAZATUR SA · 03/2026 – 08/2026 · Sólo tus clientes asignados',
       toggleDash: () => this.setState(st => ({ dashEmpty: !st.dashEmpty })),
       bars, stack, linePts: pts, lineDots: dots, zeroY, comp,
@@ -2760,13 +2778,13 @@ class Component extends DCLogic {
       ],
       cruHistLabel: cruAdmin ? (318 + savedCru.length) + ' cruces ejecutados' : 'Tus cruces · ' + (74 + savedCru.length) + ' ejecutados',
       cruHist: savedCru.concat([
-        { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'L. Peralta', regs: '1.012', dif: '0', est: 'Completado' },
-        { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'M. Duarte', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
-        { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'M. Duarte', regs: '2.117', dif: '0', est: 'Completado' },
-        { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026 11:05', user: 'L. Peralta', regs: '96', dif: '2', est: 'Completado con diferencias' },
-        { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'M. Duarte', regs: '844', dif: '0', est: 'Completado' },
-        { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'S. Ibarra', regs: '—', dif: '—', est: 'Con errores' },
-        { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'S. Ibarra', regs: '112', dif: '2', est: 'Procesando' }
+        { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', regs: '1.012', dif: '0', est: 'Completado' },
+        { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
+        { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'Administrador', regs: '2.117', dif: '0', est: 'Completado' },
+        { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026 11:05', user: 'Julieta', regs: '96', dif: '2', est: 'Completado con diferencias' },
+        { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', regs: '844', dif: '0', est: 'Completado' },
+        { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', regs: '—', dif: '—', est: 'Con errores' },
+        { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', regs: '112', dif: '2', est: 'Procesando' }
       ].map(r => Object.assign({}, r, {
         hasDif: r.est === 'Completado con diferencias',
         errs: r.est === 'Con errores'
@@ -2795,19 +2813,19 @@ class Component extends DCLogic {
       })),
       cfgTab,
       eventos: [
-        { ev: 'Diferencias detectadas en un cruce', dest: 'mduarte@estudioblasco.com.ar, lperalta@estudioblasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
-        { ev: 'Liquidación completada', dest: 'mduarte@estudioblasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
-        { ev: 'Alertas de CUITs observados', dest: 'mduarte@estudioblasco.com.ar', asunto: '[MyIVA] CUITs observados — {cliente}' },
+        { ev: 'Diferencias detectadas en un cruce', dest: 'admin@estudioblasco.com.ar, julieta@estudioblasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
+        { ev: 'Liquidación completada', dest: 'admin@estudioblasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
+        { ev: 'Alertas de CUITs observados', dest: 'admin@estudioblasco.com.ar', asunto: '[MyIVA] CUITs observados — {cliente}' },
         { ev: 'Error de procesamiento', dest: 'sistemas@estudioblasco.com.ar', asunto: '[MyIVA] Error al procesar {cliente} {periodo}' }
       ],
       auditoria: [
-        { f: '04/09/2026 14:22', u: 'M. Duarte', a: 'Liquidación ejecutada', c: 'CAZATUR SA', p: '08/2026', r: 'Completado', ip: '190.15.44.12' },
-        { f: '04/09/2026 14:20', u: 'M. Duarte', a: 'Cruce ejecutado', c: 'CAZATUR SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.12' },
-        { f: '04/09/2026 11:05', u: 'L. Peralta', a: 'Cruce ejecutado', c: 'DACKET SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.30' },
-        { f: '03/09/2026 18:02', u: 'M. Duarte', a: 'Parámetro modificado', c: 'CAZATUR SA', p: '—', r: 'Mail de notificación agregado', ip: '190.15.44.12' },
-        { f: '03/09/2026 09:12', u: 'S. Ibarra', a: 'Liquidación ejecutada', c: 'NOVALUX S.A.', p: '08/2026', r: 'Con errores', ip: '181.44.20.7' },
-        { f: '02/09/2026 16:40', u: 'S. Ibarra', a: 'Reporte exportado', c: 'Varios (3)', p: '01/2026–08/2026', r: 'Excel generado', ip: '181.44.20.7' },
-        { f: '28/08/2026 10:11', u: 'M. Duarte', a: 'Cliente creado', c: 'FIDEICOMISO PAMPA PILAR', p: '—', r: 'Alta confirmada', ip: '190.15.44.12' }
+        { f: '04/09/2026 14:22', u: 'Administrador', a: 'Liquidación ejecutada', c: 'CAZATUR SA', p: '08/2026', r: 'Completado', ip: '190.15.44.12' },
+        { f: '04/09/2026 14:20', u: 'Administrador', a: 'Cruce ejecutado', c: 'CAZATUR SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.12' },
+        { f: '04/09/2026 11:05', u: 'Julieta', a: 'Cruce ejecutado', c: 'DACKET SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.30' },
+        { f: '03/09/2026 18:02', u: 'Administrador', a: 'Parámetro modificado', c: 'CAZATUR SA', p: '—', r: 'Mail de notificación agregado', ip: '190.15.44.12' },
+        { f: '03/09/2026 09:12', u: 'Julieta', a: 'Liquidación ejecutada', c: 'NOVALUX S.A.', p: '08/2026', r: 'Con errores', ip: '181.44.20.7' },
+        { f: '02/09/2026 16:40', u: 'Julieta', a: 'Reporte exportado', c: 'Varios (3)', p: '01/2026–08/2026', r: 'Excel generado', ip: '181.44.20.7' },
+        { f: '28/08/2026 10:11', u: 'Administrador', a: 'Cliente creado', c: 'FIDEICOMISO PAMPA PILAR', p: '—', r: 'Alta confirmada', ip: '190.15.44.12' }
       ].map(r => Object.assign({}, r, { st: this.EST[r.r] || null, plain: !this.EST[r.r] }))
     };
   }
