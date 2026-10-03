@@ -1033,29 +1033,61 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="display:flex;align-items:center;gap:6px;font:400 12px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#2F80B7;border-radius:2px"></span>Crédito</span>
 </div>
 </div>
-<svg viewBox="0 0 640 210" style="width:100%;height:auto;margin-top:12px">
+<div style="position:relative;margin-top:12px">
+<svg viewBox="0 0 640 210" style="width:100%;height:auto;display:block">
 <line x1="14" y1="186" x2="626" y2="186" stroke="#E3E8EE" stroke-width="1"></line>
 <line x1="14" y1="130" x2="626" y2="130" stroke="#EEF1F4" stroke-width="1"></line>
 <line x1="14" y1="74" x2="626" y2="74" stroke="#EEF1F4" stroke-width="1"></line>
 <line x1="14" y1="18" x2="626" y2="18" stroke="#EEF1F4" stroke-width="1"></line>
 <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+<rect x="{{ b.hlx }}" y="8" width="88" height="180" rx="4" fill="{{ b.hl }}"></rect>
 <rect x="{{ b.dfx }}" y="{{ b.dfy }}" width="34" height="{{ b.dfh }}" fill="#14395C"></rect>
 <rect x="{{ b.cfx }}" y="{{ b.cfy }}" width="34" height="{{ b.cfh }}" fill="#2F80B7"></rect>
-<text x="{{ b.labx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="#5A6B7B">{{ b.per }}</text>
+<text x="{{ b.labx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="{{ b.lab }}">{{ b.per }}</text>
+<rect x="{{ b.hitx }}" y="0" width="100" height="210" fill="transparent" style="cursor:crosshair" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ hoverOut }}"></rect>
 </sc-for>
 </svg>
+<sc-if value="{{ tipB }}">
+<div style="position:absolute;top:4px;left:{{ tipLeft }};right:{{ tipRight }};min-width:190px;background:#1B2733;color:#fff;border-radius:6px;padding:9px 11px;box-shadow:0 6px 18px rgba(27,39,51,.25);pointer-events:none;z-index:5">
+<div style="font:600 12px 'Open Sans';margin-bottom:5px">{{ tipPer }}</div>
+<sc-for list="{{ tipRows }}" as="t" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;font:400 12px/1.65 'Open Sans'">
+<span style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.8)"><span style="width:8px;height:8px;border-radius:2px;background:{{ t.c }}"></span>{{ t.l }}</span>
+<span style="font-weight:600;font-variant-numeric:tabular-nums">{{ t.v }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="font:600 14.5px 'Open Sans'">Evolución del saldo</div>
 <div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:3px">Positivo = a pagar · negativo = a favor</div>
-<svg viewBox="0 0 640 210" style="width:100%;height:auto;margin-top:10px">
+<div style="position:relative;margin-top:10px">
+<svg viewBox="0 0 640 210" style="width:100%;height:auto;display:block">
 <line x1="14" y1="{{ zeroY }}" x2="626" y2="{{ zeroY }}" stroke="#D5DEE7" stroke-width="1" stroke-dasharray="4 4"></line>
+<sc-for list="{{ lineDots }}" as="d" hint-placeholder-count="6">
+<line x1="{{ d.cx }}" y1="10" x2="{{ d.cx }}" y2="188" stroke="{{ d.guide }}" stroke-width="1" stroke-dasharray="3 3"></line>
+</sc-for>
 <polyline points="{{ linePts }}" fill="none" stroke="#2F80B7" stroke-width="2.5"></polyline>
 <sc-for list="{{ lineDots }}" as="d" hint-placeholder-count="6">
-<circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="4.5" fill="{{ d.c }}"></circle>
-<text x="{{ d.cx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="#5A6B7B">{{ d.per }}</text>
+<circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="{{ d.r }}" fill="{{ d.c }}" stroke="#fff" stroke-width="{{ d.sw }}"></circle>
+<text x="{{ d.cx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="{{ d.lab }}">{{ d.per }}</text>
+<rect x="{{ d.hitx }}" y="0" width="112" height="210" fill="transparent" style="cursor:crosshair" onMouseEnter="{{ d.enter }}" onMouseLeave="{{ hoverOut }}"></rect>
 </sc-for>
 </svg>
+<sc-if value="{{ tipL }}">
+<div style="position:absolute;top:4px;left:{{ tipLeft }};right:{{ tipRight }};min-width:210px;background:#1B2733;color:#fff;border-radius:6px;padding:9px 11px;box-shadow:0 6px 18px rgba(27,39,51,.25);pointer-events:none;z-index:5">
+<div style="font:600 12px 'Open Sans';margin-bottom:5px">{{ tipPer }}</div>
+<sc-for list="{{ tipRows }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;font:400 12px/1.65 'Open Sans'">
+<span style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.8)"><span style="width:8px;height:8px;border-radius:2px;background:{{ t.c }}"></span>{{ t.l }}</span>
+<span style="font-weight:600;font-variant-numeric:tabular-nums">{{ t.v }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -1066,15 +1098,30 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="display:flex;align-items:center;gap:6px;font:400 12px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#9FC4DD;border-radius:2px"></span>27%</span>
 </div>
 </div>
-<svg viewBox="0 0 640 210" style="width:100%;height:auto;margin-top:12px">
+<div style="position:relative;margin-top:12px">
+<svg viewBox="0 0 640 210" style="width:100%;height:auto;display:block">
 <line x1="14" y1="186" x2="626" y2="186" stroke="#E3E8EE" stroke-width="1"></line>
 <sc-for list="{{ stack }}" as="b" hint-placeholder-count="6">
+<rect x="{{ b.hlx }}" y="8" width="60" height="180" rx="4" fill="{{ b.hl }}"></rect>
 <rect x="{{ b.x }}" y="{{ b.y21 }}" width="44" height="{{ b.h21 }}" fill="#14395C"></rect>
 <rect x="{{ b.x }}" y="{{ b.y105 }}" width="44" height="{{ b.h105 }}" fill="#2F80B7"></rect>
 <rect x="{{ b.x }}" y="{{ b.y27 }}" width="44" height="{{ b.h27 }}" fill="#9FC4DD"></rect>
-<text x="{{ b.x }}" y="202" font-family="Open Sans" font-size="11" fill="#5A6B7B">{{ b.per }}</text>
+<text x="{{ b.x }}" y="202" font-family="Open Sans" font-size="11" fill="{{ b.lab }}">{{ b.per }}</text>
+<rect x="{{ b.hitx }}" y="0" width="100" height="210" fill="transparent" style="cursor:crosshair" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ hoverOut }}"></rect>
 </sc-for>
 </svg>
+<sc-if value="{{ tipS }}">
+<div style="position:absolute;top:4px;left:{{ tipLeft }};right:{{ tipRight }};min-width:190px;background:#1B2733;color:#fff;border-radius:6px;padding:9px 11px;box-shadow:0 6px 18px rgba(27,39,51,.25);pointer-events:none;z-index:5">
+<div style="font:600 12px 'Open Sans';margin-bottom:5px">{{ tipPer }}</div>
+<sc-for list="{{ tipRows }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;font:400 12px/1.65 'Open Sans'">
+<span style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.8)"><span style="width:8px;height:8px;border-radius:2px;background:{{ t.c }}"></span>{{ t.l }}</span>
+<span style="font-weight:600;font-variant-numeric:tabular-nums">{{ t.v }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Comparativa período a período</div>
@@ -2011,7 +2058,7 @@ class Component extends DCLogic {
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
-    prevSaldo: 'favor', cruSaved: false, liqSaved: false,
+    prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'M. Duarte': 1, 'L. Peralta': 1, 'S. Ibarra': 0, 'C. Vega': 0 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1, 'DASYC SRL': 0, 'NOVALUX S.A.': 0, 'FIDEICOMISO PAMPA PILAR': 0, 'RODIALE SA': 0, 'IDEA 2 SA': 0 }
@@ -2423,22 +2470,63 @@ class Component extends DCLogic {
       return (neg ? '-' : '') + out + ',' + parts[1];
     };
     const maxV = 4300000, H = 168, base = 186;
+    const hov = s.dashHover;
+    const isHov = (c, i) => !!hov && hov.c === c && hov.i === i;
+    const enter = (c, i) => () => this.setState({ dashHover: { c, i } });
     const bars = serie.map((d, i) => ({
       per: d.per, x: 22 + i * 100,
       dfx: 22 + i * 100, dfy: base - d.df / maxV * H, dfh: d.df / maxV * H,
       cfx: 22 + i * 100 + 38, cfy: base - d.cf / maxV * H, cfh: d.cf / maxV * H,
-      labx: 22 + i * 100 + 36
+      labx: 22 + i * 100 + 36,
+      hlx: 22 + i * 100 - 8, hitx: 22 + i * 100 - 14,
+      hl: isHov('b', i) ? '#EEF3F8' : 'transparent', lab: isHov('b', i) ? '#14395C' : '#5A6B7B',
+      enter: enter('b', i)
     }));
     const lo = -600000, hi = 2000000;
     const ly = (v) => 178 - (v - lo) / (hi - lo) * 150;
     const pts = serie.map((d, i) => (36 + i * 112) + ',' + ly(d.saldo).toFixed(1)).join(' ');
-    const dots = serie.map((d, i) => ({ cx: 36 + i * 112, cy: ly(d.saldo), per: d.per, val: fmt(d.saldo), c: d.saldo < 0 ? '#2E7D5B' : '#B3261E' }));
+    const dots = serie.map((d, i) => ({
+      cx: 36 + i * 112, cy: ly(d.saldo), per: d.per, val: fmt(d.saldo), c: d.saldo < 0 ? '#2E7D5B' : '#B3261E',
+      hitx: 36 + i * 112 - 56,
+      r: isHov('l', i) ? 6.5 : 4.5, sw: isHov('l', i) ? 2 : 0,
+      guide: isHov('l', i) ? '#9AA9B7' : 'transparent', lab: isHov('l', i) ? '#14395C' : '#5A6B7B',
+      enter: enter('l', i)
+    }));
     const zeroY = ly(0);
     const stack = serie.map((d, i) => {
       const tot = d.a21 + d.a105 + d.a27, sh = tot / 4300000 * H;
       const h21 = d.a21 / tot * sh, h105 = d.a105 / tot * sh, h27 = d.a27 / tot * sh;
-      return { per: d.per, x: 30 + i * 100, y21: base - sh, h21, y105: base - h105 - h27, h105, y27: base - h27, h27, labx: 30 + i * 33 * 1 + 18 };
+      return {
+        per: d.per, x: 30 + i * 100, y21: base - sh, h21, y105: base - h105 - h27, h105, y27: base - h27, h27, labx: 30 + i * 33 * 1 + 18,
+        hlx: 30 + i * 100 - 8, hitx: 30 + i * 100 - 28,
+        hl: isHov('s', i) ? '#EEF3F8' : 'transparent', lab: isHov('s', i) ? '#14395C' : '#5A6B7B',
+        enter: enter('s', i)
+      };
     });
+    const tip = (() => {
+      if (!hov) return null;
+      const d = serie[hov.i];
+      const col = hov.c === 'b' ? [22 + hov.i * 100 - 8, 22 + hov.i * 100 + 80]
+        : (hov.c === 'l' ? [36 + hov.i * 112 - 10, 36 + hov.i * 112 + 10] : [30 + hov.i * 100 - 8, 30 + hov.i * 100 + 52]);
+      const pct = (v) => (v / 640 * 100).toFixed(2) + '%';
+      const left = hov.i <= 2 ? pct(col[1] + 8) : 'auto', right = hov.i <= 2 ? 'auto' : pct(640 - col[0] + 8);
+      const rows = hov.c === 'b' ? [
+        { l: 'Débito fiscal', v: fmt(d.df), c: '#14395C' },
+        { l: 'Crédito fiscal', v: fmt(d.cf), c: '#2F80B7' },
+        { l: 'Diferencia', v: fmt(d.df - d.cf), c: '#9AA9B7' }
+      ] : (hov.c === 'l' ? [
+        { l: 'Débito fiscal', v: fmt(d.df), c: '#14395C' },
+        { l: 'Crédito fiscal', v: fmt(d.cf), c: '#2F80B7' },
+        { l: 'Retenciones + Percepciones', v: fmt(d.rp), c: '#9FC4DD' },
+        { l: d.saldo < 0 ? 'Saldo a favor' : 'Saldo a pagar', v: fmt(d.saldo), c: d.saldo < 0 ? '#2E7D5B' : '#B3261E' }
+      ] : [
+        { l: '21%', v: fmt(d.a21), c: '#14395C' },
+        { l: '10,5%', v: fmt(d.a105), c: '#2F80B7' },
+        { l: '27%', v: fmt(d.a27), c: '#9FC4DD' },
+        { l: 'Total', v: fmt(d.a21 + d.a105 + d.a27), c: '#9AA9B7' }
+      ]);
+      return { c: hov.c, per: 'Período ' + d.per, left, right, rows };
+    })();
     const comp = serie.slice().reverse().map((d, i, arr) => {
       const prev = arr[i + 1];
       const varp = prev ? ((d.saldo - prev.saldo) / Math.abs(prev.saldo) * 100) : null;
@@ -2608,6 +2696,9 @@ class Component extends DCLogic {
       dashScope: s.role === 'admin' ? 'CAZATUR SA · 03/2026 – 08/2026' : 'CAZATUR SA · 03/2026 – 08/2026 · Sólo tus clientes asignados',
       toggleDash: () => this.setState(st => ({ dashEmpty: !st.dashEmpty })),
       bars, stack, linePts: pts, lineDots: dots, zeroY, comp,
+      hoverOut: () => this.setState({ dashHover: null }),
+      tipB: !!tip && tip.c === 'b', tipL: !!tip && tip.c === 'l', tipS: !!tip && tip.c === 's',
+      tipPer: tip ? tip.per : '', tipLeft: tip ? tip.left : 'auto', tipRight: tip ? tip.right : 'auto', tipRows: tip ? tip.rows : [],
       repTipos: repTipos.map(t => ({
         label: t, go: this.tset('repTipo', t),
         bg: s.repTipo === t ? '#E6EDF4' : '#FFFFFF',
