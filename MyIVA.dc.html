@@ -948,9 +948,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ histAdmin }}">
 <select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select>
 </sc-if>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Secuencia: todas</option><option>Sólo la última</option><option>Secuencia 0</option><option>Secuencia 1 o más</option></select>
+<select value="{{ histSeq }}" onChange="{{ histSeqSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Secuencia: todas</option><option value="ult">Sólo la última de cada período</option><sc-for list="{{ seqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
 <div style="flex:1"></div>
-<span style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Limpiar filtros</span>
+<span onClick="{{ histSeqLimpiar }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Limpiar filtros</span>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
@@ -970,6 +970,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
 </tr></thead>
 <tbody>
+<sc-if value="{{ histVacio }}">
+<tr><td colspan="12" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay liquidaciones con esa secuencia. <span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></td></tr>
+</sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" style="accent-color:#14395C"></td>
@@ -1956,7 +1959,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' },
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '',
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2553,7 +2556,11 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ]).filter(r => histAdmin || r.user === me.short)
+    ]).filter(r => histAdmin || r.user === me.short);
+    const ultSeq = {};
+    histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
+    const histVis = histFilas
+      .filter(r => s.histSeq === '' || (s.histSeq === 'ult' ? r.seq === ultSeq[r.cliente + '|' + r.per] : r.seq === Number(s.histSeq)))
       .map(r => {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0);
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
@@ -2624,7 +2631,10 @@ class Component extends DCLogic {
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
       seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
-      histAdmin, histCount: String(histTotal), histShown: String(histFilas.length),
+      histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
+      histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
+      histVacio: histVis.length === 0, histSeqLimpiar: () => this.setState({ histSeq: '' }),
+      seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
@@ -2697,7 +2707,7 @@ class Component extends DCLogic {
         { cuit: '33-71220099-8', rz: 'LOGÍSTICA RIACHUELO SA', q: '2', i: '218.900,00' },
         { cuit: '30-69551122-4', rz: 'SERVICIOS PILAR SRL', q: '1', i: '110.850,35' }
       ],
-      histFilas,
+      histFilas: histVis,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
       dashScope: s.role === 'admin' ? 'CAZATUR SA · 03/2026 – 08/2026' : 'CAZATUR SA · 03/2026 – 08/2026 · Sólo tus clientes asignados',
       toggleDash: () => this.setState(st => ({ dashEmpty: !st.dashEmpty })),
