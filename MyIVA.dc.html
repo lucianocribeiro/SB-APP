@@ -1079,13 +1079,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Comparativa período a período</div>
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:520px">
+<table style="width:100%;border-collapse:collapse;min-width:680px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito</th>
+<th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
+<th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
+<th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Retenciones + Percepciones</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Saldo</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Variación</th>
+<th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Variación de saldo</th>
 </tr></thead>
 <tbody>
 <sc-for list="{{ comp }}" as="r" hint-placeholder-count="6">
@@ -1093,6 +1094,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.rp }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;color:{{ r.vc }}">{{ r.vr }}</td>
 </tr>
@@ -2406,13 +2408,13 @@ class Component extends DCLogic {
     tabsDef.forEach(([k]) => { liqTab[k] = s.liqTab === k; });
 
     const serie = [
-      { per: '03/2026', df: 2201440, cf: 1905220, saldo: 296220, a21: 1980000, a105: 198000, a27: 23440 },
-      { per: '04/2026', df: 2455702.9, cf: 1988442.1, saldo: 467260.8, a21: 2210000, a105: 221000, a27: 24702 },
-      { per: '05/2026', df: 2877010.25, cf: 2140908.6, saldo: 736101.65, a21: 2600000, a105: 250000, a27: 27010 },
-      { per: '06/2026', df: 3104288, cf: 3402115.45, saldo: -297827.45, a21: 2820000, a105: 260000, a27: 24288 },
-      { per: '07/2026', df: 3908744.15, cf: 2611330.8, saldo: 1297413.35, a21: 3600000, a105: 285000, a27: 23744 },
-      { per: '08/2026', df: 4182905.6, cf: 2444516.2, saldo: 1738389.4, a21: 3979500, a105: 176400, a27: 26005 }
-    ];
+      { per: '03/2026', df: 2201440, cf: 1905220, rp: 61240.1, a21: 1980000, a105: 198000, a27: 23440 },
+      { per: '04/2026', df: 2455702.9, cf: 1988442.1, rp: 72118.4, a21: 2210000, a105: 221000, a27: 24702 },
+      { per: '05/2026', df: 2877010.25, cf: 2140908.6, rp: 84502.75, a21: 2600000, a105: 250000, a27: 27010 },
+      { per: '06/2026', df: 3104288, cf: 3402115.45, rp: 79330, a21: 2820000, a105: 260000, a27: 24288 },
+      { per: '07/2026', df: 3908744.15, cf: 2611330.8, rp: 92775.4, a21: 3600000, a105: 285000, a27: 23744 },
+      { per: '08/2026', df: 4182905.6, cf: 2444516.2, rp: 106284.15, a21: 3979500, a105: 176400, a27: 26005 }
+    ].map(d => Object.assign({}, d, { saldo: Math.round((d.df - d.cf - d.rp) * 100) / 100 }));
     const fmt = (n) => {
       const neg = n < 0; n = Math.abs(n);
       const parts = n.toFixed(2).split('.');
@@ -2441,9 +2443,9 @@ class Component extends DCLogic {
       const prev = arr[i + 1];
       const varp = prev ? ((d.saldo - prev.saldo) / Math.abs(prev.saldo) * 100) : null;
       return {
-        per: d.per, df: fmt(d.df), cf: fmt(d.cf), saldo: fmt(d.saldo),
+        per: d.per, df: fmt(d.df), cf: fmt(d.cf), rp: fmt(d.rp), saldo: fmt(d.saldo),
         sc: d.saldo < 0 ? '#2E7D5B' : '#B3261E',
-        vr: varp === null ? '—' : (varp > 0 ? '+' : '') + varp.toFixed(1) + ' %',
+        vr: varp === null ? '—' : (varp > 0 ? '+' : '') + fmt(d.saldo - prev.saldo) + ' (' + (varp > 0 ? '+' : '') + varp.toFixed(1).replace('.', ',') + ' %)',
         vc: varp === null ? '#9AA9B7' : (varp > 0 ? '#B3261E' : '#2E7D5B')
       };
     });
