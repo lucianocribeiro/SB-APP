@@ -266,14 +266,16 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <button onClick="{{ openDrawer }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nuevo cliente</button>
 </div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-<div style="display:flex;align-items:center;gap:8px;border:1px solid #E3E8EE;border-radius:6px;padding:8px 11px;min-width:260px;flex:1">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px;min-width:260px;flex:1"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Buscar</span>
+<div style="display:flex;align-items:center;gap:8px;border:1px solid #E3E8EE;border-radius:6px;padding:8px 11px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.3-4.3"></path></svg>
-<input placeholder="Buscar por razón social o CUIT" value="{{ cliF.q }}" onChange="{{ cliBuscar }}" style="border:0;outline:0;font:400 13.5px 'Open Sans';flex:1;min-width:0;color:#1B2733">
+<input placeholder="Razón social o CUIT" value="{{ cliF.q }}" onChange="{{ cliBuscar }}" style="border:0;outline:0;font:400 13.5px 'Open Sans';flex:1;min-width:0;color:#1B2733">
 </div>
-<select value="{{ cliF.est }}" onChange="{{ cliFiltroEst }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Estado: todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select>
-<select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Último período: todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
-<select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Usuario asignado: todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select>
+</div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ cliF.est }}" onChange="{{ cliFiltroEst }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Último período</span><select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario asignado</span><select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
@@ -970,17 +972,17 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde: 01/2026</option><option>01/2025</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option><option>07/2026</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>01/2026</option><option>07/2025</option><option>01/2025</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>08/2026</option><option>07/2026</option><option>06/2026</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select></div>
 <sc-if value="{{ histAdmin }}">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select></div>
 </sc-if>
-<select value="{{ histSeq }}" onChange="{{ histSeqSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Secuencia: todas</option><option value="ult">Sólo la última de cada período</option><sc-for list="{{ seqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Secuencia</span><select value="{{ histSeq }}" onChange="{{ histSeqSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todas</option><option value="ult">Sólo la última de cada período</option><sc-for list="{{ seqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="flex:1"></div>
-<span onClick="{{ histSeqLimpiar }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Limpiar filtros</span>
+<span onClick="{{ histSeqLimpiar }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;padding-bottom:9px">Limpiar filtros</span>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
@@ -1053,10 +1055,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <button onClick="{{ toggleDash }}" style="padding:9px 14px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:400 12.5px 'Open Sans';cursor:pointer" style-hover="color:#14395C;border-color:#14395C">Alternar estado vacío</button>
 </div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-<select defaultValue="CAZATUR SA" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde: 03/2026</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta: 08/2026</option></select>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select defaultValue="CAZATUR SA" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>03/2026</option><option>01/2026</option><option>07/2025</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>08/2026</option><option>07/2026</option><option>06/2026</option></select></div>
 <button style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar</button>
 </div>
 <sc-if value="{{ dashEmpty }}">
@@ -1482,10 +1484,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 22px/1.2 'Open Sans'">Historial de cruces</div>
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }}</div>
 </div>
-<div style="display:flex;gap:10px;flex-wrap:wrap">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Tipo de cruce: todos</option><option>Recibidos vs IVA Compras</option><option>Emitidos vs IVA Ventas</option><option>Retenciones</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Estado: todos</option></select>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Tipo de cruce</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Recibidos vs IVA Compras</option><option>Emitidos vs IVA Ventas</option><option>Retenciones</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select></div>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
@@ -1687,10 +1689,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 22px/1.2 'Open Sans'">Auditoría</div>
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Registro cronológico de acciones sobre clientes, liquidaciones y parámetros.</div>
 </div>
-<div style="display:flex;gap:10px;flex-wrap:wrap">
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Usuario: todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Acción: todas</option><option>Liquidación ejecutada</option><option>Cruce ejecutado</option><option>Cliente creado</option><option>Parámetro modificado</option><option>Reporte exportado</option></select>
-<select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Cliente: todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Acción</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todas</option><option>Liquidación ejecutada</option><option>Cruce ejecutado</option><option>Cliente creado</option><option>Parámetro modificado</option><option>Reporte exportado</option><option>DDJJ borrada</option><option>Base APOC actualizada</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
 <button onClick="{{ toastXls }}" style="padding:8px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar log</button>
 </div>
 </div>
