@@ -411,13 +411,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ cliTab.config }}">
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
-<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Alícuotas (se aplican todas)</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
-<div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
-</sc-for>
-</div>
-<div style="font:600 14.5px 'Open Sans';margin:20px 0 12px">Mails de notificación</div>
+<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Mails de notificación</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <div style="font:400 13px 'Open Sans';color:#1B2733">administracion@cazatur.com.ar</div>
 <div style="font:400 13px 'Open Sans';color:#1B2733">julietad@blasco.com.ar</div>
@@ -1527,14 +1521,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <sc-if value="{{ cfgTab.params }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px;max-width:760px">
-<div style="font:600 14.5px 'Open Sans'">Alícuotas</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Todas las alícuotas vigentes se aplican siempre en las liquidaciones y cruces.</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-<sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
-<div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
-</sc-for>
-</div>
-<div style="height:1px;background:#E3E8EE;margin:20px 0"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Formato de fecha</div>
@@ -1809,15 +1795,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Condición frente al IVA</div>
 <select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Responsable Inscripto</option><option>Exento</option><option>Monotributo</option></select>
 </div>
-</div>
-</div>
-<div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Parámetros de liquidación</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin:11px 0 9px">Alícuotas (se aplican todas)</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<sc-for list="{{ alicuotas }}" as="al" hint-placeholder-count="6">
-<div style="padding:7px 12px;border-radius:6px;font:600 12.5px 'Open Sans';border:1px solid {{ al.bd }};background:{{ al.bg }};color:{{ al.fg }}">{{ al.label }}</div>
-</sc-for>
 </div>
 </div>
 <div>
@@ -2665,7 +2642,6 @@ class Component extends DCLogic {
         { k: 'CUIT', v: '30-71234567-8' },
         { k: 'Condición frente al IVA', v: 'Responsable Inscripto' },
         { k: 'Inicio de ejercicio', v: '01/01' },
-        { k: 'Alícuotas', v: '21% · 10,5% · 27% · 5% · 2,5% · 0%' },
         { k: 'Mails de notificación', v: '2 destinatarios' }
       ],
       actividadCliente: [
@@ -2689,7 +2665,6 @@ class Component extends DCLogic {
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
         { tipo: 'Mis Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026', regs: '96', dif: '2', est: 'Completado con diferencias' }
       ].map(r => Object.assign({}, r, { st: E[r.est] })),
-      alicuotas: ['21%', '10,5%', '27%', '5%', '2,5%', '0%'].map(a => Object.assign({ label: a }, chip(1))),
       usuariosChips: usrNombres.map(n => Object.assign({ nombre: n, toggle: this.flip('asign', n) }, chip(s.asign[n]))),
       clientesChips: clientes.map(c => Object.assign({ rz: c.rz, toggle: this.flip('cliSel', c.rz) }, chip(s.cliSel[c.rz]))),
       chipsCount: selCount + ' de ' + clientes.length + ' clientes seleccionados',
