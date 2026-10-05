@@ -1001,7 +1001,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="12" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay liquidaciones con esa secuencia. <span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></td></tr>
+<tr><td colspan="12" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1035,9 +1035,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;gap:6px;align-items:center">
 <div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
 <div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
+<sc-if value="{{ histPaginas }}">
 <div style="padding:6px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans'">2</div>
 <div style="padding:6px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans'">3</div>
-<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans'">Siguiente</div>
+</sc-if>
+<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:{{ histSigFg }}">Siguiente</div>
 </div>
 </div>
 </div>
@@ -2337,6 +2339,37 @@ class Component extends DCLogic {
     return mine.includes('CAZATUR SA') ? 'CAZATUR SA' : ([...mine].sort((a, b) => a.localeCompare(b, 'es'))[0] || '');
   }
 
+  demoUsr() {
+    if (this._demo) return this._demo;
+    const ars = (n) => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const hash = (t) => [...t].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 99991, 7);
+    const liq = [], cru = [], proc = [], alertas = [];
+    this.CARTERA.filter(([u]) => u !== 'Julieta').forEach(([u, cs], ui) => {
+      cs.slice(0, 4).forEach((cli, i) => {
+        const k = hash(cli), dia = String(2 + i + ui).padStart(2, '0');
+        const df = 650000 + (k % 60) * 58731.45;
+        const cf = df * (i === 2 ? 1.07 + (k % 9) / 100 : 0.58 + (k % 30) / 100);
+        const rp = df * (0.012 + (k % 4) / 100);
+        const dif = i === 1;
+        const est = dif ? 'Completado con diferencias' : 'Completado';
+        const eg = dif ? [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: this.ERRS.rec }] : undefined;
+        liq.push({ cliente: cli, per: '08/2026', seq: 0, fecha: dia + '/09/2026', user: u, df: ars(df), cf: ars(cf), rp: ars(rp), est, eg });
+        if (i === 0) {
+          const d7 = df * 0.94, c7 = cf * 0.97, r7 = rp * 0.9;
+          liq.push({ cliente: cli, per: '07/2026', seq: 1, fecha: '1' + (2 + ui) + '/08/2026', user: u, df: ars(d7 + 18240.5), cf: ars(c7), rp: ars(r7), est: 'Completado' });
+          liq.push({ cliente: cli, per: '07/2026', seq: 0, fecha: '0' + (5 + ui) + '/08/2026', user: u, df: ars(d7), cf: ars(c7), rp: ars(r7), est: 'Completado' });
+        }
+        const regs = String(300 + (k % 1700)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        cru.push({ cliente: cli, tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: dia + '/09/2026 10:' + String(10 + i * 7), user: u, regs, dif: dif ? '4' : '0', est });
+        if (i < 2) cru.push({ cliente: cli, tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: dia + '/09/2026 10:0' + (2 + i), user: u, regs: String(200 + (k % 900)), dif: '0', est: 'Completado' });
+        proc.push({ cliente: cli, proc: 'Liquidación IVA', per: '08/2026', fecha: dia + '/09/2026 11:' + String(20 + i * 6), user: u, est });
+        if (dif) alertas.push({ cli, t: 'Diferencias en Mis Comprobantes Recibidos', d: cli + ' · 08/2026 · 4 comprobantes con diferencia', when: dia + '/09/2026', color: '#B7791F' });
+      });
+    });
+    this._demo = { liq, cru, proc, alertas };
+    return this._demo;
+  }
+
   SEQ_MAX = 9;
 
   seqTipo(seq) { return seq === 0 ? 'Original' : 'Rectificativa'; }
@@ -2554,7 +2587,7 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '02/09/2026 10:58', user: 'Julieta', est: 'En cola' },
       { cliente: 'DACKET SA', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', est: 'Completado' },
       { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '08/08/2026 10:14', user: 'Julieta', est: 'Completado con diferencias' }
-    ].filter(r => isAdmin || r.user === me.short)
+    ].concat(isAdmin ? [] : this.demoUsr().proc).filter(r => isAdmin || r.user === me.short)
       .map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav(r.proc.indexOf('Cruce') === 0 ? 'cruceResultado' : 'liqResultado') }));
     const misClientes = clientes.filter(c => c.users === me.short).map(c => c.rz);
     const cliOpts = (isAdmin ? clientes : clientes.filter(c => c.users === me.short)).map(c => ({ rz: c.rz }));
@@ -2564,7 +2597,7 @@ class Component extends DCLogic {
       { cli: 'DACKET SA', t: 'Diferencias en Mis Comprobantes Emitidos', d: 'DACKET SA · 08/2026 · 11 comprobantes con diferencia', when: 'hace 5 h', color: '#B7791F' },
       { cli: 'NOVALUX S.A.', t: 'Liquidación con errores de archivo', d: 'NOVALUX S.A. · 08/2026 · formato de IVA Ventas inválido', when: 'ayer 09:12', color: '#B3261E' },
       { cli: 'FIDEICOMISO PAMPA PILAR', t: 'Retenciones sin respaldo en el subdiario', d: 'FIDEICOMISO PAMPA PILAR · 07/2026 · 2 registros', when: '02/09/2026', color: '#2F80B7' }
-    ];
+    ].concat(this.demoUsr().alertas);
 
     const usuarios = [
       { nombre: 'Administrador', mail: 'admin@blasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
@@ -2842,11 +2875,26 @@ class Component extends DCLogic {
 
     const del = s.ddjjBorradas;
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
-    const cli = this.liqCli(), hasHist = cli === 'CAZATUR SA', savedAqui = s.liqSaved && s.liqCliN === cli;
-    const base0 = hasHist && !del['CAZATUR SA|08/2026|0|04/09/2026'] && !(savedAqui && s.liqSeqN === 0) ? [0] : [];
+    const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
+    const baseRows = [
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Administrador', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
+      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
+      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
+      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
+    ].concat(this.demoUsr().liq);
+    const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli;
+    const delPer = baseRows.filter(r => r.cliente === cli && r.per === '08/2026' && r.df !== '—');
+    const hasHist = delPer.length > 0;
+    const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && r.seq === s.liqSeqN));
     const nueva = savedAqui && !del[cli + '|08/2026|' + s.liqSeqN + '|03/10/2026'] ? [s.liqSeqN] : [];
-    const liqDone = [...new Set(base0.concat(nueva))].sort((a, b) => a - b);
+    const liqDone = [...new Set(hechas.map(r => r.seq).concat(nueva))].sort((a, b) => a - b);
     const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
+    const ultFecha = nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
     const seqSel = s.seqElegida ?? seqSug;
     const seqPisa = seqSel !== null && liqDone.includes(seqSel);
@@ -2858,22 +2906,11 @@ class Component extends DCLogic {
       const saldo = num(r.cf) + num(r.rp) - num(r.df);
       return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo) });
     };
-    const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
     const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
     const curRow = s.liqSaved
       ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
       : (curPend ? [{ cliente: cli, per: '08/2026', seq: seqSel ?? Math.max(0, seqLast), fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
-    const histFilas = curRow.concat([
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Administrador', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
-      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
-      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ].filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
+    const histFilas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const sel = s.histSel;
@@ -2905,7 +2942,7 @@ class Component extends DCLogic {
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg)
         });
       });
-    const histTotal = (histAdmin ? 142 : 37) + (curRow.length ? 1 : 0);
+    const histTotal = histAdmin ? 142 + histFilas.length - 9 : histFilas.length;
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
@@ -2979,7 +3016,7 @@ class Component extends DCLogic {
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
-      seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + (nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : '04/09/2026 14:22') + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
+      seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + ultFecha + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
       ddjjQ: s.ddjjQ, ddjjQSet: (e) => this.setState({ ddjjQ: e.target.value }),
       ddjjFilas: (() => {
         const q = this.fold(s.ddjjQ.trim());
@@ -3022,7 +3059,9 @@ class Component extends DCLogic {
         });
       },
       histExport: () => exportar(histPick),
-      histVacio: histVis.length === 0, histSeqLimpiar: () => this.setState({ histSeq: '' }),
+      histVacio: histVis.length === 0, histSeqActivo: s.histSeq !== '',
+      histPaginas: histTotal > histVis.length, histSigFg: histTotal > histVis.length ? '#1B2733' : '#9AA9B7',
+      histVacioTxt: s.histSeq !== '' ? 'No hay liquidaciones con esa secuencia.' : 'Todavía no hay liquidaciones registradas.', histSeqLimpiar: () => this.setState({ histSeq: '' }),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
@@ -3199,7 +3238,7 @@ class Component extends DCLogic {
         { label: 'Total percepciones IVA Compras', value: '24.000,00', color: '#1B2733' },
         { label: 'Diferencia', value: '10.104,15', color: '#B3261E' }
       ],
-      cruHistLabel: cruAdmin ? (318 + savedCru.length) + ' cruces ejecutados' : 'Tus cruces · ' + (74 + savedCru.length) + ' ejecutados',
+      cruHistLabel: cruAdmin ? (318 + savedCru.length) + ' cruces ejecutados' : 'Tus cruces · ' + ((me.short === 'Julieta' ? 74 : this.demoUsr().cru.filter(r => r.user === me.short).length) + savedCru.length) + ' ejecutados',
       cruHist: savedCru.concat([
         { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', regs: '1.012', dif: '0', est: 'Completado' },
         { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
@@ -3208,7 +3247,7 @@ class Component extends DCLogic {
         { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', regs: '844', dif: '0', est: 'Completado' },
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', regs: '112', dif: '2', est: 'Procesando' }
-      ].map(r => Object.assign({}, r, {
+      ].concat(this.demoUsr().cru).map(r => Object.assign({}, r, {
         hasDif: r.est === 'Completado con diferencias',
         errs: r.est === 'Con errores'
           ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras')
