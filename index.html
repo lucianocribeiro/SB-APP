@@ -518,17 +518,22 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="flex:1">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
 <div style="font:600 13px/1.4 'Open Sans';color:#14395C">CAZATUR SA · 08/2026 ya tiene {{ seqPrevLabel }}</div>
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#14395C;color:#fff;border:1px solid #14395C;white-space:nowrap">Se generará la {{ seqNextTxt }}</span>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ seqBadgeBg }};color:#fff;border:1px solid {{ seqBadgeBg }};white-space:nowrap">{{ seqBadge }}</span>
 </div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la {{ seqPrevTxt }}, procesada el {{ seqPrevFecha }}. Si continuás, se genera una nueva secuencia y las anteriores quedan guardadas en el historial.</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la {{ seqUltTxt }}, procesada el {{ seqPrevFecha }}. {{ seqSugTxt }}</div>
 <div style="font:400 12px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">La Secuencia 0 es la declaración jurada original; de la 1 a la 9 son rectificativas (máximo 9 rectificativas por período).</div>
 </div>
 </div>
 <div style="margin-top:16px">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:8px">Secuencias del período</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Secuencias del período <span style="text-transform:none;letter-spacing:0;font-weight:400">· hacé clic para elegir</span></div>
+<sc-if value="{{ seqOtra }}">
+<span onClick="{{ seqUsarSug }}" style="font:600 12px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Volver a la sugerida</span>
+</sc-if>
+</div>
 <div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px">
 <sc-for list="{{ seqTrack }}" as="q" hint-placeholder-count="10">
-<div style="border:1px solid {{ q.bd }};background:{{ q.bg }};border-radius:6px;padding:7px 4px;text-align:center">
+<div onClick="{{ q.pick }}" title="{{ q.hint }}" style="border:1px {{ q.bs }} {{ q.bd }};background:{{ q.bg }};border-radius:6px;padding:7px 4px;text-align:center;cursor:pointer" style-hover="box-shadow:0 0 0 2px #CFE2F0">
 <div style="font:600 15px/1 'Open Sans';color:{{ q.fg }}">{{ q.n }}</div>
 <div style="font:600 10px/1.2 'Open Sans';color:{{ q.fg }};margin-top:4px;opacity:.85">{{ q.tipo }}</div>
 <div style="font:400 10px/1.2 'Open Sans';color:{{ q.sub }};margin-top:3px">{{ q.tag }}</div>
@@ -539,7 +544,19 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ seqMax }}">
 <div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">Este período ya tiene 9 rectificativas. No se pueden generar más secuencias.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">Este período ya tiene 9 rectificativas. No se pueden generar más secuencias: elegí cuál querés reemplazar.</div>
+</div>
+</sc-if>
+<sc-if value="{{ seqPisa }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F5F14" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">{{ seqPisaTxt }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ seqSaltea }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">{{ seqSalteaTxt }}</div>
 </div>
 </sc-if>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
@@ -1856,6 +1873,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
 <div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
+<sc-if value="{{ seqPisa }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
+</sc-if>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -1959,7 +1979,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {},
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2548,14 +2568,14 @@ class Component extends DCLogic {
         { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
       ],
       liqCliente: (s.liqSaved ? [
-        { per: '08/2026', seq: 1, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
+        { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
       ] : []).concat([
         { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
         { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '-1.297.413,35', sc: '#B3261E', est: 'Completado' },
         { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '-1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
-      ]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
+      ].filter(r => !(s.liqSaved && r.per === '08/2026' && r.seq === s.liqSeqN))).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
       crucesCliente: [
         { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
@@ -2703,7 +2723,12 @@ class Component extends DCLogic {
       };
     });
 
-    const seqPrev = s.liqSaved ? 1 : 0;
+    const liqDone = s.liqSaved ? [...new Set([0, s.liqSeqN])].sort((a, b) => a - b) : [0];
+    const seqLast = Math.max(...liqDone);
+    const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
+    const seqSel = s.seqElegida ?? seqSug;
+    const seqPisa = seqSel !== null && liqDone.includes(seqSel);
+    const seqSaltea = seqSel !== null && seqSug !== null && seqSel > seqSug;
     const histAdmin = s.role === 'admin', me = this.me();
     const num = (v) => parseFloat(v.replace(/\./g, '').replace(',', '.'));
     const conSaldo = (r) => {
@@ -2714,8 +2739,8 @@ class Component extends DCLogic {
     const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
     const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
     const curRow = s.liqSaved
-      ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
-      : (curPend ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: 1, fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
+      ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
+      : (curPend ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: seqSel ?? seqLast, fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
     const histFilas = curRow.concat([
       { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
       { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
@@ -2726,7 +2751,7 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ]).filter(r => histAdmin || r.user === me.short);
+    ].filter(r => !(curRow.length && r.cliente === 'CAZATUR SA' && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => histAdmin || r.user === me.short);
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
@@ -2801,26 +2826,35 @@ class Component extends DCLogic {
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
-      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true }),
-      seqPrevTxt: this.seqTxt(seqPrev), seqNextTxt: this.seqTxt(Math.min(seqPrev + 1, this.SEQ_MAX)),
-      seqCurTxt: this.seqTxt(s.liqSaved ? seqPrev : seqPrev + 1),
-      seqMax: seqPrev >= this.SEQ_MAX,
+      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, seqElegida: null }),
+      seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
+      seqNextTxt: seqSel === null ? 'secuencia a elegir' : this.seqTxt(seqSel),
+      seqCurTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : (seqSel ?? seqLast)),
+      seqMax: seqSug === null,
+      seqPisa, seqSaltea, seqOtra: seqSel !== seqSug && seqSug !== null,
+      seqBadge: seqSel === null ? 'Elegí una secuencia' : (seqPisa ? 'Se reemplazará la ' : 'Se generará la ') + this.seqTxt(seqSel),
+      seqBadgeBg: seqPisa ? '#8F5F14' : '#14395C',
+      seqSugTxt: seqSug === null ? '' : 'El sistema sugiere la ' + this.seqTxt(seqSug) + ' según los antecedentes liquidados. Podés elegir otra secuencia haciendo clic en los casilleros de abajo.',
+      seqPisaTxt: seqPisa ? 'La ' + this.seqTxt(seqSel) + ' ya tiene una declaración jurada generada. Si continuás, la nueva liquidación la reemplaza ("pisa") y la anterior deja de figurar en el historial.' : '',
+      seqSalteaTxt: seqSaltea ? 'Elegiste la Secuencia ' + seqSel + ': ' + (seqSel - seqSug === 1 ? 'la Secuencia ' + seqSug + ' queda' : 'las secuencias ' + seqSug + ' a ' + (seqSel - 1) + ' quedan') + ' sin liquidar.' : '',
+      seqUsarSug: () => this.setState({ seqElegida: null }),
       seqTrack: Array.from({ length: this.SEQ_MAX + 1 }, (_, n) => {
-        const done = n <= seqPrev, next = n === seqPrev + 1;
+        const done = liqDone.includes(n), on = n === seqSel, sug = n === seqSug;
+        const pal = on ? (done ? ['#8F5F14', '#8F5F14', '#FFFFFF', 'rgba(255,255,255,.85)'] : ['#14395C', '#14395C', '#FFFFFF', 'rgba(255,255,255,.8)'])
+          : (done ? ['#E8F3EE', '#C7E3D6', '#2E7D5B', '#2E7D5B'] : (sug ? ['#F4F9FD', '#14395C', '#14395C', '#14395C'] : ['#FFFFFF', '#E3E8EE', '#9AA9B7', '#9AA9B7']));
         return {
           n: String(n), tipo: n === 0 ? 'Original' : 'Rectif.',
-          tag: done ? 'Liquidada' : (next ? 'A generar' : 'Disponible'),
-          bg: next ? '#14395C' : (done ? '#E8F3EE' : '#FFFFFF'),
-          bd: next ? '#14395C' : (done ? '#C7E3D6' : '#E3E8EE'),
-          fg: next ? '#FFFFFF' : (done ? '#2E7D5B' : '#9AA9B7'),
-          sub: next ? 'rgba(255,255,255,.8)' : (done ? '#2E7D5B' : '#9AA9B7')
+          tag: on ? (done ? 'Reemplazar' : (sug ? 'Sugerida' : 'A generar')) : (done ? 'Liquidada' : (sug ? 'Sugerida' : 'Disponible')),
+          bg: pal[0], bd: pal[1], fg: pal[2], sub: pal[3], bs: sug && !on ? 'dashed' : 'solid',
+          hint: done ? 'Ya liquidada: elegirla reemplaza esa declaración jurada' : (sug ? 'Secuencia sugerida' : 'Elegir esta secuencia'),
+          pick: () => this.setState({ seqElegida: n })
         };
       }),
-      step1Next: () => seqPrev >= this.SEQ_MAX
-        ? this.setState({ toast: { kind: 'err', t: 'Máximo de rectificativas alcanzado', d: 'El período ya tiene 9 rectificativas.' } })
+      step1Next: () => seqSel === null
+        ? this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia', d: 'El período ya tiene 9 rectificativas: elegí cuál querés reemplazar.' } })
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
-      seqPrevLabel: s.liqSaved ? '2 secuencias liquidadas' : '1 secuencia liquidada',
+      seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas',
       histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
       histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
       histSelCount: String(histPick.length),
