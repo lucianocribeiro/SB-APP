@@ -520,7 +520,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 13px/1.4 'Open Sans';color:#14395C">CAZATUR SA · 08/2026 ya tiene {{ seqPrevLabel }}</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ seqBadgeBg }};color:#fff;border:1px solid {{ seqBadgeBg }};white-space:nowrap">{{ seqBadge }}</span>
 </div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">La última fue la {{ seqUltTxt }}, procesada el {{ seqPrevFecha }}. {{ seqSugTxt }}</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">{{ seqUltLine }} {{ seqSugTxt }}</div>
 <div style="font:400 12px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">La Secuencia 0 es la declaración jurada original; de la 1 a la 9 son rectificativas (máximo 9 rectificativas por período).</div>
 </div>
 </div>
@@ -1603,6 +1603,75 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 </sc-if>
+<sc-if value="{{ cfgTab.ddjj }}">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap">
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;max-width:620px">Borrá registros de declaraciones juradas procesadas. El registro deja de figurar en el historial de liquidaciones y en la ficha del cliente, y la secuencia vuelve a quedar disponible. Cada borrado queda registrado en auditoría con su motivo.</div>
+<input value="{{ ddjjQ }}" onChange="{{ ddjjQSet }}" placeholder="Buscar cliente, período o usuario" style="width:280px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:900px">
+<thead><tr>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Procesada</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Saldo</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acción</th>
+</tr></thead>
+<tbody>
+<sc-if value="{{ ddjjVacio }}">
+<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay declaraciones juradas que coincidan con la búsqueda.</td></tr>
+</sc-if>
+<sc-for list="{{ ddjjFilas }}" as="r" hint-placeholder-count="6">
+<tr style-hover="background:#FAFBFD">
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right"><span onClick="{{ r.borrar }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">Borrar</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+<sc-if value="{{ cfgTab.apoc }}">
+<div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Base APOC (facturas apócrifas)</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Listado de ARCA de contribuyentes con facturación apócrifa. Los cruces marcan como alerta los comprobantes emitidos por CUITs que figuran en esta base.</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">CUITs en la base</div><div style="font:600 20px/1.2 'Open Sans';margin-top:6px">{{ apocTotal }}</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B;margin-top:2px">{{ apocNuevos }}</div></div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Última actualización</div><div style="font:600 15px/1.3 'Open Sans';margin-top:7px">{{ apocFecha }}</div></div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Origen</div><div style="font:600 12.5px/1.35 'Open Sans';margin-top:7px">{{ apocOrigen }}</div></div>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #E3E8EE">
+<button onClick="{{ apocActualizar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">{{ apocBtn }}</button>
+<label style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Cargar archivo (.csv / .txt)<input type="file" accept=".csv,.txt" onChange="{{ apocArchivo }}" style="display:none"></label>
+</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:8px">El archivo debe tener un CUIT por línea (con o sin guiones). Reemplaza la base actual.</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Consultar CUIT</div>
+<input value="{{ apocQ }}" onChange="{{ apocQSet }}" placeholder="Ej.: 30-71589632-4" style="width:100%;margin-top:10px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<sc-if value="{{ apocHayRes }}">
+<div style="margin-top:10px;padding:9px 12px;border-radius:6px;background:{{ apocResBg }};border:1px solid {{ apocResBd }};font:600 12.5px/1.45 'Open Sans';color:{{ apocResFg }}">{{ apocRes }}</div>
+</sc-if>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin:18px 0 8px">Últimas incorporaciones</div>
+<sc-for list="{{ apocUlt }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #EEF1F4">
+<div style="min-width:0"><div style="font:600 12.5px 'Open Sans';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.rz }}</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B;font-variant-numeric:tabular-nums">{{ a.cuit }}</div></div>
+<div style="font:400 12px 'Open Sans';color:#5A6B7B;white-space:nowrap">{{ a.f }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ scr.auditoria }}">
@@ -1834,6 +1903,29 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ ddjjDelOpen }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:18px 20px;display:flex;gap:13px">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#FBE9E7;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg>
+</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 16px 'Open Sans'">¿Borrar esta declaración jurada?</div>
+<div style="font:600 13px/1.5 'Open Sans';color:#1B2733;margin-top:6px">{{ ddjjDelLabel }}</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B">{{ ddjjDelSub }}</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:8px">El registro deja de figurar en el historial y la secuencia queda disponible para volver a liquidarla. Esta acción no se puede deshacer.</div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin:14px 0 6px">Motivo (queda en auditoría)</div>
+<input value="{{ ddjjMotivo }}" onChange="{{ ddjjMotivoSet }}" placeholder="Ej.: DDJJ cargada con archivos equivocados" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+</div>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<button onClick="{{ ddjjDelOk }}" style="padding:9px 14px;background:#B3261E;color:#fff;border:1px solid #B3261E;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Sí, borrar</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ upConfirm }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
 <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
@@ -1980,6 +2072,8 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
+    ddjjBorradas: {}, ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
+    apoc: { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, cuits: [] }, apocRun: false, apocQ: '',
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2245,6 +2339,21 @@ class Component extends DCLogic {
 
   seqTxt(seq) { return 'Secuencia ' + seq + ' · ' + this.seqTipo(seq); }
 
+  fold(t) { return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+
+  ahora() {
+    const d = new Date(), p = (n) => String(n).padStart(2, '0');
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  APOC_ULT = [
+    ['30-71589632-4', 'DISTRIBUIDORA LOS ALAMOS SRL', '22/09/2026'],
+    ['20-28456123-7', 'GOMEZ RICARDO ALBERTO', '15/09/2026'],
+    ['30-70984512-9', 'SERVICIOS INTEGRALES DEL SUR SA', '08/09/2026'],
+    ['27-33658741-2', 'PERALTA MARIA SOLEDAD', '29/08/2026'],
+    ['30-71245896-3', 'CONSTRUCCIONES NORTE PATAGONIA SA', '18/08/2026']
+  ];
+
   seqChip(seq) {
     return seq > 0
       ? { seq: String(seq), seqTipo: this.seqTipo(seq), seqBg: '#E6EDF4', seqFg: '#14395C', seqBd: '#CBD9E6' }
@@ -2495,7 +2604,7 @@ class Component extends DCLogic {
       openDrawer: () => this.setState({ drawer: true }),
       openModal: () => this.setState({ modal: true }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null }),
+      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null }),
       errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
       errRows: s.errView ? s.errView.rows : [],
       errCount: s.errView ? (s.errView.rows.length === 1 ? '1 error registrado' : s.errView.rows.length + ' errores registrados') : '',
@@ -2575,7 +2684,7 @@ class Component extends DCLogic {
         { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '-1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
-      ].filter(r => !(s.liqSaved && r.per === '08/2026' && r.seq === s.liqSeqN))).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
+      ].filter(r => !(s.liqSaved && r.per === '08/2026' && r.seq === s.liqSeqN))).filter(r => !s.ddjjBorradas['CAZATUR SA|' + r.per + '|' + r.seq + '|' + r.fecha]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
       crucesCliente: [
         { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
@@ -2723,8 +2832,12 @@ class Component extends DCLogic {
       };
     });
 
-    const liqDone = s.liqSaved ? [...new Set([0, s.liqSeqN])].sort((a, b) => a - b) : [0];
-    const seqLast = Math.max(...liqDone);
+    const del = s.ddjjBorradas;
+    const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    const base0 = !del['CAZATUR SA|08/2026|0|04/09/2026'] && !(s.liqSaved && s.liqSeqN === 0) ? [0] : [];
+    const nueva = s.liqSaved && !del['CAZATUR SA|08/2026|' + s.liqSeqN + '|03/10/2026'] ? [s.liqSeqN] : [];
+    const liqDone = [...new Set(base0.concat(nueva))].sort((a, b) => a - b);
+    const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
     const seqSel = s.seqElegida ?? seqSug;
     const seqPisa = seqSel !== null && liqDone.includes(seqSel);
@@ -2751,10 +2864,9 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ].filter(r => !(curRow.length && r.cliente === 'CAZATUR SA' && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => histAdmin || r.user === me.short);
+    ].filter(r => !(curRow.length && r.cliente === 'CAZATUR SA' && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
-    const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
     const sel = s.histSel;
     const histPick = histFilas.filter(r => sel[rid(r)]);
     const exportar = (rows) => {
@@ -2854,7 +2966,36 @@ class Component extends DCLogic {
         ? this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia', d: 'El período ya tiene 9 rectificativas: elegí cuál querés reemplazar.' } })
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
-      seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas',
+      seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
+      seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + (nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : '04/09/2026 14:22') + '.' : 'Las declaraciones juradas de este período fueron borradas.',
+      ddjjQ: s.ddjjQ, ddjjQSet: (e) => this.setState({ ddjjQ: e.target.value }),
+      ddjjFilas: (() => {
+        const q = this.fold(s.ddjjQ.trim());
+        return histFilas.filter(r => r.df !== '—' && (!q || this.fold(r.cliente + ' ' + r.per + ' ' + r.user).includes(q))).map(r => {
+          const id = rid(r), label = r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq);
+          return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
+            st: E[r.est],
+            borrar: () => this.setState({ ddjjDel: { id, label, cliente: r.cliente, per: r.per, seq: r.seq, fecha: r.fecha }, ddjjMotivo: '' })
+          });
+        });
+      })(),
+      ddjjVacio: !histFilas.some(r => r.df !== '—' && (!s.ddjjQ.trim() || this.fold(r.cliente + ' ' + r.per + ' ' + r.user).includes(this.fold(s.ddjjQ.trim())))),
+      ddjjDelOpen: !!s.ddjjDel, ddjjDelLabel: s.ddjjDel ? s.ddjjDel.label : '',
+      ddjjDelSub: s.ddjjDel ? 'Procesada el ' + s.ddjjDel.fecha : '',
+      ddjjMotivo: s.ddjjMotivo, ddjjMotivoSet: (e) => this.setState({ ddjjMotivo: e.target.value }),
+      ddjjDelOk: () => {
+        const d = s.ddjjDel, motivo = s.ddjjMotivo.trim();
+        if (!d) return;
+        if (motivo.length < 5) return this.setState({ toast: { kind: 'warn', t: 'Indicá el motivo', d: 'El motivo del borrado queda registrado en auditoría.' } });
+        this.setState(st => {
+          const hs = Object.assign({}, st.histSel); delete hs[d.id];
+          return {
+            ddjjBorradas: Object.assign({}, st.ddjjBorradas, { [d.id]: 1 }), histSel: hs, ddjjDel: null, ddjjMotivo: '',
+            audExtra: [{ f: this.ahora(), u: 'Administrador', a: 'DDJJ borrada', c: d.cliente, p: d.per, r: 'Sec. ' + d.seq + ' · ' + motivo, ip: '190.15.44.12' }].concat(st.audExtra),
+            toast: { kind: 'ok', t: 'Declaración jurada borrada', d: d.label + ' ya no figura en el historial. Quedó registrado en auditoría.' }
+          };
+        });
+      },
       histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
       histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
       histSelCount: String(histPick.length),
@@ -3068,10 +3209,47 @@ class Component extends DCLogic {
 
   miscVals() {
     const s = this.state;
-    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['exp', 'Exportaciones']];
+    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['exp', 'Exportaciones'], ['ddjj', 'Declaraciones juradas'], ['apoc', 'Base APOC']];
     const cfgTab = {};
     cfgDef.forEach(([k]) => { cfgTab[k] = s.cfgTab === k; });
+    const ap = s.apoc, miles = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const dig = (t) => String(t).replace(/\D/g, '');
+    const fmtCuit = (d) => d.slice(0, 2) + '-' + d.slice(2, 10) + '-' + d.slice(10);
+    const apocDone = (patch, accion, detalle, toast) => this.setState(st => ({
+      apocRun: false, apoc: Object.assign({}, st.apoc, patch, { fecha: this.ahora() }),
+      audExtra: [{ f: this.ahora(), u: 'Administrador', a: accion, c: '—', p: '—', r: detalle, ip: '190.15.44.12' }].concat(st.audExtra),
+      toast
+    }));
+    const qd = dig(s.apocQ);
+    const enBase = qd.length === 11 ? (this.APOC_ULT.find(a => dig(a[0]) === qd) || (ap.cuits.includes(qd) ? [fmtCuit(qd), 'Cargado desde archivo', ap.fecha.slice(0, 10)] : null)) : null;
     return {
+      apocFecha: ap.fecha, apocTotal: miles(ap.total), apocOrigen: ap.origen,
+      apocNuevos: ap.nuevos ? '+' + miles(ap.nuevos) + ' en la última actualización' : 'Sin cambios en la última actualización',
+      apocRun: s.apocRun, apocBtn: s.apocRun ? 'Actualizando…' : 'Actualizar desde ARCA',
+      apocActualizar: () => {
+        if (s.apocRun) return;
+        this.setState({ apocRun: true });
+        setTimeout(() => apocDone({ total: ap.total + 37, nuevos: 37, origen: 'ARCA · actualización manual' }, 'Base APOC actualizada', 'Descarga desde ARCA · +37 CUITs',
+          { kind: 'ok', t: 'Base APOC actualizada', d: 'Se incorporaron 37 CUITs nuevos. Los próximos cruces ya usan la base actualizada.' }), 1600);
+      },
+      apocArchivo: (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          const cuits = [...new Set((String(rd.result).match(/\b\d{2}-?\d{8}-?\d\b/g) || []).map(dig))];
+          if (!cuits.length) return this.setState({ toast: { kind: 'warn', t: 'Archivo sin CUITs', d: f.name + ' no tiene CUITs válidos (11 dígitos). Revisá el formato.' } });
+          apocDone({ total: cuits.length, nuevos: Math.max(0, cuits.length - ap.total), origen: 'Archivo · ' + f.name, cuits }, 'Base APOC actualizada', 'Archivo ' + f.name + ' · ' + cuits.length + ' CUITs',
+            { kind: 'ok', t: 'Base APOC actualizada', d: f.name + ' · ' + miles(cuits.length) + ' CUITs cargados.' });
+        };
+        rd.readAsText(f);
+      },
+      apocQ: s.apocQ, apocQSet: (e) => this.setState({ apocQ: e.target.value }),
+      apocHayRes: qd.length === 11,
+      apocRes: enBase ? 'Figura en la base APOC desde el ' + enBase[2] + ' · ' + enBase[1] : 'No figura en la base APOC',
+      apocResBg: enBase ? '#FBE9E7' : '#E8F3EE', apocResFg: enBase ? '#B3261E' : '#2E7D5B', apocResBd: enBase ? '#F3CFCB' : '#C7E3D6',
+      apocUlt: this.APOC_ULT.map(([cuit, rz, f]) => ({ cuit, rz, f })),
       cfgTabs: cfgDef.map(([k, label]) => ({
         label, go: this.tset('cfgTab', k),
         fg: s.cfgTab === k ? '#14395C' : '#5A6B7B',
@@ -3084,7 +3262,7 @@ class Component extends DCLogic {
         { ev: 'Alertas de CUITs observados', dest: 'admin@blasco.com.ar', asunto: '[MyIVA] CUITs observados — {cliente}' },
         { ev: 'Error de procesamiento', dest: 'sistemas@blasco.com.ar', asunto: '[MyIVA] Error al procesar {cliente} {periodo}' }
       ],
-      auditoria: [
+      auditoria: s.audExtra.concat([
         { f: '04/09/2026 14:22', u: 'Administrador', a: 'Liquidación ejecutada', c: 'CAZATUR SA', p: '08/2026', r: 'Completado', ip: '190.15.44.12' },
         { f: '04/09/2026 14:20', u: 'Administrador', a: 'Cruce ejecutado', c: 'CAZATUR SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.12' },
         { f: '04/09/2026 11:05', u: 'Julieta', a: 'Cruce ejecutado', c: 'DACKET SA', p: '08/2026', r: 'Completado con diferencias', ip: '190.15.44.30' },
@@ -3092,7 +3270,7 @@ class Component extends DCLogic {
         { f: '03/09/2026 09:12', u: 'Julieta', a: 'Liquidación ejecutada', c: 'NOVALUX S.A.', p: '08/2026', r: 'Con errores', ip: '181.44.20.7' },
         { f: '02/09/2026 16:40', u: 'Julieta', a: 'Reporte exportado', c: 'Varios (3)', p: '01/2026–08/2026', r: 'Excel generado', ip: '181.44.20.7' },
         { f: '28/08/2026 10:11', u: 'Administrador', a: 'Cliente creado', c: 'FIDEICOMISO PAMPA PILAR', p: '—', r: 'Alta confirmada', ip: '190.15.44.12' }
-      ].map(r => Object.assign({}, r, { st: this.EST[r.r] || null, plain: !this.EST[r.r] }))
+      ]).map(r => Object.assign({}, r, { st: this.EST[r.r] || null, plain: !this.EST[r.r] }))
     };
   }
 }
