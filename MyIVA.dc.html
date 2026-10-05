@@ -781,10 +781,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#FBE9E7;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
 <div style="font:600 16px 'Open Sans'">No se pudo completar la liquidación</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;text-align:center;max-width:420px">El archivo de IVA Compras tiene columnas que no coinciden con el formato esperado. Revisá la exportación y volvé a intentar.</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;text-align:center;max-width:420px">El archivo de IVA Compras tiene columnas que no coinciden con el formato esperado. Reemplazalo en la carga de archivos y volvé a procesar.</div>
 <div style="display:flex;gap:10px;margin-top:6px">
-<button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Revisar archivos</button>
-<button style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Reintentar</button>
+<button onClick="{{ revisarArchivos }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Revisar archivos</button>
 </div>
 </div>
 </sc-if>
@@ -3019,6 +3018,10 @@ class Component extends DCLogic {
         bg: s.dz === k ? '#14395C' : '#FFFFFF', fg: s.dz === k ? '#FFFFFF' : '#5A6B7B'
       })),
       procIs: { run: s.proc === 'run', done: s.proc === 'done', err: s.proc === 'error' },
+      revisarArchivos: () => this.setState(st => ({
+        step: 2, dz: 'error', proc: 'run', liqSaved: false, seqElegida: st.liqSaved ? st.liqSeqN : st.seqElegida,
+        toast: { kind: 'warn', t: 'Revisá los archivos', d: 'El archivo de IVA Compras quedó marcado con error. Reemplazalo y continuá para volver a procesar.' }
+      })),
       procModes: ['run', 'done', 'error'].map(k => ({
         label: { run: 'Procesando', done: 'Completado', error: 'Con error' }[k],
         go: this.tset('proc', k),
