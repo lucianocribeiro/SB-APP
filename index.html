@@ -65,6 +65,23 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45;border-color:#0E2A45">Ingresar</button>
 <button onClick="{{ toggleLoginErr }}" style="width:100%;padding:9px 16px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:400 12px 'Open Sans';cursor:pointer" style-hover="color:#14395C;border-color:#14395C">Ver estado de error de credenciales</button>
 </div>
+<div style="margin-top:24px;padding-top:18px;border-top:1px solid #E3E8EE">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Acceso rápido por rol</div>
+<div style="font:400 12px/1.4 'Open Sans';color:#9AA9B7;margin-top:5px">Ingresá directamente como cada perfil del estudio.</div>
+<div onClick="{{ accesoAdmin }}" style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 11px;border:1px solid #14395C;border-radius:6px;cursor:pointer;background:#F4F9FD" style-hover="background:#E6EDF4">
+<div style="width:30px;height:30px;flex:none;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">AD</div>
+<div style="flex:1;min-width:0"><div style="font:600 13px 'Open Sans';color:#14395C">Administrador</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B">Todos los clientes · configuración y auditoría</div></div>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+<sc-for list="{{ accesoUsrs }}" as="u" hint-placeholder-count="5">
+<div onClick="{{ u.go }}" title="{{ u.mail }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#14395C;background:#F4F9FD">
+<div style="width:28px;height:28px;flex:none;border-radius:6px;background:#E6EDF4;color:#14395C;display:flex;align-items:center;justify-content:center;font:600 11px 'Open Sans'">{{ u.ini }}</div>
+<div style="min-width:0"><div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ u.nombre }}</div><div style="font:400 11px 'Open Sans';color:#5A6B7B">Usuario · {{ u.cant }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -137,7 +154,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="flex:1"></div>
 <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#2F80B7">
 <span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span>
-<span style="font:600 13px/1 'Open Sans';color:#14395C">CAZATUR SA</span>
+<span style="font:600 13px/1 'Open Sans';color:#14395C">{{ liqCli }}</span>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
 </div>
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
@@ -154,6 +171,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ meShort }}</div>
 <div style="font:400 11px 'Open Sans';color:#5A6B7B">{{ rolLabel }}</div>
 </div>
+</div>
+<div onClick="{{ cerrarSesion }}" title="Cerrar sesión" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l5-5-5-5M15 12H4"></path></svg>
 </div>
 </div>
 
@@ -496,7 +516,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cliente</div>
-<select defaultValue="CAZATUR SA" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
+<select value="{{ liqCli }}" onChange="{{ liqCliSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mes</div>
@@ -511,7 +531,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
 <div style="flex:1">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-<div style="font:600 13px/1.4 'Open Sans';color:#14395C">CAZATUR SA · 08/2026 ya tiene {{ seqPrevLabel }}</div>
+<div style="font:600 13px/1.4 'Open Sans';color:#14395C">{{ seqHead }}</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ seqBadgeBg }};color:#fff;border:1px solid {{ seqBadgeBg }};white-space:nowrap">{{ seqBadge }}</span>
 </div>
 <div style="font:400 12.5px/1.5 'Open Sans';color:#1F6795;margin-top:4px">{{ seqUltLine }} {{ seqSugTxt }}</div>
@@ -652,7 +672,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ seqNextTxt }} · {{ upCountLabel }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · 08/2026 · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
@@ -756,7 +776,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
 <div style="width:34px;height:34px;border:3px solid #E3E8EE;border-top-color:#14395C;border-radius:20px;animation:spin 900ms linear infinite"></div>
 <div style="font:600 15px 'Open Sans'">Procesando liquidación</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">CAZATUR SA · 08/2026 · {{ seqCurTxt }} — no cierres esta pantalla.</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">{{ liqCli }} · 08/2026 · {{ seqCurTxt }} — no cierres esta pantalla.</div>
 <div style="width:100%;max-width:420px;height:6px;background:#EEF1F4;border-radius:4px;overflow:hidden"><div style="width:40%;height:100%;background:#14395C;animation:bar 1.6s ease-in-out infinite"></div></div>
 </div>
 </sc-if>
@@ -1911,7 +1931,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar los cruces?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de CAZATUR SA · 08/2026 con {{ upCountLabel }}:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de {{ liqCli }} · 08/2026 con {{ upCountLabel }}:</div>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ upLoaded }}" as="u" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;gap:9px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -1940,7 +1960,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar CAZATUR SA · 08/2026 como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar {{ liqCli }} · 08/2026 como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
 <sc-if value="{{ seqPisa }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
 </sc-if>
@@ -2041,7 +2061,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;rolInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Administrador&quot;,&quot;Usuario&quot;],&quot;default&quot;:&quot;Administrador&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;pantallaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Login&quot;,&quot;Inicio&quot;],&quot;default&quot;:&quot;Login&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototipo&quot;},&quot;sidebarColapsado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototipo&quot;}}">
 class Component extends DCLogic {
   state = {
-    screen: 'login', role: 'admin', collapsed: false, loginErr: false,
+    screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     step: 1, dz: 'loaded', proc: 'run',
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
@@ -2304,9 +2324,17 @@ class Component extends DCLogic {
   }
 
   me() {
+    const u = this.state.usr || 'Julieta';
     return this.state.role === 'admin'
       ? { ini: 'AD', short: 'Administrador', full: 'Administrador', mail: 'admin@blasco.com.ar' }
-      : { ini: 'JU', short: 'Julieta', full: 'Julieta', mail: this.mailDe('Julieta') };
+      : { ini: this.fold(u).slice(0, 2).toUpperCase(), short: u, full: u, mail: this.mailDe(u) };
+  }
+
+  liqCli() {
+    const s = this.state, me = this.me();
+    const mine = s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
+    if (s.liqCliSel && mine.includes(s.liqCliSel)) return s.liqCliSel;
+    return mine.includes('CAZATUR SA') ? 'CAZATUR SA' : ([...mine].sort((a, b) => a.localeCompare(b, 'es'))[0] || '');
   }
 
   SEQ_MAX = 9;
@@ -2599,11 +2627,17 @@ class Component extends DCLogic {
         { label: 'Clientes activos', value: String(clientes.length), hint: 'de ' + clientes.length + ' en el estudio', color: '#1B2733' },
         { label: 'Alertas abiertas', value: '3', hint: 'CUITs observados', color: '#B3261E' }
       ] : [
-        { label: 'Mis liquidaciones del período en curso', value: '4', hint: 'de ' + misClientes.length + ' clientes asignados', color: '#1B2733' },
-        { label: 'Mis cruces con diferencias pendientes', value: '2', hint: 'requieren revisión', color: '#B7791F' },
+        { label: 'Mis liquidaciones del período en curso', value: String(procesos.filter(p => p.per === '08/2026' && p.proc === 'Liquidación IVA').length + (me.short === 'Julieta' ? 3 : 0)), hint: 'de ' + misClientes.length + ' clientes asignados', color: '#1B2733' },
+        { label: 'Mis cruces con diferencias pendientes', value: String(procesos.filter(p => p.est === 'Completado con diferencias').length), hint: 'requieren revisión', color: '#B7791F' },
         { label: 'Clientes asignados', value: String(misClientes.length), hint: misClientes.slice(0, 2).join(' · ') + (misClientes.length > 2 ? ' y ' + (misClientes.length - 2) + ' más' : ''), color: '#1B2733' },
-        { label: 'Alertas abiertas', value: '4', hint: 'de mis clientes', color: '#B3261E' }
+        { label: 'Alertas abiertas', value: String(alertasTodas.filter(a => misClientes.indexOf(a.cli) >= 0).length), hint: 'de mis clientes', color: '#B3261E' }
       ],
+      accesoAdmin: () => this.setState({ role: 'admin', screen: 'inicio', loginErr: false }),
+      accesoUsrs: this.CARTERA.map(([u, cs]) => ({
+        nombre: u, ini: this.fold(u).slice(0, 2).toUpperCase(), cant: cs.length + ' clientes', mail: this.mailDe(u),
+        go: () => this.setState({ role: 'empleado', usr: u, screen: 'inicio', loginErr: false })
+      })),
+      cerrarSesion: () => this.setState({ screen: 'login', notif: false }),
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
       cliMostrando: clientesVis.length === clientes.length
@@ -2651,7 +2685,7 @@ class Component extends DCLogic {
         { t: 'Reporte Papel de trabajo exportado', when: '30/08/2026' },
         { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
       ],
-      liqCliente: (s.liqSaved ? [
+      liqCliente: (s.liqSaved && s.liqCliN === 'CAZATUR SA' ? [
         { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
       ] : []).concat([
         { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
@@ -2659,7 +2693,7 @@ class Component extends DCLogic {
         { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '-1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
-      ].filter(r => !(s.liqSaved && r.per === '08/2026' && r.seq === s.liqSeqN))).filter(r => !s.ddjjBorradas['CAZATUR SA|' + r.per + '|' + r.seq + '|' + r.fecha]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
+      ].filter(r => !(s.liqSaved && s.liqCliN === 'CAZATUR SA' && r.per === '08/2026' && r.seq === s.liqSeqN))).filter(r => !s.ddjjBorradas['CAZATUR SA|' + r.per + '|' + r.seq + '|' + r.fecha]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
       crucesCliente: [
         { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
@@ -2808,8 +2842,9 @@ class Component extends DCLogic {
 
     const del = s.ddjjBorradas;
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
-    const base0 = !del['CAZATUR SA|08/2026|0|04/09/2026'] && !(s.liqSaved && s.liqSeqN === 0) ? [0] : [];
-    const nueva = s.liqSaved && !del['CAZATUR SA|08/2026|' + s.liqSeqN + '|03/10/2026'] ? [s.liqSeqN] : [];
+    const cli = this.liqCli(), hasHist = cli === 'CAZATUR SA', savedAqui = s.liqSaved && s.liqCliN === cli;
+    const base0 = hasHist && !del['CAZATUR SA|08/2026|0|04/09/2026'] && !(savedAqui && s.liqSeqN === 0) ? [0] : [];
+    const nueva = savedAqui && !del[cli + '|08/2026|' + s.liqSeqN + '|03/10/2026'] ? [s.liqSeqN] : [];
     const liqDone = [...new Set(base0.concat(nueva))].sort((a, b) => a - b);
     const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
@@ -2826,8 +2861,8 @@ class Component extends DCLogic {
     const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
     const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
     const curRow = s.liqSaved
-      ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
-      : (curPend ? [{ cliente: 'CAZATUR SA', per: '08/2026', seq: seqSel ?? seqLast, fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
+      ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
+      : (curPend ? [{ cliente: cli, per: '08/2026', seq: seqSel ?? Math.max(0, seqLast), fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
     const histFilas = curRow.concat([
       { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
       { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
@@ -2838,7 +2873,7 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
       { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ].filter(r => !(curRow.length && r.cliente === 'CAZATUR SA' && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
+    ].filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const sel = s.histSel;
@@ -2912,7 +2947,10 @@ class Component extends DCLogic {
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
-      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, seqElegida: null }),
+      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null }),
+      liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
+      liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
+      seqHead: cli + ' · 08/2026 ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
       seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
       seqNextTxt: seqSel === null ? 'secuencia a elegir' : this.seqTxt(seqSel),
       seqCurTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : (seqSel ?? seqLast)),
@@ -2941,7 +2979,7 @@ class Component extends DCLogic {
         : this.setState({ step: 2 }),
       seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
-      seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + (nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : '04/09/2026 14:22') + '.' : 'Las declaraciones juradas de este período fueron borradas.',
+      seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + (nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : '04/09/2026 14:22') + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
       ddjjQ: s.ddjjQ, ddjjQSet: (e) => this.setState({ ddjjQ: e.target.value }),
       ddjjFilas: (() => {
         const q = this.fold(s.ddjjQ.trim());
@@ -2994,7 +3032,7 @@ class Component extends DCLogic {
       })),
       procIs: { run: s.proc === 'run', done: s.proc === 'done', err: s.proc === 'error' },
       revisarArchivos: () => this.setState(st => ({
-        step: 2, dz: 'error', proc: 'run', liqSaved: false, seqElegida: st.liqSaved ? st.liqSeqN : st.seqElegida,
+        step: 2, dz: 'error', proc: 'run', liqSaved: false, seqElegida: st.liqSaved ? st.liqSeqN : st.seqElegida, liqCliSel: st.liqSaved ? st.liqCliN : st.liqCliSel,
         toast: { kind: 'warn', t: 'Revisá los archivos', d: 'El archivo de IVA Compras quedó marcado con error. Reemplazalo y continuá para volver a procesar.' }
       })),
       procModes: ['run', 'done', 'error'].map(k => ({
@@ -3092,7 +3130,7 @@ class Component extends DCLogic {
     const s = this.state, E = this.EST;
     const cruAdmin = s.role === 'admin', me = this.me();
     const savedCru = s.cruSaved ? this.cruRun().rows.filter(r => r.run || r.isErr).map(r => ({
-      cliente: 'CAZATUR SA', tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: me.short,
+      cliente: this.liqCli(), tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: me.short,
       regs: r.isErr ? '—' : r.regs.toLocaleString('es-AR'), dif: r.isErr ? '—' : String(r.dif), est: r.est, hasDif: r.hasDif, errs: r.errs
     })) : [];
     const STB = {
