@@ -1230,6 +1230,103 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 </sc-if>
 
+<sc-if value="{{ scr.liqCompensaciones }}">
+<div>
+<div style="font:600 22px/1.2 'Open Sans'">Compensaciones</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px;max-width:820px">Declará compensaciones contra el saldo a favor de 2do párrafo de una declaración jurada. El monto compensado se resta del saldo de 2do párrafo que se arrastra al período siguiente y se incorpora en la planilla exportable.</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px">
+<sc-for list="{{ compKpis }}" as="k" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:14px 16px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 24px/1 'Open Sans';margin-top:9px;color:{{ k.color }};font-variant-numeric:tabular-nums">{{ k.value }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Nueva compensación</div>
+<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+<div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cliente</div>
+<select value="{{ compCli }}" onChange="{{ compCliSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ compCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
+</div>
+<div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Período de la DJ</div>
+<select value="{{ compPer }}" onChange="{{ compPerSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ compPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.per }}">{{ o.label }}</option></sc-for></select>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Monto a compensar</div>
+<sc-if value="{{ compHayDisp }}">
+<span onClick="{{ compUsarDisp }}" style="font:600 12px 'Open Sans';color:#2F80B7;cursor:pointer">Usar todo el disponible</span>
+</sc-if>
+</div>
+<div style="display:flex;align-items:center;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden;background:#fff">
+<span style="padding:9px 0 9px 11px;font:600 13.5px 'Open Sans';color:#5A6B7B">$</span>
+<input value="{{ compMonto }}" onChange="{{ compMontoSet }}" placeholder="0,00" inputmode="decimal" style="flex:1;min-width:0;padding:9px 11px 9px 6px;border:0;outline:none;font:400 13.5px 'Open Sans';font-variant-numeric:tabular-nums">
+</div>
+</div>
+<div style="padding:9px 12px;border-radius:6px;background:{{ compMsgBg }};border:1px solid {{ compMsgBd }};font:600 12.5px/1.45 'Open Sans';color:{{ compMsgFg }}">{{ compMsg }}</div>
+<div style="display:flex;justify-content:flex-end">
+<button onClick="{{ compRegistrar }}" style="padding:9px 14px;background:{{ compBtnBg }};color:#fff;border:1px solid {{ compBtnBg }};border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Registrar compensación</button>
+</div>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Saldo de la declaración jurada</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ compCli }} · {{ compPer }} · {{ compDj }}</div>
+<div style="display:flex;flex-direction:column;margin-top:12px;border:1px solid #EEF1F4;border-radius:6px">
+<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid #EEF1F4;font:400 13px 'Open Sans'"><span style="color:#5A6B7B">Saldo 2do párrafo de la DJ</span><span style="font-weight:600;font-variant-numeric:tabular-nums;color:{{ compS2c }}">{{ compS2 }}</span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid #EEF1F4;font:400 13px 'Open Sans'"><span style="color:#5A6B7B">Ya compensado</span><span style="font-weight:600;font-variant-numeric:tabular-nums">{{ compUsado }}</span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;background:#F5F7FA;font:600 13px 'Open Sans'"><span>Disponible para compensar</span><span style="font-variant-numeric:tabular-nums;color:{{ compDispC }}">{{ compDisp }}</span></div>
+</div>
+<div style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:9px 12px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="font:400 12px/1.45 'Open Sans';color:#1F6795">Se compensa contra la DJ vigente del período (la última secuencia liquidada). El monto tiene que ser menor o igual al saldo a favor de 2do párrafo que todavía no se compensó.</div>
+</div>
+<sc-if value="{{ compArrastre }}">
+<div style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 12px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><path d="M12 3l9 17H3zM12 9v5M12 17v.5"></path></svg>
+<div style="font:400 12px/1.45 'Open Sans';color:#8F5F14">Esta DJ es la que se arrastra a la liquidación de 08/2026: lo que compenses se resta del saldo de libre disponibilidad en el cruce 0 del Paso 3.</div>
+</div>
+</sc-if>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto;margin-bottom:64px">
+<div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Compensaciones registradas</div>
+<table style="width:100%;border-collapse:collapse;min-width:860px">
+<thead><tr>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">DJ</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Monto compensado</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acción</th>
+</tr></thead>
+<tbody>
+<sc-if value="{{ compVacio }}">
+<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">Todavía no hay compensaciones registradas.</td></tr>
+</sc-if>
+<sc-for list="{{ compFilas }}" as="r" hint-placeholder-count="2">
+<tr style-hover="background:#FAFBFD">
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B;white-space:nowrap">{{ r.fecha }}</td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldoTxt }}</td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.montoTxt }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right"><sc-if value="{{ r.puede }}"><span onClick="{{ r.borrar }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">Eliminar</span></sc-if></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+
 <sc-if value="{{ scr.liqReportes }}">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Reportes</div>
@@ -2103,6 +2200,11 @@ class Component extends DCLogic {
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     ddjjBorradas: {}, ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
+    comps: [
+      { id: 'c2', cliente: 'BBI SA', per: '08/2026', seq: 0, monto: 20000, fecha: '09/09/2026 12:05', user: 'Rubén' },
+      { id: 'c1', cliente: 'DACKET SA', per: '08/2026', seq: 1, monto: 35000, fecha: '05/09/2026 10:40', user: 'Julieta' }
+    ],
+    compCli: '', compPer: '', compMonto: '',
     apoc: { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, cuits: [] }, apocRun: false, apocQ: '',
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     asign: { 'Julieta': 1 },
@@ -2143,6 +2245,7 @@ class Component extends DCLogic {
     liqNueva: ['Liquidador IVA', 'Nueva liquidación'],
     liqResultado: ['Liquidador IVA', 'Resultado · CAZATUR SA 08/2026'],
     liqHistorial: ['Liquidador IVA', 'Historial de liquidaciones'],
+    liqCompensaciones: ['Liquidador IVA', 'Compensaciones'],
     liqDashboard: ['Liquidador IVA', 'Dashboard de liquidaciones'],
     liqReportes: ['Liquidador IVA', 'Reportes'],
     cruceResultado: ['Liquidador IVA', 'Resultado de cruce'],
@@ -2203,9 +2306,9 @@ class Component extends DCLogic {
     ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AM', 'Total Débito Fiscal'], ['AN', 'Total Crédito Fiscal'],
     ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
     ['AS', 'Total Crédito Fiscal Computable'], ['AT', 'Total Crédito Fiscal No Computable'], ['AU', 'Ajustes Prorrateo'],
-    ['AV', 'Total Retenciones y Percecpiones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'],
-    ['AZ', 'Débito Fiscal'], ['BA', 'Crédito Fiscal'], ['BB', 'Saldo anterior'], ['BC', 'Saldo técnico a favor ARCA (D)'],
-    ['BD', 'Saldo técnico a favor ARCA (PM)'], ['BE', 'SLD anterior'], ['BF', 'Retenciones y Perc.'], ['BG', 'Saldo a favor ARCA']
+    ['AV', 'Total Retenciones y Percecpiones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'], ['AZ', 'Compensaciones'],
+    ['BA', 'Débito Fiscal'], ['BB', 'Crédito Fiscal'], ['BC', 'Saldo anterior'], ['BD', 'Saldo técnico a favor ARCA (D)'],
+    ['BE', 'Saldo técnico a favor ARCA (PM)'], ['BF', 'SLD anterior'], ['BG', 'Retenciones y Perc.'], ['BH', 'Saldo a favor ARCA']
   ];
 
   colNum(l) { return l.split('').reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0); }
@@ -2228,15 +2331,15 @@ class Component extends DCLogic {
       if (o && o.v !== undefined) return `<c r="${ref}" s="${s}"><v>${o.v}</v></c>`;
       return `<c r="${ref}" s="${s}"/>`;
     };
-    const lastCol = C('BG'), first = 3, last = first + data.length - 1, tot = last + 1;
+    const lastCol = C('BH'), first = 3, last = first + data.length - 1, tot = last + 1;
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
       .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
-      if (L === C('AZ')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 1er párrafo' }));
-      else if (L === C('BD')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 2do párrafo' }));
+      if (L === C('BA')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 1er párrafo' }));
+      else if (L === C('BE')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 2do párrafo' }));
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
     rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
@@ -2249,16 +2352,17 @@ class Component extends DCLogic {
         B: r2(F / 0.21), C: r2(G / 0.105), D: r2(H / 0.27), F, G, H, I: df,
         J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, T: 0, U: 0, V: 0, W: 0,
         X: r2(AA / 0.21), Y: r2(AB / 0.105), Z: r2(AC / 0.27), AA, AB, AC, AD: cf,
-        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AK, AL, AM: df, AN: cf, AV: rp
+        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AK, AL, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0)
       };
       v.E = r2(v.B + v.C + v.D);
+      const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
       const f = {
         AO: `1-${ratio}`,
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
         AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
         AW: `IF(${C('AW')}${p}>0,${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r}+${C('AW')}${p},${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r})`,
-        AX: `IF(${C('AX')}${p}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}),IF(${C('AW')}${r}<0,${C('AX')}${p}+${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}+${C('AX')}${p}))`,
+        AX: `IF(${axAnt}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}),IF(${C('AW')}${r}<0,${axAnt}+${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}+${axAnt}))`,
         AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
       };
       const SALDO = { AW: 1, AX: 1, AY: 1 };
@@ -2277,7 +2381,7 @@ class Component extends DCLogic {
       const L = C(o), ref = L + tot, n = this.colNum(o);
       if (o === 'AO') tc.push(cell(ref, ST.totPct, { f: `1-${tRatio}` }));
       else if (o === 'AW' || o === 'AX') tc.push(cell(ref, ST.totMoney, { f: `${L}${last}` }));
-      else if (o === 'AU' || n > this.colNum('AY')) tc.push(cell(ref, ST.totEmpty));
+      else if (o === 'AU' || n > this.colNum('AZ')) tc.push(cell(ref, ST.totEmpty));
       else tc.push(cell(ref, ST.totMoney, { f: `SUM(${L}${first}:${L}${last})` }));
     });
     rowsXml.push(`<row r="${tot}">${tc.join('')}</row>`);
@@ -2289,7 +2393,7 @@ class Component extends DCLogic {
     const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${tot}"/>`
       + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
       + `<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml.join('')}</sheetData>`
-      + `<mergeCells count="2"><mergeCell ref="${C('AZ')}2:${C('BC')}2"/><mergeCell ref="${C('BD')}2:${C('BG')}2"/></mergeCells></worksheet>`;
+      + `<mergeCells count="2"><mergeCell ref="${C('BA')}2:${C('BD')}2"/><mergeCell ref="${C('BE')}2:${C('BH')}2"/></mergeCells></worksheet>`;
     const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
       + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;$&quot;#,##0.00"/></numFmts>`
@@ -2402,6 +2506,20 @@ class Component extends DCLogic {
     return this._demo;
   }
 
+  compSum(cliente, per, seq) {
+    return this.state.comps.filter(c => c.cliente === cliente && c.per === per && (seq === undefined || c.seq === seq)).reduce((a, c) => a + c.monto, 0);
+  }
+
+  ars(n) {
+    const neg = n < 0, p = Math.abs(n).toFixed(2).split('.');
+    return (neg ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + p[1];
+  }
+
+  arrastre(cli) {
+    const pagar = this.state.prevSaldo === 'pagar', comp = this.compSum(cli, '07/2026');
+    return { pagar, tec: pagar ? 0 : 297827.45, base: pagar ? 0 : 42180, comp, lib: pagar ? 0 : Math.max(0, 42180 - comp) };
+  }
+
   SEQ_MAX = 9;
 
   seqTipo(seq) { return seq === 0 ? 'Original' : 'Rectificativa'; }
@@ -2495,13 +2613,14 @@ class Component extends DCLogic {
       emitidos: 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.docx', recibidos: 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.docx',
       percep: 'CAZATUR_MIS_RETENCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_IVA_DIGITAL_082026.jpg'
     };
-    const cli = this.liqCli(), ap = s.apoc, prevPagar = s.prevSaldo === 'pagar';
-    const arrTec = prevPagar ? '0,00' : '297.827,45', arrLib = prevPagar ? '0,00' : '42.180,00';
+    const cli = this.liqCli(), ap = s.apoc, arr = this.arrastre(cli), prevPagar = arr.pagar;
+    const arrTec = this.ars(arr.tec), arrLib = this.ars(arr.lib);
     const arrastre = {
       n: '0', t: 'Arrastre de saldos a favor del período anterior', prevPagar,
-      regla: 'Se toman de la última secuencia liquidada de 07/2026 (Secuencia 2 · Rectificativa · 12/08/2026). Si el período anterior resultó a pagar, se trasladan en $ 0.',
+      regla: 'Se toman de la última secuencia liquidada de 07/2026 (Secuencia 2 · Rectificativa · 12/08/2026). Si el período anterior resultó a pagar, se trasladan en $ 0. Al saldo de 2do párrafo se le restan las compensaciones registradas sobre esa DJ.',
       st: E['Completado'],
-      resumen: prevPagar ? 'El período anterior resultó a pagar: no hay saldos a favor para trasladar.' : 'Se trasladan $ ' + arrTec + ' de saldo técnico y $ ' + arrLib + ' de libre disponibilidad a 08/2026.'
+      resumen: prevPagar ? 'El período anterior resultó a pagar: no hay saldos a favor para trasladar.'
+        : 'Se trasladan $ ' + arrTec + ' de saldo técnico y $ ' + arrLib + ' de libre disponibilidad a 08/2026' + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.')
     };
     const APOC_OBS = [[0, '18.270,00'], [2, '9.450,00'], [4, '31.920,00']].map(([i, iva]) => [this.APOC_ULT[i][1], this.APOC_ULT[i][0], this.APOC_ULT[i][2], iva]);
     const def = [
@@ -2593,6 +2712,7 @@ class Component extends DCLogic {
       { k: 'sub', label: 'Nueva liquidación', key: 'liqNueva' },
       { k: 'sub', label: 'Historial de cruces', key: 'crucesHistorial' },
       { k: 'sub', label: 'Historial de liquidaciones', key: 'liqHistorial' },
+      { k: 'sub', label: 'Compensaciones', key: 'liqCompensaciones' },
       { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' },
       { k: 'sub', label: 'Reportes', key: 'liqReportes' }
     ];
@@ -2628,7 +2748,7 @@ class Component extends DCLogic {
       { label: 'Configuración', key: 'config', icon: I.gear },
       { label: 'Auditoría', key: 'auditoria', icon: I.audit }
     );
-    const fam = { liqNueva: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'clientes' };
+    const fam = { liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'clientes' };
     const act = fam[active] || active;
     return items.map(it => ({
       label: it.label, icon: it.icon, go: this.nav(it.key),
@@ -2640,7 +2760,7 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const scr = {};
-    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqDashboard', 'liqReportes', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
+    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqCompensaciones', 'liqDashboard', 'liqReportes', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
     const E = this.EST;
     const go = {};
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
@@ -2817,8 +2937,8 @@ class Component extends DCLogic {
         { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
       ] : []).concat([
         { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '2.611.330,80', saldo: '-1.297.413,35', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '2.611.330,80', saldo: '-1.290.779,60', sc: '#B3261E', est: 'Completado con diferencias' },
+        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '3.858.148,75', saldo: '42.180,00', sc: '#2E7D5B', est: 'Completado' },
+        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '3.858.148,75', saldo: '48.813,75', sc: '#2E7D5B', est: 'Completado con diferencias' },
         { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
         { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
       ].filter(r => !(s.liqSaved && s.liqCliN === 'CAZATUR SA' && r.per === '08/2026' && r.seq === s.liqSeqN))).filter(r => !s.ddjjBorradas['CAZATUR SA|' + r.per + '|' + r.seq + '|' + r.fecha]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
@@ -2840,14 +2960,14 @@ class Component extends DCLogic {
     const s = this.state, E = this.EST;
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
     const cru = this.cruRun();
-    const prevPagar = s.prevSaldo === 'pagar';
+    const arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
     const prevSaldos = [
-      { label: 'Saldo técnico a favor del período anterior', amount: '$ 297.827,45' },
-      { label: 'Saldo a favor de libre disponibilidad del período anterior', amount: '$ 42.180,00' }
+      { label: 'Saldo técnico a favor del período anterior', amount: '$ ' + this.ars(arr.tec), sub: 'Se traslada a la liquidación de 08/2026' },
+      { label: 'Saldo a favor de libre disponibilidad del período anterior', amount: '$ ' + this.ars(arr.lib), sub: arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Se traslada a la liquidación de 08/2026' }
     ].map(p => ({
       label: p.label,
       value: prevPagar ? '$ 0' : p.amount,
-      sub: prevPagar ? 'El período anterior resultó a pagar' : 'Se traslada a la liquidación de 08/2026',
+      sub: prevPagar ? 'El período anterior resultó a pagar' : p.sub,
       fg: prevPagar ? '#5A6B7B' : '#2E7D5B',
       bg: prevPagar ? '#F5F7FA' : '#F3FAF6',
       bd: prevPagar ? '#E3E8EE' : '#C7E3D6'
@@ -2888,7 +3008,7 @@ class Component extends DCLogic {
       { per: '04/2026', df: 2455702.9, cf: 1988442.1, rp: 72118.4, a21: 2210000, a105: 221000, a27: 24702 },
       { per: '05/2026', df: 2877010.25, cf: 2140908.6, rp: 84502.75, a21: 2600000, a105: 250000, a27: 27010 },
       { per: '06/2026', df: 3104288, cf: 3402115.45, rp: 79330, a21: 2820000, a105: 260000, a27: 24288 },
-      { per: '07/2026', df: 3908744.15, cf: 2611330.8, rp: 92775.4, a21: 3600000, a105: 285000, a27: 23744 },
+      { per: '07/2026', df: 3908744.15, cf: 3858148.75, rp: 92775.4, a21: 3600000, a105: 285000, a27: 23744 },
       { per: '08/2026', df: 4182905.6, cf: 2444516.2, rp: 106284.15, a21: 3979500, a105: 176400, a27: 26005 }
     ].map(d => Object.assign({}, d, { saldo: Math.round((d.cf + d.rp - d.df) * 100) / 100 }));
     const saldoC = (v) => v < 0 ? '#B3261E' : '#2E7D5B';
@@ -2979,8 +3099,8 @@ class Component extends DCLogic {
       { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
       { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
       { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '2.611.330,80', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
     ].concat(this.demoUsr().liq);
     const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli;
     const delPer = baseRows.filter(r => r.cliente === cli && r.per === '08/2026' && r.df !== '—');
@@ -3005,7 +3125,8 @@ class Component extends DCLogic {
     const curRow = s.liqSaved
       ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
       : (curPend ? [{ cliente: cli, per: '08/2026', seq: seqSel ?? Math.max(0, seqLast), fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
-    const histFilas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)] && (histAdmin || r.user === me.short));
+    const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
+    const histFilas = histTodas.filter(r => histAdmin || r.user === me.short);
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const sel = s.histSel;
@@ -3018,7 +3139,7 @@ class Component extends DCLogic {
       const sinDatos = rows.filter(r => r.df === '—');
       if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar.' + (rows.length > 1 ? ' Quitalo de la selección.' : ''));
       try {
-        const x = this.novaluxXlsx(clis[0], rows);
+        const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })));
         this.descargar(x.name, x.bytes);
         this.setState({ toast: { kind: 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna.' } });
       } catch (err) {
@@ -3039,9 +3160,93 @@ class Component extends DCLogic {
       });
     const histTotal = histAdmin ? 142 + histFilas.length - 9 : histFilas.length;
 
+    const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
+    const enCartera = (c) => !misClis || misClis.includes(c);
+    const djVig = {};
+    histTodas.filter(r => r.df !== '—' && r.est !== 'Pendiente de liquidar' && enCartera(r.cliente)).forEach(r => {
+      const k = r.cliente + '|' + r.per;
+      if (!djVig[k] || r.seq > djVig[k].seq) djVig[k] = r;
+    });
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const saldo2 = (r) => r2(num(r.cf) + num(r.rp) - num(r.df));
+    const perK = (p) => p.slice(3) + p.slice(0, 2);
+    const djs = Object.values(djVig);
+    const compClis = [...new Set(djs.map(r => r.cliente))].sort((a, b) => a.localeCompare(b, 'es'));
+    const compCli = compClis.includes(s.compCli) ? s.compCli : (compClis.includes(cli) ? cli : (compClis[0] || ''));
+    const compPers = djs.filter(r => r.cliente === compCli).sort((a, b) => perK(b.per).localeCompare(perK(a.per)));
+    const djSel = compPers.find(r => r.per === s.compPer) || compPers[0] || null;
+    const djS2 = djSel ? saldo2(djSel) : 0;
+    const djUsado = djSel ? this.compSum(djSel.cliente, djSel.per, djSel.seq) : 0;
+    const djDisp = Math.max(0, r2(djS2 - djUsado));
+    const montoN = (() => {
+      let t = String(s.compMonto).replace(/[$\s]/g, '');
+      if (!t) return null;
+      if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+      else if ((t.match(/\./g) || []).length > 1 || /\.\d{3}$/.test(t)) t = t.replace(/\./g, '');
+      return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+    })();
+    let compK = 'err', compMsg;
+    if (!djSel) compMsg = 'No hay declaraciones juradas liquidadas para compensar.';
+    else if (djS2 <= 0) compMsg = 'La DJ de ' + djSel.per + ' (' + this.seqTxt(djSel.seq) + ') resultó a pagar: no tiene saldo a favor de 2do párrafo para compensar.';
+    else if (djDisp <= 0) compMsg = 'El saldo a favor de 2do párrafo de esta DJ ya fue compensado por completo.';
+    else if (montoN === null) { compK = 'info'; compMsg = 'Ingresá un monto menor o igual a $ ' + this.ars(djDisp) + ', el saldo a favor de 2do párrafo disponible.'; }
+    else if (isNaN(montoN) || montoN <= 0) compMsg = 'Ingresá un monto válido mayor a $ 0.';
+    else if (r2(montoN) > djDisp) compMsg = 'El monto ($ ' + this.ars(r2(montoN)) + ') supera el saldo a favor de 2do párrafo disponible ($ ' + this.ars(djDisp) + '). Tiene que ser menor o igual.';
+    else { compK = 'ok'; compMsg = 'Monto válido. Después de registrarla, la DJ queda con $ ' + this.ars(r2(djDisp - montoN)) + ' de saldo a favor de 2do párrafo disponible.'; }
+    const CK = { ok: ['#E8F3EE', '#2E7D5B', '#C7E3D6'], err: ['#FBE9E7', '#B3261E', '#F3CFCB'], info: ['#F4F9FD', '#1F6795', '#CFE2F0'] }[compK];
+    const compVis = s.comps.filter(c => enCartera(c.cliente));
+    const compFilas = compVis.map(c => {
+      const dj = histTodas.find(r => r.cliente === c.cliente && r.per === c.per && r.seq === c.seq && r.df !== '—');
+      const sd = dj ? saldo2(dj) : null;
+      return Object.assign({}, c, this.seqChip(c.seq), {
+        montoTxt: this.ars(c.monto), saldoTxt: sd === null ? '—' : this.ars(sd), sc: sd === null ? '#9AA9B7' : saldoC(sd),
+        puede: histAdmin || c.user === me.short,
+        borrar: () => this.setState(st => ({
+          comps: st.comps.filter(x => x.id !== c.id),
+          audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación eliminada', c: c.cliente, p: c.per, r: 'Sec. ' + c.seq + ' · $ ' + this.ars(c.monto), ip: '190.15.44.12' }].concat(st.audExtra),
+          toast: { kind: 'ok', t: 'Compensación eliminada', d: c.cliente + ' · ' + c.per + ' · $ ' + this.ars(c.monto) + '. El saldo vuelve a estar disponible.' }
+        }))
+      });
+    });
+    const compVals = {
+      compCli, compCliSet: (e) => this.setState({ compCli: e.target.value, compPer: '', compMonto: '' }),
+      compCliOpts: compClis.map(rz => ({ rz })),
+      compPer: djSel ? djSel.per : '', compPerSet: (e) => this.setState({ compPer: e.target.value, compMonto: '' }),
+      compPerOpts: compPers.map(r => {
+        const v = saldo2(r);
+        return { per: r.per, label: r.per + ' · Sec. ' + r.seq + ' · ' + (v > 0 ? 'a favor $ ' + this.ars(v) : 'a pagar') };
+      }),
+      compMonto: s.compMonto, compMontoSet: (e) => this.setState({ compMonto: e.target.value }),
+      compUsarDisp: () => this.setState({ compMonto: djDisp > 0 ? this.ars(djDisp) : '' }),
+      compHayDisp: djDisp > 0,
+      compDj: djSel ? this.seqTxt(djSel.seq) + ' · procesada el ' + djSel.fecha + ' por ' + djSel.user : '—',
+      compS2: '$ ' + this.ars(djS2), compS2c: djSel ? saldoC(djS2) : '#9AA9B7',
+      compUsado: '$ ' + this.ars(djUsado), compDisp: '$ ' + this.ars(djDisp), compDispC: djDisp > 0 ? '#2E7D5B' : '#5A6B7B',
+      compMsg, compMsgBg: CK[0], compMsgFg: CK[1], compMsgBd: CK[2],
+      compBtnBg: compK === 'ok' ? '#14395C' : '#9AA9B7',
+      compArrastre: djSel && djSel.per === '07/2026' && compCli === cli,
+      compRegistrar: () => {
+        if (compK !== 'ok') return this.setState({ toast: { kind: 'warn', t: 'No se puede registrar la compensación', d: compMsg } });
+        const m = r2(montoN), dj = djSel;
+        this.setState(st => ({
+          comps: [{ id: 'c' + Date.now(), cliente: dj.cliente, per: dj.per, seq: dj.seq, monto: m, fecha: this.ahora(), user: me.short }].concat(st.comps),
+          compMonto: '',
+          audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación registrada', c: dj.cliente, p: dj.per, r: 'Sec. ' + dj.seq + ' · $ ' + this.ars(m), ip: '190.15.44.12' }].concat(st.audExtra),
+          toast: { kind: 'ok', t: 'Compensación registrada', d: dj.cliente + ' · ' + dj.per + ' · $ ' + this.ars(m) + '. Se descuenta del saldo de 2do párrafo que se arrastra al período siguiente y figura en el Excel exportable.' }
+        }));
+      },
+      compFilas, compVacio: compFilas.length === 0,
+      compKpis: [
+        { label: 'Compensaciones registradas', value: String(compVis.length), color: '#1B2733' },
+        { label: 'Total compensado', value: '$ ' + this.ars(compVis.reduce((a, c) => a + c.monto, 0)), color: '#1B2733' },
+        { label: 'DJ con saldo a favor disponible', value: String(djs.filter(r => r2(saldo2(r) - this.compSum(r.cliente, r.per, r.seq)) > 0).length), color: '#2E7D5B' }
+      ]
+    };
+
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
     return {
+      ...compVals,
       steps: stepDef.map(([n, label]) => ({
         n: String(n), label,
         bg: s.step === n ? '#14395C' : (s.step > n ? '#2E7D5B' : '#FFFFFF'),
@@ -3254,7 +3459,7 @@ class Component extends DCLogic {
         { cliente: 'CAZATUR SA', per: '08/2026', df: '4.182.905,60', cf: '2.444.516,20', ret: '106.284,15', saldo: '-1.632.105,25' },
         { cliente: 'DACKET SA', per: '08/2026', df: '2.907.114,85', cf: '3.166.402,70', ret: '54.220,00', saldo: '313.507,85' },
         { cliente: 'DASYC SRL', per: '08/2026', df: '1.455.230,10', cf: '987.640,55', ret: '22.140,80', saldo: '-445.448,75' },
-        { cliente: 'CAZATUR SA', per: '07/2026', df: '3.908.744,15', cf: '2.611.330,80', ret: '98.410,05', saldo: '-1.199.003,30' },
+        { cliente: 'CAZATUR SA', per: '07/2026', df: '3.908.744,15', cf: '3.858.148,75', ret: '98.410,05', saldo: '47.814,65' },
         { cliente: 'DACKET SA', per: '07/2026', df: '2.744.900,00', cf: '2.408.115,40', ret: '48.900,00', saldo: '-287.884,60' }
       ].map(r => Object.assign({}, r, { sc: r.saldo[0] === '-' ? '#B3261E' : '#2E7D5B' }))
     };
