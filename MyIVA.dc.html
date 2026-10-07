@@ -677,22 +677,37 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · 08/2026 · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
-<div>
-<div style="font:600 14px 'Open Sans'">Saldos a favor del período anterior</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">Tomados de la última secuencia liquidada: 07/2026 · Secuencia 2 · Rectificativa · 12/08/2026</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px">
+<sc-for list="{{ cruKpis }}" as="k" hint-placeholder-count="4">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 24px/1 'Open Sans';margin-top:9px;color:{{ k.color }};font-variant-numeric:tabular-nums">{{ k.value }}</div>
 </div>
-<div style="display:flex;align-items:center;gap:8px">
+</sc-for>
+</div>
+
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin:22px 0 10px">Cruces del período</div>
+
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="width:26px;height:26px;border-radius:14px;background:#14395C;color:#fff;font:600 12.5px/26px 'Open Sans';text-align:center;flex:none">{{ cruArr.n }}</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 14px/1.35 'Open Sans'">{{ cruArr.t }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ cruArr.regla }}</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
 <span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Resultado 07/2026</span>
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevModes }}" as="m" hint-placeholder-count="2">
 <div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
 </sc-for>
 </div>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ cruArr.st.bg }};color:{{ cruArr.st.fg }};border:1px solid {{ cruArr.st.bd }};white-space:nowrap">{{ cruArr.st.label }}</span>
 </div>
 </div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-top:14px">
+<div style="margin-left:38px">
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1B2733;margin-top:10px">{{ cruArr.resumen }}</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px;margin-top:12px">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="border:1px solid {{ p.bd }};background:{{ p.bg }};border-radius:6px;padding:14px">
 <div style="font:600 11px/1.35 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ p.label }}</div>
@@ -708,25 +723,39 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 </div>
+</div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px;margin-top:16px">
-<sc-for list="{{ cruKpis }}" as="k" hint-placeholder-count="4">
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
-<div style="font:600 24px/1 'Open Sans';margin-top:9px;color:{{ k.color }};font-variant-numeric:tabular-nums">{{ k.value }}</div>
+<sc-for list="{{ cruRows }}" as="c" hint-placeholder-count="6">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px;margin-top:12px">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="width:26px;height:26px;border-radius:14px;background:{{ c.nBg }};color:#fff;font:600 12.5px/26px 'Open Sans';text-align:center;flex:none">{{ c.n }}</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 14px/1.35 'Open Sans'">{{ c.t }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ c.regla }}</div>
+</div>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span>
+</div>
+<div style="margin-left:38px">
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1B2733;margin-top:10px">{{ c.resumen }}</div>
+<sc-if value="{{ c.hasCmp }}">
+<div style="margin-top:10px;border:1px solid #EEF1F4;border-radius:6px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:12px;padding:8px 12px;background:#F5F7FA;border-bottom:1px solid #EEF1F4;font:600 10.5px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">
+<div>{{ c.h.a }}</div><div style="text-align:right">{{ c.h.b }}</div><div style="text-align:right">{{ c.h.c }}</div><div style="text-align:right">{{ c.h.d }}</div>
+</div>
+<sc-for list="{{ c.cmp }}" as="r" hint-placeholder-count="2">
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:12px;padding:8px 12px;border-bottom:1px solid #F3F5F7;font:{{ r.fw }} 12.5px/1.4 'Open Sans';font-variant-numeric:tabular-nums">
+<div style="color:#1B2733">{{ r.a }}</div><div style="text-align:right;color:#1B2733">{{ r.b }}</div><div style="text-align:right;color:#1B2733">{{ r.c }}</div><div style="text-align:right;font-weight:600;color:{{ r.dc }}">{{ r.d }}</div>
 </div>
 </sc-for>
 </div>
-
-<div style="margin-top:16px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<div style="padding:11px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;font:600 13px 'Open Sans'">Resultado de los cruces</div>
-<sc-for list="{{ cruRows }}" as="c" hint-placeholder-count="5">
-<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #EEF1F4">
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span>
-<div style="min-width:0;flex:1">
-<div style="font:600 13px/1.35 'Open Sans'">{{ c.t }}</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:2px">{{ c.resumen }}</div>
+</sc-if>
+<sc-if value="{{ c.hasNota }}">
+<div style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:8px 11px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="font:400 12px/1.45 'Open Sans';color:#1F6795">{{ c.nota }}</div>
 </div>
+</sc-if>
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
 <sc-if value="{{ c.hasErr }}">
 <span onClick="{{ c.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer;white-space:nowrap">{{ c.errLabel }}</span>
 </sc-if>
@@ -734,8 +763,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
 </sc-if>
 </div>
-</sc-for>
 </div>
+</div>
+</sc-for>
 
 <sc-if value="{{ cruIncCount }}">
 <div style="margin-top:16px;border:1px solid #F0E0BC;border-radius:6px;overflow:hidden">
@@ -1486,7 +1516,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Tipo de cruce</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Recibidos vs IVA Compras</option><option>Emitidos vs IVA Ventas</option><option>Retenciones</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Tipo de cruce</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>IVA Compras vs Base APOC</option><option>Emitidos vs IVA Ventas</option><option>Recibidos vs IVA Compras</option><option>Retenciones y percepciones vs Mis Retenciones</option><option>Aduaneras vs Mis Percepciones Aduaneras</option><option>IVA Digital vs IVA Compras + Ventas</option></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select></div>
 </div>
 </div>
@@ -2418,15 +2448,28 @@ class Component extends DCLogic {
     ],
     adu: [],
     dig: [
-      { k: 'Diferencia de importe', comp: 'DDJJ IVA Digital 08/2026', ter: 'Débito fiscal total', det: 'IVA Digital 4.182.905,60 · IVA Ventas 4.181.750,60', imp: '1.155,00' }
+      { k: 'Diferencia de importe', comp: 'DDJJ IVA Digital 08/2026', ter: 'Débito fiscal total', det: 'IVA Digital 4.184.060,60 · IVA Ventas 4.182.905,60', imp: '1.155,00' }
     ],
     ret: [
       { k: 'Diferencia de importe', comp: 'Retención IVA 2026-000812', ter: 'SUPERMERCADOS DEL ESTE SA', det: 'ARCA 6.300,00 · IVA Ventas 6.000,00', imp: '300,00' },
       { k: 'Faltante en IVA Ventas', comp: 'Retención IVA 2026-000877', ter: 'CONSTRUCTORA OESTE SA', det: 'Informada en ARCA y no registrada en el subdiario', imp: '2.100,00' }
+    ],
+    apoc: [
+      { k: 'Proveedor en Base APOC', comp: 'FC A 0003-00004518', ter: 'DISTRIBUIDORA LOS ALAMOS SRL · 30-71589632-4', det: 'CUIT incluido en la Base APOC el 22/09/2026 · 2 comprobantes en IVA Compras', imp: '18.270,00' },
+      { k: 'Proveedor en Base APOC', comp: 'FC A 0001-00000872', ter: 'SERVICIOS INTEGRALES DEL SUR SA · 30-70984512-9', det: 'CUIT incluido en la Base APOC el 08/09/2026 · 1 comprobante en IVA Compras', imp: '9.450,00' },
+      { k: 'Proveedor en Base APOC', comp: 'FC A 0002-00001207', ter: 'CONSTRUCCIONES NORTE PATAGONIA SA · 30-71245896-3', det: 'CUIT incluido en la Base APOC el 18/08/2026 · 1 comprobante en IVA Compras', imp: '31.920,00' }
     ]
   };
 
-  ERR_TIPO = { 'Emitidos vs IVA Ventas': 'emi', 'Recibidos vs IVA Compras': 'rec', 'Percepciones vs IVA Compras': 'per', 'Percepciones aduaneras vs IVA Compras': 'adu', 'IVA Digital vs subdiarios': 'dig', 'Retenciones vs IVA Ventas / Compras': 'ret' };
+  ERR_TIPO = {
+    'Emitidos vs IVA Ventas': 'emi', 'Recibidos vs IVA Compras': 'rec', 'Percepciones vs IVA Compras': 'per', 'Percepciones aduaneras vs IVA Compras': 'adu', 'IVA Digital vs subdiarios': 'dig', 'Retenciones vs IVA Ventas / Compras': 'ret',
+    'IVA Compras vs Base APOC': 'apoc', 'Retenciones y percepciones vs Mis Retenciones': 'retper', 'Aduaneras vs Mis Percepciones Aduaneras': 'adu', 'IVA Digital vs IVA Compras + Ventas': 'dig'
+  };
+
+  errsTipo(tipo) {
+    const k = this.ERR_TIPO[tipo];
+    return k === 'retper' ? this.ERRS.ret.concat(this.ERRS.per) : (this.ERRS[k] || []);
+  }
 
   errFile(file, cruce) {
     return [{ k: 'Error de archivo', comp: file, ter: cruce, det: 'El archivo no tiene un formato válido. El cruce no se ejecutó.', imp: '—' }];
@@ -2450,42 +2493,92 @@ class Component extends DCLogic {
     const ERRF = {
       ventas: 'CAZATUR_IVA_VENTAS_082026.docx', compras: 'CAZATUR_IVA_COMPRAS_082026.docx',
       emitidos: 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.docx', recibidos: 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.docx',
-      percep: 'CAZATUR_MIS_PERCEPCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_IVA_DIGITAL_082026.jpg'
+      percep: 'CAZATUR_MIS_RETENCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_IVA_DIGITAL_082026.jpg'
     };
+    const cli = this.liqCli(), ap = s.apoc, prevPagar = s.prevSaldo === 'pagar';
+    const arrTec = prevPagar ? '0,00' : '297.827,45', arrLib = prevPagar ? '0,00' : '42.180,00';
+    const arrastre = {
+      n: '0', t: 'Arrastre de saldos a favor del período anterior', prevPagar,
+      regla: 'Se toman de la última secuencia liquidada de 07/2026 (Secuencia 2 · Rectificativa · 12/08/2026). Si el período anterior resultó a pagar, se trasladan en $ 0.',
+      st: E['Completado'],
+      resumen: prevPagar ? 'El período anterior resultó a pagar: no hay saldos a favor para trasladar.' : 'Se trasladan $ ' + arrTec + ' de saldo técnico y $ ' + arrLib + ' de libre disponibilidad a 08/2026.'
+    };
+    const APOC_OBS = [[0, '18.270,00'], [2, '9.450,00'], [4, '31.920,00']].map(([i, iva]) => [this.APOC_ULT[i][1], this.APOC_ULT[i][0], this.APOC_ULT[i][2], iva]);
     const def = [
-      { t: 'Mis Comprobantes Emitidos vs IVA Ventas', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1 },
-      { t: 'Mis Comprobantes Recibidos vs IVA Compras', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2 },
-      { t: 'Mis Percepciones vs IVA Compras', tipo: 'Percepciones vs IVA Compras', need: [['percep', 'Mis Percepciones'], ['compras', 'IVA Compras']], regs: 64, ok: 62, dif: 2, falt: 0 },
-      { t: 'Mis Percepciones Aduaneras vs IVA Compras', tipo: 'Percepciones aduaneras vs IVA Compras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['compras', 'IVA Compras']], regs: 9, ok: 9, dif: 0, falt: 0 },
-      { t: 'IVA Digital vs subdiarios de IVA', tipo: 'IVA Digital vs subdiarios', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 2, ok: 1, dif: 1, falt: 0 }
+      {
+        n: '1', t: 'IVA Compras vs. Base APOC (ARCA)', tipo: 'IVA Compras vs Base APOC', need: [['compras', 'IVA Compras']], regs: 312, ok: 309, dif: 3, falt: 0,
+        regla: 'Se buscan los CUITs de los proveedores de IVA Compras en la Base APOC (' + num(ap.total) + ' CUITs · actualizada el ' + ap.fecha + ').',
+        res: '312 proveedores analizados · 309 sin observaciones · 3 figuran en la Base APOC',
+        h: ['Proveedor observado', 'CUIT', 'En la base desde', 'IVA computado'], cmp: APOC_OBS, alerta: true
+      },
+      {
+        n: '2', t: 'Comprobantes Emitidos (ARCA) vs. IVA Ventas', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
+        regla: 'Se cruzan por CUIT, tipo, punto de venta y número; se comparan la fecha y los importes por alícuota con tolerancia de $ 0,03.',
+        h: ['Concepto', 'Comprobantes Emitidos (ARCA)', 'IVA Ventas', 'Diferencia'],
+        cmp: [['Comprobantes', '2.117', '2.116', '1'], ['IVA débito fiscal', '4.192.670,60', '4.182.905,60', '9.765,00']]
+      },
+      {
+        n: '3', t: 'Comprobantes Recibidos (ARCA) vs. IVA Compras', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2,
+        regla: 'Se cruzan por CUIT, tipo, punto de venta, número e importe total (tolerancia de $ 0,03). Los comprobantes en moneda extranjera se convierten a pesos.',
+        h: ['Concepto', 'Comprobantes Recibidos (ARCA)', 'IVA Compras', 'Diferencia'],
+        cmp: [['Comprobantes', '1.283', '1.283', '0'], ['IVA crédito fiscal', '2.449.094,20', '2.444.516,20', '4.578,00']]
+      },
+      {
+        n: '4', t: 'Retenciones (IVA Ventas) + Percepciones (IVA Compras) vs. Mis Retenciones (ARCA)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
+        regla: 'Las retenciones de Mis Retenciones se cruzan con los comprobantes CR de IVA Ventas y las percepciones con IVA Compras, por CUIT e importe (tolerancia de $ 0,03).',
+        h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
+        cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
+      },
+      {
+        n: '5', t: 'Retenciones Aduaneras (IVA Ventas) vs. Mis Percepciones Aduaneras (ARCA)', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['ventas', 'IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
+        regla: 'Se cruzan por CUIT, fecha e importe las retenciones aduaneras registradas en el subdiario con Mis Percepciones Aduaneras.',
+        nota: 'Subdiario de origen a confirmar con el estudio: por ahora se toman de IVA Ventas.',
+        h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'IVA Ventas', 'Diferencia'],
+        cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
+      },
+      {
+        n: '6', t: 'IVA Digital vs. IVA Compras + IVA Ventas', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
+        regla: 'Se comparan los totales de la declaración jurada de IVA Digital con los subdiarios de IVA Ventas e IVA Compras y con el arrastre del cruce 0.',
+        res: '4 conceptos comparados · 3 coinciden · 1 con diferencias',
+        h: ['Concepto', 'IVA Digital', 'IVA Compras + IVA Ventas', 'Diferencia'],
+        cmp: [['Débito fiscal', '4.184.060,60', '4.182.905,60', '1.155,00'], ['Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00'], ['Retenciones y percepciones', '106.284,15', '106.284,15', '0,00'], ['Saldo técnico a favor anterior (cruce 0)', arrTec, arrTec, '0,00']]
+      }
     ];
     const rows = def.map(c => {
       const falta = c.need.filter(([k]) => !has(k)).map(([, l]) => l);
       const malos = c.need.filter(([k]) => fst(k) === 'error');
       const run = falta.length === 0, isErr = malos.length > 0 && malos.length === falta.length;
       const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado'));
-      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile(ERRF[k], c.t))) : (run ? this.ERRS[this.ERR_TIPO[c.tipo]] : []);
+      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile(ERRF[k], c.t))) : (run ? this.errsTipo(c.tipo) : []);
+      const cero = (v) => v === '0' || v === '0,00';
       return {
-        t: c.t, tipo: c.tipo, run, isErr, st: E[est], est,
+        n: c.n, t: c.t, tipo: c.tipo, regla: c.regla, run, isErr, st: E[est], est,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
         hasDif: run && c.dif + c.falt > 0,
-        errs, hasErr: errs.length > 0, errLabel: 'Ver errores (' + errs.length + ')',
-        verErr: this.openErr(c.t, 'CAZATUR SA · 08/2026', [{ cruce: c.t, errs }]),
+        errs, hasErr: errs.length > 0, errLabel: (c.alerta && run ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
+        verErr: this.openErr(c.t, cli + ' · 08/2026', [{ cruce: c.t, errs }]),
+        hasCmp: run, hasNota: !!c.nota, nota: c.nota || '',
+        h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
+        cmp: c.cmp.map(([a, b, cc, d]) => ({
+          a, b, c: cc, d,
+          dc: c.alerta ? '#B3261E' : (cero(d) ? '#2E7D5B' : '#8F5F14'),
+          fw: a === 'Total' ? '600' : '400'
+        })),
+        nBg: isErr ? '#B3261E' : (!run ? '#9AA9B7' : '#14395C'),
         resumen: isErr
           ? 'No se procesó: ' + malos.map(([, l]) => l).join(' y ') + (malos.length > 1 ? ' tienen' : ' tiene') + ' errores de archivo.'
           : (run
-            ? num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes')
-            : 'No se procesó: falta ' + falta.join(' y ') + '.')
+            ? (c.res || num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes'))
+            : 'No se procesó: falta cargar ' + falta.join(' y ') + '.')
       };
     });
     const inc = [];
     if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
     if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
-    if (has('compras')) inc.push({ t: '3 proveedores figuran en la lista de CUITs observados.' });
     const done = rows.filter(r => r.run);
     const errGroups = rows.filter(r => r.hasErr).map(r => ({ cruce: r.t, errs: r.errs }));
     return {
-      rows, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0),
+      rows, arrastre, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0),
       tot: { regs: num(done.reduce((a, r) => a + r.regs, 0)), dif: done.reduce((a, r) => a + r.dif, 0), falt: done.reduce((a, r) => a + r.falt, 0) }
     };
   }
@@ -2760,13 +2853,13 @@ class Component extends DCLogic {
       bd: prevPagar ? '#E3E8EE' : '#C7E3D6'
     }));
     const upDef = [
-      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
-      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
-      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · se cruza con IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
-      ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · se cruza con IVA Compras', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
-      ['percep', 'Mis Percepciones', '.xls / .xlsx / .csv', 'Opcional', 'CAZATUR_MIS_PERCEPCIONES_082026.xlsx', '48 KB · 64 registros', 'El archivo debe ser el export de Mis Retenciones / Percepciones de ARCA.'],
-      ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
-      ['ivadig', 'IVA Digital', '.pdf', 'Opcional', 'CAZATUR_IVA_DIGITAL_082026.pdf', '310 KB · 4 páginas', 'El archivo debe ser el PDF de la declaración jurada de IVA Digital.']
+      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
+      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
+      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
+      ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
+      ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
+      ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional · cruce 5', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
+      ['ivadig', 'IVA Digital', '.pdf', 'Opcional · cruce 6', 'CAZATUR_IVA_DIGITAL_082026.pdf', '310 KB · 4 páginas', 'El archivo debe ser el PDF de la declaración jurada de IVA Digital.']
     ];
     const upState = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
     const setUp = (k, v) => () => {
@@ -2975,11 +3068,11 @@ class Component extends DCLogic {
         label, go: this.tset('prevSaldo', k),
         bg: s.prevSaldo === k ? '#14395C' : '#FFFFFF', fg: s.prevSaldo === k ? '#FFFFFF' : '#5A6B7B'
       })),
-      cruRows: cru.rows,
+      cruRows: cru.rows, cruArr: cru.arrastre,
       cruKpis: [
-        { label: 'Cruces procesados', value: cru.done.length + ' de 5', color: '#1B2733' },
+        { label: 'Cruces procesados', value: (cru.done.length + 1) + ' de 7', color: '#1B2733' },
         { label: 'Registros cruzados', value: cru.tot.regs, color: '#1B2733' },
-        { label: 'Con diferencias', value: String(cru.tot.dif - cru.tot.falt), color: cru.tot.dif - cru.tot.falt ? '#B7791F' : '#2E7D5B' },
+        { label: 'Con diferencias o alertas', value: String(cru.tot.dif - cru.tot.falt), color: cru.tot.dif - cru.tot.falt ? '#B7791F' : '#2E7D5B' },
         { label: 'Faltantes', value: String(cru.tot.falt), color: cru.tot.falt ? '#B3261E' : '#2E7D5B' }
       ],
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
@@ -3253,7 +3346,7 @@ class Component extends DCLogic {
         hasDif: r.est === 'Completado con diferencias',
         errs: r.est === 'Con errores'
           ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras')
-          : (r.est === 'Completado con diferencias' ? this.ERRS[this.ERR_TIPO[r.tipo]] : [])
+          : (r.est === 'Completado con diferencias' ? this.errsTipo(r.tipo) : [])
       })))
         .filter(r => cruAdmin || r.user === me.short)
         .map(r => Object.assign({}, r, {
