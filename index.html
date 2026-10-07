@@ -608,7 +608,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="border:1px dashed {{ f.bd }};border-radius:6px;padding:14px 16px;background:{{ f.bg }}">
 <sc-if value="{{ f.isEmpty }}">
-<div onClick="{{ f.load }}" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+<div style="position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;margin:-14px -16px;padding:14px 16px">
 <div style="width:38px;height:38px;border-radius:6px;background:#F5F7FA;display:flex;align-items:center;justify-content:center;flex:none">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
 </div>
@@ -616,6 +616,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 13.5px 'Open Sans'">Arrastrá el archivo o hacé clic para buscarlo</div>
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">Formatos aceptados: {{ f.ext }} — hasta 20 MB</div>
 </div>
+<input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" title="Elegí o soltá el archivo" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
 </div>
 </sc-if>
 <sc-if value="{{ f.isDrag }}">
@@ -624,7 +625,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
 </div>
 <div style="min-width:0">
-<div style="font:600 13.5px 'Open Sans';color:#1F6795">Soltá el archivo para cargarlo</div>
+<div style="font:600 13.5px 'Open Sans';color:#1F6795">{{ f.dragTxt }}</div>
 <div style="font:400 12.5px 'Open Sans';color:#2F80B7;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.file }}</div>
 </div>
 </div>
@@ -639,7 +640,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ f.meta }}</div>
 </div>
 <div style="flex:1"></div>
-<button onClick="{{ f.load }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar</button>
+<label style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar<input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
 <button onClick="{{ f.clear }}" style="padding:7px 10px;background:#fff;color:#5A6B7B;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#B3261E;color:#B3261E">Quitar</button>
 </div>
 </sc-if>
@@ -653,7 +654,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E;margin-top:3px">{{ f.errMsg }}</div>
 </div>
 <div style="flex:1"></div>
-<button onClick="{{ f.load }}" style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar</button>
+<label style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar<input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
 </div>
 </sc-if>
 </div>
@@ -760,7 +761,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ c.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer;white-space:nowrap">{{ c.errLabel }}</span>
 </sc-if>
 <sc-if value="{{ c.hasDif }}">
-<span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
+<span onClick="{{ c.rep }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
 </sc-if>
 </div>
 </div>
@@ -781,7 +782,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding:12px 14px;background:#E8F3EE;border:1px solid #C7E3D6;border-radius:6px">
 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.2" stroke-linecap="round" style="flex:none"><path d="M20 6L9 17l-5-5"></path></svg>
 <div style="flex:1;min-width:220px;font:400 12.5px/1.45 'Open Sans';color:#1F5A41">El resultado de los cruces y su reporte quedaron guardados en <span onClick="{{ go.crucesHistorial }}" style="font-weight:600;color:#2E7D5B;text-decoration:underline;cursor:pointer">Historial de cruces</span>.</div>
-<button onClick="{{ toastReporte }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #C7E3D6;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Descargar reporte de diferencias</button>
+<button onClick="{{ cruRep }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #C7E3D6;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Descargar reporte de diferencias</button>
 </div>
 
 <div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
@@ -1780,7 +1781,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
 <div style="font:600 14.5px 'Open Sans'">Base APOC (facturas apócrifas)</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Listado de ARCA de contribuyentes con facturación apócrifa. Los cruces marcan como alerta los comprobantes emitidos por CUITs que figuran en esta base.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Listado de ARCA de contribuyentes con facturación apócrifa. El cruce 1 marca como error los comprobantes de IVA Compras de CUITs que figuran en esta base con fecha igual o posterior a la condición de apócrifo.</div>
 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px">
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">CUITs en la base</div><div style="font:600 20px/1.2 'Open Sans';margin-top:6px">{{ apocTotal }}</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B;margin-top:2px">{{ apocNuevos }}</div></div>
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Última actualización</div><div style="font:600 15px/1.3 'Open Sans';margin-top:7px">{{ apocFecha }}</div></div>
@@ -1788,9 +1789,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ apocActualizar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">{{ apocBtn }}</button>
-<label style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Cargar archivo (.csv / .txt)<input type="file" accept=".csv,.txt" onChange="{{ apocArchivo }}" style="display:none"></label>
+<label style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Cargar archivo (.zip / .txt / .csv)<input type="file" accept=".zip,.txt,.csv,.xls,.xlsx" onChange="{{ apocArchivo }}" style="display:none"></label>
 </div>
-<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:8px">El archivo debe tener un CUIT por línea (con o sin guiones). Reemplaza la base actual.</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:8px">Cargá el listado completo de ARCA tal como se descarga (FacturasApocrifas.zip, con CUIT, fecha de condición de apócrifo y fecha de publicación). Reemplaza la base actual y queda guardada en este navegador.</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
 <div style="font:600 14.5px 'Open Sans'">Consultar CUIT</div>
@@ -2205,8 +2206,9 @@ class Component extends DCLogic {
       { id: 'c1', cliente: 'DACKET SA', per: '08/2026', seq: 1, monto: 35000, fecha: '05/09/2026 10:40', user: 'Julieta' }
     ],
     compCli: '', compPer: '', compMonto: '',
-    apoc: { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, cuits: [] }, apocRun: false, apocQ: '',
+    apoc: this.apocInit(), apocRun: false, apocQ: '',
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
+    real: {}, upErr: {}, upBusy: {},
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
   };
@@ -2515,9 +2517,48 @@ class Component extends DCLogic {
     return (neg ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + p[1];
   }
 
+  baseRows() {
+    const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
+    return [
+      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
+      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Administrador', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
+      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
+      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
+      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado' },
+      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
+    ].concat(this.demoUsr().liq);
+  }
+
+  perAnt(per) {
+    const m = Number(per.slice(0, 2)), y = Number(per.slice(3));
+    return m === 1 ? '12/' + (y - 1) : String(m - 1).padStart(2, '0') + '/' + y;
+  }
+
+  saldosDj(rows, cliente, per, seq, prof) {
+    if ((prof || 0) > 24) return null;
+    const num = (v) => this.numAr(v), r2 = (v) => Math.round(v * 100) / 100;
+    const djs = rows.filter(r => r.cliente === cliente && r.per === per && r.df !== '—' && r.est !== 'Pendiente de liquidar');
+    const dj = seq === undefined ? djs.sort((a, b) => b.seq - a.seq)[0] : djs.find(r => r.seq === seq);
+    if (!dj) return null;
+    const prev = this.saldosDj(rows, cliente, this.perAnt(per), undefined, (prof || 0) + 1);
+    const p1 = prev ? prev.s1 : 0, p2 = prev ? r2(prev.s2 - prev.comp) : 0;
+    const cf = num(dj.cf), df = num(dj.df), rp = num(dj.rp);
+    const s1 = r2(p1 < 0 ? cf - df : cf - df + p1);
+    const s2 = r2(p2 < 0 ? (s1 < 0 ? s1 + rp : rp) : (s1 < 0 ? p2 + s1 + rp : rp + p2));
+    return { dj, s1, s2, comp: this.compSum(cliente, per, dj.seq), prev };
+  }
+
   arrastre(cli) {
-    const pagar = this.state.prevSaldo === 'pagar', comp = this.compSum(cli, '07/2026');
-    return { pagar, tec: pagar ? 0 : 297827.45, base: pagar ? 0 : 42180, comp, lib: pagar ? 0 : Math.max(0, 42180 - comp) };
+    const s = this.state, per = this.perAnt('08/2026');
+    const rows = this.baseRows().filter(r => !s.ddjjBorradas[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
+    const x = this.saldosDj(rows, cli, per);
+    const forz = s.prevSaldo === 'pagar';
+    if (!x || forz) return { per, dj: x ? x.dj : null, sinDj: !x, pagar: true, pagar1: true, pagar2: true, tec: 0, base: 0, comp: x ? x.comp : 0, lib: 0, s1: x ? x.s1 : 0, s2: x ? x.s2 : 0 };
+    const tec = Math.max(0, x.s1), base = Math.max(0, x.s2);
+    return { per, dj: x.dj, sinDj: false, pagar: tec <= 0 && base <= 0, pagar1: x.s1 <= 0, pagar2: x.s2 <= 0, tec, base, comp: x.comp, lib: Math.max(0, Math.round((base - x.comp) * 100) / 100), s1: x.s1, s2: x.s2 };
   }
 
   SEQ_MAX = 9;
@@ -2603,10 +2644,423 @@ class Component extends DCLogic {
     return () => this.setState({ errView: { title, sub, rows } });
   }
 
+  COMP_TAB = '1:FACTURAS A|2:NOTAS DE DEBITO A|3:NOTAS DE CREDITO A|4:RECIBOS A|5:NOTAS DE VENTA AL CONTADO A|6:FACTURAS B|7:NOTAS DE DEBITO B|8:NOTAS DE CREDITO B|9:RECIBOS B|10:NOTAS DE VENTA AL CONTADO B|11:FACTURAS C|12:NOTAS DE DEBITO C|13:NOTAS DE CREDITO C|15:RECIBOS C|16:NOTAS DE VENTA AL CONTADO C|17:LIQUIDACION DE SERVICIOS PUBLICOS CLASE A|18:LIQUIDACION DE SERVICIOS PUBLICOS CLASE B|19:FACTURAS DE EXPORTACION|20:NOTAS DE DEBITO POR OPERACIONES CON EL EXTERIOR|21:NOTAS DE CREDITO POR OPERACIONES CON EL EXTERIOR|22:FACTURAS - PERMISO EXPORTACION SIMPLIFICADO - DTO. 855/97|23:COMPROBANTES A DE COMPRA PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|24:COMPROBANTES A DE CONSIGNACION PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|25:COMPROBANTES B DE COMPRA PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|26:COMPROBANTES B DE CONSIGNACION PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|27:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|28:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|29:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|30:COMPROBANTES DE COMPRA DE BIENES USADOS|32:COMPROBANTES PARA RECICLAR MATERIALES|33:LIQUIDACION PRIMARIA DE GRANOS|34:COMPROBANTES A DEL APARTADO A INCISO F R G N 1415|35:COMPROBANTES B DEL ANEXO I, APARTADO A, INC. F), RG N° 1415|36:COMPROBANTES C DEL ANEXO I, APARTADO A, INC.F), R.G. N° 1415|37:NOTAS DE DEBITO O DOCUMENTO EQUIVALENTE QUE CUMPLAN CON LA R.G. N° 1415|38:NOTAS DE CREDITO O DOCUMENTO EQUIVALENTE QUE CUMPLAN CON LA R.G. N° 1415|39:OTROS COMPROBANTES A QUE CUMPLEN CON LA R G 1415|40:OTROS COMPROBANTES B QUE CUMPLAN CON LA R.G. 1415|41:OTROS COMPROBANTES C QUE CUMPLAN CON LA R.G. 1415|43:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|44:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|45:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|46:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|47:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|48:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|49:COMPROBANTES DE COMPRA DE BIENES NO REGISTRABLES A CONSUMIDORES FINALES|50:RECIBO FACTURA A REGIMEN DE FACTURA DE CREDITO|51:FACTURAS M|52:NOTAS DE DEBITO M|53:NOTAS DE CREDITO M|54:RECIBOS M|55:NOTAS DE VENTA AL CONTADO M|56:COMPROBANTES M DEL ANEXO I APARTADO A INC F R G N 1415|57:OTROS COMPROBANTES M QUE CUMPLAN CON LA R G N 1415|58:CUENTAS DE VENTA Y LIQUIDO PRODUCTO M|59:LIQUIDACIONES M|60:CUENTAS DE VENTA Y LIQUIDO PRODUCTO A|61:CUENTAS DE VENTA Y LIQUIDO PRODUCTO B|63:LIQUIDACIONES A|64:LIQUIDACIONES B|66:DESPACHO DE IMPORTACION|68:LIQUIDACION C|70:RECIBOS FACTURA DE CREDITO|81:TIQUE FACTURA A CONTROLADORES FISCALES|82:TIQUE - FACTURA B|83:TIQUE|90:NOTA DE CREDITO OTROS COMP QUE NO CUMPLEN CON LA R G 1415 Y SUS MODIF|99:OTROS COMP QUE NO CUMPLEN CON LA R G 1415 Y SUS MODIF|109:TIQUE C|110:TIQUE NOTA DE CREDITO|111:TIQUE FACTURA C|112:TIQUE NOTA DE CREDITO A|113:TIQUE NOTA DE CREDITO B|114:TIQUE NOTA DE CREDITO C|115:TIQUE NOTA DE DEBITO A|116:TIQUE NOTA DE DEBITO B|117:TIQUE NOTA DE DEBITO C|118:TIQUE FACTURA M|119:TIQUE NOTA DE CREDITO M|120:TIQUE NOTA DE DEBITO M|150:LIQUIDACION DE COMPRA PRIMARIA PARA EL SECTOR TABACALERO A|151:LIQUIDACION DE COMPRA PRIMARIA PARA EL SECTOR TABACALERO B|157:CUENTA DE VENTA Y LÍQUIDO PRODUCTO A - SECTOR AVÍCOLA|158:CUENTA DE VENTA Y LÍQUIDO PRODUCTO B - SECTOR AVÍCOLA|159:LIQUIDACIÓN DE COMPRA A - SECTOR AVÍCOLA|160:LIQUIDACIÓN DE COMPRA B - SECTOR AVÍCOLA|161:LIQUIDACIÓN DE COMPRA DIRECTA A - SECTOR AVÍCOLA|162:LIQUIDACIÓN DE COMPRA DIRECTA B - SECTOR AVÍCOLA|163:LIQUIDACIÓN DE COMPRA DIRECTA C - SECTOR AVÍCOLA|164:LIQUIDACIÓN DE VENTA DIRECTA A - SECTOR AVÍCOLA|165:LIQUIDACIÓN DE VENTA DIRECTA B - SECTOR AVÍCOLA|166:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS A|167:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS B|168:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS C|169:LIQUIDACIÓN DE CRIANZA POLLOS PARRILLEROS A|170:LIQUIDACIÓN DE CRIANZA POLLOS PARRILLEROS B|171:LIQUIDACIÓN DE COMPRA DE CAÑA DE AZÚCAR A|172:LIQUIDACIÓN DE COMPRA DE CAÑA DE AZÚCAR B|180:CUENTA DE VENTA Y LÍQUIDO PRODUCTO A - SECTOR PECUARIO|182:CUENTA DE VENTA Y LÍQUIDO PRODUCTO B - SECTOR PECUARIO|183:LIQUIDACIÓN DE COMPRA A - SECTOR PECUARIO|185:LIQUIDACIÓN DE COMPRA B - SECTOR PECUARIO|186:LIQUIDACIÓN DE COMPRA DIRECTA A - SECTOR PECUARIO|188:LIQUIDACIÓN DE COMPRA DIRECTA B - SECTOR PECUARIO|189:LIQUIDACIÓN DE COMPRA DIRECTA C - SECTOR PECUARIO|190:LIQUIDACIÓN DE VENTA DIRECTA A - SECTOR PECUARIO|191:LIQUIDACIÓN DE VENTA DIRECTA B - SECTOR PECUARIO|195:FACTURA CLASE T|196:NOTA DE DÉBITO CLASE T|197:NOTA DE CRÉDITO CLASE T|201:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) A|202:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) A|203:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) A|206:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) B|207:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) B|208:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) B|211:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) C|212:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) C|213:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) C|331:LIQUIDACION SECUNDARIA DE GRANOS|332:CERTIFICACION ELECTRONICA (GRANOS)';
+
+  TC_EXCL = ['CG', 'IB', 'IR', 'CB', 'CS', 'CR'];
+
+  PARSEABLES = ['ventas', 'compras', 'emitidos', 'recibidos'];
+
+  UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'IVA Digital' };
+
+  compTipos() {
+    if (this._compT) return this._compT;
+    const m = {};
+    this.COMP_TAB.split('|').forEach(x => { const i = x.indexOf(':'); m[x.slice(0, i)] = x.slice(i + 1); });
+    this._compT = m;
+    return m;
+  }
+
+  tipoDesc(desc) {
+    const d = this.fold(desc).toUpperCase().replace(/["“”]/g, '').replace(/\s+/g, ' ').trim();
+    const tc = /NOTAS? DE CREDITO/.test(d) ? 'NC' : (/NOTAS? DE DEBITO/.test(d) ? 'ND' : (/^TIQUE/.test(d) ? 'TK' : (/^RECIBO/.test(d) ? 'RC' : (/FACTURA/.test(d) ? 'FC' : (/VENTA AL CONTADO/.test(d) ? 'NV' : (/^LIQUIDACI/.test(d) ? 'LQ' : 'CO'))))));
+    const m = d.match(/(?:^|\s)([ABCMET])$/);
+    return { tc, letra: m ? m[1] : (/EXPORTACION|EXTERIOR/.test(d) ? 'E' : '') };
+  }
+
+  tipoArca(v) {
+    const t = String(v == null ? '' : v).trim(), m = t.match(/^(\d+)/);
+    const cod = m ? String(Number(m[1])) : '';
+    const desc = (cod && this.compTipos()[cod]) || t.replace(/^\d+\s*-\s*/, '');
+    return Object.assign({ cod, desc }, this.tipoDesc(desc));
+  }
+
+  tipoLibro(tc, letra) {
+    let t = String(tc == null ? '' : tc).trim().toUpperCase(), l = String(letra == null ? '' : letra).trim().toUpperCase();
+    const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
+    if (m && !l) { t = m[1]; l = m[2]; }
+    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC' }[t] || t;
+    if (!l && ['FC', 'NC', 'ND'].includes(t)) l = 'A';
+    return { tc: t, letra: l };
+  }
+
+  numAr(v) {
+    if (v == null || v === '') return 0;
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    let t = String(v).replace(/[$\s]/g, '');
+    if (!t) return 0;
+    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    const n = Number(t);
+    return isFinite(n) ? n : 0;
+  }
+
+  fechaTxt(v) {
+    const p = (n) => String(n).padStart(2, '0');
+    if (v instanceof Date && !isNaN(v)) return p(v.getDate()) + '/' + p(v.getMonth() + 1) + '/' + v.getFullYear();
+    if (typeof v === 'number') {
+      if (v < 20000 || v > 80000) return '';
+      const d = new Date(Math.round((v - 25569) * 864e5));
+      return p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+    }
+    const t = String(v == null ? '' : v).trim();
+    let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (m) return p(m[1]) + '/' + p(m[2]) + '/' + m[3];
+    m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+  }
+
+  fechaKey(f) { return f ? f.slice(6) + f.slice(3, 5) + f.slice(0, 2) : ''; }
+
+  cuitFmt(c) { return c && c.length === 11 ? c.slice(0, 2) + '-' + c.slice(2, 10) + '-' + c.slice(10) : (c || '—'); }
+
+  compTxt(x) { return x.tc + (x.letra ? ' ' + x.letra : '') + ' ' + String(x.pv).padStart(5, '0') + '-' + String(x.nro).padStart(8, '0'); }
+
+  xlsxLib() {
+    if (typeof window !== 'undefined' && window.XLSX) return Promise.resolve(window.XLSX);
+    if (this._xlsxP) return this._xlsxP;
+    const urls = ['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js', 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'];
+    const load = (i) => new Promise((ok, ko) => {
+      const sc = document.createElement('script');
+      sc.src = urls[i];
+      sc.async = true;
+      sc.onload = () => (window.XLSX ? ok(window.XLSX) : ko(new Error('XLSX')));
+      sc.onerror = () => { sc.remove(); if (i + 1 < urls.length) load(i + 1).then(ok, ko); else ko(new Error('No se pudo cargar el lector de Excel. Revisá la conexión a internet y volvé a intentar.')); };
+      document.head.appendChild(sc);
+    });
+    this._xlsxP = load(0).catch(e => { this._xlsxP = null; throw e; });
+    return this._xlsxP;
+  }
+
+  parseComprobantes(k, name, bytes, X) {
+    const LBL = this.UP_LBL;
+    let wb;
+    try { wb = X.read(bytes, { type: 'array' }); } catch (e) { throw new Error('No se pudo leer el archivo: no es un Excel (.xls / .xlsx) ni un CSV válido.'); }
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = ws ? X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }) : [];
+    const hk = (h) => this.fold(h == null ? '' : h).replace(/[^a-z0-9]/g, '');
+    let hi = -1, keys = [];
+    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+      const ks = (aoa[i] || []).map(hk);
+      if ((ks.includes('fecha') || ks.includes('fechadeemision')) && ks.some(x => x === 'tipo' || x === 'tc' || x === 'tipodecomprobante')) { hi = i; keys = ks; break; }
+    }
+    if (hi < 0) throw new Error('No se encontró la fila de encabezados (Fecha, Tipo / TC, Punto de venta…). Cargá el archivo tal como se exporta.');
+    const titulo = (aoa.slice(0, hi).map(r => (r || []).join(' ')).join(' ') + ' ' + name).toLowerCase();
+    const has = (x) => keys.includes(x);
+    let kind = null;
+    if (has('tc') && has('letra') && has('totalcomprobante')) kind = has('comprasaexentosmonotributistasyotros') ? 'compras' : (has('importeoperacionesexportacion') ? 'ventas' : (/compra/.test(titulo) ? 'compras' : (/venta/.test(titulo) ? 'ventas' : null)));
+    else if (has('puntodeventa') && (has('imptotal') || has('importetotal'))) kind = (has('nrodocemisor') || /recibid/.test(titulo)) ? 'recibidos' : ((has('nrodocreceptor') || /emitid/.test(titulo)) ? 'emitidos' : null);
+    if (!kind) throw new Error('Las columnas no corresponden a un subdiario de IVA Ventas / Compras ni a Mis Comprobantes de ARCA.');
+    if (kind !== k) throw new Error('El archivo parece ser ' + LBL[kind] + '. Cargalo en el casillero "' + LBL[kind] + '".');
+    const col = (...ns) => { for (const n of ns) { const i = keys.indexOf(n); if (i >= 0) return i; } return -1; };
+    const libro = kind === 'ventas' || kind === 'compras';
+    const C = {}, def = libro ? {
+      fecha: ['fecha'], tc: ['tc'], letra: ['letra'], pv: ['ptovta', 'puntodeventa', 'pv'], nro: ['nrodesde', 'numerodesde', 'numero', 'nro'], nom: ['razonsocial', 'denominacion'], cuit: ['cuit', 'nrodoc'],
+      n21: ['neto21'], i21: ['iva21'], n105: ['neto105'], i105: ['iva105'], n27: ['neto27'], i27: ['iva27'], n0: ['neto0'], n25: ['neto25'], i25: ['iva25'], n5: ['neto5'], i5: ['iva5'],
+      exp: ['importeoperacionesexportacion'], exe: ['importeexento'], nal: ['importenoalcanzado'], ngr: ['importenogravado'], mono: ['comprasaexentosmonotributistasyotros'],
+      iin: ['importeimpuestosinternos'], piibb: ['percepcionesiibb'], piva: ['percepcionesiva'], potr: ['otraspercepciones'], oreg: ['otrosregimenesespeciales'], tot: ['totalcomprobante']
+    } : {
+      fecha: ['fecha', 'fechadeemision'], tipo: ['tipo', 'tipodecomprobante'], pv: ['puntodeventa'], nro: ['numerodesde', 'numero'],
+      cuit: kind === 'recibidos' ? ['nrodocemisor'] : ['nrodocreceptor'], nom: kind === 'recibidos' ? ['denominacionemisor'] : ['denominacionreceptor'],
+      cam: ['tipocambio', 'tipodecambio'], mon: ['moneda'],
+      n21: ['netograviva21'], i21: ['iva21'], n105: ['netograviva105'], i105: ['iva105'], n27: ['netograviva27'], i27: ['iva27'], n5: ['netograviva5'], i5: ['iva5'], n25: ['netograviva25'], i25: ['iva25'], n0: ['netograviva0'],
+      ngt: ['netogravadototal', 'impnetogravado', 'netogravado'], ivt: ['totaliva', 'iva'], nng: ['netonogravado', 'impnetonogravado'], exe: ['opexentas', 'impopexentas'], ot: ['otrostributos'], tot: ['imptotal', 'importetotal']
+    };
+    Object.keys(def).forEach(f => { C[f] = col(...def[f]); });
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const ALI = ['n21', 'i21', 'n105', 'i105', 'n27', 'i27', 'n5', 'i5', 'n25', 'i25', 'n0'];
+    const hasAli = libro || C.i21 >= 0;
+    const recs = [], pers = {};
+    let omit = 0;
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [];
+      const g = (f) => (C[f] < 0 ? null : r[C[f]]);
+      const n = (f) => this.numAr(g(f));
+      const fecha = this.fechaTxt(g('fecha'));
+      if (!fecha) { if (r.some(x => x !== null && x !== '') && !/total/i.test(String(g('fecha') || ''))) omit++; continue; }
+      const cuitRaw = g('cuit');
+      const cuit = String(typeof cuitRaw === 'number' ? Math.round(cuitRaw) : (cuitRaw == null ? '' : cuitRaw)).replace(/\D/g, '');
+      let t, f = 1, v;
+      if (libro) {
+        t = this.tipoLibro(g('tc'), g('letra'));
+        v = {};
+        ALI.forEach(a => { v[a] = n(a); });
+        v.ng = n('exp') + n('exe') + n('nal') + n('ngr');
+        v.ot = n('iin') + n('piibb') + n('piva') + n('potr') + n('oreg');
+        v.tot = n('tot');
+      } else {
+        t = this.tipoArca(g('tipo'));
+        const mon = String(g('mon') == null ? '$' : g('mon')).trim().toUpperCase(), cam = n('cam') || 1;
+        f = (mon && !['$', 'PES', 'ARS'].includes(mon) && cam > 1) ? cam : 1;
+        v = {};
+        ALI.forEach(a => { v[a] = n(a) * f; });
+        v.ngt = n('ngt') * f;
+        v.ivt = n('ivt') * f;
+        v.ng = (n('nng') + n('exe')) * f;
+        v.ot = n('ot') * f;
+        v.tot = n('tot') * f;
+      }
+      if (libro) {
+        v.ngt = v.n21 + v.n105 + v.n27 + v.n5 + v.n25 + v.n0;
+        v.ivt = v.i21 + v.i105 + v.i27 + v.i5 + v.i25;
+      }
+      Object.keys(v).forEach(a => { v[a] = r2(t.tc === 'NC' ? Math.abs(v[a]) : v[a]); });
+      const nom = g('nom');
+      const rec = {
+        cuit, tc: t.tc, letra: t.letra, tipo: t.tc + (t.letra ? ' ' + t.letra : ''), desc: libro ? '' : (t.cod ? t.cod + ' - ' : '') + t.desc,
+        pv: Math.round(n('pv')), nro: Math.round(n('nro')), fecha, nom: nom == null ? '' : String(nom).trim(),
+        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, excl: libro && this.TC_EXCL.includes(t.tc)
+      };
+      recs.push(rec);
+      const pk = fecha.slice(3);
+      pers[pk] = (pers[pk] || 0) + 1;
+    }
+    if (!recs.length) throw new Error('El archivo no tiene comprobantes: se leyó el encabezado pero ninguna fila con fecha válida.');
+    const per = Object.keys(pers).sort((a, b) => pers[b] - pers[a])[0];
+    const propio = (titulo.match(/cuit\s*(\d{11})/) || [])[1] || '';
+    return { kind, name, recs, per, omit, propio, excl: recs.filter(x => x.excl).length };
+  }
+
+  cruzarComp(arca, libro) {
+    const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
+    const L = libro.recs.filter(x => !x.excl), A = arca.recs;
+    const ali = A.some(x => x.hasAli);
+    const F = (ali
+      ? [['n21', 'Neto gravado 21%'], ['i21', 'IVA 21%'], ['n105', 'Neto gravado 10,5%'], ['i105', 'IVA 10,5%'], ['n27', 'Neto gravado 27%'], ['i27', 'IVA 27%'], ['n5', 'Neto gravado 5%'], ['i5', 'IVA 5%'], ['n25', 'Neto gravado 2,5%'], ['i25', 'IVA 2,5%'], ['n0', 'Neto gravado 0%']]
+      : [['ngt', 'Neto gravado'], ['ivt', 'IVA']]).concat([['ng', 'No gravado / exento / no alcanzado'], ['ot', 'Otros tributos y percepciones'], ['tot', 'Importe total']]);
+    const used = new Set();
+    const idx = (fn) => { const m = new Map(); L.forEach((x, i) => { const k = fn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(i); }); return m; };
+    const take = (m, k) => { const q = m.get(k) || []; const i = q.find(j => !used.has(j)); if (i === undefined) return -1; used.add(i); return i; };
+    const k1 = (x) => [x.cuit, x.tc, x.letra, x.pv, x.nro].join('|');
+    const k2 = (x) => [x.cuit, x.pv, x.nro].join('|');
+    const k3 = (x) => [x.cuit, x.fecha, Math.round(x.v.tot)].join('|');
+    const m1 = idx(k1), m2 = idx(k2), m3 = idx(k3);
+    const pares = [], resto1 = [], resto2 = [], faltL = [];
+    A.forEach(a => { const i = take(m1, k1(a)); if (i >= 0) pares.push([a, L[i], 1]); else resto1.push(a); });
+    resto1.forEach(a => { const i = take(m2, k2(a)); if (i >= 0) pares.push([a, L[i], 2]); else resto2.push(a); });
+    resto2.forEach(a => { const i = take(m3, k3(a)); if (i >= 0) pares.push([a, L[i], 3]); else faltL.push(a); });
+    const filas = pares.map(([a, l, st]) => {
+      const dif = [];
+      if (a.tc !== l.tc || a.letra !== l.letra) dif.push({ l: 'Tipo de comprobante', a: a.tipo, b: l.tipo, d: null });
+      if (st === 3) dif.push({ l: 'Punto de venta y número', a: String(a.pv).padStart(5, '0') + '-' + String(a.nro).padStart(8, '0'), b: String(l.pv).padStart(5, '0') + '-' + String(l.nro).padStart(8, '0'), d: null });
+      if (a.fecha !== l.fecha) dif.push({ l: 'Fecha', a: a.fecha, b: l.fecha, d: null });
+      F.forEach(([k, lb]) => { const d = r2(a.v[k] - l.v[k]); if (Math.abs(d) > TOL) dif.push({ l: lb, a: a.v[k], b: l.v[k], d }); });
+      return { est: dif.length ? 'dif' : 'ok', a, l, dif };
+    });
+    const faltA = L.filter((x, i) => !used.has(i));
+    const sum = (xs, k) => r2(xs.reduce((acc, x) => acc + (x.tc === 'NC' ? -1 : 1) * x.v[k], 0));
+    const tot = {};
+    ['ngt', 'ivt', 'ng', 'ot', 'tot'].forEach(k => { tot[k] = [sum(A, k), sum(L, k)]; });
+    return {
+      filas, faltA, faltL, nA: A.length, nL: L.length, excl: libro.recs.length - L.length,
+      ok: filas.filter(f => f.est === 'ok').length, dif: filas.filter(f => f.est === 'dif').length, tot
+    };
+  }
+
+  cruzarApoc(compras, base) {
+    const hits = [], provs = new Set(), antes = new Set();
+    const recs = compras.recs.filter(x => !x.excl && x.cuit);
+    recs.forEach(x => {
+      provs.add(x.cuit);
+      const b = base.get(x.cuit);
+      if (!b) return;
+      if (this.fechaKey(x.fecha) >= this.fechaKey(b[0])) hits.push({ x, fc: b[0], fp: b[1] });
+      else antes.add(x.cuit);
+    });
+    const provHits = new Set(hits.map(h => h.x.cuit));
+    return { hits, comps: recs.length, provs: provs.size, provHits: provHits.size, antes: [...antes].filter(c => !provHits.has(c)) };
+  }
+
+  apocInit() {
+    const def = { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, real: false, gen: '', v: 0 };
+    try {
+      const meta = JSON.parse(localStorage.getItem('myiva.apoc.meta') || 'null');
+      return meta && meta.total ? Object.assign(def, meta, { real: true, v: 0 }) : def;
+    } catch (e) { return def; }
+  }
+
+  apocBase() {
+    if (this._apocMap !== undefined) return this._apocMap;
+    this._apocMap = null;
+    try {
+      const raw = localStorage.getItem('myiva.apoc.data');
+      if (raw) this._apocMap = this.parseApoc(raw).map;
+    } catch (e) { this._apocMap = null; }
+    return this._apocMap;
+  }
+
+  parseApoc(txt) {
+    const map = new Map();
+    let gen = '';
+    String(txt).split(/\r?\n/).forEach(l => {
+      if (/^\s*#/.test(l)) { const g = l.match(/Generado\s*-\s*([\d\/]+)/i); if (g) gen = g[1]; return; }
+      const p = l.split(/[,;\t]/).map(x => x.trim());
+      const c = (p[0] || '').replace(/\D/g, '');
+      if (c.length !== 11) return;
+      map.set(c, [this.fechaTxt(p[1]), this.fechaTxt(p[2])]);
+    });
+    return { map, gen };
+  }
+
+  async leerApoc(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let txt = null;
+    if (bytes[0] === 0x50 && bytes[1] === 0x4B) {
+      const X = await this.xlsxLib();
+      const z = X.CFB.read(bytes, { type: 'array' });
+      const ent = z.FileIndex.find(f => /\.(txt|csv)$/i.test(f.name) && f.content && f.content.length);
+      if (ent) txt = new TextDecoder('latin1').decode(Uint8Array.from(ent.content));
+      else {
+        const wb = X.read(bytes, { type: 'array' });
+        txt = X.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+      }
+    } else if (/\.xlsx?$/i.test(file.name)) {
+      const X = await this.xlsxLib();
+      const wb = X.read(bytes, { type: 'array' });
+      txt = X.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+    } else txt = new TextDecoder('latin1').decode(bytes);
+    return this.parseApoc(txt);
+  }
+
+  async cargarArchivo(k, e) {
+    const f = e && e.target && e.target.files && e.target.files[0];
+    if (e && e.target) e.target.value = '';
+    if (!f) return;
+    const parse = this.PARSEABLES.includes(k);
+    const kb = f.size >= 1048576 ? (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB';
+    const setKind = (st, v) => (k === 'compras' ? { dz: v } : { up: Object.assign({}, st.up, { [k]: v }) });
+    const primero = (st) => !Object.values(st.real || {}).some(Boolean);
+    this.setState(st => Object.assign({ upBusy: Object.assign({}, st.upBusy, { [k]: f.name }) }, setKind(st, 'drag')));
+    try {
+      if (f.size > 20 * 1048576) throw new Error('El archivo pesa ' + kb + ': el máximo es 20 MB.');
+      let data;
+      if (parse) {
+        const X = await this.xlsxLib();
+        data = this.parseComprobantes(k, f.name, new Uint8Array(await f.arrayBuffer()), X);
+      } else {
+        if (k === 'ivadig' && !/\.pdf$/i.test(f.name)) throw new Error('El archivo debe ser el PDF de la declaración jurada de IVA Digital.');
+        data = { kind: k, name: f.name, attach: true };
+      }
+      data.size = kb;
+      this.setState(st => {
+        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' } } : { up: st.up };
+        const base = Object.assign({}, st, reset);
+        return Object.assign(reset, setKind(base, 'loaded'), {
+          real: Object.assign({}, st.real, { [k]: data }),
+          upErr: Object.assign({}, st.upErr, { [k]: null }),
+          upBusy: Object.assign({}, st.upBusy, { [k]: null }),
+          cruSaved: false
+        });
+      });
+    } catch (err) {
+      this.setState(st => Object.assign(setKind(st, 'error'), {
+        real: Object.assign({}, st.real, { [k]: null }),
+        upErr: Object.assign({}, st.upErr, { [k]: { file: f.name, msg: String(err && err.message || err) } }),
+        upBusy: Object.assign({}, st.upBusy, { [k]: null })
+      }));
+    }
+  }
+
+  cruReal() {
+    const s = this.state, R = s.real || {}, base = this.apocBase();
+    const c = this._crc;
+    if (c && c.R === R && c.base === base) return c.v;
+    const v = {};
+    if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas);
+    if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras);
+    if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
+    this._crc = { R, base, v };
+    return v;
+  }
+
+  cruCompVista(x, lblL) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const errs = [];
+    x.filas.filter(f => f.est === 'dif').forEach(f => {
+      const imp = f.dif.filter(d => d.d !== null).reduce((m, d) => Math.max(m, Math.abs(d.d)), 0);
+      const soloTipo = f.dif.every(d => d.d === null);
+      errs.push({
+        k: soloTipo ? (f.dif[0].l === 'Fecha' ? 'Diferencia de fecha' : 'Diferencia de tipo de comprobante') : 'Diferencia de importe',
+        comp: this.compTxt(f.a), ter: (f.a.nom || f.l.nom || 'Sin denominación') + ' · ' + this.cuitFmt(f.a.cuit),
+        det: f.dif.map(d => d.l + ': ARCA ' + (d.d === null ? d.a : fm(d.a)) + ' · ' + lblL + ' ' + (d.d === null ? d.b : fm(d.b))).join(' — '),
+        imp: soloTipo ? '—' : fm(imp)
+      });
+    });
+    x.faltL.forEach(a => errs.push({ k: 'Faltante en ' + lblL, comp: this.compTxt(a), ter: (a.nom || 'Sin denominación') + ' · ' + this.cuitFmt(a.cuit), det: 'Informado en ARCA el ' + a.fecha + ' y no registrado en ' + lblL, imp: fm(a.v.tot) }));
+    x.faltA.forEach(l => errs.push({ k: 'Faltante en ARCA', comp: this.compTxt(l), ter: (l.nom || 'Sin denominación') + ' · ' + this.cuitFmt(l.cuit), det: 'Registrado en ' + lblL + ' el ' + l.fecha + ' y no informado en ARCA', imp: fm(l.v.tot) }));
+    const T = x.tot, fila = (lb, k) => [lb, fm(T[k][0]), fm(T[k][1]), fm(T[k][0] - T[k][1])];
+    const falt = x.faltA.length + x.faltL.length;
+    return {
+      regs: x.filas.length + falt, ok: x.ok, dif: x.dif, falt, errs,
+      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nA) + ' comprobantes en ARCA · ' + n(x.nL) + ' en ' + lblL + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en ' + lblL + ' · ' + x.faltA.length + ' faltan en ARCA' + (x.excl ? ' · ' + x.excl + ' registros del subdiario excluidos (TC ' + this.TC_EXCL.join(', ') + ')' : ''),
+      cmp: [['Comprobantes', n(x.nA), n(x.nL), String(x.nA - x.nL)], fila('Neto gravado', 'ngt'), fila('IVA', 'ivt'), fila('No gravado / exento / no alcanzado', 'ng'), fila('Otros tributos y percepciones', 'ot'), fila('Importe total', 'tot')]
+    };
+  }
+
+  cruApocVista(x, ap) {
+    const n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const errs = x.hits.map(h => ({
+      k: 'Proveedor en Base APOC', comp: this.compTxt(h.x), ter: (h.x.nom || 'Sin denominación') + ' · ' + this.cuitFmt(h.x.cuit),
+      det: 'Comprobante del ' + h.x.fecha + ' · CUIT con condición de apócrifo desde el ' + (h.fc || 's/f') + (h.fp ? ' (publicado el ' + h.fp + ')' : ''),
+      imp: this.ars(h.x.v.ivt)
+    }));
+    const porCuit = {};
+    x.hits.forEach(h => {
+      const p = porCuit[h.x.cuit] || (porCuit[h.x.cuit] = { nom: h.x.nom || 'Sin denominación', fc: h.fc, iva: 0 });
+      p.iva += h.x.v.ivt;
+    });
+    return {
+      regs: x.comps, ok: x.comps - x.hits.length, dif: x.hits.length, falt: 0, errs,
+      est: x.hits.length ? 'Con errores' : 'Completado',
+      res: n(x.comps) + ' comprobantes de ' + n(x.provs) + ' proveedores contra la Base APOC (' + n(ap.total) + ' CUITs' + (ap.gen ? ' · listado de ARCA del ' + ap.gen : '') + ') · '
+        + (x.hits.length ? x.hits.length + (x.hits.length === 1 ? ' comprobante' : ' comprobantes') + ' de ' + x.provHits + (x.provHits === 1 ? ' proveedor apócrifo' : ' proveedores apócrifos') + ' dentro de la ventana de fechas' : 'ningún proveedor figura en la base dentro de la ventana de fechas')
+        + (x.antes.length ? ' · ' + x.antes.length + ' con comprobantes anteriores a la fecha de condición' : ''),
+      cmp: Object.keys(porCuit).map(c => [porCuit[c].nom, this.cuitFmt(c), porCuit[c].fc || '—', this.ars(porCuit[c].iva)])
+    };
+  }
+
+  reporteFilas(tipo, x, lblL) {
+    if (tipo === 'apoc') {
+      return {
+        head: ['Resultado', 'Comprobante', 'Fecha', 'CUIT', 'Denominación', 'Fecha condición apócrifo', 'Fecha publicación', 'IVA', 'Importe total'],
+        rows: x.hits.map(h => ['Error: proveedor en Base APOC', this.compTxt(h.x), h.x.fecha, this.cuitFmt(h.x.cuit), h.x.nom, h.fc, h.fp, h.x.v.ivt, h.x.v.tot])
+      };
+    }
+    const rows = [], base = (r, a, l) => [r, this.compTxt(a || l), a ? a.fecha : '', l ? l.fecha : '', this.cuitFmt((a || l).cuit), (a && a.nom) || (l && l.nom) || ''];
+    x.filas.filter(f => f.est === 'dif').forEach(f => f.dif.forEach(d => rows.push(base('Coincide con diferencias', f.a, f.l).concat([d.l, d.a, d.b, d.d === null ? '' : d.d]))));
+    x.faltL.forEach(a => rows.push(base('Falta en ' + lblL, a, null).concat(['Importe total', a.v.tot, '', ''])));
+    x.faltA.forEach(l => rows.push(base('Falta en ARCA', null, l).concat(['Importe total', '', l.v.tot, ''])));
+    x.filas.filter(f => f.est === 'ok').forEach(f => rows.push(base('Coincide', f.a, f.l).concat(['', '', '', ''])));
+    return { head: ['Resultado', 'Comprobante', 'Fecha ARCA', 'Fecha ' + lblL, 'CUIT', 'Denominación', 'Concepto', 'ARCA', lblL, 'Diferencia'], rows };
+  }
+
+  descargarReporte(bloques, cli) {
+    const X = typeof window !== 'undefined' && window.XLSX;
+    if (!X || !bloques.length) return this.setState({ toast: { kind: 'warn', t: 'No hay cruces reales para exportar', d: 'Cargá los archivos reales y procesá los cruces para descargar el reporte de diferencias.' } });
+    try {
+      const wb = X.utils.book_new();
+      if (bloques.length > 1) {
+        const ws = X.utils.aoa_to_sheet([['Cruce', 'Estado', 'Resumen']].concat(bloques.map(b => [b.t, b.est, b.res])));
+        ws['!cols'] = [{ wch: 30 }, { wch: 26 }, { wch: 120 }];
+        X.utils.book_append_sheet(wb, ws, 'Resumen');
+      }
+      bloques.forEach(b => {
+        const ws = X.utils.aoa_to_sheet([[b.t], [b.res], []].concat([b.head], b.rows));
+        ws['!cols'] = b.head.map((h, i) => ({ wch: i === 5 || i === 4 ? 34 : (i === 0 ? 26 : 16) }));
+        X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
+      });
+      const name = cli + ' - Reporte de diferencias' + (bloques.length === 1 ? ' - ' + bloques[0].hoja : '') + '.xlsx';
+      this.descargar(name, new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      this.setState({ toast: { kind: 'ok', t: 'Reporte de diferencias descargado', d: name } });
+    } catch (err) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el reporte', d: String(err && err.message || err) } });
+    }
+  }
+
   cruRun() {
     const s = this.state, E = this.EST;
     const fst = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
-    const has = (k) => fst(k) === 'loaded';
+    const R = s.real || {}, enReal = Object.values(R).some(Boolean), apBase = enReal ? this.apocBase() : null;
+    const has = (k) => k === 'apocBase' ? !!apBase : (fst(k) === 'loaded' && (!enReal || !!R[k]));
     const num = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     const ERRF = {
       ventas: 'CAZATUR_IVA_VENTAS_082026.docx', compras: 'CAZATUR_IVA_COMPRAS_082026.docx',
@@ -2616,74 +3070,92 @@ class Component extends DCLogic {
     const cli = this.liqCli(), ap = s.apoc, arr = this.arrastre(cli), prevPagar = arr.pagar;
     const arrTec = this.ars(arr.tec), arrLib = this.ars(arr.lib);
     const arrastre = {
-      n: '0', t: 'Arrastre de saldos a favor del período anterior', prevPagar,
-      regla: 'Se toman de la última secuencia liquidada de 07/2026 (Secuencia 2 · Rectificativa · 12/08/2026). Si el período anterior resultó a pagar, se trasladan en $ 0. Al saldo de 2do párrafo se le restan las compensaciones registradas sobre esa DJ.',
+      n: '0', t: 'Saldos a favor', prevPagar,
+      regla: 'Se toman de la DJ vigente de ' + arr.per + (arr.dj ? ' (' + this.seqTxt(arr.dj.seq) + ' · ' + arr.dj.fecha + ')' : '') + ': saldo a favor de 1er párrafo y saldo a favor de 2do párrafo menos las compensaciones registradas. Si resultó a pagar, se trae $ 0.',
       st: E['Completado'],
-      resumen: prevPagar ? 'El período anterior resultó a pagar: no hay saldos a favor para trasladar.'
-        : 'Se trasladan $ ' + arrTec + ' de saldo técnico y $ ' + arrLib + ' de libre disponibilidad a 08/2026' + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.')
+      resumen: arr.sinDj ? 'No hay una DJ liquidada de ' + arr.per + ' para ' + cli + ': los saldos a favor se trasladan en $ 0.'
+        : (prevPagar ? 'La DJ de ' + arr.per + ' resultó a pagar: no hay saldos a favor para trasladar.'
+          : 'Se trasladan $ ' + arrTec + ' de saldo a favor de 1er párrafo y $ ' + arrLib + ' de 2do párrafo a 08/2026' + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.'))
     };
     const APOC_OBS = [[0, '18.270,00'], [2, '9.450,00'], [4, '31.920,00']].map(([i, iva]) => [this.APOC_ULT[i][1], this.APOC_ULT[i][0], this.APOC_ULT[i][2], iva]);
     const def = [
       {
-        n: '1', t: 'IVA Compras vs. Base APOC (ARCA)', tipo: 'IVA Compras vs Base APOC', need: [['compras', 'IVA Compras']], regs: 312, ok: 309, dif: 3, falt: 0,
-        regla: 'Se buscan los CUITs de los proveedores de IVA Compras en la Base APOC (' + num(ap.total) + ' CUITs · actualizada el ' + ap.fecha + ').',
+        n: '1', t: 'Base APOC', tipo: 'IVA Compras vs Base APOC', need: [['compras', 'IVA Compras']].concat(enReal ? [['apocBase', 'la Base APOC de ARCA (Configuración → Base APOC)']] : []), regs: 312, ok: 309, dif: 3, falt: 0,
+        regla: 'IVA Compras vs. Base APOC (' + num(ap.total) + ' CUITs · actualizada el ' + ap.fecha + '). Es error si el CUIT del proveedor figura en la base y el comprobante tiene fecha igual o posterior a la condición de apócrifo.',
         res: '312 proveedores analizados · 309 sin observaciones · 3 figuran en la Base APOC',
         h: ['Proveedor observado', 'CUIT', 'En la base desde', 'IVA computado'], cmp: APOC_OBS, alerta: true
       },
       {
-        n: '2', t: 'Comprobantes Emitidos (ARCA) vs. IVA Ventas', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
-        regla: 'Se cruzan por CUIT, tipo, punto de venta y número; se comparan la fecha y los importes por alícuota con tolerancia de $ 0,03.',
+        n: '2', t: 'Comprobantes Emitidos', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
+        regla: 'Mis Comprobantes Emitidos (ARCA) vs. IVA Ventas. Match simultáneo y total: se emparejan por CUIT, tipo, punto de venta y número, y se comparan fecha, neto e IVA por alícuota, no gravado / exento, otros tributos e importe total (tolerancia $ 0,03; moneda extranjera convertida a pesos). No se cruzan denominación ni tipo de documento del receptor ni código de autorización.',
         h: ['Concepto', 'Comprobantes Emitidos (ARCA)', 'IVA Ventas', 'Diferencia'],
         cmp: [['Comprobantes', '2.117', '2.116', '1'], ['IVA débito fiscal', '4.192.670,60', '4.182.905,60', '9.765,00']]
       },
       {
-        n: '3', t: 'Comprobantes Recibidos (ARCA) vs. IVA Compras', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2,
-        regla: 'Se cruzan por CUIT, tipo, punto de venta, número e importe total (tolerancia de $ 0,03). Los comprobantes en moneda extranjera se convierten a pesos.',
+        n: '3', t: 'Comprobantes Recibidos', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2,
+        regla: 'Mis Comprobantes Recibidos (ARCA) vs. IVA Compras. Match simultáneo y total con las mismas reglas que Emitidos. No se cruzan denominación ni tipo de documento del emisor, tipo y número de documento del receptor ni código de autorización.',
         h: ['Concepto', 'Comprobantes Recibidos (ARCA)', 'IVA Compras', 'Diferencia'],
         cmp: [['Comprobantes', '1.283', '1.283', '0'], ['IVA crédito fiscal', '2.449.094,20', '2.444.516,20', '4.578,00']]
       },
       {
-        n: '4', t: 'Retenciones (IVA Ventas) + Percepciones (IVA Compras) vs. Mis Retenciones (ARCA)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
+        n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
         regla: 'Las retenciones de Mis Retenciones se cruzan con los comprobantes CR de IVA Ventas y las percepciones con IVA Compras, por CUIT e importe (tolerancia de $ 0,03).',
         h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
       {
-        n: '5', t: 'Retenciones Aduaneras (IVA Ventas) vs. Mis Percepciones Aduaneras (ARCA)', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['ventas', 'IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
+        n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['ventas', 'IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
         regla: 'Se cruzan por CUIT, fecha e importe las retenciones aduaneras registradas en el subdiario con Mis Percepciones Aduaneras.',
         nota: 'Subdiario de origen a confirmar con el estudio: por ahora se toman de IVA Ventas.',
         h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'IVA Ventas', 'Diferencia'],
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
       {
-        n: '6', t: 'IVA Digital vs. IVA Compras + IVA Ventas', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
+        n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
         regla: 'Se comparan los totales de la declaración jurada de IVA Digital con los subdiarios de IVA Ventas e IVA Compras y con el arrastre del cruce 0.',
         res: '4 conceptos comparados · 3 coinciden · 1 con diferencias',
         h: ['Concepto', 'IVA Digital', 'IVA Compras + IVA Ventas', 'Diferencia'],
         cmp: [['Débito fiscal', '4.184.060,60', '4.182.905,60', '1.155,00'], ['Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00'], ['Retenciones y percepciones', '106.284,15', '106.284,15', '0,00'], ['Saldo técnico a favor anterior (cruce 0)', arrTec, arrTec, '0,00']]
       }
     ];
-    const rows = def.map(c => {
-      const falta = c.need.filter(([k]) => !has(k)).map(([, l]) => l);
-      const malos = c.need.filter(([k]) => fst(k) === 'error');
+    const RV = enReal ? this.cruReal() : {};
+    const vista = {
+      '1': RV.apoc ? Object.assign(this.cruApocVista(RV.apoc, ap), { blk: ['apoc', RV.apoc, 'IVA Compras', 'Base APOC'] }) : null,
+      '2': RV.emi ? Object.assign(this.cruCompVista(RV.emi, 'IVA Ventas'), { blk: ['comp', RV.emi, 'IVA Ventas', 'Comprobantes Emitidos'] }) : null,
+      '3': RV.rec ? Object.assign(this.cruCompVista(RV.rec, 'IVA Compras'), { blk: ['comp', RV.rec, 'IVA Compras', 'Comprobantes Recibidos'] }) : null
+    };
+    const demoRep = this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.');
+    const reales = [];
+    const rows = def.map(c0 => {
+      const falta = c0.need.filter(([k]) => !has(k)).map(([, l]) => l);
+      const malos = c0.need.filter(([k]) => fst(k) === 'error');
       const run = falta.length === 0, isErr = malos.length > 0 && malos.length === falta.length;
-      const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado'));
-      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile(ERRF[k], c.t))) : (run ? this.errsTipo(c.tipo) : []);
+      const rv = run ? vista[c0.n] : null;
+      const c = rv ? Object.assign({}, c0, rv, { alerta: c0.alerta && rv.est === 'Con errores' }) : c0;
+      const nota = [c0.nota, run && enReal && !rv ? 'Resultado de ejemplo: el cruce real de este archivo se habilita cuando tengamos un archivo de muestra.' : ''].filter(Boolean).join(' ');
+      const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (rv ? rv.est : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado')));
+      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile((s.upErr && s.upErr[k] && s.upErr[k].file) || ERRF[k], c.t))) : (run ? (rv ? rv.errs : this.errsTipo(c.tipo)) : []);
       const cero = (v) => v === '0' || v === '0,00';
+      let rep = demoRep;
+      if (rv) {
+        const bloque = () => Object.assign({ t: c0.n + ' - ' + c0.t, hoja: rv.blk[3], est, res: rv.res }, this.reporteFilas(rv.blk[0], rv.blk[1], rv.blk[2]));
+        reales.push(bloque);
+        rep = () => this.descargarReporte([bloque()], cli);
+      }
       return {
-        n: c.n, t: c.t, tipo: c.tipo, regla: c.regla, run, isErr, st: E[est], est,
+        n: c.n, t: c.t, tipo: c.tipo, regla: c.regla, run, isErr, st: E[est], est, real: !!rv,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
-        hasDif: run && c.dif + c.falt > 0,
-        errs, hasErr: errs.length > 0, errLabel: (c.alerta && run ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
+        hasDif: run && (rv ? (rv.blk[0] === 'comp' || rv.dif > 0) : c.dif + c.falt > 0), rep,
+        errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
         verErr: this.openErr(c.t, cli + ' · 08/2026', [{ cruce: c.t, errs }]),
-        hasCmp: run, hasNota: !!c.nota, nota: c.nota || '',
+        hasCmp: run && c.cmp.length > 0, hasNota: !!nota, nota,
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
         cmp: c.cmp.map(([a, b, cc, d]) => ({
           a, b, c: cc, d,
           dc: c.alerta ? '#B3261E' : (cero(d) ? '#2E7D5B' : '#8F5F14'),
           fw: a === 'Total' ? '600' : '400'
         })),
-        nBg: isErr ? '#B3261E' : (!run ? '#9AA9B7' : '#14395C'),
+        nBg: isErr || est === 'Con errores' ? '#B3261E' : (!run ? '#9AA9B7' : '#14395C'),
         resumen: isErr
           ? 'No se procesó: ' + malos.map(([, l]) => l).join(' y ') + (malos.length > 1 ? ' tienen' : ' tiene') + ' errores de archivo.'
           : (run
@@ -2692,12 +3164,21 @@ class Component extends DCLogic {
       };
     });
     const inc = [];
-    if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
-    if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
+    if (enReal) {
+      const L = this.UP_LBL, P = this.PARSEABLES.filter(k => R[k] && !R[k].attach);
+      if (new Set(P.map(k => R[k].per)).size > 1) inc.push({ t: 'Los archivos corresponden a períodos distintos: ' + P.map(k => L[k] + ' ' + R[k].per).join(' · ') + '.' });
+      const props = P.filter(k => R[k].propio);
+      if (new Set(props.map(k => R[k].propio)).size > 1) inc.push({ t: 'Los archivos de ARCA son de CUITs distintos: ' + props.map(k => L[k] + ' ' + this.cuitFmt(R[k].propio)).join(' · ') + '.' });
+      P.forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
+      P.forEach(k => { const n = R[k].recs.filter(x => !x.excl && x.cuit.length !== 11).length; if (n) inc.push({ t: n + (n === 1 ? ' comprobante' : ' comprobantes') + ' de ' + L[k] + ' sin CUIT válido (11 dígitos): se cruzan igual por tipo, punto de venta y número.' }); });
+    } else {
+      if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
+      if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
+    }
     const done = rows.filter(r => r.run);
     const errGroups = rows.filter(r => r.hasErr).map(r => ({ cruce: r.t, errs: r.errs }));
     return {
-      rows, arrastre, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0),
+      rows, arrastre, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0), reales, enReal,
       tot: { regs: num(done.reduce((a, r) => a + r.regs, 0)), dif: done.reduce((a, r) => a + r.dif, 0), falt: done.reduce((a, r) => a + r.falt, 0) }
     };
   }
@@ -2961,17 +3442,21 @@ class Component extends DCLogic {
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
     const cru = this.cruRun();
     const arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
+    const sinArr = arr.sinDj ? 'No hay DJ liquidada de ' + arr.per : '';
     const prevSaldos = [
-      { label: 'Saldo técnico a favor del período anterior', amount: '$ ' + this.ars(arr.tec), sub: 'Se traslada a la liquidación de 08/2026' },
-      { label: 'Saldo a favor de libre disponibilidad del período anterior', amount: '$ ' + this.ars(arr.lib), sub: arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Se traslada a la liquidación de 08/2026' }
-    ].map(p => ({
-      label: p.label,
-      value: prevPagar ? '$ 0' : p.amount,
-      sub: prevPagar ? 'El período anterior resultó a pagar' : p.sub,
-      fg: prevPagar ? '#5A6B7B' : '#2E7D5B',
-      bg: prevPagar ? '#F5F7FA' : '#F3FAF6',
-      bd: prevPagar ? '#E3E8EE' : '#C7E3D6'
-    }));
+      { label: 'Saldo a favor 1er párrafo · ' + arr.per, cero: arr.pagar1, amount: '$ ' + this.ars(arr.tec), sub: sinArr || (arr.pagar1 ? 'Resultó a pagar ($ ' + this.ars(arr.s1) + '): se trae $ 0' : 'Se traslada a la liquidación de 08/2026') },
+      { label: 'Saldo a favor 2do párrafo menos compensaciones · ' + arr.per, cero: arr.pagar2, amount: '$ ' + this.ars(arr.lib), sub: sinArr || (arr.pagar2 ? 'Resultó a pagar ($ ' + this.ars(arr.s2) + '): se trae $ 0' : (arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Sin compensaciones registradas · se traslada a 08/2026')) }
+    ].map(p => {
+      const z = prevPagar || p.cero;
+      return {
+        label: p.label,
+        value: z ? '$ 0' : p.amount,
+        sub: s.prevSaldo === 'pagar' ? 'Simulación: período anterior a pagar' : p.sub,
+        fg: z ? '#5A6B7B' : '#2E7D5B',
+        bg: z ? '#F5F7FA' : '#F3FAF6',
+        bd: z ? '#E3E8EE' : '#C7E3D6'
+      };
+    });
     const upDef = [
       ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
@@ -2986,15 +3471,24 @@ class Component extends DCLogic {
       if (k === 'compras') this.setState({ dz: v });
       else this.setState(st => ({ up: Object.assign({}, st.up, { [k]: v }) }));
     };
+    const RF = s.real || {};
     const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
-      const kind = upState(k);
+      const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
+      const rmeta = rf ? (rf.attach ? rf.size + ' · adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
+        : rf.size + ' · ' + rf.recs.length + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + ' excluidos del cruce (TC ' + this.TC_EXCL.join(', ') + ')' : '')) : '';
       return {
-        n: String(i + 1), label, ext, hint, file, meta, errMsg,
-        errFile: file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
+        n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
+        errFile: ue ? ue.file : file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
+        dragTxt: busy ? 'Leyendo el archivo…' : 'Soltá el archivo para cargarlo',
+        accept: k === 'ivadig' ? '.pdf' : '.xls,.xlsx,.csv',
         isEmpty: kind === 'empty', isDrag: kind === 'drag', isLoaded: kind === 'loaded', isErr: kind === 'error',
         bd: kind === 'error' ? '#B3261E' : (kind === 'drag' ? '#2F80B7' : '#D5DEE7'),
         bg: kind === 'error' ? '#FDF5F4' : (kind === 'drag' ? '#F4F9FD' : '#FFFFFF'),
-        load: setUp(k, 'loaded'), clear: setUp(k, 'empty')
+        pick: (e) => this.cargarArchivo(k, e),
+        load: setUp(k, 'loaded'),
+        clear: () => this.setState(st => Object.assign(k === 'compras' ? { dz: 'empty' } : { up: Object.assign({}, st.up, { [k]: 'empty' }) }, {
+          real: Object.assign({}, st.real, { [k]: null }), upErr: Object.assign({}, st.upErr, { [k]: null }), cruSaved: false
+        }))
       };
     });
     const upLoaded = upFiles.filter(f => f.isLoaded).map(f => ({ label: f.label, file: f.file }));
@@ -3090,18 +3584,7 @@ class Component extends DCLogic {
 
     const del = s.ddjjBorradas;
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
-    const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
-    const baseRows = [
-      { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 1, fecha: '04/09/2026', user: 'Julieta', df: '2.907.114,85', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DACKET SA', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '2.894.020,15', cf: '3.166.402,70', rp: '41.220,00', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Retenciones vs IVA Ventas / IVA Compras', errs: ER.ret }] },
-      { cliente: 'DASYC SRL', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Administrador', df: '1.455.230,10', cf: '987.640,55', rp: '18.450,30', est: 'Completado' },
-      { cliente: 'NOVALUX S.A.', per: '08/2026', seq: 0, fecha: '03/09/2026', user: 'Julieta', df: '—', cf: '—', est: 'Con errores', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: novalux }] },
-      { cliente: 'FIDEICOMISO PAMPA PILAR', per: '07/2026', seq: 0, fecha: '02/09/2026', user: 'Julieta', df: '6.330.447,00', cf: '5.118.902,35', rp: '96.112,80', est: 'Completado' },
-      { cliente: 'RODIALE SA', per: '07/2026', seq: 2, fecha: '02/09/2026', user: 'Julieta', df: '812.004,20', cf: '744.118,90', rp: '4.880,00', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 2, fecha: '12/08/2026', user: 'Administrador', df: '3.908.744,15', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado' },
-      { cliente: 'CAZATUR SA', per: '07/2026', seq: 1, fecha: '08/08/2026', user: 'Julieta', df: '3.902.110,40', cf: '3.858.148,75', rp: '92.775,40', est: 'Completado con diferencias', eg: [{ cruce: 'Mis Comprobantes Emitidos vs IVA Ventas', errs: ER.emi }] }
-    ].concat(this.demoUsr().liq);
+    const baseRows = this.baseRows();
     const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli;
     const delPer = baseRows.filter(r => r.cliente === cli && r.per === '08/2026' && r.df !== '—');
     const hasHist = delPer.length > 0;
@@ -3118,7 +3601,8 @@ class Component extends DCLogic {
     const num = (v) => parseFloat(v.replace(/\./g, '').replace(',', '.'));
     const conSaldo = (r) => {
       if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7' });
-      const saldo = num(r.cf) + num(r.rp) - num(r.df);
+      const sd = this.saldosDj(histTodas, r.cliente, r.per, r.seq);
+      const saldo = sd ? sd.s2 : num(r.cf) + num(r.rp) - num(r.df);
       return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo) });
     };
     const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
@@ -3168,7 +3652,7 @@ class Component extends DCLogic {
       if (!djVig[k] || r.seq > djVig[k].seq) djVig[k] = r;
     });
     const r2 = (v) => Math.round(v * 100) / 100;
-    const saldo2 = (r) => r2(num(r.cf) + num(r.rp) - num(r.df));
+    const saldo2 = (r) => { const x = this.saldosDj(histTodas, r.cliente, r.per, r.seq); return x ? x.s2 : 0; };
     const perK = (p) => p.slice(3) + p.slice(0, 2);
     const djs = Object.values(djVig);
     const compClis = [...new Set(djs.map(r => r.cliente))].sort((a, b) => a.localeCompare(b, 'es'));
@@ -3274,6 +3758,7 @@ class Component extends DCLogic {
         bg: s.prevSaldo === k ? '#14395C' : '#FFFFFF', fg: s.prevSaldo === k ? '#FFFFFF' : '#5A6B7B'
       })),
       cruRows: cru.rows, cruArr: cru.arrastre,
+      cruRep: cru.reales.length ? () => this.descargarReporte(cru.reales.map(f => f()), cli) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       cruKpis: [
         { label: 'Cruces procesados', value: (cru.done.length + 1) + ' de 7', color: '#1B2733' },
         { label: 'Registros cruzados', value: cru.tot.regs, color: '#1B2733' },
@@ -3576,35 +4061,46 @@ class Component extends DCLogic {
       toast
     }));
     const qd = dig(s.apocQ);
-    const enBase = qd.length === 11 ? (this.APOC_ULT.find(a => dig(a[0]) === qd) || (ap.cuits.includes(qd) ? [fmtCuit(qd), 'Cargado desde archivo', ap.fecha.slice(0, 10)] : null)) : null;
+    const apMap = ap.real ? this.apocBase() : null;
+    const enBase = qd.length === 11 ? (apMap
+      ? (apMap.has(qd) ? [fmtCuit(qd), 'condición de apócrifo desde el ' + (apMap.get(qd)[0] || 's/f'), apMap.get(qd)[1] || apMap.get(qd)[0]] : null)
+      : this.APOC_ULT.find(a => dig(a[0]) === qd)) : null;
     return {
       apocFecha: ap.fecha, apocTotal: miles(ap.total), apocOrigen: ap.origen,
-      apocNuevos: ap.nuevos ? '+' + miles(ap.nuevos) + ' en la última actualización' : 'Sin cambios en la última actualización',
-      apocRun: s.apocRun, apocBtn: s.apocRun ? 'Actualizando…' : 'Actualizar desde ARCA',
+      apocNuevos: ap.real ? (ap.gen ? 'Listado de ARCA generado el ' + ap.gen : 'Listado cargado desde archivo') : (ap.nuevos ? '+' + miles(ap.nuevos) + ' en la última actualización' : 'Sin cambios en la última actualización'),
+      apocRun: s.apocRun, apocBtn: s.apocRun ? 'Leyendo el archivo…' : 'Descargar listado de ARCA',
       apocActualizar: () => {
-        if (s.apocRun) return;
-        this.setState({ apocRun: true });
-        setTimeout(() => apocDone({ total: ap.total + 37, nuevos: 37, origen: 'ARCA · actualización manual' }, 'Base APOC actualizada', 'Descarga desde ARCA · +37 CUITs',
-          { kind: 'ok', t: 'Base APOC actualizada', d: 'Se incorporaron 37 CUITs nuevos. Los próximos cruces ya usan la base actualizada.' }), 1600);
+        window.open('https://servicioscf.afip.gob.ar/facturacion/facturasapocrifas/DownloadFile.aspx', '_blank');
+        this.setState({ toast: { kind: 'ok', t: 'Descargando el listado completo de ARCA', d: 'Se descarga FacturasApocrifas.zip. Cargalo acá con "Cargar archivo" para actualizar la base.' } });
       },
-      apocArchivo: (e) => {
+      apocArchivo: async (e) => {
         const f = e.target.files && e.target.files[0];
         e.target.value = '';
         if (!f) return;
-        const rd = new FileReader();
-        rd.onload = () => {
-          const cuits = [...new Set((String(rd.result).match(/\b\d{2}-?\d{8}-?\d\b/g) || []).map(dig))];
-          if (!cuits.length) return this.setState({ toast: { kind: 'warn', t: 'Archivo sin CUITs', d: f.name + ' no tiene CUITs válidos (11 dígitos). Revisá el formato.' } });
-          apocDone({ total: cuits.length, nuevos: Math.max(0, cuits.length - ap.total), origen: 'Archivo · ' + f.name, cuits }, 'Base APOC actualizada', 'Archivo ' + f.name + ' · ' + cuits.length + ' CUITs',
-            { kind: 'ok', t: 'Base APOC actualizada', d: f.name + ' · ' + miles(cuits.length) + ' CUITs cargados.' });
-        };
-        rd.readAsText(f);
+        this.setState({ apocRun: true });
+        try {
+          const r = await this.leerApoc(f);
+          if (!r.map.size) return this.setState({ apocRun: false, toast: { kind: 'warn', t: 'Archivo sin CUITs', d: f.name + ' no tiene CUITs válidos (11 dígitos). Cargá el listado de ARCA (FacturasApocrifas.zip / .txt).' } });
+          this._apocMap = r.map;
+          const ult = [...r.map.entries()].sort((a, b) => this.fechaKey(b[1][1] || b[1][0]).localeCompare(this.fechaKey(a[1][1] || a[1][0]))).slice(0, 5)
+            .map(([c, [fc, fp]]) => [fmtCuit(c), 'Apócrifo desde el ' + (fc || 's/f'), fp || fc]);
+          const meta = { total: r.map.size, gen: r.gen, origen: 'Archivo · ' + f.name, nuevos: Math.max(0, r.map.size - ap.total), fecha: this.ahora(), ult };
+          let guardada = true;
+          try {
+            localStorage.setItem('myiva.apoc.data', [...r.map.entries()].map(([c, [fc, fp]]) => c + ',' + fc + ',' + fp).join('\n'));
+            localStorage.setItem('myiva.apoc.meta', JSON.stringify(meta));
+          } catch (err) { guardada = false; }
+          apocDone(Object.assign({ real: true, v: (ap.v || 0) + 1 }, meta), 'Base APOC actualizada', 'Archivo ' + f.name + ' · ' + r.map.size + ' CUITs',
+            { kind: 'ok', t: 'Base APOC actualizada', d: f.name + ' · ' + miles(r.map.size) + ' CUITs' + (r.gen ? ' (listado de ARCA del ' + r.gen + ')' : '') + '. ' + (guardada ? 'Queda guardada en este navegador.' : 'No se pudo guardar en el navegador: se usa hasta recargar la página.') });
+        } catch (err) {
+          this.setState({ apocRun: false, toast: { kind: 'err', t: 'No se pudo leer la Base APOC', d: String(err && err.message || err) } });
+        }
       },
       apocQ: s.apocQ, apocQSet: (e) => this.setState({ apocQ: e.target.value }),
       apocHayRes: qd.length === 11,
-      apocRes: enBase ? 'Figura en la base APOC desde el ' + enBase[2] + ' · ' + enBase[1] : 'No figura en la base APOC',
+      apocRes: enBase ? 'Figura en la base APOC · ' + enBase[1] : 'No figura en la base APOC',
       apocResBg: enBase ? '#FBE9E7' : '#E8F3EE', apocResFg: enBase ? '#B3261E' : '#2E7D5B', apocResBd: enBase ? '#F3CFCB' : '#C7E3D6',
-      apocUlt: this.APOC_ULT.map(([cuit, rz, f]) => ({ cuit, rz, f })),
+      apocUlt: ap.real && ap.ult ? ap.ult.map(([cuit, rz, f]) => ({ cuit, rz, f })) : this.APOC_ULT.map(([cuit, rz, f]) => ({ cuit, rz, f })),
       cfgTabs: cfgDef.map(([k, label]) => ({
         label, go: this.tset('cfgTab', k),
         fg: s.cfgTab === k ? '#14395C' : '#5A6B7B',
