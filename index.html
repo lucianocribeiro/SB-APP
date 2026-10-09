@@ -2743,8 +2743,7 @@ class Component extends DCLogic {
     return this._xlsxP;
   }
 
-  parseComprobantes(k, name, bytes, X) {
-    const LBL = this.UP_LBL;
+  leerHoja(bytes, X) {
     let wb;
     try {
       const bin = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
@@ -2757,8 +2756,23 @@ class Component extends DCLogic {
       wb = txt === null ? X.read(bytes, { type: 'array' }) : X.read(txt, { type: 'string', raw: true });
     } catch (e) { throw new Error('No se pudo leer el archivo: no es un Excel (.xls / .xlsx) ni un CSV válido.'); }
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const aoa = ws ? X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }) : [];
-    const hk = (h) => this.fold(h == null ? '' : h).replace(/[^a-z0-9]/g, '');
+    return ws ? X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }) : [];
+  }
+
+  hkey(h) { return this.fold(h == null ? '' : h).replace(/[^a-z0-9]/g, ''); }
+
+  cuitTxt(v) { return String(typeof v === 'number' ? Math.round(v) : (v == null ? '' : v)).replace(/\D/g, ''); }
+
+  perMayor(fechas) {
+    const pers = {};
+    fechas.forEach(f => { const k = f.slice(3); pers[k] = (pers[k] || 0) + 1; });
+    return Object.keys(pers).sort((a, b) => pers[b] - pers[a])[0] || '';
+  }
+
+  parseComprobantes(k, name, bytes, X) {
+    const LBL = this.UP_LBL;
+    const aoa = this.leerHoja(bytes, X);
+    const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
       const ks = (aoa[i] || []).map(hk);
@@ -2807,6 +2821,7 @@ class Component extends DCLogic {
         ALI.forEach(a => { v[a] = n(a); });
         v.ng = n('exp') + n('exe') + n('nal') + n('ngr');
         v.ot = n('iin') + n('piibb') + n('piva') + n('potr') + n('oreg');
+        v.piva = n('piva');
         v.tot = n('tot');
       } else {
         t = this.tipoArca(g('tipo'));
@@ -2891,6 +2906,232 @@ class Component extends DCLogic {
     return { hits, comps: recs.length, provs: provs.size, provHits: provHits.size, antes: [...antes].filter(c => !provHits.has(c)) };
   }
 
+  parseRetenciones(name, bytes, X) {
+    const aoa = this.leerHoja(bytes, X);
+    let hi = -1, keys = [];
+    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+      const ks = (aoa[i] || []).map(h => this.hkey(h));
+      if (ks.some(x => x.startsWith('cuitagente')) && ks.some(x => x.startsWith('importeret'))) { hi = i; keys = ks; break; }
+    }
+    if (hi < 0) throw new Error('No se encontró la fila de encabezados de Mis Retenciones (CUIT Agente Ret./Perc., Importe Ret./Perc.…). Cargá el archivo tal como se exporta de ARCA.');
+    const col = (...ps) => { for (const p of ps) { const i = keys.findIndex(x => x.startsWith(p)); if (i >= 0) return i; } return -1; };
+    const C = {
+      cuit: col('cuitagente'), nom: col('denominacion', 'razonsocial'), fecha: col('fecharet', 'fecha'), op: col('descripcionoperacion', 'operacion'),
+      imp: col('importeret'), comp: col('numerocomprobante', 'nrocomprobante'), cert: col('numerocertificado', 'nrocertificado'), impu: col('descripcionimpuesto', 'impuesto')
+    };
+    if (C.op < 0) throw new Error('Falta la columna "Descripción Operación" de Mis Retenciones: sin ella no se pueden distinguir retenciones de percepciones.');
+    const recs = [];
+    let omit = 0, otros = 0;
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [], g = (f) => (C[f] < 0 ? null : r[C[f]]), s = (f) => (g(f) == null ? '' : String(g(f)).trim());
+      const fecha = this.fechaTxt(g('fecha'));
+      if (!fecha) { if (r.some(x => x !== null && x !== '') && !/total/i.test(r.join(' '))) omit++; continue; }
+      const impu = this.fold(s('impu'));
+      if (impu && !/\b767\b|\biva\b|valor agregado/.test(impu)) { otros++; continue; }
+      const op = this.fold(s('op'));
+      const tipo = /percep/.test(op) ? 'per' : (/retenc/.test(op) ? 'ret' : '');
+      if (!tipo) { otros++; continue; }
+      recs.push({ tipo, cuit: this.cuitTxt(g('cuit')), nom: s('nom'), fecha, imp: Math.round(this.numAr(g('imp')) * 100) / 100, comp: s('comp'), cert: s('cert'), fila: i + 1 });
+    }
+    if (!recs.length) throw new Error('El archivo no tiene retenciones ni percepciones de IVA: se leyó el encabezado pero ninguna fila válida.');
+    return { kind: 'percep', name, recs, per: this.perMayor(recs.map(x => x.fecha)), omit, otros, nRet: recs.filter(x => x.tipo === 'ret').length, nPer: recs.filter(x => x.tipo === 'per').length };
+  }
+
+  parseAduana(name, bytes, X) {
+    const aoa = this.leerHoja(bytes, X);
+    const esF = (x) => x.startsWith('fecha') || x.includes('oficializ');
+    const esI = (x) => /^(importe|monto|percep|liquidado|pagado|total)/.test(x);
+    let hi = -1, keys = [];
+    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+      const ks = (aoa[i] || []).map(h => this.hkey(h));
+      if (ks.some(esF) && ks.some(esI)) { hi = i; keys = ks; break; }
+    }
+    if (hi < 0) throw new Error('No se encontró la fila de encabezados (Fecha, Importe…). Cargá el archivo de percepciones aduaneras tal como se exporta de ARCA.');
+    if ((keys.includes('tc') && keys.includes('letra')) || keys.includes('puntodeventa')) throw new Error('El archivo parece ser un subdiario de IVA o Mis Comprobantes, no percepciones aduaneras.');
+    const col = (...ps) => { for (const p of ps) { const i = keys.findIndex(x => (typeof p === 'function' ? p(x) : x.startsWith(p))); if (i >= 0) return i; } return -1; };
+    const C = {
+      fecha: col('fecharet', x => x.includes('oficializ'), 'fecha'), imp: col('importeret', 'importepercep', 'importe', 'monto', 'percep', 'liquidado', 'pagado', 'total'),
+      cuit: col('cuitagente', x => x.includes('cuit')), nom: col('denominacion', 'razonsocial'),
+      ref: col(x => x.includes('destinacion'), x => x.includes('despacho'), 'numerocomprobante', 'nrocomprobante', 'numerocertificado'),
+      impu: col('descripcionimpuesto', 'impuesto', 'concepto', 'descripcionregimen')
+    };
+    const rows = [];
+    let omit = 0;
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [], g = (f) => (C[f] < 0 ? null : r[C[f]]), s = (f) => (g(f) == null ? '' : String(g(f)).trim());
+      const fecha = this.fechaTxt(g('fecha'));
+      if (!fecha) { if (r.some(x => x !== null && x !== '') && !/total/i.test(r.join(' '))) omit++; continue; }
+      const imp = Math.round(this.numAr(g('imp')) * 100) / 100;
+      if (!imp) continue;
+      rows.push({ cuit: this.cuitTxt(g('cuit')), nom: s('nom'), fecha, imp, ref: s('ref'), impu: this.fold(s('impu')), fila: i + 1 });
+    }
+    const conIva = rows.filter(x => /\b767\b|\biva\b|valor agregado/.test(x.impu));
+    const recs = conIva.length ? conIva : rows;
+    if (!recs.length) throw new Error('El archivo no tiene percepciones: se leyó el encabezado pero ninguna fila con fecha e importe válidos.');
+    return { kind: 'aduana', name, recs, per: this.perMayor(recs.map(x => x.fecha)), omit, otros: rows.length - recs.length };
+  }
+
+  pdfLib() {
+    if (typeof window !== 'undefined' && window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (this._pdfP) return this._pdfP;
+    const bases = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/'];
+    const load = (i) => new Promise((ok, ko) => {
+      const sc = document.createElement('script');
+      sc.src = bases[i] + 'pdf.min.js';
+      sc.async = true;
+      sc.onload = () => {
+        const P = window.pdfjsLib;
+        if (!P) return ko(new Error('PDF'));
+        P.GlobalWorkerOptions.workerSrc = bases[i] + 'pdf.worker.min.js';
+        ok(P);
+      };
+      sc.onerror = () => { sc.remove(); if (i + 1 < bases.length) load(i + 1).then(ok, ko); else ko(new Error('No se pudo cargar el lector de PDF. Revisá la conexión a internet y volvé a intentar.')); };
+      document.head.appendChild(sc);
+    });
+    this._pdfP = load(0).catch(e => { this._pdfP = null; throw e; });
+    return this._pdfP;
+  }
+
+  async textoPdf(bytes) {
+    const P = await this.pdfLib();
+    let doc;
+    try { doc = await P.getDocument({ data: bytes.slice() }).promise; } catch (e) {
+      throw new Error('No se pudo abrir el PDF' + (/password/i.test(String(e && e.name)) ? ': está protegido con contraseña.' : '.'));
+    }
+    const lineas = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const tc = await (await doc.getPage(p)).getTextContent();
+      const filas = [];
+      tc.items.forEach(it => {
+        if (!it.str || !it.str.trim()) return;
+        const x = it.transform[4], y = it.transform[5];
+        let f = filas.find(q => Math.abs(q.y - y) < 3);
+        if (!f) filas.push(f = { y, its: [] });
+        f.its.push({ x, s: it.str });
+      });
+      filas.sort((a, b) => b.y - a.y).forEach(f => lineas.push(f.its.sort((a, b) => a.x - b.x).map(i => i.s).join(' ')));
+    }
+    return { lineas, paginas: doc.numPages };
+  }
+
+  DJ_CONC = [
+    ['df', 'Total del débito fiscal del período', /total (del )?debito fiscal/],
+    ['cf', 'Total del crédito fiscal del período', /total (del )?credito fiscal/],
+    ['rp', 'Total de retenciones, percepciones y pagos a cuenta', /total de (las )?retenciones,? percepciones y pagos a cuenta/],
+    ['sta', 'Saldo técnico a favor del contribuyente del período anterior', /saldo tecnico a favor del (contribuyente|responsable) del periodo anterior/],
+    ['lda', 'Saldo a favor de libre disponibilidad del período anterior neto de usos', /saldo a favor (de|del) (la )?libre disponibilidad del periodo anterior/],
+    ['sia', 'Saldo de impuesto a favor de ARCA', /saldo (de|del) impuesto a favor de (la )?(arca|afip)/]
+  ];
+
+  parseDJ(name, pdf) {
+    const L = pdf.lineas.map(l => this.fold(l).replace(/\s+/g, ' '));
+    const num = (t) => { const m = t.match(/((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2})/); return m ? this.numAr(m[1]) : null; };
+    const v = {};
+    this.DJ_CONC.forEach(([k, , re]) => {
+      for (let i = 0; i < L.length && v[k] === undefined; i++) {
+        const m = L[i].match(re);
+        if (!m) continue;
+        let x = num(L[i].slice(m.index + m[0].length));
+        for (let j = 1; x === null && j <= 2 && i + j < L.length && !/[a-z]{3,}/.test(L[i + j]); j++) x = num(L[i + j]);
+        if (x !== null) v[k] = Math.round(x * 100) / 100;
+      }
+    });
+    let per = '';
+    for (const l of L) {
+      let m = l.match(/periodo[^0-9]{0,25}(\d{1,2})\s*[\/-]\s*(\d{4})/);
+      if (m && +m[1] >= 1 && +m[1] <= 12) { per = m[1].padStart(2, '0') + '/' + m[2]; break; }
+      m = l.match(/periodo[^0-9]{0,25}(\d{4})\s*[\/-]?\s*(\d{2})(?!\d)/);
+      if (m && +m[2] >= 1 && +m[2] <= 12) { per = m[2] + '/' + m[1]; break; }
+    }
+    const encontrados = Object.keys(v).length;
+    if (!encontrados) throw new Error('No se encontraron los totales de la declaración jurada en el PDF (Total del débito fiscal, Total del crédito fiscal…). Verificá que sea el PDF de la DJ de IVA y no una imagen escaneada.');
+    return { kind: 'ivadig', name, v, per, encontrados, paginas: pdf.paginas };
+  }
+
+  CUIT_ADUANA = '33693450239';
+
+  TC_DESPACHO = ['DI', 'DE', 'DA', 'DS', 'DIM', 'DES', 'DP'];
+
+  cruzarRet(mr, ventas, compras) {
+    const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
+    const std = (v) => { let t = String(v == null ? '' : v).replace(/\D/g, ''); if (t.length > 8) t = t.slice(-8); return t ? String(parseInt(t, 10)) : ''; };
+    const V = ventas.recs.filter(x => x.tc === 'CR').map(x => ({ x, imp: r2(Math.abs(x.v.tot)), src: 'IVA Ventas' }));
+    const C = compras.recs.filter(x => x.v.piva).map(x => ({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras' }));
+    const used = new Set(), pares = [], faltL = [];
+    mr.recs.forEach(a => {
+      const cand = (a.tipo === 'ret' ? V : C).filter(c => !used.has(c) && c.x.cuit === a.cuit && Math.abs(c.imp - a.imp) <= TOL);
+      const c = cand.find(q => q.x.fecha === a.fecha) || cand[0];
+      if (!c) return faltL.push(a);
+      used.add(c);
+      const dif = [];
+      if (a.fecha !== c.x.fecha) dif.push({ l: 'Fecha', a: a.fecha, b: c.x.fecha, d: null });
+      if (a.tipo === 'per' && std(a.comp) && std(a.comp) !== String(c.x.nro)) dif.push({ l: 'Número de comprobante', a: std(a.comp), b: String(c.x.nro), d: null });
+      if (Math.abs(a.imp - c.imp) > 0.001) dif.push({ l: 'Importe', a: a.imp, b: c.imp, d: r2(a.imp - c.imp) });
+      pares.push({ a, c, dif, est: dif.length ? 'dif' : 'ok' });
+    });
+    const sum = (xs) => r2(xs.reduce((s, x) => s + x.imp, 0));
+    const esAdu = (c) => c.x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(c.x.tc);
+    const adu = C.filter(c => !used.has(c) && esAdu(c));
+    const Cn = C.filter(c => !adu.includes(c));
+    return {
+      pares, faltL, faltA: V.concat(Cn).filter(c => !used.has(c)), nRet: mr.nRet, nPer: mr.nPer, nV: V.length, nC: Cn.length, nAdu: adu.length, otros: mr.otros,
+      ok: pares.filter(p => p.est === 'ok').length, dif: pares.filter(p => p.est === 'dif').length,
+      tot: { ret: [sum(mr.recs.filter(x => x.tipo === 'ret')), sum(V)], per: [sum(mr.recs.filter(x => x.tipo === 'per')), sum(Cn)] }
+    };
+  }
+
+  cruzarAdu(ad, ventas, compras) {
+    const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
+    const esAdu = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
+    const pool = [];
+    if (compras) compras.recs.filter(x => x.v.piva).forEach(x => pool.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras', adu: esAdu(x) }));
+    if (ventas) ventas.recs.filter(x => x.excl || x.v.piva).forEach(x => pool.push({ x, imp: r2(x.excl ? Math.abs(x.v.tot) : x.v.piva), src: 'IVA Ventas', adu: esAdu(x) }));
+    const used = new Set(), pares = [], faltL = [];
+    ad.recs.forEach(a => {
+      const sc = (c) => (c.adu ? 2 : 0) + (c.x.fecha === a.fecha ? 1 : 0);
+      const c = pool.filter(q => !used.has(q) && Math.abs(q.imp - a.imp) <= TOL).sort((p, q) => sc(q) - sc(p))[0];
+      if (!c) return faltL.push(a);
+      used.add(c);
+      const dif = [];
+      if (a.fecha !== c.x.fecha) dif.push({ l: 'Fecha', a: a.fecha, b: c.x.fecha, d: null });
+      if (Math.abs(a.imp - c.imp) > 0.001) dif.push({ l: 'Importe', a: a.imp, b: c.imp, d: r2(a.imp - c.imp) });
+      pares.push({ a, c, dif, est: dif.length ? 'dif' : 'ok' });
+    });
+    const faltA = pool.filter(c => c.adu && !used.has(c));
+    const sum = (xs) => r2(xs.reduce((s, x) => s + x.imp, 0));
+    return {
+      pares, faltL, faltA, nA: ad.recs.length, otros: ad.otros,
+      ok: pares.filter(p => p.est === 'ok').length, dif: pares.filter(p => p.est === 'dif').length,
+      enCompras: pares.filter(p => p.c.src === 'IVA Compras').length, enVentas: pares.filter(p => p.c.src === 'IVA Ventas').length,
+      tot: [sum(ad.recs), r2(sum(pares.map(p => p.c)) + sum(faltA))], nS: pares.length + faltA.length
+    };
+  }
+
+  cruzarDJ(dj, ventas, compras, arr) {
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
+    const V = ventas.recs.filter(x => !x.excl), C = compras.recs.filter(x => !x.excl);
+    const df = r2(iva(V.filter(x => x.tc !== 'NC')) + iva(C.filter(x => x.tc === 'NC')));
+    const cf = r2(iva(C.filter(x => x.tc !== 'NC')) + iva(V.filter(x => x.tc === 'NC')));
+    const rp = r2(compras.recs.reduce((a, x) => a + (x.tc === 'NC' ? -1 : 1) * (x.v.piva || 0), 0) + ventas.recs.filter(x => x.tc === 'CR').reduce((a, x) => a + Math.abs(x.v.tot), 0));
+    const s1 = r2(cf - df + arr.tec);
+    const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
+    const lbl = {};
+    this.DJ_CONC.forEach(([k, l]) => { lbl[k] = l; });
+    const filas = [
+      ['df', 'Débito fiscal', df, 'IVA Ventas + débito de NC de IVA Compras'],
+      ['cf', 'Crédito fiscal', cf, 'IVA Compras + crédito de NC de IVA Ventas'],
+      ['rp', 'Retenciones y percepciones', rp, 'Percepciones IVA de IVA Compras + CR de IVA Ventas'],
+      ['sta', 'Saldo técnico a favor anterior (cruce 0)', arr.tec, 'Cruce 0'],
+      ['lda', 'Libre disponibilidad anterior (cruce 0)', arr.lib, 'Cruce 0, neto de compensaciones'],
+      ['sia', 'Saldo de impuesto a favor de ARCA', s2 < 0 ? r2(-s2) : 0, 'Calculado con la fórmula de la liquidación']
+    ].map(([k, l, calc, origen]) => {
+      const d = dj.v[k], falta = d === undefined, dif = falta ? null : r2(d - calc);
+      return { k, l, pdf: lbl[k], dj: d, calc, origen, falta, dif, est: falta ? 'falta' : (Math.abs(dif) <= 1 ? 'ok' : 'dif') };
+    });
+    return { filas, per: dj.per };
+  }
+
   apocInit() {
     const def = { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, real: false, gen: '', v: 0 };
     try {
@@ -2957,8 +3198,13 @@ class Component extends DCLogic {
       if (parse) {
         const X = await this.xlsxLib();
         data = this.parseComprobantes(k, f.name, new Uint8Array(await f.arrayBuffer()), X);
+      } else if (k === 'percep' || k === 'aduana') {
+        const X = await this.xlsxLib();
+        data = (k === 'percep' ? this.parseRetenciones : this.parseAduana).call(this, f.name, new Uint8Array(await f.arrayBuffer()), X);
+      } else if (k === 'ivadig') {
+        if (!/\.pdf$/i.test(f.name)) throw new Error('El archivo debe ser el PDF de la declaración jurada de IVA Digital.');
+        data = this.parseDJ(f.name, await this.textoPdf(new Uint8Array(await f.arrayBuffer())));
       } else {
-        if (k === 'ivadig' && !/\.pdf$/i.test(f.name)) throw new Error('El archivo debe ser el PDF de la declaración jurada de IVA Digital.');
         data = { kind: k, name: f.name, attach: true };
       }
       data.size = kb;
@@ -2989,6 +3235,8 @@ class Component extends DCLogic {
     if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas);
     if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras);
     if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
+    if (R.percep && R.ventas && R.compras) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
+    if (R.aduana && (R.ventas || R.compras)) v.adu = this.cruzarAdu(R.aduana, R.ventas, R.compras);
     this._crc = { R, base, v };
     return v;
   }
@@ -3040,12 +3288,86 @@ class Component extends DCLogic {
     };
   }
 
+  retErrs(x, lbl, subL, fuente) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), errs = [];
+    const ter = (a, c) => ((a && a.nom) || (c && c.x.nom) || 'Sin denominación') + ' · ' + this.cuitFmt((a && a.cuit) || (c && c.x.cuit));
+    x.pares.filter(p => p.est === 'dif').forEach(p => errs.push({
+      k: p.dif.some(d => d.d !== null) ? 'Diferencia de importe' : (p.dif[0].l === 'Fecha' ? 'Diferencia de fecha' : 'Diferencia de número de comprobante'),
+      comp: lbl(p.a), ter: ter(p.a, p.c),
+      det: p.dif.map(d => d.l + ': ARCA ' + (d.d === null ? d.a : fm(d.a)) + ' · ' + p.c.src + ' ' + (d.d === null ? d.b : fm(d.b))).join(' — ') + ' (' + this.compTxt(p.c.x) + ')',
+      imp: fm(p.a.imp)
+    }));
+    x.faltL.forEach(a => errs.push({ k: 'Faltante en ' + subL(a), comp: lbl(a), ter: ter(a), det: 'Informada en ' + fuente + ' el ' + a.fecha + ' y no registrada en ' + subL(a), imp: fm(a.imp) }));
+    x.faltA.forEach(c => errs.push({ k: 'Faltante en ' + fuente, comp: this.compTxt(c.x), ter: ter(null, c), det: 'Registrada en ' + c.src + ' el ' + c.x.fecha + ' y no informada en ' + fuente, imp: fm(c.imp) }));
+    return errs;
+  }
+
+  cruRetVista(x) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const lbl = (a) => (a.tipo === 'ret' ? 'Retención ' : 'Percepción ') + (a.comp || a.cert || 's/n');
+    const subL = (a) => a.tipo === 'ret' ? 'IVA Ventas (CR)' : 'IVA Compras (Percepciones IVA)';
+    const errs = this.retErrs(x, lbl, subL, 'Mis Retenciones'), falt = x.faltL.length + x.faltA.length, T = x.tot;
+    const fila = (l, a, b) => [l, fm(a), fm(b), fm(a - b)];
+    return {
+      regs: x.pares.length + falt, ok: x.ok, dif: x.dif, falt, errs,
+      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · ' + n(x.nV) + ' CR en IVA Ventas · ' + n(x.nC) + ' comprobantes con percepción de IVA en IVA Compras · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' faltan en Mis Retenciones' + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '') + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
+      cmp: [fila('Retenciones (IVA Ventas · CR)', T.ret[0], T.ret[1]), fila('Percepciones (IVA Compras)', T.per[0], T.per[1]), fila('Total', T.ret[0] + T.per[0], T.ret[1] + T.per[1])]
+    };
+  }
+
+  cruAduVista(x) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const lbl = (a) => 'Percepción aduanera ' + (a.ref || 's/n');
+    const errs = this.retErrs(x, lbl, () => 'los subdiarios', 'Mis Percepciones Aduaneras'), falt = x.faltL.length + x.faltA.length;
+    const donde = [x.enCompras ? n(x.enCompras) + ' en IVA Compras' : '', x.enVentas ? n(x.enVentas) + ' en IVA Ventas' : ''].filter(Boolean).join(' y ');
+    return {
+      regs: x.pares.length + falt, ok: x.ok, dif: x.dif, falt, errs,
+      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nA) + ' percepciones aduaneras en ARCA · ' + (donde ? 'encontradas ' + donde : 'ninguna encontrada en los subdiarios') + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' de la Aduana faltan en ARCA' + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos excluidos' : ''),
+      cmp: [['Percepciones', n(x.nA), n(x.nS), String(x.nA - x.nS)], ['Importe total', fm(x.tot[0]), fm(x.tot[1]), fm(x.tot[0] - x.tot[1])]]
+    };
+  }
+
+  cruDigVista(x) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), comp = 'DDJJ IVA Digital' + (x.per ? ' ' + x.per : ''), errs = [];
+    x.filas.forEach(f => {
+      if (f.est === 'falta') errs.push({ k: 'Dato no encontrado en el PDF', comp, ter: f.l, det: 'No se encontró "' + f.pdf + '" en el PDF: este concepto no se pudo comparar.', imp: '—' });
+      else if (f.est === 'dif') errs.push({ k: 'Diferencia de importe', comp, ter: f.l, det: 'IVA Digital ' + fm(f.dj) + ' · ' + f.origen + ' ' + fm(f.calc), imp: fm(Math.abs(f.dif)) });
+    });
+    const c = (e) => x.filas.filter(f => f.est === e).length, ok = c('ok'), dif = c('dif'), falt = c('falta');
+    return {
+      regs: x.filas.length, ok, dif, falt, errs,
+      est: dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: x.filas.length + ' conceptos comparados · ' + ok + ' coinciden · ' + dif + ' con diferencias' + (falt ? ' · ' + falt + ' no encontrados en el PDF' : '') + (x.per ? ' · DJ del período ' + x.per : ''),
+      cmp: x.filas.map(f => [f.l, f.falta ? 'No encontrado' : fm(f.dj), fm(f.calc), f.falta ? '—' : fm(f.dif)])
+    };
+  }
+
   reporteFilas(tipo, x, lblL) {
     if (tipo === 'apoc') {
       return {
         head: ['Resultado', 'Comprobante', 'Fecha', 'CUIT', 'Denominación', 'Fecha condición apócrifo', 'Fecha publicación', 'IVA', 'Importe total'],
         rows: x.hits.map(h => ['Error: proveedor en Base APOC', this.compTxt(h.x), h.x.fecha, this.cuitFmt(h.x.cuit), h.x.nom, h.fc, h.fp, h.x.v.ivt, h.x.v.tot])
       };
+    }
+    if (tipo === 'dig') {
+      return {
+        head: ['Concepto', 'IVA Digital', 'Subdiarios / cálculo', 'Origen del cálculo', 'Diferencia', 'Resultado'],
+        rows: x.filas.map(f => [f.l, f.falta ? 'No encontrado' : f.dj, f.calc, f.origen, f.falta ? '' : f.dif, { ok: 'Coincide', dif: 'Diferencia', falta: 'No encontrado en el PDF' }[f.est]])
+      };
+    }
+    if (tipo === 'ret' || tipo === 'adu') {
+      const fuente = tipo === 'ret' ? 'Mis Retenciones' : 'Mis Percepciones Aduaneras';
+      const tip = (a) => tipo === 'adu' ? 'Percepción aduanera' : (a.tipo === 'ret' ? 'Retención' : 'Percepción');
+      const ref = (a) => tipo === 'adu' ? a.ref : (a.comp || a.cert);
+      const fila = (r, a, c, d) => [r, a ? tip(a) : (c.src === 'IVA Ventas' ? 'Retención' : 'Percepción'), a ? a.fecha : '', c ? c.x.fecha : '', this.cuitFmt((a && a.cuit) || (c && c.x.cuit)), (a && a.nom) || (c && c.x.nom) || '', a ? ref(a) || '' : '', c ? c.src + ' ' + this.compTxt(c.x) : '', a ? a.imp : '', c ? c.imp : '', d];
+      const rows = [];
+      x.pares.filter(p => p.est === 'dif').forEach(p => rows.push(fila('Coincide con diferencias', p.a, p.c, p.dif.map(d => d.l).join(', '))));
+      x.faltL.forEach(a => rows.push(fila('Falta en ' + (tipo === 'adu' ? 'los subdiarios' : (a.tipo === 'ret' ? 'IVA Ventas' : 'IVA Compras')), a, null, '')));
+      x.faltA.forEach(c => rows.push(fila('Falta en ' + fuente, null, c, '')));
+      x.pares.filter(p => p.est === 'ok').forEach(p => rows.push(fila('Coincide', p.a, p.c, '')));
+      return { head: ['Resultado', 'Tipo', 'Fecha ARCA', 'Fecha subdiario', 'CUIT', 'Denominación', 'Comprobante ARCA', 'Comprobante subdiario', 'Importe ARCA', 'Importe subdiario', 'Diferencias'], rows };
     }
     const rows = [], base = (r, a, l) => [r, this.compTxt(a || l), a ? a.fecha : '', l ? l.fecha : '', this.cuitFmt((a || l).cuit), (a && a.nom) || (l && l.nom) || ''];
     x.filas.filter(f => f.est === 'dif').forEach(f => f.dif.forEach(d => rows.push(base('Coincide con diferencias', f.a, f.l).concat([d.l, d.a, d.b, d.d === null ? '' : d.d]))));
@@ -3082,7 +3404,7 @@ class Component extends DCLogic {
     const s = this.state, E = this.EST;
     const fst = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
     const R = s.real || {}, enReal = Object.values(R).some(Boolean), apBase = enReal ? this.apocBase() : null;
-    const has = (k) => k === 'apocBase' ? !!apBase : (fst(k) === 'loaded' && (!enReal || !!R[k]));
+    const has = (k) => k === 'apocBase' ? !!apBase : (k === 'subdiario' ? has('ventas') || has('compras') : (fst(k) === 'loaded' && (!enReal || !!R[k])));
     const num = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     const ERRF = {
       ventas: 'CAZATUR_IVA_VENTAS_082026.docx', compras: 'CAZATUR_IVA_COMPRAS_082026.docx',
@@ -3121,20 +3443,20 @@ class Component extends DCLogic {
       },
       {
         n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
-        regla: 'Las retenciones de Mis Retenciones se cruzan con los comprobantes CR de IVA Ventas y las percepciones con IVA Compras, por CUIT e importe (tolerancia de $ 0,03).',
+        regla: 'Mis Retenciones (ARCA, impuesto IVA) vs. subdiarios. Las retenciones se cruzan con los comprobantes CR de IVA Ventas (importe total) y las percepciones con la columna Percepciones IVA de IVA Compras, por CUIT del agente e importe (tolerancia $ 0,03). En las coincidencias se comparan fecha y número de comprobante (últimos 8 dígitos); lo que queda sin pareja de cada lado es faltante.',
         h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
       {
-        n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['ventas', 'IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
-        regla: 'Se cruzan por CUIT, fecha e importe las retenciones aduaneras registradas en el subdiario con Mis Percepciones Aduaneras.',
-        nota: 'Subdiario de origen a confirmar con el estudio: por ahora se toman de IVA Ventas.',
-        h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'IVA Ventas', 'Diferencia'],
+        n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
+        regla: 'Mis Percepciones Aduaneras (ARCA) vs. subdiarios. Cada percepción se busca por importe (tolerancia $ 0,03) en la columna Percepciones IVA de IVA Compras y en los registros de retenciones de IVA Ventas, priorizando los despachos de la Aduana y la misma fecha. Se informa en qué subdiario se encontró cada una, las diferencias de fecha y los despachos de la Aduana que no figuran en ARCA.',
+        nota: 'Subdiario de origen a confirmar con el estudio: por ahora se buscan en IVA Compras y en IVA Ventas.',
+        h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
       {
         n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
-        regla: 'Se comparan los totales de la declaración jurada de IVA Digital con los subdiarios de IVA Ventas e IVA Compras y con el arrastre del cruce 0.',
+        regla: 'Se leen del PDF de la DJ de IVA Digital el débito y el crédito fiscal, las retenciones y percepciones, los saldos a favor del período anterior y el saldo a pagar, y se comparan con lo calculado desde IVA Ventas e IVA Compras (débito = IVA de ventas + IVA de NC de compras; crédito = IVA de compras + IVA de NC de ventas) y con el arrastre del cruce 0 (tolerancia $ 1).',
         res: '4 conceptos comparados · 3 coinciden · 1 con diferencias',
         h: ['Concepto', 'IVA Digital', 'IVA Compras + IVA Ventas', 'Diferencia'],
         cmp: [['Débito fiscal', '4.184.060,60', '4.182.905,60', '1.155,00'], ['Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00'], ['Retenciones y percepciones', '106.284,15', '106.284,15', '0,00'], ['Saldo técnico a favor anterior (cruce 0)', arrTec, arrTec, '0,00']]
@@ -3144,8 +3466,14 @@ class Component extends DCLogic {
     const vista = {
       '1': RV.apoc ? Object.assign(this.cruApocVista(RV.apoc, ap), { blk: ['apoc', RV.apoc, 'IVA Compras', 'Base APOC'] }) : null,
       '2': RV.emi ? Object.assign(this.cruCompVista(RV.emi, 'IVA Ventas'), { blk: ['comp', RV.emi, 'IVA Ventas', 'Comprobantes Emitidos'] }) : null,
-      '3': RV.rec ? Object.assign(this.cruCompVista(RV.rec, 'IVA Compras'), { blk: ['comp', RV.rec, 'IVA Compras', 'Comprobantes Recibidos'] }) : null
+      '3': RV.rec ? Object.assign(this.cruCompVista(RV.rec, 'IVA Compras'), { blk: ['comp', RV.rec, 'IVA Compras', 'Comprobantes Recibidos'] }) : null,
+      '4': RV.ret ? Object.assign(this.cruRetVista(RV.ret), { blk: ['ret', RV.ret, '', 'Mis Retenciones'] }) : null,
+      '5': RV.adu ? Object.assign(this.cruAduVista(RV.adu), { blk: ['adu', RV.adu, '', 'Percepciones Aduaneras'] }) : null
     };
+    if (enReal && R.ivadig && R.ventas && R.compras) {
+      const dj = this.cruzarDJ(R.ivadig, R.ventas, R.compras, arr);
+      vista['6'] = Object.assign(this.cruDigVista(dj), { blk: ['dig', dj, '', 'Libro IVA Digital'] });
+    }
     const demoRep = this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.');
     const reales = [];
     const rows = def.map(c0 => {
@@ -3167,7 +3495,7 @@ class Component extends DCLogic {
       return {
         n: c.n, t: c.t, tipo: c.tipo, regla: c.regla, run, isErr, st: E[est], est, real: !!rv,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
-        hasDif: run && (rv ? (rv.blk[0] === 'comp' || rv.dif > 0) : c.dif + c.falt > 0), rep,
+        hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep,
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
         verErr: this.openErr(c.t, cli + ' · 08/2026', [{ cruce: c.t, errs }]),
         hasCmp: run && c.cmp.length > 0, hasNota: !!nota, nota,
@@ -3188,10 +3516,12 @@ class Component extends DCLogic {
     const inc = [];
     if (enReal) {
       const L = this.UP_LBL, P = this.PARSEABLES.filter(k => R[k] && !R[k].attach);
-      if (new Set(P.map(k => R[k].per)).size > 1) inc.push({ t: 'Los archivos corresponden a períodos distintos: ' + P.map(k => L[k] + ' ' + R[k].per).join(' · ') + '.' });
+      const PP = P.concat(['percep', 'aduana', 'ivadig'].filter(k => R[k] && R[k].per));
+      if (new Set(PP.map(k => R[k].per)).size > 1) inc.push({ t: 'Los archivos corresponden a períodos distintos: ' + PP.map(k => L[k] + ' ' + R[k].per).join(' · ') + '.' });
       const props = P.filter(k => R[k].propio);
       if (new Set(props.map(k => R[k].propio)).size > 1) inc.push({ t: 'Los archivos de ARCA son de CUITs distintos: ' + props.map(k => L[k] + ' ' + this.cuitFmt(R[k].propio)).join(' · ') + '.' });
-      P.forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
+      P.concat(['percep', 'aduana'].filter(k => R[k])).forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
+      if (R.ivadig && R.ivadig.encontrados < this.DJ_CONC.length) inc.push({ t: 'Del PDF de IVA Digital se leyeron ' + R.ivadig.encontrados + ' de ' + this.DJ_CONC.length + ' totales: los conceptos no encontrados figuran como faltantes en el cruce 6.' });
       P.forEach(k => { const n = R[k].recs.filter(x => !x.excl && x.cuit.length !== 11).length; if (n) inc.push({ t: n + (n === 1 ? ' comprobante' : ' comprobantes') + ' de ' + L[k] + ' sin CUIT válido (11 dígitos): se cruzan igual por tipo, punto de venta y número.' }); });
     } else {
       if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
@@ -3481,7 +3811,7 @@ class Component extends DCLogic {
     });
     const upDef = [
       ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
-      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
+      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
       ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
       ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
       ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
@@ -3496,8 +3826,11 @@ class Component extends DCLogic {
     const RF = s.real || {};
     const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
       const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
-      const rmeta = rf ? (rf.attach ? rf.size + ' · adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
-        : rf.size + ' · ' + rf.recs.length + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + ' excluidos del cruce (TC ' + this.TC_EXCL.join(', ') + ')' : '')) : '';
+      const rmeta = !rf ? '' : rf.size + ' · ' + (rf.attach ? 'adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
+        : k === 'ivadig' ? 'DJ' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.DJ_CONC.length + ' totales leídos · ' + rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas')
+        : k === 'percep' ? rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
+        : k === 'aduana' ? rf.recs.length + ' percepciones · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
+        : rf.recs.length + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + ' excluidos del cruce (TC ' + this.TC_EXCL.join(', ') + ')' : ''));
       return {
         n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
         errFile: ue ? ue.file : file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
