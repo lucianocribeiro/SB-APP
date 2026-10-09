@@ -2201,10 +2201,7 @@ class Component extends DCLogic {
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     ddjjBorradas: {}, ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
-    comps: [
-      { id: 'c2', cliente: 'BBI SA', per: '08/2026', seq: 0, monto: 20000, fecha: '09/09/2026 12:05', user: 'Rubén' },
-      { id: 'c1', cliente: 'DACKET SA', per: '08/2026', seq: 1, monto: 35000, fecha: '05/09/2026 10:40', user: 'Julieta' }
-    ],
+    comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
     up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
@@ -2506,6 +2503,22 @@ class Component extends DCLogic {
     });
     this._demo = { liq, cru, proc, alertas };
     return this._demo;
+  }
+
+  compsInit() {
+    const def = [
+      { id: 'c2', cliente: 'BBI SA', per: '08/2026', seq: 0, monto: 20000, fecha: '09/09/2026 12:05', user: 'Rubén' },
+      { id: 'c1', cliente: 'DACKET SA', per: '08/2026', seq: 1, monto: 35000, fecha: '05/09/2026 10:40', user: 'Julieta' }
+    ];
+    try {
+      const g = JSON.parse(localStorage.getItem('myiva.comps') || 'null');
+      return Array.isArray(g) ? g : def;
+    } catch (e) { return def; }
+  }
+
+  guardarComps(comps) {
+    try { localStorage.setItem('myiva.comps', JSON.stringify(comps)); } catch (e) { }
+    return comps;
   }
 
   compSum(cliente, per, seq) {
@@ -3695,7 +3708,7 @@ class Component extends DCLogic {
         montoTxt: this.ars(c.monto), saldoTxt: sd === null ? '—' : this.ars(sd), sc: sd === null ? '#9AA9B7' : saldoC(sd),
         puede: histAdmin || c.user === me.short,
         borrar: () => this.setState(st => ({
-          comps: st.comps.filter(x => x.id !== c.id),
+          comps: this.guardarComps(st.comps.filter(x => x.id !== c.id)),
           audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación eliminada', c: c.cliente, p: c.per, r: 'Sec. ' + c.seq + ' · $ ' + this.ars(c.monto), ip: '190.15.44.12' }].concat(st.audExtra),
           toast: { kind: 'ok', t: 'Compensación eliminada', d: c.cliente + ' · ' + c.per + ' · $ ' + this.ars(c.monto) + '. El saldo vuelve a estar disponible.' }
         }))
@@ -3722,7 +3735,7 @@ class Component extends DCLogic {
         if (compK !== 'ok') return this.setState({ toast: { kind: 'warn', t: 'No se puede registrar la compensación', d: compMsg } });
         const m = r2(montoN), dj = djSel;
         this.setState(st => ({
-          comps: [{ id: 'c' + Date.now(), cliente: dj.cliente, per: dj.per, seq: dj.seq, monto: m, fecha: this.ahora(), user: me.short }].concat(st.comps),
+          comps: this.guardarComps([{ id: 'c' + Date.now(), cliente: dj.cliente, per: dj.per, seq: dj.seq, monto: m, fecha: this.ahora(), user: me.short }].concat(st.comps)),
           compMonto: '',
           audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación registrada', c: dj.cliente, p: dj.per, r: 'Sec. ' + dj.seq + ' · $ ' + this.ars(m), ip: '190.15.44.12' }].concat(st.audExtra),
           toast: { kind: 'ok', t: 'Compensación registrada', d: dj.cliente + ' · ' + dj.per + ' · $ ' + this.ars(m) + '. Se descuenta del saldo de 2do párrafo que se arrastra al período siguiente y figura en el Excel exportable.' }
