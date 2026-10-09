@@ -818,6 +818,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="width:46px;height:46px;border-radius:24px;background:#E8F3EE;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
 <div style="font:600 16px 'Open Sans'">Liquidación completada · {{ seqCurTxt }}</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar -1.632.105,25 · 3.401 registros procesados</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">Quedó en estado <b style="font-weight:600;color:#1B2733">Borrador</b> en el Historial de liquidaciones: desde ahí podés cerrarla o eliminarla.</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
 <button onClick="{{ go.liqResultado }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
@@ -1007,7 +1008,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>01/2026</option><option>07/2025</option><option>01/2025</option></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>08/2026</option><option>07/2026</option><option>06/2026</option></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ histEst }}" onChange="{{ histEstSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><option value="Borrador">Borrador</option><option value="Cerrada">Cerrada</option></select></div>
 <sc-if value="{{ histAdmin }}">
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select></div>
 </sc-if>
@@ -1017,7 +1018,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1200px">
+<table style="width:100%;border-collapse:collapse;min-width:1320px">
 <thead><tr>
 <th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ histAllSel }}" onChange="{{ histToggleAll }}" title="Seleccionar todas las visibles" style="accent-color:#14395C;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
@@ -1029,12 +1030,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
 <th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Retenciones + Percepciones</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cruces</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="12" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
+<tr><td colspan="13" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1049,6 +1051,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.rp }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.le.bg }};color:{{ r.le.fg }};border:1px solid {{ r.le.bd }};white-space:nowrap">{{ r.le.label }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
@@ -1056,6 +1059,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
 </sc-if>
 <span onClick="{{ r.xls }}" title="Descargar el Excel de este período" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
+<sc-if value="{{ r.puedeCerrar }}">
+<span onClick="{{ r.cerrar }}" title="Cambiar el estado a Cerrada" style="font:600 12.5px 'Open Sans';color:#14395C;cursor:pointer">Cerrar</span>
+</sc-if>
+<sc-if value="{{ r.puedeBorrar }}">
+<span onClick="{{ r.borrar }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">Eliminar</span>
+</sc-if>
 </div>
 </td>
 </tr>
@@ -2039,7 +2048,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg>
 </div>
 <div style="min-width:0;flex:1">
-<div style="font:600 16px 'Open Sans'">¿Borrar esta declaración jurada?</div>
+<div style="font:600 16px 'Open Sans'">¿Eliminar esta liquidación?</div>
 <div style="font:600 13px/1.5 'Open Sans';color:#1B2733;margin-top:6px">{{ ddjjDelLabel }}</div>
 <div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B">{{ ddjjDelSub }}</div>
 <div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:8px">El registro deja de figurar en el historial y la secuencia queda disponible para volver a liquidarla. Esta acción no se puede deshacer.</div>
@@ -2049,7 +2058,27 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
 <button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ ddjjDelOk }}" style="padding:9px 14px;background:#B3261E;color:#fff;border:1px solid #B3261E;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Sí, borrar</button>
+<button onClick="{{ ddjjDelOk }}" style="padding:9px 14px;background:#B3261E;color:#fff;border:1px solid #B3261E;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Sí, eliminar</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ liqCierreOpen }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:18px 20px;display:flex;gap:13px">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#E9EEF4;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+</div>
+<div style="min-width:0;flex:1">
+<div style="font:600 16px 'Open Sans'">¿Cerrar esta liquidación?</div>
+<div style="font:600 13px/1.5 'Open Sans';color:#1B2733;margin-top:6px">{{ liqCierreLabel }}</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:8px">El estado pasa de Borrador a Cerrada. Una vez cerrada, sólo un administrador puede eliminarla.</div>
+</div>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<button onClick="{{ liqCierreOk }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Sí, cerrar</button>
 </div>
 </div>
 </sc-if>
@@ -2200,7 +2229,8 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
-    ddjjBorradas: {}, ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
+    ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
+    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '',
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
@@ -2218,6 +2248,8 @@ class Component extends DCLogic {
     'En cola': { label: 'En cola', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Omitido': { label: 'Omitido', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Pendiente de liquidar': { label: 'Pendiente de liquidar', bg: '#E9F1F8', fg: '#1F6795', bd: '#CFE2F0' },
+    'Borrador': { label: 'Borrador', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
+    'Cerrada': { label: 'Cerrada', bg: '#E9EEF4', fg: '#14395C', bd: '#C9D5E2' },
     'Activo': { label: 'Activo', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
     'Inactivo': { label: 'Inactivo', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' },
     'Invitación pendiente': { label: 'Invitación pendiente', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
@@ -2514,6 +2546,21 @@ class Component extends DCLogic {
       const g = JSON.parse(localStorage.getItem('myiva.comps') || 'null');
       return Array.isArray(g) ? g : def;
     } catch (e) { return def; }
+  }
+
+  lsGet(k, def) {
+    try { const g = JSON.parse(localStorage.getItem(k) || 'null'); return g && typeof g === 'object' ? g : def; } catch (e) { return def; }
+  }
+
+  lsSet(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { }
+    return v;
+  }
+
+  liqEstado(r) {
+    if (r.est === 'Pendiente de liquidar') return null;
+    const k = r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    return this.state.liqEst[k] || (r.per === '07/2026' ? 'Cerrada' : 'Borrador');
   }
 
   guardarComps(comps) {
@@ -3689,7 +3736,7 @@ class Component extends DCLogic {
       openDrawer: () => this.setState({ drawer: true }),
       openModal: () => this.setState({ modal: true }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null }),
+      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null }),
       errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
       errRows: s.errView ? s.errView.rows : [],
       errCount: s.errView ? (s.errView.rows.length === 1 ? '1 error registrado' : s.errView.rows.length + ' errores registrados') : '',
@@ -3987,9 +4034,16 @@ class Component extends DCLogic {
     };
     const histVis = histFilas
       .filter(r => s.histSeq === '' || (s.histSeq === 'ult' ? r.seq === ultSeq[r.cliente + '|' + r.per] : r.seq === Number(s.histSeq)))
+      .filter(r => s.histEst === '' || this.liqEstado(r) === s.histEst)
       .map(r => {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0), id = rid(r);
+        const le = this.liqEstado(r), label = r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq);
+        const puedeBorrar = le === 'Borrador' || (le === 'Cerrada' && histAdmin);
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
+          le: le ? E[le] : { label: '—', bg: 'transparent', fg: '#9AA9B7', bd: 'transparent' },
+          puedeCerrar: le === 'Borrador', puedeBorrar,
+          cerrar: () => this.setState({ liqCierre: { id, label, cliente: r.cliente, per: r.per, seq: r.seq } }),
+          borrar: () => this.setState({ ddjjDel: { id, label, cliente: r.cliente, per: r.per, seq: r.seq, fecha: r.fecha, le }, ddjjMotivo: '' }),
           sel: !!sel[id], toggle: () => this.setState(st => ({ histSel: Object.assign({}, st.histSel, { [id]: !st.histSel[id] }) })),
           xls: () => exportar([r]),
           st: E[r.est], ver: this.nav('liqResultado'),
@@ -4124,7 +4178,11 @@ class Component extends DCLogic {
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
-      liqConfirmOk: () => this.setState({ liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null }),
+      liqConfirmOk: () => this.setState(st => {
+        const id = cli + '|08/2026|' + seqSel + '|03/10/2026', le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
+        delete le[id]; delete bo[id];
+        return { liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo) };
+      }),
       liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
       seqHead: cli + ' · 08/2026 ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
@@ -4175,16 +4233,28 @@ class Component extends DCLogic {
       ddjjDelOk: () => {
         const d = s.ddjjDel, motivo = s.ddjjMotivo.trim();
         if (!d) return;
+        if (d.le === 'Cerrada' && !histAdmin) return this.setState({ ddjjDel: null, toast: { kind: 'err', t: 'Liquidación cerrada', d: 'Sólo un administrador puede eliminar una liquidación cerrada.' } });
         if (motivo.length < 5) return this.setState({ toast: { kind: 'warn', t: 'Indicá el motivo', d: 'El motivo del borrado queda registrado en auditoría.' } });
         this.setState(st => {
           const hs = Object.assign({}, st.histSel); delete hs[d.id];
           return {
-            ddjjBorradas: Object.assign({}, st.ddjjBorradas, { [d.id]: 1 }), histSel: hs, ddjjDel: null, ddjjMotivo: '',
-            audExtra: [{ f: this.ahora(), u: 'Administrador', a: 'DDJJ borrada', c: d.cliente, p: d.per, r: 'Sec. ' + d.seq + ' · ' + motivo, ip: '190.15.44.12' }].concat(st.audExtra),
-            toast: { kind: 'ok', t: 'Declaración jurada borrada', d: d.label + ' ya no figura en el historial. Quedó registrado en auditoría.' }
+            ddjjBorradas: this.lsSet('myiva.liqBorradas', Object.assign({}, st.ddjjBorradas, { [d.id]: 1 })), histSel: hs, ddjjDel: null, ddjjMotivo: '',
+            audExtra: [{ f: this.ahora(), u: me.short, a: 'Liquidación eliminada', c: d.cliente, p: d.per, r: 'Sec. ' + d.seq + (d.le ? ' · ' + d.le : '') + ' · ' + motivo, ip: '190.15.44.12' }].concat(st.audExtra),
+            toast: { kind: 'ok', t: 'Liquidación eliminada', d: d.label + ' ya no figura en el historial. Quedó registrado en auditoría.' }
           };
         });
       },
+      liqCierreOpen: !!s.liqCierre, liqCierreLabel: s.liqCierre ? s.liqCierre.label : '',
+      liqCierreOk: () => {
+        const d = s.liqCierre;
+        if (!d) return;
+        this.setState(st => ({
+          liqEst: this.lsSet('myiva.liqEst', Object.assign({}, st.liqEst, { [d.id]: 'Cerrada' })), liqCierre: null,
+          audExtra: [{ f: this.ahora(), u: me.short, a: 'Liquidación cerrada', c: d.cliente, p: d.per, r: 'Sec. ' + d.seq, ip: '190.15.44.12' }].concat(st.audExtra),
+          toast: { kind: 'ok', t: 'Liquidación cerrada', d: d.label + ' quedó cerrada. Desde ahora sólo un administrador puede eliminarla.' }
+        }));
+      },
+      histEst: s.histEst, histEstSet: (e) => this.setState({ histEst: e.target.value }),
       histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
       histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
       histSelCount: String(histPick.length),
@@ -4199,9 +4269,9 @@ class Component extends DCLogic {
         });
       },
       histExport: () => exportar(histPick),
-      histVacio: histVis.length === 0, histSeqActivo: s.histSeq !== '',
+      histVacio: histVis.length === 0, histSeqActivo: s.histSeq !== '' || s.histEst !== '',
       histPaginas: histTotal > histVis.length, histSigFg: histTotal > histVis.length ? '#1B2733' : '#9AA9B7',
-      histVacioTxt: s.histSeq !== '' ? 'No hay liquidaciones con esa secuencia.' : 'Todavía no hay liquidaciones registradas.', histSeqLimpiar: () => this.setState({ histSeq: '' }),
+      histVacioTxt: s.histSeq !== '' || s.histEst !== '' ? 'No hay liquidaciones con esos filtros.' : 'Todavía no hay liquidaciones registradas.', histSeqLimpiar: () => this.setState({ histSeq: '', histEst: '' }),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
