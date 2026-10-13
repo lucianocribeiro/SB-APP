@@ -1110,6 +1110,70 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 <sc-if value="{{ dashFull }}">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<div style="font:600 14.5px 'Open Sans'">Avance del período 08/2026</div>
+<span style="padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#FBF3E3;color:#8F5F14;border:1px solid #F0E0BC">Prueba · a confirmar con Daniela / Sergio</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:12px">
+<sc-for list="{{ dpKpis }}" as="k" hint-placeholder-count="6">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 10.5px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div><div style="font:600 22px/1.2 'Open Sans';margin-top:6px;color:{{ k.color }}">{{ k.value }}</div></div>
+</sc-for>
+</div>
+<sc-if value="{{ dpAdmin }}">
+<div style="font:600 13px 'Open Sans';margin-top:16px">Avance por usuario</div>
+<table style="width:100%;border-collapse:collapse;margin-top:8px">
+<thead><tr>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Clientes</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cerradas</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Borrador</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Pendientes</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Sin liquidar</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:34%">Avance</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{ dpUsr }}" as="u" hint-placeholder-count="5">
+<tr>
+<td style="font:600 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE">{{ u.u }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE;text-align:right">{{ u.tot }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE;text-align:right">{{ u.cer }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE;text-align:right">{{ u.bor }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE;text-align:right">{{ u.pen }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #E3E8EE;text-align:right">{{ u.sin }}</td>
+<td style="padding:8px 10px;border-bottom:1px solid #E3E8EE"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;display:flex"><div style="width:{{ u.wc }};background:#14395C"></div><div style="width:{{ u.wb }};background:#8DB8DA"></div></div><span style="font:600 12px 'Open Sans';width:38px;text-align:right">{{ u.av }}</span></div></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<div style="display:flex;gap:14px;margin-top:6px"><span style="display:flex;align-items:center;gap:6px;font:400 11.5px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#14395C;border-radius:2px"></span>Cerradas</span><span style="display:flex;align-items:center;gap:6px;font:400 11.5px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#8DB8DA;border-radius:2px"></span>En borrador</span></div>
+</sc-if>
+<div style="font:600 13px 'Open Sans';margin-top:16px">Estado por cliente</div>
+<div style="max-height:320px;overflow:auto;margin-top:8px;border:1px solid #E3E8EE;border-radius:6px">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="position:sticky;top:0;text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
+<th style="position:sticky;top:0;text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
+<th style="position:sticky;top:0;text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
+<th style="position:sticky;top:0;text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
+<th style="position:sticky;top:0;text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Saldo 2do párrafo</th>
+<th style="position:sticky;top:0;text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:8px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Errores</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{ dpCli }}" as="c" hint-placeholder-count="8">
+<tr>
+<td style="font:600 13px 'Open Sans';padding:7px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap">{{ c.cliente }}</td>
+<td style="font:400 13px 'Open Sans';padding:7px 10px;border-bottom:1px solid #EEF1F4">{{ c.user }}</td>
+<td style="padding:7px 10px;border-bottom:1px solid #EEF1F4"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span></td>
+<td style="font:400 12.5px 'Open Sans';padding:7px 10px;border-bottom:1px solid #EEF1F4;color:#5A6B7B">{{ c.seq }}</td>
+<td style="font:600 13px 'Open Sans';padding:7px 10px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums;color:{{ c.sc }}">{{ c.saldo }}</td>
+<td style="font:600 13px 'Open Sans';padding:7px 10px;border-bottom:1px solid #EEF1F4;text-align:right;color:{{ c.errC }}">{{ c.err }}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -4104,6 +4168,39 @@ class Component extends DCLogic {
       });
     const histTotal = histAdmin ? 142 + histFilas.length - 9 : histFilas.length;
 
+    const dpCart = this.CARTERA.filter(([u]) => histAdmin || u === me.short);
+    const dpCli = [].concat(...dpCart.map(([u, cs]) => cs.map(cliente => {
+      const rs = histTodas.filter(r => r.cliente === cliente && r.per === '08/2026');
+      const liq = rs.filter(r => r.df !== '—' && r.est !== 'Pendiente de liquidar').sort((a, b) => b.seq - a.seq)[0];
+      const pend = rs.find(r => r.est === 'Pendiente de liquidar');
+      const r = liq || pend;
+      const est = liq ? this.liqEstado(liq) : (pend ? 'Pendiente de liquidar' : 'Sin liquidar');
+      const nErr = r ? (r.eg || []).reduce((a, g) => a + g.errs.length, 0) : 0;
+      const sd = liq ? conSaldo(liq) : null;
+      return {
+        cliente, user: u, est, st: est === 'Sin liquidar' ? { label: 'Sin liquidar', bg: '#FFFFFF', fg: '#9AA9B7', bd: '#DDE3E9' } : E[est],
+        seq: liq ? this.seqTxt(liq.seq) : '—', saldo: sd ? sd.saldo : '—', sc: sd ? sd.sc : '#9AA9B7',
+        err: nErr ? String(nErr) : '—', errC: nErr ? '#B3261E' : '#9AA9B7'
+      };
+    })));
+    const dpN = (e) => dpCli.filter(c => c.est === e).length;
+    const pct = (a, b) => (b ? Math.round(a / b * 100) : 0) + '%';
+    const dpKpis = [
+      { label: 'Clientes en cartera', value: String(dpCli.length), color: '#1B2733' },
+      { label: 'Cerradas', value: String(dpN('Cerrada')), color: '#14395C' },
+      { label: 'En borrador', value: String(dpN('Borrador')), color: '#1F6795' },
+      { label: 'Pendientes de liquidar', value: String(dpN('Pendiente de liquidar')), color: dpN('Pendiente de liquidar') ? '#B7791F' : '#2E7D5B' },
+      { label: 'Sin liquidar', value: String(dpN('Sin liquidar')), color: dpN('Sin liquidar') ? '#B3261E' : '#2E7D5B' },
+      { label: 'Con errores de cruce', value: String(dpCli.filter(c => c.err !== '—').length), color: '#B3261E' }
+    ];
+    const dpUsr = dpCart.map(([u]) => {
+      const cs = dpCli.filter(c => c.user === u), n = (e) => cs.filter(c => c.est === e).length;
+      return {
+        u, tot: String(cs.length), cer: String(n('Cerrada')), bor: String(n('Borrador')), pen: String(n('Pendiente de liquidar')), sin: String(n('Sin liquidar')),
+        wc: pct(n('Cerrada'), cs.length), wb: pct(n('Borrador'), cs.length), av: pct(n('Cerrada') + n('Borrador'), cs.length)
+      };
+    });
+
     const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
     const enCartera = (c) => !misClis || misClis.includes(c);
     const djVig = {};
@@ -4406,6 +4503,7 @@ class Component extends DCLogic {
         { cuit: '30-69551122-4', rz: 'SERVICIOS PILAR SRL', q: '1', i: '110.850,35' }
       ],
       histFilas: histVis,
+      dpKpis, dpUsr, dpCli, dpAdmin: histAdmin,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
       dashScope: s.role === 'admin' ? 'CAZATUR SA · 03/2026 – 08/2026' : 'CAZATUR SA · 03/2026 – 08/2026 · Sólo tus clientes asignados',
       toggleDash: () => this.setState(st => ({ dashEmpty: !st.dashEmpty })),
