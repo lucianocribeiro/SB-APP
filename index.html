@@ -1018,7 +1018,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1390px">
+<table style="width:100%;border-collapse:collapse;min-width:1480px">
 <thead><tr>
 <th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ histAllSel }}" onChange="{{ histToggleAll }}" title="Seleccionar todas las visibles" style="accent-color:#14395C;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
@@ -1028,6 +1028,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;display:{{ histUsrCol }}">Usuario</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
+<th title="Crédito fiscal − Débito fiscal (más el saldo técnico a favor del período anterior, si lo hay)" style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 1er párrafo</th>
 <th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Retenciones + Percepciones</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
@@ -1038,7 +1039,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="15" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
+<tr><td colspan="16" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1050,6 +1051,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;display:{{ r.usrCol }}">{{ r.user }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
+<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc1 }}">{{ r.saldo1 }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.rp }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.le.bg }};color:{{ r.le.fg }};border:1px solid {{ r.le.bd }};white-space:nowrap">{{ r.le.label }}</span></td>
@@ -4276,10 +4278,11 @@ class Component extends DCLogic {
     const histAdmin = s.role === 'admin', me = this.me();
     const num = (v) => parseFloat(v.replace(/\./g, '').replace(',', '.'));
     const conSaldo = (r) => {
-      if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7' });
+      if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7', saldo1: '—', sc1: '#9AA9B7' });
       const sd = this.saldosDj(histTodas, r.cliente, r.per, r.seq);
       const saldo = sd ? sd.s2 : num(r.cf) + num(r.rp) - num(r.df);
-      return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo) });
+      const saldo1 = sd ? sd.s1 : num(r.cf) - num(r.df);
+      return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo), saldo1: fmt(saldo1), sc1: saldoC(saldo1) });
     };
     const pendRows = [], vistos = {};
     s.cruRuns.forEach(run => {
