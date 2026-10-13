@@ -1856,6 +1856,42 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 </sc-if>
+<sc-if value="{{ cfgTab.cart }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Cargar asignación</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Pegá desde Excel dos columnas, <b style="font-weight:600;color:#1B2733">Usuario</b> y <b style="font-weight:600;color:#1B2733">Cliente</b> (una fila por cliente), o subí el archivo. Reemplaza la asignación actual. Cada usuario ve y liquida sólo sus clientes.</div>
+<textarea value="{{ cartTxt }}" onChange="{{ cartTxtSet }}" placeholder="Usuario&#9;Cliente&#10;Agustín&#9;LANES SA&#10;Candelaria&#9;CLAMACO S.A." style="width:100%;height:150px;margin-top:12px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px/1.5 'Open Sans';resize:vertical;box-sizing:border-box"></textarea>
+<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
+<button onClick="{{ cartPegar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar lo pegado</button>
+<label style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Subir Excel / CSV<input type="file" accept=".xls,.xlsx,.csv" onChange="{{ cartArchivo }}" style="display:none"></label>
+<button onClick="{{ cartDescargar }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Descargar actual</button>
+<button onClick="{{ cartRestaurar }}" style="padding:9px 14px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Restaurar original</button>
+</div>
+<div style="font:600 13px 'Open Sans';margin-top:18px">Asignar un cliente</div>
+<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+<input value="{{ cartU }}" onChange="{{ cartUSet }}" list="cartUsrList" placeholder="Usuario" style="width:150px;padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans'">
+<datalist id="cartUsrList"><sc-for list="{{ cartUOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.u }}"></option></sc-for></datalist>
+<input value="{{ cartC }}" onChange="{{ cartCSet }}" placeholder="Cliente (razón social)" style="flex:1;min-width:180px;padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans'">
+<button onClick="{{ cartAgregar }}" style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer">Asignar</button>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Asignación actual</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cartRes }}</div>
+<sc-for list="{{ cartUsrs }}" as="g" hint-placeholder-count="5">
+<div style="border-top:1px solid #EEF1F4;margin-top:12px;padding-top:10px">
+<div style="font:600 13px 'Open Sans'">{{ g.u }} <span style="font-weight:400;color:#5A6B7B">· {{ g.n }} clientes</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px">
+<sc-for list="{{ g.cs }}" as="x" hint-placeholder-count="4">
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border:1px solid #DDE3E9;border-radius:6px;background:#F5F7FA;font:400 12px 'Open Sans'">{{ x.c }}<span onClick="{{ x.quitar }}" title="Quitar" style="cursor:pointer;color:#9AA9B7;font:600 13px/1 'Open Sans';padding:0 3px" style-hover="color:#B3261E">×</span></span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
 <sc-if value="{{ cfgTab.apoc }}">
 <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
@@ -2305,7 +2341,7 @@ class Component extends DCLogic {
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
-    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [],
+    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0,
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
@@ -2385,13 +2421,54 @@ class Component extends DCLogic {
     return () => this.setState({ toast: { kind, t, d } });
   }
 
-  CARTERA = [
+  CARTERA_DEF = [
     ['Agustín', ['LANES SA', 'JUANA Y SUS HERMANAS SRL', 'LHS WORLDWIDE SA', 'SEOB SA']],
     ['Candelaria', ['CLAMACO S.A.', 'BOVENCO S.A.', 'FASECO S.A.', 'VMP SA', 'CREARFULL SAS', 'REINA MARIA DEL PLATA I. Y C. S.C.A.', 'WAHREN SA', 'INVERCOSUD S.A.', 'ADVITA SA', 'KOI SRL', 'MEDA Y CIA SCA']],
     ['Ivanna', ['INVOINET SAU', 'AFARTE', 'INVOTRADE SA', 'GLOBAL DUNNING S.A.', 'FINVOI CAPITAL SA', 'ANDALUX SA', 'SIOMAA S.A.', 'SANTA CLARA DE ZAVALIA SRL', 'FABIALVA SRL', 'ZAGAR SRL']],
     ['Julieta', ['IDEA 2 SA', 'NOVALUX S.A.', 'FIDEICOMISO PAMPA PILAR', 'DASYC SRL', 'DACKET SA', 'CAZATUR SA', 'RODIALE SA']],
     ['Rubén', ['GLOBAL MARKETING BUREAU S.A.', 'BCBT S.A.U.', 'BBI SA', 'MEDICAL LOGISTIC S.A.', 'BLASCO_SERGIO', 'NALAPO SA']]
   ];
+
+  CARTERA = (() => {
+    const g = this.lsGet('myiva.cartera', null);
+    return Array.isArray(g) && g.every(x => Array.isArray(x) && typeof x[0] === 'string' && Array.isArray(x[1])) ? g : this.CARTERA_DEF;
+  })();
+
+  guardarCartera(pares, accion) {
+    const m = new Map();
+    pares.forEach(([u, c]) => { if (!m.has(u)) m.set(u, []); if (!m.get(u).includes(c)) m.get(u).push(c); });
+    const cart = [...m.entries()].filter(([, cs]) => cs.length).sort((a, b) => a[0].localeCompare(b[0], 'es'));
+    this.CARTERA = cart;
+    this._demo = null;
+    this.lsSet('myiva.cartera', cart);
+    const n = cart.reduce((a, [, cs]) => a + cs.length, 0);
+    this.setState(st => ({
+      cartV: (st.cartV || 0) + 1, cartTxt: '',
+      audExtra: [{ f: this.ahora(), u: 'Administrador', a: accion, c: '—', p: '—', r: cart.length + ' usuarios · ' + n + ' clientes', ip: '190.15.44.12' }].concat(st.audExtra),
+      toast: { kind: 'ok', t: accion, d: cart.length + ' usuarios con ' + n + ' clientes asignados.' }
+    }));
+  }
+
+  parsePares(filas) {
+    const t = (v) => String(v == null ? '' : v).trim();
+    let rows = filas.map(r => (r || []).map(t)).filter(r => r.some(Boolean));
+    let iu = 0, ic = 1;
+    const h = rows[0] ? rows[0].map(x => this.fold(x)) : [];
+    if (h.some(x => /usuario/.test(x)) && h.some(x => /cliente|razon/.test(x))) {
+      iu = h.findIndex(x => /usuario/.test(x)); ic = h.findIndex(x => /cliente|razon/.test(x));
+      rows = rows.slice(1);
+    }
+    const pares = [], vistos = new Map(), dup = [];
+    rows.forEach(r => {
+      const u = r[iu], c = r[ic];
+      if (!u || !c) return;
+      if (vistos.has(c) && vistos.get(c) !== u) dup.push(c);
+      vistos.set(c, u);
+      pares.push([u, c]);
+    });
+    const ult = pares.filter(([u, c]) => vistos.get(c) === u);
+    return { pares: ult, dup: [...new Set(dup)] };
+  }
 
   MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
 
@@ -4639,7 +4716,14 @@ class Component extends DCLogic {
 
   miscVals() {
     const s = this.state;
-    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['exp', 'Exportaciones'], ['ddjj', 'Declaraciones juradas'], ['apoc', 'Base APOC']];
+    const cfgDef = [['params', 'Parámetros generales'], ['cart', 'Clientes por usuario'], ['notif', 'Notificaciones'], ['exp', 'Exportaciones'], ['ddjj', 'Declaraciones juradas'], ['apoc', 'Base APOC']];
+    const paresAct = () => [].concat(...this.CARTERA.map(([u, cs]) => cs.map(c => [u, c])));
+    const aplicar = (r, origen) => {
+      if (!r.pares.length) return this.setState({ toast: { kind: 'err', t: 'No se encontraron asignaciones', d: 'Hacen falta dos columnas: Usuario y Cliente (una fila por cliente).' } });
+      this.guardarCartera(r.pares, 'Clientes por usuario cargados (' + origen + ')');
+      if (r.dup.length) this.setState({ toast: { kind: 'warn', t: 'Clientes repetidos', d: r.dup.length + ' clientes figuraban con dos usuarios; quedó la última fila: ' + r.dup.slice(0, 3).join(', ') + (r.dup.length > 3 ? '…' : '') } });
+    };
+    const cartN = this.CARTERA.reduce((a, [, cs]) => a + cs.length, 0);
     const cfgTab = {};
     cfgDef.forEach(([k]) => { cfgTab[k] = s.cfgTab === k; });
     const ap = s.apoc, miles = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -4697,6 +4781,43 @@ class Component extends DCLogic {
         bar: s.cfgTab === k ? '#14395C' : 'transparent'
       })),
       cfgTab,
+      cartRes: this.CARTERA.length + ' usuarios · ' + cartN + ' clientes asignados',
+      cartUsrs: this.CARTERA.map(([u, cs]) => ({
+        u, n: String(cs.length),
+        cs: cs.map(c => ({ c, quitar: () => this.guardarCartera(paresAct().filter(([uu, cc]) => !(uu === u && cc === c)), 'Cliente quitado de ' + u) }))
+      })),
+      cartUOpts: this.CARTERA.map(([u]) => ({ u })),
+      cartTxt: s.cartTxt, cartTxtSet: (e) => this.setState({ cartTxt: e.target.value }),
+      cartU: s.cartU, cartUSet: (e) => this.setState({ cartU: e.target.value }),
+      cartC: s.cartC, cartCSet: (e) => this.setState({ cartC: e.target.value }),
+      cartPegar: () => aplicar(this.parsePares(s.cartTxt.split(/\r?\n/).map(l => l.split(/\t|;/))), 'pegado'),
+      cartArchivo: async (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        try {
+          const X = await this.xlsxLib();
+          aplicar(this.parsePares(this.leerHoja(new Uint8Array(await f.arrayBuffer()), X)), f.name);
+        } catch (err) {
+          this.setState({ toast: { kind: 'err', t: 'No se pudo leer el archivo', d: String(err && err.message || err) } });
+        }
+      },
+      cartAgregar: () => {
+        const u = s.cartU.trim(), c = s.cartC.trim();
+        if (!u || !c) return this.setState({ toast: { kind: 'warn', t: 'Completá usuario y cliente', d: 'Elegí o escribí el usuario y el nombre del cliente.' } });
+        const otro = this.CARTERA.find(([uu, cs]) => uu !== u && cs.includes(c));
+        this.guardarCartera(paresAct().filter(([, cc]) => cc !== c).concat([[u, c]]), 'Cliente asignado a ' + u + (otro ? ' (antes de ' + otro[0] + ')' : ''));
+        this.setState({ cartC: '' });
+      },
+      cartDescargar: async () => {
+        const X = await this.xlsxLib();
+        const ws = X.utils.aoa_to_sheet([['Usuario', 'Cliente']].concat(paresAct()));
+        ws['!cols'] = [{ wch: 18 }, { wch: 44 }];
+        const wb = X.utils.book_new();
+        X.utils.book_append_sheet(wb, ws, 'Clientes por usuario');
+        this.descargar('Clientes por usuario.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      },
+      cartRestaurar: () => this.guardarCartera([].concat(...this.CARTERA_DEF.map(([u, cs]) => cs.map(c => [u, c]))), 'Clientes por usuario restaurados'),
       eventos: [
         { ev: 'Diferencias detectadas en un cruce', dest: 'admin@blasco.com.ar, julietad@blasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
         { ev: 'Liquidación completada', dest: 'admin@blasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
