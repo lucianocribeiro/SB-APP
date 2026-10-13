@@ -1030,7 +1030,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
 <th style="text-align:right;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Retenciones + Percepciones</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cruces</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cerrar</th>
@@ -1038,7 +1037,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="15" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
+<tr><td colspan="14" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1052,14 +1051,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.rp }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.le.bg }};color:{{ r.le.fg }};border:1px solid {{ r.le.bd }};white-space:nowrap">{{ r.le.label }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:5px;align-items:center">
 <span onClick="{{ r.ver }}" title="Ver liquidación" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
-<sc-if value="{{ r.hasErr }}">
-<span onClick="{{ r.verErr }}" title="{{ r.errLabel }} · {{ r.errTip }}" style="display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 7px;border:1px solid #F3CFCB;background:#FDF5F4;border-radius:6px;cursor:pointer;font:600 12px 'Open Sans';color:#B3261E" style-hover="border-color:#B3261E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17v.5"></path></svg>{{ r.nErr }}</span>
-</sc-if>
 <span onClick="{{ r.xls }}" title="Descargar el Excel de este período" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span>
 </div>
 </td>
@@ -4132,7 +4127,7 @@ class Component extends DCLogic {
       ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] }]
       : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
-    const histFilas = histTodas.filter(r => histAdmin || r.user === me.short);
+    const histFilas = histTodas.filter(r => r.df !== '—' && (histAdmin || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const sel = s.histSel;
@@ -4312,7 +4307,7 @@ class Component extends DCLogic {
       upConfirmOk: () => this.setState({
         upConfirm: false, step: 3, cruSaved: true, cruRuns: this.guardarRun(cru, cli, seqSel ?? Math.max(0, seqLast), me.short),
         toast: cru.nErr
-          ? { kind: 'warn', t: 'Cruces procesados con errores', d: cru.nErr + (cru.nErr === 1 ? ' error quedó registrado' : ' errores quedaron registrados') + ' en Historial de cruces y en Historial de liquidaciones.' }
+          ? { kind: 'warn', t: 'Cruces procesados con errores', d: cru.nErr + (cru.nErr === 1 ? ' error quedó registrado' : ' errores quedaron registrados') + ' en Historial de cruces.' }
           : { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' }
       }),
       prevPagar, prevSaldos,
