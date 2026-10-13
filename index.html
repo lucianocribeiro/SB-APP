@@ -2716,7 +2716,8 @@ class Component extends DCLogic {
   }
 
   openErr(title, sub, groups, cli) {
-    const rows = [], gs = groups.filter(g => g.errs.length);
+    const nro = (t) => /^Cruce \d/.test(t) ? t : ([[/APOC/, 1], [/Emitidos/, 2], [/Recibidos/, 3], [/Retenciones/, 4], [/Aduaner/, 5], [/IVA Digital/, 6]].find(([re]) => re.test(t)) || [0, 0])[1];
+    const rows = [], gs = groups.filter(g => g.errs.length).map(g => { const n = nro(g.cruce); return typeof n === 'number' && n ? Object.assign({}, g, { cruce: 'Cruce ' + n + ' · ' + g.cruce }) : g; });
     gs.forEach(g => g.errs.forEach((e, i) => rows.push(Object.assign({}, e, {
       cruce: g.cruce, head: i === 0, headTxt: g.cruce + ' · ' + (g.errs.length === 1 ? '1 error' : g.errs.length + ' errores'),
       kc: e.k.indexOf('Diferencia') === 0 ? '#8F5F14' : '#B3261E',
