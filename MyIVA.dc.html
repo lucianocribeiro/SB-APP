@@ -1056,7 +1056,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
 <sc-if value="{{ r.hasErr }}">
-<span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
+<span onClick="{{ r.verErr }}" title="{{ r.errTip }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
 </sc-if>
 <span onClick="{{ r.xls }}" title="Descargar el Excel de este período" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 <sc-if value="{{ r.puedeCerrar }}">
@@ -1658,7 +1658,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
 </sc-if>
 <sc-if value="{{ r.hasDif }}">
-<span onClick="{{ toastReporte }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Reporte de diferencias</span>
+<span onClick="{{ r.rep }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Reporte de diferencias</span>
 </sc-if>
 <span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 </div>
@@ -2153,17 +2153,22 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="min-width:0;flex:1">
 <div style="font:600 16px/1.3 'Open Sans'">{{ errTitle }}</div>
 <div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ errSub }} · {{ errCount }}</div>
+<sc-if value="{{ errResumen }}">
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1B2733;margin-top:6px"><span style="font-weight:600">Por cruce:</span> {{ errResumen }}</div>
+</sc-if>
 </div>
 <span onClick="{{ closeAll }}" style="font:400 22px/1 'Open Sans';color:#5A6B7B;cursor:pointer;padding:2px 4px">×</span>
 </div>
 <div style="overflow:auto;padding:4px 20px 8px">
 <sc-for list="{{ errRows }}" as="e" hint-placeholder-count="4">
+<sc-if value="{{ e.head }}">
+<div style="margin:12px 0 2px;padding:7px 10px;background:#F5F7FA;border:1px solid #E3E8EE;border-radius:6px;font:600 12.5px/1.3 'Open Sans';color:#14395C">{{ e.headTxt }}</div>
+</sc-if>
 <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #EEF1F4">
 <span style="display:inline-block;flex:none;width:150px;padding:3px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ e.kb }};color:{{ e.kc }};text-align:center">{{ e.k }}</span>
 <div style="min-width:0;flex:1">
 <div style="font:600 13px/1.35 'Open Sans'">{{ e.comp }} <span style="font-weight:400;color:#5A6B7B">· {{ e.ter }}</span></div>
 <div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:2px">{{ e.det }}</div>
-<div style="font:400 11.5px/1.4 'Open Sans';color:#9AA9B7;margin-top:2px">Cruce: {{ e.cruce }}</div>
 </div>
 <div style="flex:none;text-align:right">
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Diferencia</div>
@@ -2174,7 +2179,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="padding:13px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
 <button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cerrar</button>
-<button onClick="{{ toastReporte }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Descargar reporte de errores</button>
+<button onClick="{{ errDescargar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Descargar reporte de errores</button>
 </div>
 </div>
 </sc-if>
@@ -2230,7 +2235,7 @@ class Component extends DCLogic {
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
-    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '',
+    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [],
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
@@ -2557,6 +2562,22 @@ class Component extends DCLogic {
     return v;
   }
 
+  runGrupos(run) {
+    return run.cruces.filter(c => c.errs.length).map(c => ({ cruce: c.cruce, errs: c.errs }));
+  }
+
+  guardarRun(cru, cli, seq, user) {
+    const run = {
+      id: String(Date.now()), cliente: cli, per: '08/2026', seq, fecha: this.ahora(), user, liq: false,
+      cruces: cru.rows.filter(r => r.run || r.isErr).map(r => ({
+        n: r.n, t: r.t, tipo: r.tipo, cruce: r.cruce, est: r.est, real: r.real,
+        regs: r.isErr ? '—' : String(r.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.'), dif: r.isErr ? '—' : String(r.dif),
+        errs: r.errs.slice(0, 500).map(e => ({ k: e.k, comp: e.comp, ter: e.ter, det: e.det, imp: e.imp }))
+      }))
+    };
+    return this.lsSet('myiva.cruRuns', [run].concat(this.state.cruRuns).slice(0, 40));
+  }
+
   liqEstado(r) {
     if (r.est === 'Pendiente de liquidar') return null;
     const k = r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
@@ -2690,18 +2711,36 @@ class Component extends DCLogic {
     return k === 'retper' ? this.ERRS.ret.concat(this.ERRS.per) : (this.ERRS[k] || []);
   }
 
-  errFile(file, cruce) {
-    return [{ k: 'Error de archivo', comp: file, ter: cruce, det: 'El archivo no tiene un formato válido. El cruce no se ejecutó.', imp: '—' }];
+  errFile(file, cruce, msg) {
+    return [{ k: 'Error de archivo', comp: file, ter: cruce, det: (msg ? msg.replace(/\.?$/, '.') + ' ' : 'El archivo no tiene un formato válido. ') + 'El cruce no se ejecutó.', imp: '—' }];
   }
 
-  openErr(title, sub, groups) {
-    const rows = [];
-    groups.forEach(g => g.errs.forEach(e => rows.push(Object.assign({}, e, {
-      cruce: g.cruce,
+  openErr(title, sub, groups, cli) {
+    const rows = [], gs = groups.filter(g => g.errs.length);
+    gs.forEach(g => g.errs.forEach((e, i) => rows.push(Object.assign({}, e, {
+      cruce: g.cruce, head: i === 0, headTxt: g.cruce + ' · ' + (g.errs.length === 1 ? '1 error' : g.errs.length + ' errores'),
       kc: e.k.indexOf('Diferencia') === 0 ? '#8F5F14' : '#B3261E',
       kb: e.k.indexOf('Diferencia') === 0 ? '#FBF3E3' : '#FBE9E7'
     }))));
-    return () => this.setState({ errView: { title, sub, rows } });
+    const resumen = gs.length > 1 ? gs.map(g => g.cruce + ' (' + g.errs.length + ')').join(' · ') : '';
+    return () => this.setState({ errView: { title, sub, rows, resumen, cli: cli || sub.split(' · ')[0] } });
+  }
+
+  async descargarErrores(v, cli) {
+    if (!v || !v.rows.length) return;
+    try {
+      const X = await this.xlsxLib();
+      const head = ['Cruce', 'Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia'];
+      const ws = X.utils.aoa_to_sheet([[v.title], [v.sub], [], head].concat(v.rows.map(e => [e.cruce, e.k, e.comp, e.ter, e.det, e.imp])));
+      ws['!cols'] = [{ wch: 34 }, { wch: 30 }, { wch: 30 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
+      const wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, ws, 'Errores');
+      const name = (cli || 'Cruces') + ' - Reporte de errores.xlsx';
+      this.descargar(name, new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      this.setState({ toast: { kind: 'ok', t: 'Reporte de errores descargado', d: name } });
+    } catch (err) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el reporte', d: String(err && err.message || err) } });
+    }
   }
 
   COMP_TAB = '1:FACTURAS A|2:NOTAS DE DEBITO A|3:NOTAS DE CREDITO A|4:RECIBOS A|5:NOTAS DE VENTA AL CONTADO A|6:FACTURAS B|7:NOTAS DE DEBITO B|8:NOTAS DE CREDITO B|9:RECIBOS B|10:NOTAS DE VENTA AL CONTADO B|11:FACTURAS C|12:NOTAS DE DEBITO C|13:NOTAS DE CREDITO C|15:RECIBOS C|16:NOTAS DE VENTA AL CONTADO C|17:LIQUIDACION DE SERVICIOS PUBLICOS CLASE A|18:LIQUIDACION DE SERVICIOS PUBLICOS CLASE B|19:FACTURAS DE EXPORTACION|20:NOTAS DE DEBITO POR OPERACIONES CON EL EXTERIOR|21:NOTAS DE CREDITO POR OPERACIONES CON EL EXTERIOR|22:FACTURAS - PERMISO EXPORTACION SIMPLIFICADO - DTO. 855/97|23:COMPROBANTES A DE COMPRA PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|24:COMPROBANTES A DE CONSIGNACION PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|25:COMPROBANTES B DE COMPRA PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|26:COMPROBANTES B DE CONSIGNACION PRIMARIA PARA EL SECTOR PESQUERO MARITIMO|27:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|28:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|29:LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|30:COMPROBANTES DE COMPRA DE BIENES USADOS|32:COMPROBANTES PARA RECICLAR MATERIALES|33:LIQUIDACION PRIMARIA DE GRANOS|34:COMPROBANTES A DEL APARTADO A INCISO F R G N 1415|35:COMPROBANTES B DEL ANEXO I, APARTADO A, INC. F), RG N° 1415|36:COMPROBANTES C DEL ANEXO I, APARTADO A, INC.F), R.G. N° 1415|37:NOTAS DE DEBITO O DOCUMENTO EQUIVALENTE QUE CUMPLAN CON LA R.G. N° 1415|38:NOTAS DE CREDITO O DOCUMENTO EQUIVALENTE QUE CUMPLAN CON LA R.G. N° 1415|39:OTROS COMPROBANTES A QUE CUMPLEN CON LA R G 1415|40:OTROS COMPROBANTES B QUE CUMPLAN CON LA R.G. 1415|41:OTROS COMPROBANTES C QUE CUMPLAN CON LA R.G. 1415|43:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|44:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|45:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|46:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE B|47:NOTA DE DEBITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE C|48:NOTA DE CREDITO LIQUIDACION UNICA COMERCIAL IMPOSITIVA CLASE A|49:COMPROBANTES DE COMPRA DE BIENES NO REGISTRABLES A CONSUMIDORES FINALES|50:RECIBO FACTURA A REGIMEN DE FACTURA DE CREDITO|51:FACTURAS M|52:NOTAS DE DEBITO M|53:NOTAS DE CREDITO M|54:RECIBOS M|55:NOTAS DE VENTA AL CONTADO M|56:COMPROBANTES M DEL ANEXO I APARTADO A INC F R G N 1415|57:OTROS COMPROBANTES M QUE CUMPLAN CON LA R G N 1415|58:CUENTAS DE VENTA Y LIQUIDO PRODUCTO M|59:LIQUIDACIONES M|60:CUENTAS DE VENTA Y LIQUIDO PRODUCTO A|61:CUENTAS DE VENTA Y LIQUIDO PRODUCTO B|63:LIQUIDACIONES A|64:LIQUIDACIONES B|66:DESPACHO DE IMPORTACION|68:LIQUIDACION C|70:RECIBOS FACTURA DE CREDITO|81:TIQUE FACTURA A CONTROLADORES FISCALES|82:TIQUE - FACTURA B|83:TIQUE|90:NOTA DE CREDITO OTROS COMP QUE NO CUMPLEN CON LA R G 1415 Y SUS MODIF|99:OTROS COMP QUE NO CUMPLEN CON LA R G 1415 Y SUS MODIF|109:TIQUE C|110:TIQUE NOTA DE CREDITO|111:TIQUE FACTURA C|112:TIQUE NOTA DE CREDITO A|113:TIQUE NOTA DE CREDITO B|114:TIQUE NOTA DE CREDITO C|115:TIQUE NOTA DE DEBITO A|116:TIQUE NOTA DE DEBITO B|117:TIQUE NOTA DE DEBITO C|118:TIQUE FACTURA M|119:TIQUE NOTA DE CREDITO M|120:TIQUE NOTA DE DEBITO M|150:LIQUIDACION DE COMPRA PRIMARIA PARA EL SECTOR TABACALERO A|151:LIQUIDACION DE COMPRA PRIMARIA PARA EL SECTOR TABACALERO B|157:CUENTA DE VENTA Y LÍQUIDO PRODUCTO A - SECTOR AVÍCOLA|158:CUENTA DE VENTA Y LÍQUIDO PRODUCTO B - SECTOR AVÍCOLA|159:LIQUIDACIÓN DE COMPRA A - SECTOR AVÍCOLA|160:LIQUIDACIÓN DE COMPRA B - SECTOR AVÍCOLA|161:LIQUIDACIÓN DE COMPRA DIRECTA A - SECTOR AVÍCOLA|162:LIQUIDACIÓN DE COMPRA DIRECTA B - SECTOR AVÍCOLA|163:LIQUIDACIÓN DE COMPRA DIRECTA C - SECTOR AVÍCOLA|164:LIQUIDACIÓN DE VENTA DIRECTA A - SECTOR AVÍCOLA|165:LIQUIDACIÓN DE VENTA DIRECTA B - SECTOR AVÍCOLA|166:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS A|167:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS B|168:LIQUIDACIÓN DE CONTRATACIÓN DE CRIANZA POLLOS PARRILLEROS C|169:LIQUIDACIÓN DE CRIANZA POLLOS PARRILLEROS A|170:LIQUIDACIÓN DE CRIANZA POLLOS PARRILLEROS B|171:LIQUIDACIÓN DE COMPRA DE CAÑA DE AZÚCAR A|172:LIQUIDACIÓN DE COMPRA DE CAÑA DE AZÚCAR B|180:CUENTA DE VENTA Y LÍQUIDO PRODUCTO A - SECTOR PECUARIO|182:CUENTA DE VENTA Y LÍQUIDO PRODUCTO B - SECTOR PECUARIO|183:LIQUIDACIÓN DE COMPRA A - SECTOR PECUARIO|185:LIQUIDACIÓN DE COMPRA B - SECTOR PECUARIO|186:LIQUIDACIÓN DE COMPRA DIRECTA A - SECTOR PECUARIO|188:LIQUIDACIÓN DE COMPRA DIRECTA B - SECTOR PECUARIO|189:LIQUIDACIÓN DE COMPRA DIRECTA C - SECTOR PECUARIO|190:LIQUIDACIÓN DE VENTA DIRECTA A - SECTOR PECUARIO|191:LIQUIDACIÓN DE VENTA DIRECTA B - SECTOR PECUARIO|195:FACTURA CLASE T|196:NOTA DE DÉBITO CLASE T|197:NOTA DE CRÉDITO CLASE T|201:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) A|202:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) A|203:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) A|206:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) B|207:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) B|208:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) B|211:FACTURA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) C|212:NOTA DE DÉBITO ELECTRÓNICA MIPYMES (FCE) C|213:NOTA DE CRÉDITO ELECTRÓNICA MIPYMES (FCE) C|331:LIQUIDACION SECUNDARIA DE GRANOS|332:CERTIFICACION ELECTRONICA (GRANOS)';
@@ -3531,7 +3570,8 @@ class Component extends DCLogic {
       const c = rv ? Object.assign({}, c0, rv, { alerta: c0.alerta && rv.est === 'Con errores' }) : c0;
       const nota = [c0.nota, run && enReal && !rv ? 'Resultado de ejemplo: el cruce real de este archivo se habilita cuando tengamos un archivo de muestra.' : ''].filter(Boolean).join(' ');
       const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (rv ? rv.est : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado')));
-      const errs = isErr ? [].concat(...malos.map(([k]) => this.errFile((s.upErr && s.upErr[k] && s.upErr[k].file) || ERRF[k], c.t))) : (run ? (rv ? rv.errs : this.errsTipo(c.tipo)) : []);
+      const ue = (k) => (s.upErr && s.upErr[k]) || {};
+      const errs = isErr ? [].concat(...malos.map(([k, l]) => this.errFile(ue(k).file || ERRF[k], l, ue(k).msg))) : (run ? (rv ? rv.errs : this.errsTipo(c.tipo)) : []);
       const cero = (v) => v === '0' || v === '0,00';
       let rep = demoRep;
       if (rv) {
@@ -3544,7 +3584,8 @@ class Component extends DCLogic {
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
         hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep,
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
-        verErr: this.openErr(c.t, cli + ' · 08/2026', [{ cruce: c.t, errs }]),
+        cruce: 'Cruce ' + c.n + ' · ' + c.t,
+        verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · 08/2026', [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
         hasCmp: run && c.cmp.length > 0, hasNota: !!nota, nota,
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
         cmp: c.cmp.map(([a, b, cc, d]) => ({
@@ -3575,7 +3616,7 @@ class Component extends DCLogic {
       if (has('compras')) inc.push({ t: '2 comprobantes de compras con IVA que no coincide con la alícuota informada (diferencia mayor a $ 1).' });
     }
     const done = rows.filter(r => r.run);
-    const errGroups = rows.filter(r => r.hasErr).map(r => ({ cruce: r.t, errs: r.errs }));
+    const errGroups = rows.filter(r => r.hasErr).map(r => ({ cruce: r.cruce, errs: r.errs }));
     return {
       rows, arrastre, inc, done, errGroups, nErr: errGroups.reduce((a, g) => a + g.errs.length, 0), reales, enReal,
       tot: { regs: num(done.reduce((a, r) => a + r.regs, 0)), dif: done.reduce((a, r) => a + r.dif, 0), falt: done.reduce((a, r) => a + r.falt, 0) }
@@ -3738,7 +3779,8 @@ class Component extends DCLogic {
       openConfirm: () => this.setState({ confirm: true }),
       closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null }),
       errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
-      errRows: s.errView ? s.errView.rows : [],
+      errRows: s.errView ? s.errView.rows : [], errResumen: s.errView ? s.errView.resumen || '' : '',
+      errDescargar: () => this.descargarErrores(s.errView, s.errView && s.errView.cli),
       errCount: s.errView ? (s.errView.rows.length === 1 ? '1 error registrado' : s.errView.rows.length + ' errores registrados') : '',
       toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
@@ -4007,10 +4049,17 @@ class Component extends DCLogic {
       const saldo = sd ? sd.s2 : num(r.cf) + num(r.rp) - num(r.df);
       return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo) });
     };
-    const curPend = s.cruSaved && !s.liqSaved && cru.nErr > 0;
-    const curRow = s.liqSaved
-      ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: cru.errGroups }]
-      : (curPend ? [{ cliente: cli, per: '08/2026', seq: seqSel ?? Math.max(0, seqLast), fecha: '03/10/2026', user: me.short, df: '—', cf: '—', est: 'Pendiente de liquidar', eg: cru.errGroups }] : []);
+    const pendRows = [], vistos = {};
+    s.cruRuns.forEach(run => {
+      const k = run.cliente + '|' + run.per;
+      if (run.liq || vistos[k]) return;
+      vistos[k] = 1;
+      const eg = this.runGrupos(run);
+      if (eg.length) pendRows.push({ cliente: run.cliente, per: run.per, seq: run.seq, fecha: run.fecha, user: run.user, df: '—', cf: '—', est: 'Pendiente de liquidar', eg });
+    });
+    const curRow = (s.liqSaved
+      ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] }]
+      : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
     const histFilas = histTodas.filter(r => histAdmin || r.user === me.short);
     const ultSeq = {};
@@ -4038,7 +4087,7 @@ class Component extends DCLogic {
       .map(r => {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0), id = rid(r);
         const le = this.liqEstado(r), label = r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq);
-        const puedeBorrar = le === 'Borrador' || (le === 'Cerrada' && histAdmin);
+        const puedeBorrar = le !== 'Cerrada' || histAdmin;
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
           le: le ? E[le] : { label: '—', bg: 'transparent', fg: '#9AA9B7', bd: 'transparent' },
           puedeCerrar: le === 'Borrador', puedeBorrar,
@@ -4048,7 +4097,8 @@ class Component extends DCLogic {
           xls: () => exportar([r]),
           st: E[r.est], ver: this.nav('liqResultado'),
           hasErr: n > 0, errLabel: 'Errores de cruce (' + n + ')',
-          verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg)
+          errTip: eg.map(g => g.cruce + ': ' + g.errs.length).join(' · '),
+          verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg, r.cliente)
         });
       });
     const histTotal = histAdmin ? 142 + histFilas.length - 9 : histFilas.length;
@@ -4156,7 +4206,7 @@ class Component extends DCLogic {
         ? this.setState({ upConfirm: true })
         : this.setState({ toast: { kind: 'warn', t: 'No hay archivos cargados', d: 'Cargá al menos un archivo para procesar los cruces.' } }),
       upConfirmOk: () => this.setState({
-        upConfirm: false, step: 3, cruSaved: true,
+        upConfirm: false, step: 3, cruSaved: true, cruRuns: this.guardarRun(cru, cli, seqSel ?? Math.max(0, seqLast), me.short),
         toast: cru.nErr
           ? { kind: 'warn', t: 'Cruces procesados con errores', d: cru.nErr + (cru.nErr === 1 ? ' error quedó registrado' : ' errores quedaron registrados') + ' en Historial de cruces y en Historial de liquidaciones.' }
           : { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' }
@@ -4181,7 +4231,12 @@ class Component extends DCLogic {
       liqConfirmOk: () => this.setState(st => {
         const id = cli + '|08/2026|' + seqSel + '|03/10/2026', le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
         delete le[id]; delete bo[id];
-        return { liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo) };
+        const ult = st.cruRuns.find(r => r.cliente === cli && r.per === '08/2026' && !r.liq);
+        const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === '08/2026' && !r.liq ? Object.assign({}, r, { liq: true }) : r));
+        return {
+          liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
+          liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
+        };
       }),
       liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
@@ -4378,10 +4433,11 @@ class Component extends DCLogic {
   cruVals() {
     const s = this.state, E = this.EST;
     const cruAdmin = s.role === 'admin', me = this.me();
-    const savedCru = s.cruSaved ? this.cruRun().rows.filter(r => r.run || r.isErr).map(r => ({
-      cliente: this.liqCli(), tipo: r.tipo, per: '08/2026', fecha: '03/10/2026 17:35', user: me.short,
-      regs: r.isErr ? '—' : r.regs.toLocaleString('es-AR'), dif: r.isErr ? '—' : String(r.dif), est: r.est, hasDif: r.hasDif, errs: r.errs
-    })) : [];
+    const NUM = { 'IVA Compras vs Base APOC': 1, 'Emitidos vs IVA Ventas': 2, 'Recibidos vs IVA Compras': 3, 'Retenciones vs IVA Ventas / Compras': 4, 'Retenciones y percepciones vs Mis Retenciones': 4, 'Aduaneras vs Mis Percepciones Aduaneras': 5, 'IVA Digital vs IVA Compras + Ventas': 6 };
+    const savedCru = [].concat(...s.cruRuns.map(run => run.cruces.map(c => ({
+      cliente: run.cliente, tipo: c.tipo, n: c.n, per: run.per, fecha: run.fecha, user: run.user,
+      regs: c.regs, dif: c.dif, est: c.est, errs: c.errs, guardado: true
+    }))));
     const STB = {
       ok: { label: 'Completado', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
       dif: { label: 'Completado con diferencias', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
@@ -4458,17 +4514,21 @@ class Component extends DCLogic {
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', regs: '112', dif: '2', est: 'Procesando' }
       ].concat(this.demoUsr().cru).map(r => Object.assign({}, r, {
-        hasDif: r.est === 'Completado con diferencias',
         errs: r.est === 'Con errores'
-          ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras')
+          ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos')
           : (r.est === 'Completado con diferencias' ? this.errsTipo(r.tipo) : [])
       })))
         .filter(r => cruAdmin || r.user === me.short)
-        .map(r => Object.assign({}, r, {
-          st: E[r.est], ver: this.nav('cruceResultado'),
-          hasErr: r.errs.length > 0, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')',
-          verErr: this.openErr('Errores de cruce · ' + r.tipo, r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user, [{ cruce: r.tipo, errs: r.errs }])
-        }))
+        .map(r => {
+          const n = r.n || NUM[r.tipo], cruce = (n ? 'Cruce ' + n + ' · ' : '') + r.tipo, sub = r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user;
+          const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
+          return Object.assign({}, r, {
+            tipo: cruce, st: E[r.est], hasErr: r.errs.length > 0, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
+            ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : this.nav('cruceResultado'),
+            hasDif: r.guardado ? r.errs.length > 0 : r.est === 'Completado con diferencias',
+            rep: r.guardado ? () => this.descargarErrores({ title: 'Errores · ' + cruce, sub, rows: r.errs.map(e => Object.assign({ cruce }, e)) }, r.cliente) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.')
+          });
+        })
     };
   }
 
