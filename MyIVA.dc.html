@@ -1018,7 +1018,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1320px">
+<table style="width:100%;border-collapse:collapse;min-width:1390px">
 <thead><tr>
 <th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ histAllSel }}" onChange="{{ histToggleAll }}" title="Seleccionar todas las visibles" style="accent-color:#14395C;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
@@ -1032,13 +1032,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cruces</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">DDJJ</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cerrar</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Eliminar</th>
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="15" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
+<tr><td colspan="16" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1054,6 +1055,20 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.le.bg }};color:{{ r.le.fg }};border:1px solid {{ r.le.bd }};white-space:nowrap">{{ r.le.label }}</span></td>
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center;white-space:nowrap">
+<sc-if value="{{ r.pdfTiene }}">
+<div style="display:inline-flex;align-items:center;gap:3px">
+<span onClick="{{ r.pdfVer }}" title="Ver DDJJ · {{ r.pdfTip }}" style="display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid #CDE6D6;background:#F1F9F4;border-radius:6px;cursor:pointer;font:600 11.5px 'Open Sans';color:#1E7A46" style-hover="border-color:#1E7A46"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7A46" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M9 13l2 2 4-4"></path></svg>PDF</span>
+<sc-if value="{{ r.pdfQuitable }}">
+<span onClick="{{ r.pdfQuitar }}" title="Quitar DDJJ" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;cursor:pointer;font:600 14px/1 'Open Sans';color:#9AA9B7" style-hover="background:#FDF5F4;color:#B3261E">×</span>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ r.pdfPuede }}">
+<label title="Adjuntar el PDF de la declaración jurada" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px dashed #B9C6D3;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M12 17v-6M9 14l3-3 3 3"></path></svg><input type="file" accept=".pdf,application/pdf" onChange="{{ r.pdfSubir }}" style="display:none"></label>
+</sc-if>
+<sc-if value="{{ r.pdfNo }}"><span style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
+</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:5px;align-items:center">
 <span onClick="{{ r.ver }}" title="Ver liquidación" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
@@ -2341,7 +2356,7 @@ class Component extends DCLogic {
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
-    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0,
+    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
@@ -2707,6 +2722,80 @@ class Component extends DCLogic {
   lsSet(k, v) {
     try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { }
     return v;
+  }
+
+  pdfDb(modo, fn) {
+    if (typeof indexedDB === 'undefined') {
+      const m = this._pdfMem || (this._pdfMem = new Map());
+      const r = fn({ put: (v, k) => m.set(k, v), get: k => ({ result: m.get(k) }), delete: k => m.delete(k) });
+      return Promise.resolve(r && r.result);
+    }
+    return new Promise((ok, ko) => {
+      const rq = indexedDB.open('myiva', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('ddjj');
+      rq.onerror = () => ko(rq.error);
+      rq.onsuccess = () => {
+        const tx = rq.result.transaction('ddjj', modo), r = fn(tx.objectStore('ddjj'));
+        tx.oncomplete = () => { ok(r && r.result); rq.result.close(); };
+        tx.onerror = () => ko(tx.error);
+      };
+    });
+  }
+
+  async adjuntarDJ(e, r, id) {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const err = (t, d) => this.setState({ toast: { kind: 'err', t, d } });
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') return err('El archivo no es un PDF', f.name + ' no es un PDF. Subí la declaración jurada en PDF, tal como la descarga ARCA.');
+    if (bytes.length > 10 * 1024 * 1024) return err('El PDF es muy grande', f.name + ' supera los 10 MB.');
+    let per = '';
+    try { per = this.parseDJ(f.name, await this.textoPdf(bytes)).per; } catch (x) { }
+    if (per && per !== r.per) return err('El PDF es de otro período', f.name + ' corresponde al período ' + per + ' y esta liquidación es del ' + r.per + '.');
+    try {
+      await this.pdfDb('readwrite', st => st.put(new Blob([bytes], { type: 'application/pdf' }), id));
+    } catch (x) {
+      return err('No se pudo guardar el PDF', String(x && x.message || x));
+    }
+    const u = this.me().short, meta = { name: f.name, kb: Math.max(1, Math.round(bytes.length / 1024)), fecha: this.ahora(), u };
+    this.setState(st => ({
+      ddjjPdf: this.lsSet('myiva.ddjjPdf', Object.assign({}, st.ddjjPdf, { [id]: meta })),
+      audExtra: [{ f: meta.fecha, u, a: 'DDJJ adjuntada', c: r.cliente, p: r.per, r: 'Sec. ' + r.seq + ' · ' + f.name, ip: '190.15.44.12' }].concat(st.audExtra),
+      toast: { kind: per ? 'ok' : 'warn', t: 'Declaración jurada adjuntada', d: f.name + ' quedó guardada junto a ' + r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq) + '.' + (per ? '' : ' No se pudo leer el período del PDF: verificá que sea el correcto.') }
+    }));
+  }
+
+  async verDJ(id) {
+    const meta = this.state.ddjjPdf[id];
+    try {
+      const b = await this.pdfDb('readonly', st => st.get(id));
+      if (!b) throw new Error('El archivo no está guardado en este navegador. Volvé a adjuntarlo.');
+      const url = URL.createObjectURL(b);
+      if (!window.open(url, '_blank')) {
+        const a = document.createElement('a');
+        a.href = url; a.download = meta ? meta.name : 'DDJJ.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (x) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo abrir la DDJJ', d: String(x && x.message || x) } });
+    }
+  }
+
+  quitarDJ(r, id, conf = true) {
+    const meta = this.state.ddjjPdf[id];
+    if (!meta) return;
+    if (conf && typeof window !== 'undefined' && window.confirm && !window.confirm('¿Quitar ' + meta.name + ' de ' + r.cliente + ' · ' + r.per + '?')) return;
+    this.pdfDb('readwrite', st => st.delete(id)).catch(() => { });
+    this.setState(st => {
+      const d = Object.assign({}, st.ddjjPdf); delete d[id];
+      return {
+        ddjjPdf: this.lsSet('myiva.ddjjPdf', d),
+        audExtra: conf ? [{ f: this.ahora(), u: this.me().short, a: 'DDJJ quitada', c: r.cliente, p: r.per, r: 'Sec. ' + r.seq + ' · ' + meta.name, ip: '190.15.44.12' }].concat(st.audExtra) : st.audExtra,
+        toast: conf ? { kind: 'ok', t: 'DDJJ quitada', d: meta.name + ' ya no está adjunta a ' + r.cliente + ' · ' + r.per + '.' } : st.toast
+      };
+    });
   }
 
   runGrupos(run) {
@@ -4236,7 +4325,11 @@ class Component extends DCLogic {
         const eg = r.eg || [], n = eg.reduce((a, g) => a + g.errs.length, 0), id = rid(r);
         const le = this.liqEstado(r), label = r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq);
         const puedeBorrar = le !== 'Cerrada' || histAdmin;
+        const pdf = s.ddjjPdf[id];
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
+          pdfTiene: !!pdf, pdfPuede: !pdf && r.df !== '—', pdfNo: !pdf && r.df === '—', pdfQuitable: !!pdf && puedeBorrar,
+          pdfTip: pdf ? pdf.name + ' · ' + pdf.kb + ' KB · adjuntada por ' + pdf.u + ' el ' + pdf.fecha : '',
+          pdfSubir: (e) => this.adjuntarDJ(e, r, id), pdfVer: () => this.verDJ(id), pdfQuitar: () => this.quitarDJ(r, id),
           le: le ? E[le] : { label: '—', bg: 'transparent', fg: '#9AA9B7', bd: 'transparent' },
           puedeCerrar: le === 'Borrador', puedeBorrar,
           cerrar: () => this.setState({ liqCierre: { id, label, cliente: r.cliente, per: r.per, seq: r.seq } }),
@@ -4471,6 +4564,7 @@ class Component extends DCLogic {
         if (!d) return;
         if (d.le === 'Cerrada' && !histAdmin) return this.setState({ ddjjDel: null, toast: { kind: 'err', t: 'Liquidación cerrada', d: 'Sólo un administrador puede eliminar una liquidación cerrada.' } });
         if (motivo.length < 5) return this.setState({ toast: { kind: 'warn', t: 'Indicá el motivo', d: 'El motivo del borrado queda registrado en auditoría.' } });
+        this.quitarDJ(d, d.id, false);
         this.setState(st => {
           const hs = Object.assign({}, st.histSel); delete hs[d.id];
           return {
