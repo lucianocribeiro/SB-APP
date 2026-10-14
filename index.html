@@ -520,13 +520,44 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cliente</div>
 <select value="{{ liqCli }}" onChange="{{ liqCliSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
 </div>
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mes</div>
-<select value="{{ liqMes }}" onChange="{{ liqMesSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqMesOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
+<div style="grid-column:span 2;position:relative">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Período</div>
+<div onClick="{{ perToggle }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 11px;border:1px solid {{ perBd }};border-radius:6px;font:400 13.5px 'Open Sans';background:#fff;cursor:pointer;user-select:none" style-hover="border-color:#2F80B7">
+<span>{{ perLabel }}</span>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
 </div>
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Año</div>
-<select value="{{ liqAnio }}" onChange="{{ liqAnioSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqAnioOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
+<sc-if value="{{ perOpen }}">
+<div onClick="{{ perClose }}" style="position:fixed;inset:0;z-index:40"></div>
+<div style="position:absolute;top:calc(100% + 6px);left:0;width:320px;max-width:92vw;background:#fff;border:1px solid #E3E8EE;border-radius:6px;box-shadow:0 8px 28px rgba(27,39,51,.2);z-index:41;padding:14px 14px 12px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<div style="font:600 15px 'Open Sans';color:#1B2733">{{ perVista }}</div>
+<div style="display:flex;gap:4px">
+<div onClick="{{ perPrev }}" title="Año anterior" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;opacity:{{ perPrevOp }}" style-hover="background:#F5F7FA"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B2733" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg></div>
+<div onClick="{{ perNext }}" title="Año siguiente" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;opacity:{{ perNextOp }}" style-hover="background:#F5F7FA"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B2733" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+<sc-for list="{{ perMeses }}" as="m" hint-placeholder-count="12">
+<sc-if value="{{ m.ok }}">
+<div onClick="{{ m.go }}" style="padding:13px 0 9px;text-align:center;border-radius:6px;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};border:1px solid {{ m.bd }}" style-hover="border-color:#2F80B7">
+<div style="font:600 13px/1 'Open Sans'">{{ m.label }}</div>
+<div style="width:4px;height:4px;border-radius:2px;margin:5px auto 0;background:{{ m.dot }}"></div>
+</div>
+</sc-if>
+<sc-if value="{{ m.no }}">
+<div title="Período futuro" style="padding:13px 0 9px;text-align:center;border-radius:6px;color:#B5C0CB;border:1px solid transparent;cursor:not-allowed">
+<div style="font:600 13px/1 'Open Sans'">{{ m.label }}</div>
+<div style="width:4px;height:4px;margin:5px auto 0"></div>
+</div>
+</sc-if>
+</sc-for>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #E3E8EE;font:400 12px 'Open Sans';color:#5A6B7B">
+<span>El punto marca el mes actual</span>
+<span onClick="{{ perUltimo }}" style="font:600 12px 'Open Sans';color:#2F80B7;cursor:pointer" style-hover="color:#14395C;text-decoration:underline">Último período cerrado</span>
+</div>
+</div>
+</sc-if>
 </div>
 </div>
 <div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
@@ -2351,7 +2382,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026',
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
@@ -2820,6 +2851,32 @@ class Component extends DCLogic {
   guardarComps(comps) {
     try { localStorage.setItem('myiva.comps', JSON.stringify(comps)); } catch (e) { }
     return comps;
+  }
+
+  periodoPicker(s) {
+    const MES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const hoy = new Date(), anioHoy = hoy.getFullYear(), mesHoy = hoy.getMonth() + 1, anioMin = anioHoy - 5;
+    const vista = s.perVista || +s.liqAnio, mm = n => String(n).padStart(2, '0');
+    const elegir = (mes, anio) => this.setState({ liqMes: mm(mes), liqAnio: String(anio), perOpen: false, seqElegida: null });
+    return {
+      perLabel: s.liqMes + ' — ' + MES[+s.liqMes - 1] + ' ' + s.liqAnio,
+      perOpen: s.perOpen, perBd: s.perOpen ? '#2F80B7' : '#E3E8EE', perVista: String(vista),
+      perToggle: () => this.setState(st => ({ perOpen: !st.perOpen, perVista: +st.liqAnio })),
+      perClose: () => this.setState({ perOpen: false }),
+      perPrev: () => { if (vista > anioMin) this.setState({ perVista: vista - 1 }); },
+      perNext: () => { if (vista < anioHoy) this.setState({ perVista: vista + 1 }); },
+      perPrevOp: vista > anioMin ? 1 : .3, perNextOp: vista < anioHoy ? 1 : .3,
+      perUltimo: () => (mesHoy === 1 ? elegir(12, anioHoy - 1) : elegir(mesHoy - 1, anioHoy)),
+      perMeses: MES.map((n, i) => {
+        const sel = vista === +s.liqAnio && mm(i + 1) === s.liqMes, esHoy = vista === anioHoy && i + 1 === mesHoy;
+        const ok = vista < anioHoy || i + 1 <= mesHoy;
+        return {
+          label: n.slice(0, 3), ok, no: !ok, go: () => elegir(i + 1, vista),
+          bg: sel ? '#14395C' : '#fff', fg: sel ? '#fff' : (esHoy ? '#2F80B7' : '#1B2733'), bd: sel ? '#14395C' : '#EEF1F4',
+          dot: esHoy ? (sel ? '#fff' : '#2F80B7') : 'transparent'
+        };
+      })
+    };
   }
 
   compSum(cliente, per, seq) {
@@ -4513,11 +4570,7 @@ class Component extends DCLogic {
       }),
       liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
-      liqMes: s.liqMes, liqMesSet: (e) => this.setState({ liqMes: e.target.value }),
-      liqMesOpts: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-        .map((m, i) => { const v = String(i + 1).padStart(2, '0'); return { v, label: v + ' — ' + m }; }),
-      liqAnio: s.liqAnio, liqAnioSet: (e) => this.setState({ liqAnio: e.target.value }),
-      liqAnioOpts: Array.from({ length: 6 }, (_, i) => ({ v: String(new Date().getFullYear() - i) })),
+      ...this.periodoPicker(s),
       seqHead: cli + ' · 08/2026 ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
       seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
       seqNextTxt: seqSel === null ? 'secuencia a elegir' : this.seqTxt(seqSel),
