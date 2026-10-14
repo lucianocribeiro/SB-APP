@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -46,41 +47,28 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ loginErr }}">
 <div style="display:flex;gap:10px;align-items:flex-start;margin-top:22px;padding:11px 13px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px">
 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg>
-<div style="font:400 13px/1.45 'Open Sans';color:#B3261E">Usuario o contraseña incorrectos. Te quedan 4 intentos antes del bloqueo.</div>
+<div style="font:400 13px/1.45 'Open Sans';color:#B3261E">{{ loginErrTxt }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ loginOkHay }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:22px;padding:11px 13px;background:#E8F3EE;border:1px solid #C7E3D6;border-radius:6px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M4 6h16v12H4zM4 7l8 6 8-6"></path></svg>
+<div style="font:400 13px/1.45 'Open Sans';color:#2E7D5B">{{ loginOkTxt }}</div>
 </div>
 </sc-if>
 <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
 <div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Usuario</div>
-<input value="admin@blasco.com.ar" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Mail</div>
+<input type="email" autocomplete="username" placeholder="nombre@blasco.com.ar" value="{{ loginMail }}" onChange="{{ loginMailSet }}" onKeyDown="{{ loginKey }}" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Contraseña</div>
-<input type="password" value="123456789" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
+<input type="password" autocomplete="current-password" value="{{ loginPw }}" onChange="{{ loginPwSet }}" onKeyDown="{{ loginKey }}" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';color:#1B2733;background:#fff">
 </div>
-<div style="display:flex;align-items:center;justify-content:space-between">
-<label style="display:flex;align-items:center;gap:8px;font:400 13px 'Open Sans';color:#5A6B7B;cursor:pointer"><input type="checkbox" defaultChecked style="accent-color:#14395C;width:15px;height:15px">Recordarme</label>
-<a href="#1a" style="font:400 13px 'Open Sans'">Olvidé mi contraseña</a>
+<div style="display:flex;align-items:center;justify-content:flex-end">
+<span onClick="{{ olvidePw }}" style="font:400 13px 'Open Sans';color:#2F80B7;cursor:pointer" style-hover="color:#14395C">Olvidé mi contraseña</span>
 </div>
-<button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45;border-color:#0E2A45">Ingresar</button>
-<button onClick="{{ toggleLoginErr }}" style="width:100%;padding:9px 16px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:400 12px 'Open Sans';cursor:pointer" style-hover="color:#14395C;border-color:#14395C">Ver estado de error de credenciales</button>
-</div>
-<div style="margin-top:24px;padding-top:18px;border-top:1px solid #E3E8EE">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Acceso rápido por rol</div>
-<div style="font:400 12px/1.4 'Open Sans';color:#9AA9B7;margin-top:5px">Ingresá directamente como cada perfil del estudio.</div>
-<div onClick="{{ accesoAdmin }}" style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 11px;border:1px solid #14395C;border-radius:6px;cursor:pointer;background:#F4F9FD" style-hover="background:#E6EDF4">
-<div style="width:30px;height:30px;flex:none;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">AD</div>
-<div style="flex:1;min-width:0"><div style="font:600 13px 'Open Sans';color:#14395C">Administrador</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B">Todos los clientes · configuración y auditoría</div></div>
-<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-<sc-for list="{{ accesoUsrs }}" as="u" hint-placeholder-count="5">
-<div onClick="{{ u.go }}" title="{{ u.mail }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#14395C;background:#F4F9FD">
-<div style="width:28px;height:28px;flex:none;border-radius:6px;background:#E6EDF4;color:#14395C;display:flex;align-items:center;justify-content:center;font:600 11px 'Open Sans'">{{ u.ini }}</div>
-<div style="min-width:0"><div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ u.nombre }}</div><div style="font:400 11px 'Open Sans';color:#5A6B7B">Usuario · {{ u.cant }}</div></div>
-</div>
-</sc-for>
-</div>
+<button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer;opacity:{{ loginBtnOp }}" style-hover="background:#0E2A45;border-color:#0E2A45">{{ loginBtn }}</button>
 </div>
 </div>
 </div>
@@ -157,10 +145,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="font:600 13px/1 'Open Sans';color:#14395C">{{ liqCli }}</span>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
 </div>
+<sc-if value="{{ rolToggle }}">
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div onClick="{{ setAdmin }}" style="padding:7px 11px;font:600 12px/1 'Open Sans';cursor:pointer;background:{{ rolAdminBg }};color:{{ rolAdminFg }}">Admin</div>
 <div onClick="{{ setEmpleado }}" style="padding:7px 11px;font:600 12px/1 'Open Sans';cursor:pointer;border-left:1px solid #E3E8EE;background:{{ rolEmpBg }};color:{{ rolEmpFg }}">Usuario</div>
 </div>
+</sc-if>
 <div onClick="{{ toggleNotif }}" style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="1.8" stroke-linecap="round"><path d="M18 15V10a6 6 0 10-12 0v5l-2 3h16zM10 21h4"></path></svg>
 <span style="position:absolute;top:4px;right:5px;min-width:15px;height:15px;padding:0 3px;background:#B3261E;color:#fff;border-radius:8px;font:600 9.5px/15px 'Open Sans';text-align:center">3</span>
@@ -2110,7 +2100,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="width:52px;height:52px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px 'Open Sans'">{{ meIni }}</div>
 <div>
 <div style="font:600 17px 'Open Sans'">{{ meFull }}</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ rolLabel }} · último acceso 04/09/2026 14:20</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ rolLabel }} · {{ meAcceso }}</div>
 </div>
 </div>
 <div style="height:1px;background:#E3E8EE;margin:18px 0"></div>
@@ -2128,20 +2118,20 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Actual</div>
-<input type="password" value="12345678" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input type="password" autocomplete="current-password" disabled="{{ pwRecup }}" value="{{ pwAct }}" onChange="{{ pwActSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Nueva</div>
-<input type="password" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input type="password" autocomplete="new-password" value="{{ pwNue }}" onChange="{{ pwNueSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Repetir</div>
-<input type="password" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input type="password" autocomplete="new-password" value="{{ pwRep }}" onChange="{{ pwRepSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 </div>
 <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE;gap:10px">
 <button onClick="{{ go.inicio }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ toastXls }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Guardar</button>
+<button onClick="{{ cambiarPw }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Guardar</button>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
@@ -2463,6 +2453,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
+    loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
+    pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
@@ -2536,6 +2528,312 @@ class Component extends DCLogic {
     if (p.rolInicial === 'Usuario' || p.rolInicial === 'Empleado') st.role = 'empleado';
     if (p.sidebarColapsado) st.collapsed = true;
     if (Object.keys(st).length) this.setState(st);
+    const sb = this.sb();
+    if (!sb || this._authIni) return;
+    this._authIni = true;
+    sb.auth.getSession()
+      .then(({ data }) => { const u = data && data.session && data.session.user; return u ? this.entrar(u) : this.setState({ sesionChk: false }); })
+      .catch(() => this.setState({ sesionChk: false }));
+  }
+
+  componentDidUpdate() { this.sincronizar(); }
+
+  sb() {
+    if (this._sb !== undefined) return this._sb;
+    const w = typeof window !== 'undefined' ? window : null, lib = w && w.supabase;
+    this._recup = !!w && /type=recovery|recuperar=1/.test(w.location.hash + w.location.search);
+    this._sb = w && w.__myivaSb ? w.__myivaSb : (lib && lib.createClient
+      ? (w.__myivaSb = lib.createClient('https://ilazlcianywbzyisinlh.supabase.co', 'sb_publishable_yyAyE8SIYpaSAgmkZZGbPg_X4tioOxX'))
+      : null);
+    return this._sb;
+  }
+
+  async login() {
+    const sb = this.sb(), s = this.state;
+    if (!sb) {
+      if (typeof window === 'undefined') return this.setState({ screen: 'inicio' });
+      return this.setState({ loginErr: true, loginErrTxt: 'No se pudo conectar con el servidor. Revisá tu conexión y recargá la página.' });
+    }
+    if (s.loginBusy || s.sesionChk) return;
+    const email = s.loginMail.trim().toLowerCase();
+    if (!email || !s.loginPw) return this.setState({ loginErr: true, loginErrTxt: 'Ingresá tu mail y tu contraseña.', loginOk: '' });
+    this.setState({ loginBusy: true, loginErr: false, loginOk: '' });
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: s.loginPw });
+      if (error) {
+        const m = String(error.message || '');
+        return this.setState({
+          loginBusy: false, loginErr: true,
+          loginErrTxt: /invalid/i.test(m) ? 'Mail o contraseña incorrectos.' : (/confirm/i.test(m) ? 'Tu mail todavía no está confirmado. Pedile al administrador que lo confirme.' : 'No se pudo ingresar: ' + m)
+        });
+      }
+      await this.entrar(data.user);
+    } catch (e) {
+      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo conectar con el servidor: ' + String(e && e.message || e) });
+    }
+  }
+
+  async olvidePw() {
+    const sb = this.sb(), email = this.state.loginMail.trim().toLowerCase();
+    if (!sb) return;
+    if (!email) return this.setState({ loginErr: true, loginErrTxt: 'Escribí tu mail arriba y volvé a tocar "Olvidé mi contraseña".', loginOk: '' });
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname + '?recuperar=1' });
+    this.setState(error
+      ? { loginErr: true, loginErrTxt: 'No se pudo enviar el mail: ' + error.message, loginOk: '' }
+      : { loginErr: false, loginOk: 'Si ' + email + ' tiene usuario en MyIVA, te llega un mail para elegir una contraseña nueva.' });
+  }
+
+  async salir() {
+    const sb = this.sb();
+    if (!sb || !this._user) return this.setState({ screen: 'login', notif: false });
+    try { await sb.auth.signOut(); } catch (e) { }
+    location.replace(location.pathname);
+  }
+
+  async cambiarPw() {
+    const sb = this.sb(), s = this.state, err = (t, d) => this.setState({ toast: { kind: 'err', t, d } });
+    if (!sb || !this._user) return this.setState({ toast: { kind: 'ok', t: 'Perfil guardado', d: 'Los cambios quedaron guardados.' } });
+    if (s.pwNue.length < 6) return err('Contraseña muy corta', 'La contraseña nueva tiene que tener al menos 6 caracteres.');
+    if (s.pwNue !== s.pwRep) return err('Las contraseñas no coinciden', 'Escribí la misma contraseña nueva en "Nueva" y en "Repetir".');
+    if (!s.pwRecup) {
+      if (!s.pwAct) return err('Falta la contraseña actual', 'Escribí tu contraseña actual para poder cambiarla.');
+      const r = await sb.auth.signInWithPassword({ email: this._user.email, password: s.pwAct });
+      if (r.error) return err('La contraseña actual no es correcta', 'Revisala y volvé a intentar.');
+    }
+    const { error } = await sb.auth.updateUser({ password: s.pwNue });
+    if (error) return err('No se pudo cambiar la contraseña', error.message);
+    this.setState({ pwAct: '', pwNue: '', pwRep: '', pwRecup: false, toast: { kind: 'ok', t: 'Contraseña actualizada', d: 'La próxima vez ingresá con la contraseña nueva.' } });
+  }
+
+  async entrar(user) {
+    const sb = this.sb();
+    try {
+      const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', user.id).maybeSingle();
+      if (error) throw error;
+      if (!perfil || !perfil.activo) {
+        await sb.auth.signOut();
+        return this.setState({
+          sesionChk: false, loginBusy: false, loginErr: true,
+          loginErrTxt: perfil ? 'Tu usuario está desactivado. Consultá con el administrador.' : 'Tu usuario no tiene perfil en MyIVA. Consultá con el administrador.'
+        });
+      }
+      this._user = user;
+      const datos = await this.cargarDatos(perfil), recup = this._recup;
+      this._recup = false;
+      if (recup) history.replaceState(null, '', location.pathname);
+      this.setState(Object.assign(datos, {
+        perfil, role: perfil.rol === 'admin' ? 'admin' : 'empleado', usr: perfil.nombre, acceso: user.last_sign_in_at || null,
+        screen: recup ? 'perfil' : 'inicio', pwRecup: recup, sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '',
+        toast: recup ? { kind: 'info', t: 'Elegí tu contraseña nueva', d: 'Escribila en "Nueva" y en "Repetir", y tocá Guardar.' } : null
+      }));
+    } catch (e) {
+      this._user = null;
+      this._sync = null;
+      this.setState({ sesionChk: false, loginBusy: false, loginErr: true, loginErrTxt: 'No se pudieron cargar los datos: ' + String(e && e.message || e) });
+    }
+  }
+
+  async cargarDatos(perfil) {
+    const sb = this.sb(), s = this.state, q = (p) => p.then(r => { if (r.error) throw r.error; return r.data || []; });
+    const [perfiles, clientes, liqs, cruces, comps, pdfs, aud, cfg] = await Promise.all([
+      q(sb.from('perfiles').select('id,email,nombre,rol,activo')),
+      q(sb.from('clientes').select('nombre,usuario').order('nombre')),
+      q(sb.from('liquidaciones').select('*').order('procesada', { ascending: false }).limit(1000)),
+      q(sb.from('cruces').select('*').order('fecha', { ascending: false }).limit(40)),
+      q(sb.from('compensaciones').select('*').order('fecha', { ascending: false })),
+      q(sb.from('ddjj_pdf').select('*')),
+      perfil.rol === 'admin' ? q(sb.from('auditoria').select('*').order('fecha', { ascending: false }).limit(300)) : [],
+      q(sb.from('config').select('*'))
+    ]);
+    this._perfiles = perfiles;
+    const hayLocal = (k) => { try { return localStorage.getItem(k) !== null; } catch (e) { return false; } };
+    const z = { audSet: new WeakSet() };
+
+    let cart = this.CARTERA, pend = s.cartPend;
+    if (clientes.length) {
+      const m = new Map(perfiles.filter(p => p.rol === 'empleado' && p.activo).map(p => [p.nombre, []]));
+      pend = [];
+      clientes.forEach(c => {
+        if (!c.usuario) return pend.push(c.nombre);
+        if (!m.has(c.usuario)) m.set(c.usuario, []);
+        m.get(c.usuario).push(c.nombre);
+      });
+      cart = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+      this.CARTERA = this.lsSet('myiva.cartera', cart);
+      this._demo = null;
+      this.lsSet('myiva.cartPend', pend);
+    }
+    Object.assign(z, { cart: clientes.length ? cart : null, pend, mapa: clientes.length ? this.cartMapa(cart, pend) : {} });
+
+    const liqEst = {}, bor = {}, reales = [];
+    liqs.forEach(r => {
+      if (r.estado === 'Cerrada') liqEst[r.id] = 'Cerrada';
+      if (r.borrada) bor[r.id] = 1;
+      if (!(r.registros > 0)) return;
+      const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
+      reales.push({
+        id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
+        user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
+      });
+    });
+    const sinLiqs = !liqs.length;
+    const liqsDb = sinLiqs ? s.liqsDb : reales, le = sinLiqs ? s.liqEst : liqEst, bo = sinLiqs ? s.ddjjBorradas : bor;
+    Object.assign(z, { liqsDb: sinLiqs ? [] : liqsDb, liqEst: sinLiqs ? {} : le, bor: sinLiqs ? {} : bo });
+
+    const runsDb = cruces.map(r => ({ id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: this.fechaDe(r.fecha), user: r.usuario || '—', liq: r.liquidacion, cruces: r.cruces || [] }));
+    const runsLocal = !cruces.length && s.cruRuns.length > 0, cruRuns = runsLocal ? s.cruRuns : runsDb;
+    z.cruRuns = runsLocal ? [] : cruRuns;
+
+    const compsDb = comps.map(c => ({ id: c.id, cliente: c.cliente, per: c.periodo, seq: c.secuencia, monto: Number(c.monto), fecha: this.fechaDe(c.fecha), user: c.usuario || '—' }));
+    const compsLocal = !comps.length && hayLocal('myiva.comps'), compsN = compsLocal ? s.comps : compsDb;
+    z.comps = compsLocal ? [] : compsN;
+
+    const ddjjPdf = {};
+    pdfs.forEach(p => { ddjjPdf[p.liquidacion_id] = { name: p.nombre, kb: p.kb, fecha: this.fechaDe(p.fecha), u: p.usuario || '—', ruta: p.ruta }; });
+    z.pdf = ddjjPdf;
+
+    const audExtra = aud.map(a => ({ f: this.fechaDe(a.fecha), u: a.usuario || '—', a: a.accion, c: a.cliente || '—', p: a.periodo || '—', r: a.resultado || '', ip: a.ip || '—' }));
+    audExtra.forEach(e => z.audSet.add(e));
+    z.aud = audExtra;
+
+    let apoc = s.apoc;
+    const ca = cfg.find(c => c.clave === 'apoc');
+    if (ca && ca.valor && ca.valor.total) {
+      apoc = Object.assign({}, s.apoc, ca.valor, { real: true, v: (s.apoc.v || 0) + 1 });
+      let lm = null;
+      try { lm = JSON.parse(localStorage.getItem('myiva.apoc.meta') || 'null'); } catch (e) { }
+      if (!(lm && lm.fecha === ca.valor.fecha && hayLocal('myiva.apoc.data'))) {
+        this._apocMap = null;
+        setTimeout(() => this.apocBajar(ca.valor), 0);
+      }
+    }
+
+    this._sync = z;
+    return { cartPend: pend, cartV: (s.cartV || 0) + 1, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
+  }
+
+  cartMapa(cart, pend) {
+    const m = {};
+    (pend || []).forEach(c => { m[c] = null; });
+    cart.forEach(([u, cs]) => cs.forEach(c => { m[c] = u; }));
+    return m;
+  }
+
+  isoDe(f) {
+    const m = String(f || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+    return (m ? new Date(+m[3], +m[2] - 1, +m[1], m[4] ? +m[4] : 12, m[5] ? +m[5] : 0) : new Date()).toISOString();
+  }
+
+  fechaDe(iso, hora = true) {
+    const d = new Date(iso), p = (n) => String(n).padStart(2, '0');
+    if (isNaN(d)) return '';
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + (hora ? ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) : '');
+  }
+
+  pdfRuta(id) { return this.fold(id).replace(/[^a-z0-9]+/g, '_') + '.pdf'; }
+
+  db(p, que) {
+    return Promise.resolve(p).then(r => { if (r && r.error) throw r.error; return r && r.data; }).catch(e => {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar en la base de datos', d: que + ': ' + String(e && e.message || e) } });
+    });
+  }
+
+  sincronizar() {
+    const sb = this.sb(), z = this._sync, s = this.state;
+    if (!sb || !z || !this._user) return;
+    const me = this.me().short;
+    const nuevos = (cur, prev) => { const v = new Set(prev || []); return (cur || []).filter(x => !v.has(x)); };
+    const cambios = (cur, prev) => [...new Set(Object.keys(cur || {}).concat(Object.keys(prev || {})))].filter(k => (cur || {})[k] !== (prev || {})[k]);
+    const partes = (id) => { const [cliente, periodo, seq] = id.split('|'); return { id, cliente, periodo, secuencia: Number(seq) || 0 }; };
+
+    if (s.role === 'admin' && (this.CARTERA !== z.cart || s.cartPend !== z.pend)) {
+      const m = this.cartMapa(this.CARTERA, s.cartPend), a = z.mapa;
+      const up = Object.keys(m).filter(c => !(c in a) || a[c] !== m[c]).map(nombre => ({ nombre, usuario: m[nombre] }));
+      const del = Object.keys(a).filter(c => !(c in m));
+      if (up.length) this.db(sb.from('clientes').upsert(up, { onConflict: 'nombre' }), 'Clientes');
+      if (del.length) this.db(sb.from('clientes').delete().in('nombre', del), 'Clientes');
+      Object.assign(z, { cart: this.CARTERA, pend: s.cartPend, mapa: m });
+    }
+    if (s.liqsDb !== z.liqsDb) {
+      const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => ({
+        id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
+        debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [], estado: 'Borrador', borrada: false
+      }));
+      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows), 'Liquidación');
+      z.liqsDb = s.liqsDb;
+    }
+    if (s.liqEst !== z.liqEst) {
+      const rows = cambios(s.liqEst, z.liqEst).map(k => Object.assign(partes(k), { estado: s.liqEst[k] === 'Cerrada' ? 'Cerrada' : 'Borrador' }));
+      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows), 'Estado de la liquidación');
+      z.liqEst = s.liqEst;
+    }
+    if (s.ddjjBorradas !== z.bor) {
+      const rows = cambios(s.ddjjBorradas, z.bor).map(k => Object.assign(partes(k), { borrada: !!s.ddjjBorradas[k] }));
+      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows), 'Liquidación eliminada');
+      z.bor = s.ddjjBorradas;
+    }
+    if (s.cruRuns !== z.cruRuns) {
+      const rows = nuevos(s.cruRuns, z.cruRuns).map(r => ({
+        id: String(r.id), cliente: r.cliente, periodo: r.per, secuencia: Number(r.seq) || 0, usuario: r.user, fecha: this.isoDe(r.fecha), liquidacion: !!r.liq, cruces: r.cruces || []
+      }));
+      if (rows.length) this.db(sb.from('cruces').upsert(rows), 'Cruce');
+      z.cruRuns = s.cruRuns;
+    }
+    if (s.comps !== z.comps) {
+      const rows = nuevos(s.comps, z.comps).map(c => ({ id: String(c.id), cliente: c.cliente, periodo: c.per, secuencia: Number(c.seq) || 0, monto: c.monto, usuario: c.user, fecha: this.isoDe(c.fecha) }));
+      if (rows.length) this.db(sb.from('compensaciones').upsert(rows), 'Compensación');
+      z.comps = s.comps;
+    }
+    if (s.ddjjPdf !== z.pdf) {
+      const ks = cambios(s.ddjjPdf, z.pdf), up = ks.filter(k => s.ddjjPdf[k]), del = ks.filter(k => !s.ddjjPdf[k]);
+      if (up.length) this.db(sb.from('ddjj_pdf').upsert(up.map(k => {
+        const m = s.ddjjPdf[k];
+        return { liquidacion_id: k, nombre: m.name, kb: m.kb, ruta: m.ruta || this.pdfRuta(k), usuario: m.u, fecha: this.isoDe(m.fecha) };
+      })), 'DDJJ');
+      if (del.length) {
+        this.db(sb.from('ddjj_pdf').delete().in('liquidacion_id', del), 'DDJJ');
+        sb.storage.from('ddjj').remove(del.map(k => (z.pdf[k] && z.pdf[k].ruta) || this.pdfRuta(k))).catch(() => { });
+      }
+      z.pdf = s.ddjjPdf;
+    }
+    if (s.audExtra !== z.aud) {
+      const rows = s.audExtra.filter(e => !z.audSet.has(e)).reverse()
+        .map(e => ({ fecha: this.isoDe(e.f), usuario: me, accion: e.a, cliente: e.c, periodo: e.p, resultado: e.r }));
+      s.audExtra.forEach(e => z.audSet.add(e));
+      if (rows.length) this.db(sb.from('auditoria').insert(rows), 'Auditoría');
+      z.aud = s.audExtra;
+    }
+  }
+
+  async apocBajar(meta) {
+    const sb = this.sb(), filas = [];
+    for (let i = 0; ; i += 1000) {
+      const { data, error } = await sb.from('apocrifos').select('cuit,fecha_condicion,fecha_publicacion').order('cuit').range(i, i + 999);
+      if (error) return this.db(Promise.resolve({ error }), 'Base APOC');
+      filas.push(...data);
+      if (data.length < 1000) break;
+    }
+    this._apocMap = new Map(filas.map(r => [r.cuit, [r.fecha_condicion || '', r.fecha_publicacion || '']]));
+    try {
+      localStorage.setItem('myiva.apoc.data', filas.map(r => r.cuit + ',' + (r.fecha_condicion || '') + ',' + (r.fecha_publicacion || '')).join('\n'));
+      localStorage.setItem('myiva.apoc.meta', JSON.stringify(meta));
+    } catch (e) { }
+    this.setState(st => ({ apoc: Object.assign({}, st.apoc, { v: (st.apoc.v || 0) + 1 }) }));
+  }
+
+  async apocSubir(map, meta) {
+    const sb = this.sb();
+    if (!sb || !this._user) return;
+    const filas = [...map.entries()].map(([cuit, [fc, fp]]) => ({ cuit, fecha_condicion: fc || null, fecha_publicacion: fp || null }));
+    const ok = (r) => { if (r.error) throw r.error; };
+    try {
+      ok(await sb.from('apocrifos').delete().neq('cuit', ''));
+      for (let i = 0; i < filas.length; i += 1000) ok(await sb.from('apocrifos').insert(filas.slice(i, i + 1000)));
+      ok(await sb.from('config').upsert({ clave: 'apoc', valor: meta, actualizado: new Date().toISOString() }));
+      this.setState({ toast: { kind: 'ok', t: 'Base APOC guardada en la base de datos', d: filas.length + ' CUITs disponibles para todo el estudio.' } });
+    } catch (e) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar la Base APOC en la base de datos', d: String(e && e.message || e) } });
+    }
   }
 
   nav(key) {
@@ -2701,6 +2999,8 @@ class Component extends DCLogic {
   MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
 
   mailDe(nombre) {
+    const pf = (this._perfiles || []).find(p => p.nombre === nombre);
+    if (pf) return pf.email;
     return this.MAILS[nombre] || nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() + '@blasco.com.ar';
   }
 
@@ -2873,6 +3173,8 @@ class Component extends DCLogic {
   }
 
   me() {
+    const pf = this.state.perfil;
+    if (pf) return { ini: this.fold(pf.nombre).replace(/[^a-z]/g, '').slice(0, 2).toUpperCase() || 'US', short: pf.nombre, full: pf.nombre, mail: pf.email };
     const u = this.state.usr || 'Julieta';
     return this.state.role === 'admin'
       ? { ini: 'AD', short: 'Administrador', full: 'Administrador', mail: 'admin@blasco.com.ar' }
@@ -2966,12 +3268,17 @@ class Component extends DCLogic {
     let per = '';
     try { per = this.parseDJ(f.name, await this.textoPdf(bytes)).per; } catch (x) { }
     if (per && per !== r.per) return err('El PDF es de otro período', f.name + ' corresponde al período ' + per + ' y esta liquidación es del ' + r.per + '.');
+    const ruta = this.pdfRuta(id), sb = this.sb();
     try {
+      if (sb && this._user) {
+        const up = await sb.storage.from('ddjj').upload(ruta, new Blob([bytes], { type: 'application/pdf' }), { upsert: true, contentType: 'application/pdf' });
+        if (up.error) throw up.error;
+      }
       await this.pdfDb('readwrite', st => st.put(new Blob([bytes], { type: 'application/pdf' }), id));
     } catch (x) {
       return err('No se pudo guardar el PDF', String(x && x.message || x));
     }
-    const u = this.me().short, meta = { name: f.name, kb: Math.max(1, Math.round(bytes.length / 1024)), fecha: this.ahora(), u };
+    const u = this.me().short, meta = { name: f.name, kb: Math.max(1, Math.round(bytes.length / 1024)), fecha: this.ahora(), u, ruta };
     this.setState(st => ({
       ddjjPdf: this.lsSet('myiva.ddjjPdf', Object.assign({}, st.ddjjPdf, { [id]: meta })),
       audExtra: [{ f: meta.fecha, u, a: 'DDJJ adjuntada', c: r.cliente, p: r.per, r: 'Sec. ' + r.seq + ' · ' + f.name, ip: '190.15.44.12' }].concat(st.audExtra),
@@ -2982,7 +3289,13 @@ class Component extends DCLogic {
   async verDJ(id) {
     const meta = this.state.ddjjPdf[id];
     try {
-      const b = await this.pdfDb('readonly', st => st.get(id));
+      const sb = this.sb();
+      let b = null;
+      if (sb && this._user && meta) {
+        const dl = await sb.storage.from('ddjj').download(meta.ruta || this.pdfRuta(id));
+        if (!dl.error) b = dl.data;
+      }
+      if (!b) b = await this.pdfDb('readonly', st => st.get(id));
       if (!b) throw new Error('El archivo no está guardado en este navegador. Volvé a adjuntarlo.');
       const url = URL.createObjectURL(b);
       if (!window.open(url, '_blank')) {
@@ -3084,6 +3397,12 @@ class Component extends DCLogic {
   }
 
   baseRows() {
+    const reales = [], vistos = new Set(), k = (r) => r.cliente + '|' + r.per + '|' + r.seq;
+    (this.state.liqsDb || []).forEach(r => { if (!vistos.has(k(r))) { vistos.add(k(r)); reales.push(r); } });
+    return reales.concat(this.demoRows().filter(r => !vistos.has(k(r))));
+  }
+
+  demoRows() {
     const ER = this.ERRS, novalux = this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos vs IVA Compras');
     return [
       { cliente: 'CAZATUR SA', per: '08/2026', seq: 0, fecha: '04/09/2026', user: 'Administrador', df: '4.182.905,60', cf: '2.444.516,20', rp: '98.410,25', est: 'Completado', eg: [{ cruce: 'Mis Comprobantes Recibidos vs IVA Compras', errs: ER.rec }] },
@@ -4269,8 +4588,16 @@ class Component extends DCLogic {
 
     return Object.assign({}, this.liqVals(), this.cruVals(), this.miscVals(), {
       scr, go, inApp: s.screen !== 'login', loginErr: s.loginErr,
-      doLogin: this.nav('inicio'),
-      toggleLoginErr: () => this.setState(st2 => ({ loginErr: !st2.loginErr })),
+      doLogin: () => this.login(), olvidePw: () => this.olvidePw(),
+      loginMail: s.loginMail, loginMailSet: (e) => this.setState({ loginMail: e.target.value, loginErr: false, loginOk: '' }),
+      loginPw: s.loginPw, loginPwSet: (e) => this.setState({ loginPw: e.target.value, loginErr: false }),
+      loginKey: (e) => { if (e.key === 'Enter') this.login(); },
+      loginErrTxt: s.loginErrTxt || 'Mail o contraseña incorrectos.', loginOkHay: !!s.loginOk, loginOkTxt: s.loginOk,
+      loginBtn: s.sesionChk ? 'Verificando sesión…' : (s.loginBusy ? 'Ingresando…' : 'Ingresar'), loginBtnOp: s.sesionChk || s.loginBusy ? '.7' : '1',
+      rolToggle: !this.sb(), meAcceso: s.acceso ? 'último acceso ' + this.fechaDe(s.acceso) : 'último acceso 04/09/2026 14:20',
+      pwAct: s.pwAct, pwNue: s.pwNue, pwRep: s.pwRep, pwRecup: s.pwRecup,
+      pwActSet: (e) => this.setState({ pwAct: e.target.value }), pwNueSet: (e) => this.setState({ pwNue: e.target.value }), pwRepSet: (e) => this.setState({ pwRep: e.target.value }),
+      cambiarPw: () => this.cambiarPw(),
       sbWide: !s.collapsed, sbMini: s.collapsed,
       toggleSb: () => this.setState(st2 => ({ collapsed: !st2.collapsed })),
       nav: this.navModel(), navMini: this.navMiniModel(),
@@ -4319,7 +4646,7 @@ class Component extends DCLogic {
         nombre: u, ini: this.fold(u).slice(0, 2).toUpperCase(), cant: cs.length + ' clientes', mail: this.mailDe(u),
         go: () => this.setState({ role: 'empleado', usr: u, screen: 'inicio', loginErr: false })
       })),
-      cerrarSesion: () => this.setState({ screen: 'login', notif: false }),
+      cerrarSesion: () => this.salir(),
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
       cliMostrando: clientesVis.length === clientes.length
@@ -4802,7 +5129,14 @@ class Component extends DCLogic {
           delete le[id]; delete bo[id];
           const ult = st.cruRuns.find(r => r.cliente === cli && r.per === '08/2026' && !r.liq);
           const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === '08/2026' && !r.liq ? Object.assign({}, r, { liq: true }) : r));
+          const eg = ult ? this.runGrupos(ult) : cru.errGroups;
+          const fila = {
+            id, cliente: cli, per: '08/2026', seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
+            df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
+            n: { df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs }
+          };
           return {
+            liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || []).slice(0, 200)),
             liqConfirm: false, step: 4, proc: 'run', liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
             liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
           };
@@ -5184,6 +5518,7 @@ class Component extends DCLogic {
             localStorage.setItem('myiva.apoc.data', [...r.map.entries()].map(([c, [fc, fp]]) => c + ',' + fc + ',' + fp).join('\n'));
             localStorage.setItem('myiva.apoc.meta', JSON.stringify(meta));
           } catch (err) { guardada = false; }
+          this.apocSubir(r.map, meta);
           apocDone(Object.assign({ real: true, v: (ap.v || 0) + 1 }, meta), 'Base APOC actualizada', 'Archivo ' + f.name + ' · ' + r.map.size + ' CUITs',
             { kind: 'ok', t: 'Base APOC actualizada', d: f.name + ' · ' + miles(r.map.size) + ' CUITs' + (r.gen ? ' (listado de ARCA del ' + r.gen + ')' : '') + '. ' + (guardada ? 'Queda guardada en este navegador.' : 'No se pudo guardar en el navegador: se usa hasta recargar la página.') });
         } catch (err) {
