@@ -1053,9 +1053,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select value="{{ histF.desde }}" onChange="{{ histFSet.desde }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select value="{{ histF.hasta }}" onChange="{{ histFSet.hasta }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ histEst }}" onChange="{{ histEstSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><option value="Borrador">Borrador</option><option value="Cerrada">Cerrada</option></select></div>
-<sc-if value="{{ histAdmin }}">
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select value="{{ histF.usr }}" onChange="{{ histFSet.usr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histUsrOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
-</sc-if>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Secuencia</span><select value="{{ histSeq }}" onChange="{{ histSeqSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todas</option><option value="ult">Sólo la última de cada período</option><sc-for list="{{ seqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="flex:1"></div>
 <span onClick="{{ histSeqLimpiar }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;padding-bottom:9px">Limpiar filtros</span>
@@ -1069,7 +1067,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;display:{{ histUsrCol }}">Usuario</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
 <th title="Crédito fiscal − Débito fiscal (más el saldo técnico a favor del período anterior, si lo hay)" style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 1er párrafo</th>
@@ -1092,7 +1090,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;display:{{ r.usrCol }}">{{ r.user }}</td>
+<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc1 }}">{{ r.saldo1 }}</td>
@@ -4930,7 +4928,9 @@ class Component extends DCLogic {
         s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp) } : {})]
       : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === curRow[0].per && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
-    const histFilas = histTodas.filter(r => r.df !== '—' && (histAdmin || r.user === me.short));
+    const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
+    const enCartera = (c) => !misClis || misClis.includes(c);
+    const histFilas = histTodas.filter(r => r.df !== '—' && (enCartera(r.cliente) || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
     const sel = s.histSel;
@@ -4964,7 +4964,6 @@ class Component extends DCLogic {
         const puedeBorrar = le !== 'Cerrada' || histAdmin;
         const pdf = s.ddjjPdf[id];
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
-          usrCol: histAdmin ? 'table-cell' : 'none',
           pdfTiene: !!pdf, pdfPuede: !pdf && r.df !== '—', pdfNo: !pdf && r.df === '—', pdfQuitable: !!pdf && puedeBorrar,
           pdfTip: pdf ? pdf.name + ' · ' + pdf.kb + ' KB · adjuntada por ' + pdf.u + ' el ' + pdf.fecha : '',
           pdfSubir: (e) => this.adjuntarDJ(e, r, id), pdfVer: () => this.verDJ(id), pdfQuitar: () => this.quitarDJ(r, id),
@@ -5015,8 +5014,6 @@ class Component extends DCLogic {
       };
     });
 
-    const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
-    const enCartera = (c) => !misClis || misClis.includes(c);
     const djVig = {};
     histTodas.filter(r => r.df !== '—' && r.est !== 'Pendiente de liquidar' && enCartera(r.cliente)).forEach(r => {
       const k = r.cliente + '|' + r.per;
@@ -5247,7 +5244,7 @@ class Component extends DCLogic {
         }));
       },
       histEst: s.histEst, histEstSet: (e) => this.setState({ histEst: e.target.value }),
-      histAdmin, histUsrCol: histAdmin ? 'table-cell' : 'none', histCount: String(histTotal), histShown: String(histVis.length),
+      histAdmin, histCount: String(histTotal), histShown: String(histVis.length),
       histSeq: s.histSeq, histSeqSet: (e) => this.setState({ histSeq: e.target.value }),
       histSelCount: String(histPick.length),
       histSelLabel: histPick.length ? 'Exportar selección (' + histPick.length + ')' : 'Exportar selección',
@@ -5270,7 +5267,7 @@ class Component extends DCLogic {
       histPerOpts: [...new Set(histFilas.map(r => r.per))].sort((a, b) => perH(b).localeCompare(perH(a))).map(v => ({ v })),
       histUsrOpts: [...new Set(histFilas.map(r => r.user))].sort((a, b) => a.localeCompare(b, 'es')).map(v => ({ v })),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
-      histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
+      histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Liquidaciones de tus clientes · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
@@ -5456,7 +5453,7 @@ class Component extends DCLogic {
 
   cruHistVals(savedCru, NUM, cruAdmin, me) {
     const s = this.state, E = this.EST, f = s.cruF;
-    const total = cruAdmin ? 318 + savedCru.length : (me.short === 'Julieta' ? 74 : this.demoUsr().cru.filter(r => r.user === me.short).length) + savedCru.length;
+    const misClis = cruAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
     const perKey = p => p.slice(3) + p.slice(0, 2);
     const todos = savedCru.concat([
         { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', regs: '1.012', dif: '0', est: 'Completado' },
@@ -5471,7 +5468,7 @@ class Component extends DCLogic {
           ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos')
           : (r.est === 'Completado con diferencias' ? this.errsTipo(r.tipo) : [])
       })))
-        .filter(r => cruAdmin || r.user === me.short)
+        .filter(r => cruAdmin || misClis.includes(r.cliente) || r.user === me.short)
         .map(r => {
           const n = r.n || NUM[r.tipo], cruce = (n ? 'Cruce ' + n + ' · ' : '') + r.tipo, sub = r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user;
           const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
@@ -5482,6 +5479,7 @@ class Component extends DCLogic {
             ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : (tab ? verSolo : this.nav('cruceResultado'))
           });
         });
+    const total = cruAdmin ? 318 + savedCru.length : Math.max(todos.length, me.short === 'Julieta' ? 74 + savedCru.length : 0);
     const uniq = a => [...new Set(a)];
     const pers = uniq(todos.map(r => r.per)).sort((a, b) => perKey(b).localeCompare(perKey(a)));
     const filas = todos.filter(r => (!f.cli || r.cliente === f.cli) && (!f.tipo || r.tipo === f.tipo) && (!f.est || r.est === f.est)
@@ -5489,7 +5487,7 @@ class Component extends DCLogic {
     const activo = Object.keys(f).some(k => f[k] !== '');
     const set = k => (e) => this.setState(st => ({ cruF: Object.assign({}, st.cruF, { [k]: e.target.value }) }));
     return {
-      cruHistLabel: (cruAdmin ? total + ' cruces ejecutados' : 'Tus cruces · ' + total + ' ejecutados'),
+      cruHistLabel: (cruAdmin ? total + ' cruces ejecutados' : 'Cruces de tus clientes · ' + total + ' ejecutados'),
       cruHist: filas, cruCount: String(activo ? filas.length : total), cruShown: String(filas.length),
       cruVacio: !filas.length, cruVacioTxt: activo ? 'No hay cruces con esos filtros.' : 'Todavía no hay cruces registrados.',
       cruPaginas: !activo && total > filas.length, cruSigFg: !activo && total > filas.length ? '#1B2733' : '#9AA9B7',
