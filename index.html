@@ -3399,7 +3399,7 @@ class Component extends DCLogic {
   baseRows() {
     const reales = [], vistos = new Set(), k = (r) => r.cliente + '|' + r.per + '|' + r.seq;
     (this.state.liqsDb || []).forEach(r => { if (!vistos.has(k(r))) { vistos.add(k(r)); reales.push(r); } });
-    return reales.concat(this.demoRows().filter(r => !vistos.has(k(r))));
+    return this._user ? reales : reales.concat(this.demoRows().filter(r => !vistos.has(k(r))));
   }
 
   demoRows() {
@@ -4950,7 +4950,7 @@ class Component extends DCLogic {
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg, r.cliente)
         });
       });
-    const histTotal = histAdmin ? 142 + histFilas.length - 9 : histFilas.length;
+    const histTotal = histAdmin && !this._user ? 142 + histFilas.length - 9 : histFilas.length;
 
     const dpCart = this.CARTERA.filter(([u]) => histAdmin || u === me.short);
     const dpCli = [].concat(...dpCart.map(([u, cs]) => cs.map(cliente => {
