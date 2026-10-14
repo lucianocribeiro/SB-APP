@@ -1539,9 +1539,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:17px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 20px/1.25 'Open Sans'">{{ cruceTitulo }}</div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CAZATUR SA · CUIT 30-71234567-8 · Período 08/2026 · Ejecutado por Administrador el 04/09/2026 14:22</div>
+<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">{{ cruceSub }}</div>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
+<sc-if value="{{ cruSolo }}">
+<button onClick="{{ go.crucesHistorial }}" style="padding:9px 13px;background:#fff;color:#5A6B7B;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C;color:#14395C">← Historial de cruces</button>
+</sc-if>
 <button onClick="{{ openConfirm }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Reprocesar</button>
 <button onClick="{{ toastXls }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Enviar por mail</button>
 <button onClick="{{ toastXls }}" style="padding:9px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Exportar Excel</button>
@@ -1555,11 +1558,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-for>
 </div>
+<sc-if value="{{ cruTabsVer }}">
 <div style="display:flex;gap:2px;border-bottom:1px solid #E3E8EE;overflow-x:auto">
 <sc-for list="{{ cruTabs }}" as="t" hint-placeholder-count="3">
 <div onClick="{{ t.go }}" style="padding:10px 15px;cursor:pointer;font:600 13.5px 'Open Sans';white-space:nowrap;color:{{ t.fg }};border-bottom:2px solid {{ t.bar }};margin-bottom:-1px" style-hover="color:#14395C">{{ t.label }}</div>
 </sc-for>
 </div>
+</sc-if>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
 <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
 <div onClick="{{ c.go }}" style="padding:6px 11px;border-radius:6px;cursor:pointer;font:600 12.5px 'Open Sans';border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</div>
@@ -1735,7 +1740,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de cruces</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }} · Los errores y diferencias de cada cruce se revisan desde la columna Errores.</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }} · Los errores de cada cruce se revisan desde la columna Errores.</div>
 </div>
 <div style="display:flex;gap:9px">
 <button onClick="{{ toastXls }}" title="Exporta a Excel los cruces que se ven en la tabla" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar a Excel</button>
@@ -1762,13 +1767,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Errores</th>
-<th style="text-align:center;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Reporte de diferencias</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Ver</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Excel</th>
 </tr></thead>
 <tbody>
 <sc-if value="{{ cruVacio }}">
-<tr><td colspan="9" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ cruVacioTxt }} <sc-if value="{{ cruFActivo }}"><span onClick="{{ cruFLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todos</span></sc-if></td></tr>
+<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ cruVacioTxt }} <sc-if value="{{ cruFActivo }}"><span onClick="{{ cruFLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todos</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ cruHist }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1782,12 +1786,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ r.verErr }}" title="{{ r.errLabel }}" style="display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid #F3CFCB;background:#FDF5F4;border-radius:6px;cursor:pointer;font:600 11.5px 'Open Sans';color:#B3261E" style-hover="border-color:#B3261E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>{{ r.nErr }}</span>
 </sc-if>
 <sc-if value="{{ r.noErr }}"><span title="Sin errores" style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
-</td>
-<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
-<sc-if value="{{ r.hasDif }}">
-<span onClick="{{ r.rep }}" title="Descargar el reporte de diferencias" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#FBF3E3;border-color:#B7791F"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M9 13h6M9 17h4"></path></svg></span>
-</sc-if>
-<sc-if value="{{ r.noDif }}"><span title="Sin diferencias" style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
 </td>
 <td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
 <span onClick="{{ r.ver }}" title="Ver resultado del cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
@@ -2415,7 +2413,7 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
-    cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' },
+    cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
@@ -2484,7 +2482,7 @@ class Component extends DCLogic {
     if (Object.keys(st).length) this.setState(st);
   }
 
-  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false }); }
+  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null }); }
   tset(k, v) { return () => this.setState({ [k]: v }); }
   flip(group, key) {
     return () => this.setState(s => {
@@ -4860,6 +4858,10 @@ class Component extends DCLogic {
       })),
       cruTab, rowsA, rowsB, rowsC,
       cruceTitulo: s.cruceTab === 'A' ? 'Mis Comprobantes Recibidos vs IVA Compras' : (s.cruceTab === 'B' ? 'Mis Comprobantes Emitidos vs IVA Ventas' : 'Mis Retenciones vs IVA Ventas / IVA Compras'),
+      cruSolo: !!s.cruSolo, cruTabsVer: !s.cruSolo,
+      cruceSub: s.cruSolo
+        ? s.cruSolo.cliente + ' · Período ' + s.cruSolo.per + ' · ' + this.seqTxt(+s.cruSolo.seq) + ' · Ejecutado por ' + s.cruSolo.user + ' el ' + s.cruSolo.fecha
+        : 'CAZATUR SA · CUIT 30-71234567-8 · Período 08/2026 · Ejecutado por Administrador el 04/09/2026 14:22',
       kpisCruce: [
         { label: 'Registros procesados', value: '1.284', color: '#1B2733' },
         { label: 'Coincidencias exactas', value: '1.278', color: '#2E7D5B' },
@@ -4905,12 +4907,11 @@ class Component extends DCLogic {
         .map(r => {
           const n = r.n || NUM[r.tipo], cruce = (n ? 'Cruce ' + n + ' · ' : '') + r.tipo, sub = r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user;
           const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
-          const hasDif = r.guardado ? r.errs.length > 0 : r.est === 'Completado con diferencias';
+          const tab = /Recibidos/.test(r.tipo) ? 'A' : (/Emitidos/.test(r.tipo) ? 'B' : (/Retenciones/.test(r.tipo) ? 'C' : null));
+          const verSolo = () => this.setState({ screen: 'cruceResultado', cruceTab: tab, cruceFiltro: 'todos', drawer: false, modal: false, notif: false, cruSolo: { cliente: r.cliente, per: r.per, seq: r.seq || 0, fecha: r.fecha, user: r.user } });
           return Object.assign({}, r, this.seqChip(r.seq || 0), {
             tipo: cruce, st: E[r.est], hasErr: r.errs.length > 0, noErr: !r.errs.length, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
-            ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : this.nav('cruceResultado'),
-            hasDif, noDif: !hasDif,
-            rep: r.guardado ? () => this.descargarErrores({ title: 'Errores · ' + cruce, sub, rows: r.errs.map(e => Object.assign({ cruce }, e)) }, r.cliente) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.')
+            ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : (tab ? verSolo : this.nav('cruceResultado'))
           });
         });
     const uniq = a => [...new Set(a)];
