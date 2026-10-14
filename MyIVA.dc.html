@@ -636,9 +636,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <sc-for list="{{ upFiles }}" as="f" hint-placeholder-count="7">
 <div>
-<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px">
+<div style="margin-bottom:8px">
 <div style="font:600 12px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ f.n }}) {{ f.label }} · {{ f.ext }}</div>
-<div style="font:400 11.5px/1.3 'Open Sans';color:#9AA9B7;white-space:nowrap">{{ f.hint }}</div>
 </div>
 <div style="border:1px dashed {{ f.bd }};border-radius:6px;padding:14px 16px;background:{{ f.bg }}">
 <sc-if value="{{ f.isEmpty }}">
@@ -830,14 +829,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:760px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:8px">
 <div style="font:600 15.5px 'Open Sans'">Paso 4 — Procesamiento</div>
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Estado</span>
-<div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<sc-for list="{{ procModes }}" as="m" hint-placeholder-count="3">
-<div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
-</sc-for>
-</div>
-</div>
 </div>
 <sc-if value="{{ procIs.run }}">
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
@@ -851,11 +842,30 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#E8F3EE;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
 <div style="font:600 16px 'Open Sans'">Liquidación completada · {{ seqCurTxt }}</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">Saldo a pagar -1.632.105,25 · 3.401 registros procesados</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">{{ procResSub }}</div>
+<div style="width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:4px">
+<sc-for list="{{ procResKpis }}" as="k" hint-placeholder-count="3">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:11px 13px">
+<div style="font:600 10.5px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 17px/1.2 'Open Sans';margin-top:6px;font-variant-numeric:tabular-nums">{{ k.value }}</div>
+</div>
+</sc-for>
+</div>
+<div style="width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+<sc-for list="{{ procResSaldos }}" as="sd" hint-placeholder-count="2">
+<div style="background:{{ sd.bg }};border:1px solid {{ sd.bd }};border-radius:6px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+<div>
+<div style="font:600 10.5px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">{{ sd.label }}</div>
+<div style="font:600 19px/1.2 'Open Sans';margin-top:6px;color:{{ sd.fg }};font-variant-numeric:tabular-nums">{{ sd.value }}</div>
+</div>
+<span style="padding:3px 9px;border-radius:6px;font:600 11.5px 'Open Sans';background:#fff;border:1px solid {{ sd.bd }};color:{{ sd.fg }};white-space:nowrap">{{ sd.tag }}</span>
+</div>
+</sc-for>
+</div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Quedó en estado <b style="font-weight:600;color:#1B2733">Borrador</b> en el Historial de liquidaciones: desde ahí podés cerrarla o eliminarla.</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
-<button onClick="{{ go.liqResultado }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
+<button onClick="{{ verResultadoReal }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
 </div>
 </div>
 </sc-if>
@@ -863,7 +873,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:30px 4px;display:flex;flex-direction:column;align-items:center;gap:14px">
 <div style="width:46px;height:46px;border-radius:24px;background:#FBE9E7;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
 <div style="font:600 16px 'Open Sans'">No se pudo completar la liquidación</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;text-align:center;max-width:420px">El archivo de IVA Compras tiene columnas que no coinciden con el formato esperado. Reemplazalo en la carga de archivos y volvé a procesar.</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;text-align:center;max-width:420px">{{ procErrTxt }}</div>
 <div style="display:flex;gap:10px;margin-top:6px">
 <button onClick="{{ revisarArchivos }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Revisar archivos</button>
 </div>
@@ -877,11 +887,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:17px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="display:flex;align-items:center;gap:10px">
-<div style="font:600 20px/1.2 'Open Sans'">CAZATUR SA</div>
+<div style="font:600 20px/1.2 'Open Sans'">{{ liqResCli }}</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Completado</span>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">{{ seqPrevTxt }}</span>
 </div>
-<div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por Administrador el {{ seqPrevFecha }}</div>
+<sc-if value="{{ liqResReal }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">{{ liqResSub }}</div></sc-if>
+<sc-if value="{{ liqResDemo }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por Administrador el {{ seqPrevFecha }}</div></sc-if>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
@@ -2452,7 +2463,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
-    step: 1, dz: 'loaded', proc: 'run',
+    step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
@@ -2464,7 +2475,7 @@ class Component extends DCLogic {
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
-    up: { ventas: 'loaded', emitidos: 'loaded', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
+    up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: { 'Julieta': 1 },
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
@@ -2527,7 +2538,17 @@ class Component extends DCLogic {
     if (Object.keys(st).length) this.setState(st);
   }
 
-  nav(key) { return () => this.setState({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null }); }
+  nav(key) {
+    return () => this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false },
+      key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {}));
+  }
+
+  liqVacia() {
+    return {
+      step: 1, proc: 'run', dz: 'empty', real: {}, upErr: {}, upBusy: {}, cruSaved: false, liqErrTxt: '',
+      up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' }
+    };
+  }
   tset(k, v) { return () => this.setState({ [k]: v }); }
   flip(group, key) {
     return () => this.setState(s => {
@@ -3658,7 +3679,7 @@ class Component extends DCLogic {
     };
   }
 
-  cruzarDJ(dj, ventas, compras, arr) {
+  liqCalc(ventas, compras, arr) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
     const V = ventas.recs.filter(x => !x.excl), C = compras.recs.filter(x => !x.excl);
@@ -3667,6 +3688,32 @@ class Component extends DCLogic {
     const rp = r2(compras.recs.reduce((a, x) => a + (x.tc === 'NC' ? -1 : 1) * (x.v.piva || 0), 0) + ventas.recs.filter(x => x.tc === 'CR').reduce((a, x) => a + Math.abs(x.v.tot), 0));
     const s1 = r2(cf - df + arr.tec);
     const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
+    return { df, cf, rp, s1, s2, regs: ventas.recs.length + compras.recs.length };
+  }
+
+  liqResVals(res, fmt) {
+    if (!res) return { procResSub: '', procResKpis: [], procResSaldos: [], resKpisLiq: null, resSaldos: null };
+    const sd = (label, v) => v < 0
+      ? { label, value: fmt(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
+      : { label, value: fmt(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
+    const saldos = [sd('Saldo 1° párrafo', res.s1), sd('Saldo 2° párrafo', res.s2)];
+    return {
+      procResSub: res.cli + ' · 08/2026 · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados',
+      procResKpis: [{ label: 'Débito fiscal', value: fmt(res.df) }, { label: 'Crédito fiscal', value: fmt(res.cf) }, { label: 'Retenciones y percepciones', value: fmt(res.rp) }],
+      procResSaldos: saldos,
+      resKpisLiq: [
+        { label: 'Total débito fiscal', value: fmt(res.df), color: '#1B2733' },
+        { label: 'Total crédito fiscal', value: fmt(res.cf), color: '#1B2733' },
+        { label: 'Retenciones y percepciones', value: fmt(res.rp), color: '#1B2733' },
+        { label: res.s2 < 0 ? 'Saldo a pagar' : 'Saldo a favor', value: fmt(res.s2), color: res.s2 < 0 ? '#B3261E' : '#2E7D5B' }
+      ],
+      resSaldos: saldos
+    };
+  }
+
+  cruzarDJ(dj, ventas, compras, arr) {
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const { df, cf, rp, s2 } = this.liqCalc(ventas, compras, arr);
     const lbl = {};
     this.DJ_CONC.forEach(([k, l]) => { lbl[k] = l; });
     const filas = [
@@ -4321,7 +4368,9 @@ class Component extends DCLogic {
         { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
       ],
       liqCliente: (s.liqSaved && s.liqCliN === 'CAZATUR SA' ? [
-        { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
+        s.liqRes
+          ? { per: '08/2026', seq: s.liqSeqN, fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), saldo: this.ars(s.liqRes.s2), sc: s.liqRes.s2 < 0 ? '#B3261E' : '#2E7D5B', est: 'Completado' }
+          : { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
       ] : []).concat([
         { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
         { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '3.858.148,75', saldo: '42.180,00', sc: '#2E7D5B', est: 'Completado' },
@@ -4498,10 +4547,11 @@ class Component extends DCLogic {
     const delPer = baseRows.filter(r => r.cliente === cli && r.per === '08/2026' && r.df !== '—');
     const hasHist = delPer.length > 0;
     const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && r.seq === s.liqSeqN));
-    const nueva = savedAqui && !del[cli + '|08/2026|' + s.liqSeqN + '|03/10/2026'] ? [s.liqSeqN] : [];
+    const fechaN = s.liqRes ? s.liqRes.fecha : '03/10/2026', fechaHoraN = s.liqRes ? s.liqRes.fechaHora : '03/10/2026 17:40';
+    const nueva = savedAqui && !del[cli + '|08/2026|' + s.liqSeqN + '|' + fechaN] ? [s.liqSeqN] : [];
     const liqDone = [...new Set(hechas.map(r => r.seq).concat(nueva))].sort((a, b) => a - b);
     const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
-    const ultFecha = nueva.length && seqLast === s.liqSeqN ? '03/10/2026 17:40' : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
+    const ultFecha = nueva.length && seqLast === s.liqSeqN ? fechaHoraN : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
     const seqSel = s.seqElegida ?? seqSug;
     const seqPisa = seqSel !== null && liqDone.includes(seqSel);
@@ -4524,7 +4574,8 @@ class Component extends DCLogic {
       if (eg.length) pendRows.push({ cliente: run.cliente, per: run.per, seq: run.seq, fecha: run.fecha, user: run.user, df: '—', cf: '—', est: 'Pendiente de liquidar', eg });
     });
     const curRow = (s.liqSaved
-      ? [{ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] }]
+      ? [Object.assign({ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] },
+        s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp) } : {})]
       : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
     const histFilas = histTodas.filter(r => r.df !== '—' && (histAdmin || r.user === me.short));
@@ -4692,6 +4743,7 @@ class Component extends DCLogic {
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
+    const resV = this.liqResVals(s.liqRes, fmt), resReal = !!(s.liqResVer && s.liqRes);
     return {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
@@ -4732,16 +4784,31 @@ class Component extends DCLogic {
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm,
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
-      liqConfirmOk: () => this.setState(st => {
-        const id = cli + '|08/2026|' + seqSel + '|03/10/2026', le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
-        delete le[id]; delete bo[id];
-        const ult = st.cruRuns.find(r => r.cliente === cli && r.per === '08/2026' && !r.liq);
-        const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === '08/2026' && !r.liq ? Object.assign({}, r, { liq: true }) : r));
-        return {
-          liqConfirm: false, step: 4, proc: 'run', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
-          liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
-        };
-      }),
+      liqConfirmOk: () => {
+        const R = this.state.real || {}, tiene = k => !!(R[k] && R[k].recs);
+        const falta = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !tiene(k)).map(([, l]) => l);
+        const fin = (proc) => setTimeout(() => { if (this.state.step === 4 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
+        if (falta.length) {
+          this.setState({
+            liqConfirm: false, step: 4, proc: 'run', liqRes: null,
+            liqErrTxt: 'Para liquidar hacen falta los subdiarios de IVA Ventas e IVA Compras. ' + (falta.length === 2 ? 'No se cargó ninguno de los dos' : 'Falta ' + falta[0]) + ': cargalo en la carga de archivos y volvé a procesar.'
+          });
+          return fin('error');
+        }
+        const ahora = this.ahora();
+        const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel });
+        this.setState(st => {
+          const id = cli + '|08/2026|' + seqSel + '|' + res.fecha, le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
+          delete le[id]; delete bo[id];
+          const ult = st.cruRuns.find(r => r.cliente === cli && r.per === '08/2026' && !r.liq);
+          const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === '08/2026' && !r.liq ? Object.assign({}, r, { liq: true }) : r));
+          return {
+            liqConfirm: false, step: 4, proc: 'run', liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
+            liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
+          };
+        });
+        fin('done');
+      },
       liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
       ...this.periodoPicker(s),
@@ -4772,7 +4839,7 @@ class Component extends DCLogic {
       step1Next: () => seqSel === null
         ? this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia', d: 'El período ya tiene 9 rectificativas: elegí cuál querés reemplazar.' } })
         : this.setState({ step: 2 }),
-      seqPrevFecha: s.liqSaved ? '03/10/2026 17:40' : '04/09/2026 14:22',
+      seqPrevFecha: s.liqSaved ? fechaHoraN : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
       seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + ultFecha + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
       ddjjQ: s.ddjjQ, ddjjQSet: (e) => this.setState({ ddjjQ: e.target.value }),
@@ -4841,28 +4908,27 @@ class Component extends DCLogic {
         bg: s.dz === k ? '#14395C' : '#FFFFFF', fg: s.dz === k ? '#FFFFFF' : '#5A6B7B'
       })),
       procIs: { run: s.proc === 'run', done: s.proc === 'done', err: s.proc === 'error' },
-      revisarArchivos: () => this.setState(st => ({
-        step: 2, dz: 'error', proc: 'run', liqSaved: false, seqElegida: st.liqSaved ? st.liqSeqN : st.seqElegida, liqCliSel: st.liqSaved ? st.liqCliN : st.liqCliSel,
-        toast: { kind: 'warn', t: 'Revisá los archivos', d: 'El archivo de IVA Compras quedó marcado con error. Reemplazalo y continuá para volver a procesar.' }
-      })),
-      procModes: ['run', 'done', 'error'].map(k => ({
-        label: { run: 'Procesando', done: 'Completado', error: 'Con error' }[k],
-        go: this.tset('proc', k),
-        bg: s.proc === k ? '#14395C' : '#FFFFFF', fg: s.proc === k ? '#FFFFFF' : '#5A6B7B'
-      })),
+      revisarArchivos: () => this.setState({
+        step: 2, proc: 'run',
+        toast: { kind: 'warn', t: 'Revisá los archivos', d: 'Cargá los subdiarios de IVA Ventas e IVA Compras y volvé a procesar.' }
+      }),
+      procErrTxt: s.liqErrTxt,
+      ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? s.liqRes.cli : 'CAZATUR SA',
+      liqResSub: resReal ? 'Período 08/2026 · ' + this.seqTxt(s.liqRes.seq) + ' · Procesado por ' + me.short + ' el ' + s.liqRes.fechaHora + ' · Calculado con los subdiarios cargados' : '',
+      verResultadoReal: () => this.setState({ screen: 'liqResultado', liqResVer: true, drawer: false, modal: false, notif: false }),
       liqTabs: tabsDef.map(([k, label]) => ({
         label, go: this.tset('liqTab', k),
         fg: s.liqTab === k ? '#14395C' : '#5A6B7B',
         bar: s.liqTab === k ? '#14395C' : 'transparent'
       })),
       liqTab,
-      kpisLiq: [
+      kpisLiq: (resReal && resV.resKpisLiq) || [
         { label: 'Total débito fiscal', value: '4.182.905,60', color: '#1B2733' },
         { label: 'Total crédito fiscal', value: '2.444.516,20', color: '#1B2733' },
         { label: 'Retenciones y percepciones', value: '106.284,15', color: '#1B2733' },
         { label: 'Saldo a pagar', value: '-1.632.105,25', color: '#B3261E' }
       ],
-      saldos: [
+      saldos: (resReal && resV.resSaldos) || [
         { label: 'Saldo 1° párrafo', value: '-1.738.389,40', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' },
         { label: 'Saldo 2° párrafo', value: '-1.632.105,25', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
       ],
