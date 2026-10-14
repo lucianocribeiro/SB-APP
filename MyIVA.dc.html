@@ -1735,57 +1735,83 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Historial de cruces</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }}</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }} · Los errores y diferencias de cada cruce se revisan desde la columna Errores.</div>
 </div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Tipo de cruce</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>IVA Compras vs Base APOC</option><option>Emitidos vs IVA Ventas</option><option>Recibidos vs IVA Compras</option><option>Retenciones y percepciones vs Mis Retenciones</option><option>Aduaneras vs Mis Percepciones Aduaneras</option><option>IVA Digital vs IVA Compras + Ventas</option></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><option>Completado</option><option>Completado con diferencias</option><option>Con errores</option></select></div>
+<div style="display:flex;gap:9px">
+<button onClick="{{ toastXls }}" title="Exporta a Excel los cruces que se ven en la tabla" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar a Excel</button>
+<button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:900px">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select value="{{ cruF.cli }}" onChange="{{ cruFSet.cli }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ cruCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Tipo de cruce</span><select value="{{ cruF.tipo }}" onChange="{{ cruFSet.tipo }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff;max-width:280px"><option value="">Todos</option><sc-for list="{{ cruTipoOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select value="{{ cruF.desde }}" onChange="{{ cruFSet.desde }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ cruPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select value="{{ cruF.hasta }}" onChange="{{ cruFSet.hasta }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ cruPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ cruF.est }}" onChange="{{ cruFSet.est }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ cruEstOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Secuencia</span><select value="{{ cruF.seq }}" onChange="{{ cruFSet.seq }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todas</option><sc-for list="{{ cruSeqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div style="flex:1"></div>
+<span onClick="{{ cruFLimpiar }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;padding-bottom:9px">Limpiar filtros</span>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:960px">
 <thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Tipo de cruce</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia DJ</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
-<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:64px">Ver</th>
-<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:76px">Errores</th>
-<th style="text-align:center;font:600 11px/1.25 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:96px">Reporte de diferencias</th>
-<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:64px">Excel</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Errores</th>
+<th style="text-align:center;font:600 11px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Reporte de diferencias</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Ver</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Excel</th>
 </tr></thead>
 <tbody>
-<sc-for list="{{ cruHist }}" as="r" hint-placeholder-count="6">
+<sc-if value="{{ cruVacio }}">
+<tr><td colspan="9" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ cruVacioTxt }} <sc-if value="{{ cruFActivo }}"><span onClick="{{ cruFLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todos</span></sc-if></td></tr>
+</sc-if>
+<sc-for list="{{ cruHist }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.tipo }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
-<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
-<div onClick="{{ r.ver }}" title="Ver resultado del cruce" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#2F80B7;background:#F4F9FD"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
-</td>
-<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center;white-space:nowrap">
 <sc-if value="{{ r.hasErr }}">
-<div onClick="{{ r.verErr }}" title="{{ r.errLabel }}" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;height:32px;padding:0 8px;border:1px solid #F3CFCB;border-radius:6px;cursor:pointer;background:#FBE9E7" style-hover="border-color:#B3261E"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg><span style="font:600 12px/1 'Open Sans';color:#B3261E">{{ r.nErr }}</span></div>
+<span onClick="{{ r.verErr }}" title="{{ r.errLabel }}" style="display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid #F3CFCB;background:#FDF5F4;border-radius:6px;cursor:pointer;font:600 11.5px 'Open Sans';color:#B3261E" style-hover="border-color:#B3261E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>{{ r.nErr }}</span>
 </sc-if>
-<sc-if value="{{ r.noErr }}"><span title="Sin errores" style="font:400 13px 'Open Sans';color:#B5C0CB">—</span></sc-if>
+<sc-if value="{{ r.noErr }}"><span title="Sin errores" style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
 </td>
-<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
 <sc-if value="{{ r.hasDif }}">
-<div onClick="{{ r.rep }}" title="Descargar reporte de diferencias" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #F0E0BC;border-radius:6px;cursor:pointer;background:#FBF3E3" style-hover="border-color:#B7791F"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8F5F14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6M9 13h6M9 17h4"></path></svg></div>
+<span onClick="{{ r.rep }}" title="Descargar el reporte de diferencias" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#FBF3E3;border-color:#B7791F"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M9 13h6M9 17h4"></path></svg></span>
 </sc-if>
-<sc-if value="{{ r.noDif }}"><span title="Sin diferencias" style="font:400 13px 'Open Sans';color:#B5C0CB">—</span></sc-if>
+<sc-if value="{{ r.noDif }}"><span title="Sin diferencias" style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
 </td>
-<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
-<div onClick="{{ toastXls }}" title="Exportar a Excel" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #C7E3D6;border-radius:6px;cursor:pointer;background:#E8F3EE" style-hover="border-color:#2E7D5B"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M3 15h18M9 3v18"></path></svg></div>
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
+<span onClick="{{ r.ver }}" title="Ver resultado del cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+</td>
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
+<span onClick="{{ toastXls }}" title="Descargar el Excel de este cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span>
 </td>
 </tr>
 </sc-for>
 </tbody>
 </table>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE;flex-wrap:wrap;gap:10px">
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">Mostrando 1–{{ cruShown }} de {{ cruCount }} cruces</div>
+<div style="display:flex;gap:6px;align-items:center">
+<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
+<div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
+<sc-if value="{{ cruPaginas }}">
+<div style="padding:6px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans'">2</div>
+<div style="padding:6px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans'">3</div>
+</sc-if>
+<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:{{ cruSigFg }}">Siguiente</div>
+</div>
+</div>
 </div>
 </sc-if>
 
@@ -2389,6 +2415,7 @@ class Component extends DCLogic {
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
+    cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' },
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
@@ -4853,8 +4880,15 @@ class Component extends DCLogic {
         { label: 'Total percepciones IVA Compras', value: '24.000,00', color: '#1B2733' },
         { label: 'Diferencia', value: '10.104,15', color: '#B3261E' }
       ],
-      cruHistLabel: cruAdmin ? (318 + savedCru.length) + ' cruces ejecutados' : 'Tus cruces · ' + ((me.short === 'Julieta' ? 74 : this.demoUsr().cru.filter(r => r.user === me.short).length) + savedCru.length) + ' ejecutados',
-      cruHist: savedCru.concat([
+      ...this.cruHistVals(savedCru, NUM, cruAdmin, me)
+    };
+  }
+
+  cruHistVals(savedCru, NUM, cruAdmin, me) {
+    const s = this.state, E = this.EST, f = s.cruF;
+    const total = cruAdmin ? 318 + savedCru.length : (me.short === 'Julieta' ? 74 : this.demoUsr().cru.filter(r => r.user === me.short).length) + savedCru.length;
+    const perKey = p => p.slice(3) + p.slice(0, 2);
+    const todos = savedCru.concat([
         { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', regs: '1.012', dif: '0', est: 'Completado' },
         { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
         { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'Administrador', regs: '2.117', dif: '0', est: 'Completado' },
@@ -4878,7 +4912,25 @@ class Component extends DCLogic {
             hasDif, noDif: !hasDif,
             rep: r.guardado ? () => this.descargarErrores({ title: 'Errores · ' + cruce, sub, rows: r.errs.map(e => Object.assign({ cruce }, e)) }, r.cliente) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.')
           });
-        })
+        });
+    const uniq = a => [...new Set(a)];
+    const pers = uniq(todos.map(r => r.per)).sort((a, b) => perKey(b).localeCompare(perKey(a)));
+    const filas = todos.filter(r => (!f.cli || r.cliente === f.cli) && (!f.tipo || r.tipo === f.tipo) && (!f.est || r.est === f.est)
+      && (f.seq === '' || r.seq === f.seq) && (!f.desde || perKey(r.per) >= perKey(f.desde)) && (!f.hasta || perKey(r.per) <= perKey(f.hasta)));
+    const activo = Object.keys(f).some(k => f[k] !== '');
+    const set = k => (e) => this.setState(st => ({ cruF: Object.assign({}, st.cruF, { [k]: e.target.value }) }));
+    return {
+      cruHistLabel: (cruAdmin ? total + ' cruces ejecutados' : 'Tus cruces · ' + total + ' ejecutados'),
+      cruHist: filas, cruCount: String(activo ? filas.length : total), cruShown: String(filas.length),
+      cruVacio: !filas.length, cruVacioTxt: activo ? 'No hay cruces con esos filtros.' : 'Todavía no hay cruces registrados.',
+      cruPaginas: !activo && total > filas.length, cruSigFg: !activo && total > filas.length ? '#1B2733' : '#9AA9B7',
+      cruF: f, cruFSet: { cli: set('cli'), tipo: set('tipo'), est: set('est'), seq: set('seq'), desde: set('desde'), hasta: set('hasta') },
+      cruFActivo: activo, cruFLimpiar: () => this.setState({ cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' } }),
+      cruCliOpts: uniq(todos.map(r => r.cliente)).sort((a, b) => a.localeCompare(b, 'es')).map(v => ({ v })),
+      cruTipoOpts: uniq(todos.map(r => r.tipo)).sort((a, b) => a.localeCompare(b, 'es', { numeric: true })).map(v => ({ v })),
+      cruEstOpts: uniq(todos.map(r => r.est)).map(v => ({ v })),
+      cruPerOpts: pers.map(v => ({ v })),
+      cruSeqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) }))
     };
   }
 
