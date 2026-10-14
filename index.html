@@ -627,18 +627,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 2 — Carga de archivos</div>
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Estado de la dropzone · IVA Compras</span>
-<div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<sc-for list="{{ dzModes }}" as="m" hint-placeholder-count="4">
-<div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
-</sc-for>
-</div>
-</div>
 </div>
 <div style="display:flex;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">Todos los archivos son opcionales. Se procesan los cruces disponibles según los archivos que cargues.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">Para liquidar hacen falta IVA Ventas e IVA Compras. El resto es opcional: se procesan los cruces disponibles según los archivos que cargues.</div>
 </div>
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <sc-for list="{{ upFiles }}" as="f" hint-placeholder-count="7">
@@ -715,7 +707,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · 08/2026 · {{ seqNextTxt }} · {{ upCountLabel }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px">
@@ -841,7 +833,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
 <div style="width:34px;height:34px;border:3px solid #E3E8EE;border-top-color:#14395C;border-radius:20px;animation:spin 900ms linear infinite"></div>
 <div style="font:600 15px 'Open Sans'">Procesando liquidación</div>
-<div style="font:400 13px 'Open Sans';color:#5A6B7B">{{ liqCli }} · 08/2026 · {{ seqCurTxt }} — no cierres esta pantalla.</div>
+<div style="font:400 13px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqCurTxt }} — no cierres esta pantalla.</div>
 <div style="width:100%;max-width:420px;height:6px;background:#EEF1F4;border-radius:4px;overflow:hidden"><div style="width:40%;height:100%;background:#14395C;animation:bar 1.6s ease-in-out infinite"></div></div>
 </div>
 </sc-if>
@@ -3347,7 +3339,7 @@ class Component extends DCLogic {
 
   guardarRun(cru, cli, seq, user) {
     const run = {
-      id: String(Date.now()), cliente: cli, per: '08/2026', seq, fecha: this.ahora(), user, liq: false,
+      id: String(Date.now()), cliente: cli, per: this.perLiq(), seq, fecha: this.ahora(), user, liq: false,
       cruces: cru.rows.filter(r => r.run || r.isErr).map(r => ({
         n: r.n, t: r.t, tipo: r.tipo, cruce: r.cruce, est: r.est, real: r.real,
         regs: r.isErr ? '—' : String(r.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.'), dif: r.isErr ? '—' : String(r.dif),
@@ -3454,7 +3446,7 @@ class Component extends DCLogic {
   }
 
   arrastre(cli) {
-    const s = this.state, per = this.perAnt('08/2026');
+    const s = this.state, per = this.perAnt(this.perLiq());
     const rows = this.baseRows().filter(r => !s.ddjjBorradas[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
     const x = this.saldosDj(rows, cli, per);
     const forz = s.prevSaldo === 'pagar';
@@ -3462,6 +3454,8 @@ class Component extends DCLogic {
     const tec = Math.max(0, x.s1), base = Math.max(0, x.s2);
     return { per, dj: x.dj, sinDj: false, pagar: tec <= 0 && base <= 0, pagar1: x.s1 <= 0, pagar2: x.s2 <= 0, tec, base, comp: x.comp, lib: Math.max(0, Math.round((base - x.comp) * 100) / 100), s1: x.s1, s2: x.s2 };
   }
+
+  perLiq() { return (this.state.liqMes || '08') + '/' + (this.state.liqAnio || '2026'); }
 
   SEQ_MAX = 9;
 
@@ -4034,7 +4028,7 @@ class Component extends DCLogic {
       : { label, value: fmt(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const saldos = [sd('Saldo 1° párrafo', res.s1), sd('Saldo 2° párrafo', res.s2)];
     return {
-      procResSub: res.cli + ' · 08/2026 · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados',
+      procResSub: res.cli + ' · ' + res.per + ' · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados',
       procResKpis: [{ label: 'Débito fiscal', value: fmt(res.df) }, { label: 'Crédito fiscal', value: fmt(res.cf) }, { label: 'Retenciones y percepciones', value: fmt(res.rp) }],
       procResSaldos: saldos,
       resKpisLiq: [
@@ -4353,7 +4347,7 @@ class Component extends DCLogic {
       st: E['Completado'],
       resumen: arr.sinDj ? 'No hay una DJ liquidada de ' + arr.per + ' para ' + cli + ': los saldos a favor se trasladan en $ 0.'
         : (prevPagar ? 'La DJ de ' + arr.per + ' resultó a pagar: no hay saldos a favor para trasladar.'
-          : 'Se trasladan $ ' + arrTec + ' de saldo a favor de 1er párrafo y $ ' + arrLib + ' de 2do párrafo a 08/2026' + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.'))
+          : 'Se trasladan $ ' + arrTec + ' de saldo a favor de 1er párrafo y $ ' + arrLib + ' de 2do párrafo a ' + this.perLiq() + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.'))
     };
     const APOC_OBS = [[0, '18.270,00'], [2, '9.450,00'], [4, '31.920,00']].map(([i, iva]) => [this.APOC_ULT[i][1], this.APOC_ULT[i][0], this.APOC_ULT[i][2], iva]);
     const def = [
@@ -4740,11 +4734,11 @@ class Component extends DCLogic {
     const s = this.state, E = this.EST;
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
     const cru = this.cruRun();
-    const arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
+    const perL = this.perLiq(), arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
     const sinArr = arr.sinDj ? 'No hay DJ liquidada de ' + arr.per : '';
     const prevSaldos = [
-      { label: 'Saldo a favor 1er párrafo · ' + arr.per, cero: arr.pagar1, amount: '$ ' + this.ars(arr.tec), sub: sinArr || (arr.pagar1 ? 'Resultó a pagar ($ ' + this.ars(arr.s1) + '): se trae $ 0' : 'Se traslada a la liquidación de 08/2026') },
-      { label: 'Saldo a favor 2do párrafo menos compensaciones · ' + arr.per, cero: arr.pagar2, amount: '$ ' + this.ars(arr.lib), sub: sinArr || (arr.pagar2 ? 'Resultó a pagar ($ ' + this.ars(arr.s2) + '): se trae $ 0' : (arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Sin compensaciones registradas · se traslada a 08/2026')) }
+      { label: 'Saldo a favor 1er párrafo · ' + arr.per, cero: arr.pagar1, amount: '$ ' + this.ars(arr.tec), sub: sinArr || (arr.pagar1 ? 'Resultó a pagar ($ ' + this.ars(arr.s1) + '): se trae $ 0' : 'Se traslada a la liquidación de ' + perL) },
+      { label: 'Saldo a favor 2do párrafo menos compensaciones · ' + arr.per, cero: arr.pagar2, amount: '$ ' + this.ars(arr.lib), sub: sinArr || (arr.pagar2 ? 'Resultó a pagar ($ ' + this.ars(arr.s2) + '): se trae $ 0' : (arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Sin compensaciones registradas · se traslada a ' + perL)) }
     ].map(p => {
       const z = prevPagar || p.cero;
       return {
@@ -4888,11 +4882,11 @@ class Component extends DCLogic {
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
     const baseRows = this.baseRows();
     const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli;
-    const delPer = baseRows.filter(r => r.cliente === cli && r.per === '08/2026' && r.df !== '—');
+    const delPer = baseRows.filter(r => r.cliente === cli && r.per === perL && r.df !== '—');
     const hasHist = delPer.length > 0;
     const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && r.seq === s.liqSeqN));
     const fechaN = s.liqRes ? s.liqRes.fecha : '03/10/2026', fechaHoraN = s.liqRes ? s.liqRes.fechaHora : '03/10/2026 17:40';
-    const nueva = savedAqui && !del[cli + '|08/2026|' + s.liqSeqN + '|' + fechaN] ? [s.liqSeqN] : [];
+    const nueva = savedAqui && !del[cli + '|' + perL + '|' + s.liqSeqN + '|' + fechaN] ? [s.liqSeqN] : [];
     const liqDone = [...new Set(hechas.map(r => r.seq).concat(nueva))].sort((a, b) => a - b);
     const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
     const ultFecha = nueva.length && seqLast === s.liqSeqN ? fechaHoraN : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
@@ -4918,10 +4912,10 @@ class Component extends DCLogic {
       if (eg.length) pendRows.push({ cliente: run.cliente, per: run.per, seq: run.seq, fecha: run.fecha, user: run.user, df: '—', cf: '—', est: 'Pendiente de liquidar', eg });
     });
     const curRow = (s.liqSaved
-      ? [Object.assign({ cliente: s.liqCliN, per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] },
+      ? [Object.assign({ cliente: s.liqCliN, per: s.liqRes ? s.liqRes.per : '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] },
         s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp) } : {})]
       : []).concat(pendRows);
-    const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === '08/2026' && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
+    const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === curRow[0].per && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
     const histFilas = histTodas.filter(r => r.df !== '—' && (histAdmin || r.user === me.short));
     const ultSeq = {};
     histFilas.forEach(r => { const k = r.cliente + '|' + r.per; ultSeq[k] = Math.max(ultSeq[k] ?? -1, r.seq); });
@@ -5145,15 +5139,15 @@ class Component extends DCLogic {
           return fin('error');
         }
         const ahora = this.ahora();
-        const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel });
+        const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
         this.setState(st => {
-          const id = cli + '|08/2026|' + seqSel + '|' + res.fecha, le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
+          const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
           delete le[id]; delete bo[id];
-          const ult = st.cruRuns.find(r => r.cliente === cli && r.per === '08/2026' && !r.liq);
-          const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === '08/2026' && !r.liq ? Object.assign({}, r, { liq: true }) : r));
+          const ult = st.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
+          const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === perL && !r.liq ? Object.assign({}, r, { liq: true }) : r));
           const eg = ult ? this.runGrupos(ult) : cru.errGroups;
           const fila = {
-            id, cliente: cli, per: '08/2026', seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
+            id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
             df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
             n: { df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs }
           };
@@ -5165,10 +5159,10 @@ class Component extends DCLogic {
         });
         fin('done');
       },
-      liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
+      liqCli: cli, liqPer: perL, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
       ...this.periodoPicker(s),
-      seqHead: cli + ' · 08/2026 ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
+      seqHead: cli + ' · ' + perL + ' ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
       seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
       seqNextTxt: seqSel === null ? 'secuencia a elegir' : this.seqTxt(seqSel),
       seqCurTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : (seqSel ?? seqLast)),
@@ -5275,7 +5269,7 @@ class Component extends DCLogic {
       }),
       procErrTxt: s.liqErrTxt,
       ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? s.liqRes.cli : 'CAZATUR SA',
-      liqResSub: resReal ? 'Período 08/2026 · ' + this.seqTxt(s.liqRes.seq) + ' · Procesado por ' + me.short + ' el ' + s.liqRes.fechaHora + ' · Calculado con los subdiarios cargados' : '',
+      liqResSub: resReal ? 'Período ' + s.liqRes.per + ' · ' + this.seqTxt(s.liqRes.seq) + ' · Procesado por ' + me.short + ' el ' + s.liqRes.fechaHora + ' · Calculado con los subdiarios cargados' : '',
       verResultadoReal: () => this.setState({ screen: 'liqResultado', liqResVer: true, drawer: false, modal: false, notif: false }),
       liqTabs: tabsDef.map(([k, label]) => ({
         label, go: this.tset('liqTab', k),
