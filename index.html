@@ -522,11 +522,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mes</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>08 — Agosto</option><option>07 — Julio</option><option>06 — Junio</option></select>
+<select value="{{ liqMes }}" onChange="{{ liqMesSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqMesOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Año</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>2026</option><option>2025</option></select>
+<select value="{{ liqAnio }}" onChange="{{ liqAnioSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ liqAnioOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
 </div>
 </div>
 <div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
@@ -2351,7 +2351,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1,
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026',
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
@@ -4513,6 +4513,11 @@ class Component extends DCLogic {
       }),
       liqCli: cli, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
+      liqMes: s.liqMes, liqMesSet: (e) => this.setState({ liqMes: e.target.value }),
+      liqMesOpts: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        .map((m, i) => { const v = String(i + 1).padStart(2, '0'); return { v, label: v + ' — ' + m }; }),
+      liqAnio: s.liqAnio, liqAnioSet: (e) => this.setState({ liqAnio: e.target.value }),
+      liqAnioOpts: Array.from({ length: 6 }, (_, i) => ({ v: String(new Date().getFullYear() - i) })),
       seqHead: cli + ' · 08/2026 ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
       seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
       seqNextTxt: seqSel === null ? 'secuencia a elegir' : this.seqTxt(seqSel),
