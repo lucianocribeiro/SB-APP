@@ -528,7 +528,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <sc-if value="{{ perOpen }}">
 <div onClick="{{ perClose }}" style="position:fixed;inset:0;z-index:40"></div>
-<div style="position:absolute;top:calc(100% + 6px);left:0;width:320px;max-width:92vw;background:#fff;border:1px solid #E3E8EE;border-radius:6px;box-shadow:0 8px 28px rgba(27,39,51,.2);z-index:41;padding:14px 14px 12px">
+<div style="position:absolute;top:calc(100% + 6px);left:0;width:320px;max-width:92vw;background:#fff;border:1px solid #E3E8EE;border-radius:6px;box-shadow:0 8px 28px rgba(27,39,51,.2);z-index:41;padding:14px 14px 12px;user-select:none">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
 <div style="font:600 15px 'Open Sans';color:#1B2733">{{ perVista }}</div>
 <div style="display:flex;gap:4px">
@@ -552,8 +552,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 </sc-for>
 </div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #E3E8EE;font:400 12px 'Open Sans';color:#5A6B7B">
-<span>El punto marca el mes actual</span>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #E3E8EE;font:400 12px 'Open Sans';color:#5A6B7B;white-space:nowrap">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:3px;background:#2F80B7"></span>Mes actual</span>
 <span onClick="{{ perUltimo }}" style="font:600 12px 'Open Sans';color:#2F80B7;cursor:pointer" style-hover="color:#14395C;text-decoration:underline">Último período cerrado</span>
 </div>
 </div>
@@ -2855,7 +2855,7 @@ class Component extends DCLogic {
 
   periodoPicker(s) {
     const MES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    const hoy = new Date(), anioHoy = hoy.getFullYear(), mesHoy = hoy.getMonth() + 1, anioMin = anioHoy - 5;
+    const hoy = new Date(), anioHoy = hoy.getFullYear(), mesHoy = hoy.getMonth() + 1, anioMin = anioHoy - 10;
     const vista = s.perVista || +s.liqAnio, mm = n => String(n).padStart(2, '0');
     const elegir = (mes, anio) => this.setState({ liqMes: mm(mes), liqAnio: String(anio), perOpen: false, seqElegida: null });
     return {
