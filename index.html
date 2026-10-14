@@ -1744,17 +1744,17 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1020px">
+<table style="width:100%;border-collapse:collapse;min-width:900px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Tipo de cruce</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Registros</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Con diferencias</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia DJ</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:64px">Ver</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:76px">Errores</th>
+<th style="text-align:center;font:600 11px/1.25 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:96px">Reporte de diferencias</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 8px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;width:64px">Excel</th>
 </tr></thead>
 <tbody>
 <sc-for list="{{ cruHist }}" as="r" hint-placeholder-count="6">
@@ -1762,22 +1762,25 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.tipo }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B;white-space:nowrap">{{ r.fecha }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.regs }}</td>
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.dif }}</td>
+<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
-<div style="display:inline-flex;gap:8px">
-<span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
+<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
+<div onClick="{{ r.ver }}" title="Ver resultado del cruce" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#2F80B7;background:#F4F9FD"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
+</td>
+<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
 <sc-if value="{{ r.hasErr }}">
-<span onClick="{{ r.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">{{ r.errLabel }}</span>
+<div onClick="{{ r.verErr }}" title="{{ r.errLabel }}" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;height:32px;padding:0 8px;border:1px solid #F3CFCB;border-radius:6px;cursor:pointer;background:#FBE9E7" style-hover="border-color:#B3261E"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg><span style="font:600 12px/1 'Open Sans';color:#B3261E">{{ r.nErr }}</span></div>
 </sc-if>
+<sc-if value="{{ r.noErr }}"><span title="Sin errores" style="font:400 13px 'Open Sans';color:#B5C0CB">—</span></sc-if>
+</td>
+<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
 <sc-if value="{{ r.hasDif }}">
-<span onClick="{{ r.rep }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Reporte de diferencias</span>
+<div onClick="{{ r.rep }}" title="Descargar reporte de diferencias" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #F0E0BC;border-radius:6px;cursor:pointer;background:#FBF3E3" style-hover="border-color:#B7791F"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8F5F14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6M9 13h6M9 17h4"></path></svg></div>
 </sc-if>
-<span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
-</div>
+<sc-if value="{{ r.noDif }}"><span title="Sin diferencias" style="font:400 13px 'Open Sans';color:#B5C0CB">—</span></sc-if>
+</td>
+<td style="padding:9px 8px;border-bottom:1px solid #E3E8EE;text-align:center">
+<div onClick="{{ toastXls }}" title="Exportar a Excel" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #C7E3D6;border-radius:6px;cursor:pointer;background:#E8F3EE" style-hover="border-color:#2E7D5B"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M3 15h18M9 3v18"></path></svg></div>
 </td>
 </tr>
 </sc-for>
@@ -4781,7 +4784,7 @@ class Component extends DCLogic {
     const cruAdmin = s.role === 'admin', me = this.me();
     const NUM = { 'IVA Compras vs Base APOC': 1, 'Emitidos vs IVA Ventas': 2, 'Recibidos vs IVA Compras': 3, 'Retenciones vs IVA Ventas / Compras': 4, 'Retenciones y percepciones vs Mis Retenciones': 4, 'Aduaneras vs Mis Percepciones Aduaneras': 5, 'IVA Digital vs IVA Compras + Ventas': 6 };
     const savedCru = [].concat(...s.cruRuns.map(run => run.cruces.map(c => ({
-      cliente: run.cliente, tipo: c.tipo, n: c.n, per: run.per, fecha: run.fecha, user: run.user,
+      cliente: run.cliente, tipo: c.tipo, n: c.n, per: run.per, seq: run.seq, fecha: run.fecha, user: run.user,
       regs: c.regs, dif: c.dif, est: c.est, errs: c.errs, guardado: true
     }))));
     const STB = {
@@ -4855,7 +4858,7 @@ class Component extends DCLogic {
         { cliente: 'DACKET SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', regs: '1.012', dif: '0', est: 'Completado' },
         { cliente: 'CAZATUR SA', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', regs: '1.284', dif: '5', est: 'Completado con diferencias' },
         { cliente: 'CAZATUR SA', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026 14:20', user: 'Administrador', regs: '2.117', dif: '0', est: 'Completado' },
-        { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026 11:05', user: 'Julieta', regs: '96', dif: '2', est: 'Completado con diferencias' },
+        { cliente: 'DACKET SA', tipo: 'Retenciones vs IVA Ventas / Compras', per: '08/2026', seq: 1, fecha: '04/09/2026 11:05', user: 'Julieta', regs: '96', dif: '2', est: 'Completado con diferencias' },
         { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', regs: '844', dif: '0', est: 'Completado' },
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', regs: '112', dif: '2', est: 'Procesando' }
@@ -4868,10 +4871,11 @@ class Component extends DCLogic {
         .map(r => {
           const n = r.n || NUM[r.tipo], cruce = (n ? 'Cruce ' + n + ' · ' : '') + r.tipo, sub = r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user;
           const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
-          return Object.assign({}, r, {
-            tipo: cruce, st: E[r.est], hasErr: r.errs.length > 0, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
+          const hasDif = r.guardado ? r.errs.length > 0 : r.est === 'Completado con diferencias';
+          return Object.assign({}, r, this.seqChip(r.seq || 0), {
+            tipo: cruce, st: E[r.est], hasErr: r.errs.length > 0, noErr: !r.errs.length, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
             ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : this.nav('cruceResultado'),
-            hasDif: r.guardado ? r.errs.length > 0 : r.est === 'Completado con diferencias',
+            hasDif, noDif: !hasDif,
             rep: r.guardado ? () => this.descargarErrores({ title: 'Errores · ' + cruce, sub, rows: r.errs.map(e => Object.assign({ cruce }, e)) }, r.cliente) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.')
           });
         })
