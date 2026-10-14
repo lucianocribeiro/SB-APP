@@ -1930,38 +1930,83 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 <sc-if value="{{ cfgTab.cart }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+<sc-for list="{{ cartKpis }}" as="k" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid {{ k.bd }};border-radius:6px;padding:13px 15px">
+<div style="font:600 11px/1.3 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 26px/1 'Open Sans';margin-top:8px;color:{{ k.color }}">{{ k.value }}</div>
+<div style="font:400 12px/1.4 'Open Sans';color:#5A6B7B;margin-top:6px">{{ k.hint }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:11px;align-items:flex-start;padding:12px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+<div style="font:400 13px/1.55 'Open Sans';color:#1F5A80">Cada usuario ve y liquida <b style="font-weight:600">sólo los clientes que tiene asignados</b>. Para asignar, <b style="font-weight:600">arrastrá</b> un cliente hasta la tarjeta del usuario. Para quitárselo, arrastralo de vuelta a <b style="font-weight:600">Pendientes de asignación</b> o tocá la ×.</div>
+</div>
+<div onDragOver="{{ cartPendZona.over }}" onDrop="{{ cartPendZona.drop }}" onDragLeave="{{ cartLeave }}" style="background:{{ cartPendZona.bg }};border:1px {{ cartPendZona.bs }} {{ cartPendZona.bd }};border-radius:6px;padding:16px 18px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ cartPendZona.ic }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<div style="font:600 14.5px 'Open Sans'">Pendientes de asignación</div>
+<span style="display:inline-block;padding:2px 9px;border-radius:10px;font:600 12px/1.5 'Open Sans';background:{{ cartPendZona.nBg }};color:{{ cartPendZona.nFg }}">{{ cartPendN }}</span>
+</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cartPendTxt }}</div>
+<sc-if value="{{ cartPendHay }}">
+<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px">
+<sc-for list="{{ cartPend }}" as="x" hint-placeholder-count="3">
+<span draggable="true" onDragStart="{{ x.drag }}" onDragEnd="{{ cartDragEnd }}" title="Arrastrá hasta un usuario para asignarlo" style="display:inline-flex;align-items:center;gap:7px;padding:5px 5px 5px 8px;border:1px solid #F0E0BC;border-radius:6px;background:#fff;font:600 12.5px 'Open Sans';color:#1B2733;cursor:grab;opacity:{{ x.op }}" style-hover="border-color:#B7791F;box-shadow:0 2px 6px rgba(27,39,51,.12)"><svg width="10" height="14" viewBox="0 0 10 14" fill="#B7791F"><circle cx="3" cy="3" r="1.2"></circle><circle cx="7" cy="3" r="1.2"></circle><circle cx="3" cy="7" r="1.2"></circle><circle cx="7" cy="7" r="1.2"></circle><circle cx="3" cy="11" r="1.2"></circle><circle cx="7" cy="11" r="1.2"></circle></svg>{{ x.c }}<span onClick="{{ x.eliminar }}" title="Eliminar del listado" style="cursor:pointer;color:#9AA9B7;font:600 14px/1 'Open Sans';padding:0 4px" style-hover="color:#B3261E">×</span></span>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:stretch">
+<sc-for list="{{ cartUsrs }}" as="g" hint-placeholder-count="5">
+<div onDragOver="{{ g.over }}" onDrop="{{ g.drop }}" onDragLeave="{{ cartLeave }}" style="background:{{ g.bg }};border:1px {{ g.bs }} {{ g.bd }};border-radius:6px;padding:14px 16px;min-height:118px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:32px;height:32px;border-radius:16px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 12px 'Open Sans';flex:none">{{ g.ini }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:600 14px 'Open Sans'">{{ g.u }}</div>
+<div style="font:400 12px 'Open Sans';color:#5A6B7B">{{ g.nTxt }}</div>
+</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+<sc-for list="{{ g.cs }}" as="x" hint-placeholder-count="4">
+<span draggable="true" onDragStart="{{ x.drag }}" onDragEnd="{{ cartDragEnd }}" title="Arrastrá para pasarlo a otro usuario" style="display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 8px;border:1px solid #DDE3E9;border-radius:6px;background:#F5F7FA;font:400 12px 'Open Sans';cursor:grab;opacity:{{ x.op }}" style-hover="border-color:#2F80B7;background:#fff">{{ x.c }}<span onClick="{{ x.quitar }}" title="Quitar (pasa a Pendientes de asignación)" style="cursor:pointer;color:#9AA9B7;font:600 13px/1 'Open Sans';padding:0 3px" style-hover="color:#B3261E">×</span></span>
+</sc-for>
+</div>
+<sc-if value="{{ g.vacio }}">
+<div style="flex:1;display:flex;align-items:center;justify-content:center;margin-top:8px;padding:12px;border:1px dashed #D5DEE7;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7;text-align:center">Sin clientes. Arrastrá uno acá.</div>
+</sc-if>
+<sc-if value="{{ g.soltar }}">
+<div style="margin-top:10px;padding:7px;border-radius:6px;background:#2F80B7;color:#fff;font:600 12px 'Open Sans';text-align:center">Soltá para asignar a {{ g.u }}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
-<div style="font:600 14.5px 'Open Sans'">Cargar asignación</div>
-<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Pegá desde Excel dos columnas, <b style="font-weight:600;color:#1B2733">Usuario</b> y <b style="font-weight:600;color:#1B2733">Cliente</b> (una fila por cliente), o subí el archivo. Reemplaza la asignación actual. Cada usuario ve y liquida sólo sus clientes.</div>
-<textarea value="{{ cartTxt }}" onChange="{{ cartTxtSet }}" placeholder="Usuario&#9;Cliente&#10;Agustín&#9;LANES SA&#10;Candelaria&#9;CLAMACO S.A." style="width:100%;height:150px;margin-top:12px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px/1.5 'Open Sans';resize:vertical;box-sizing:border-box"></textarea>
+<div style="font:600 14.5px 'Open Sans'">Agregar un cliente</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Para sumar un cliente nuevo, o asignar sin arrastrar. Si no elegís usuario, queda en Pendientes de asignación.</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+<input value="{{ cartC }}" onChange="{{ cartCSet }}" list="cartPendList" placeholder="Cliente (razón social)" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';box-sizing:border-box">
+<datalist id="cartPendList"><sc-for list="{{ cartPend }}" as="o" hint-placeholder-count="3"><option value="{{ o.c }}"></option></sc-for></datalist>
+<div style="display:flex;gap:9px">
+<select value="{{ cartU }}" onChange="{{ cartUSet }}" style="flex:1;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Sin usuario (queda pendiente)</option><sc-for list="{{ cartUOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.u }}">{{ o.u }}</option></sc-for></select>
+<button onClick="{{ cartAgregar }}" style="padding:9px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Agregar</button>
+</div>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Carga masiva desde Excel</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Pegá dos columnas, <b style="font-weight:600;color:#1B2733">Usuario</b> y <b style="font-weight:600;color:#1B2733">Cliente</b> (una fila por cliente), o subí el archivo. <b style="font-weight:600;color:#1B2733">Reemplaza toda la asignación</b>: los clientes que no estén en la lista, o que no tengan usuario, pasan a Pendientes de asignación.</div>
+<textarea value="{{ cartTxt }}" onChange="{{ cartTxtSet }}" placeholder="Usuario&#9;Cliente&#10;Agustín&#9;LANES SA&#10;Candelaria&#9;CLAMACO S.A." style="width:100%;height:110px;margin-top:12px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px/1.5 'Open Sans';resize:vertical;box-sizing:border-box"></textarea>
 <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
 <button onClick="{{ cartPegar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar lo pegado</button>
 <label style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Subir Excel / CSV<input type="file" accept=".xls,.xlsx,.csv" onChange="{{ cartArchivo }}" style="display:none"></label>
 <button onClick="{{ cartDescargar }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Descargar actual</button>
 <button onClick="{{ cartRestaurar }}" style="padding:9px 14px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Restaurar original</button>
 </div>
-<div style="font:600 13px 'Open Sans';margin-top:18px">Asignar un cliente</div>
-<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-<input value="{{ cartU }}" onChange="{{ cartUSet }}" list="cartUsrList" placeholder="Usuario" style="width:150px;padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans'">
-<datalist id="cartUsrList"><sc-for list="{{ cartUOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.u }}"></option></sc-for></datalist>
-<input value="{{ cartC }}" onChange="{{ cartCSet }}" placeholder="Cliente (razón social)" style="flex:1;min-width:180px;padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans'">
-<button onClick="{{ cartAgregar }}" style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer">Asignar</button>
 </div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
-<div style="font:600 14.5px 'Open Sans'">Asignación actual</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cartRes }}</div>
-<sc-for list="{{ cartUsrs }}" as="g" hint-placeholder-count="5">
-<div style="border-top:1px solid #EEF1F4;margin-top:12px;padding-top:10px">
-<div style="font:600 13px 'Open Sans'">{{ g.u }} <span style="font-weight:400;color:#5A6B7B">· {{ g.n }} clientes</span></div>
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px">
-<sc-for list="{{ g.cs }}" as="x" hint-placeholder-count="4">
-<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border:1px solid #DDE3E9;border-radius:6px;background:#F5F7FA;font:400 12px 'Open Sans'">{{ x.c }}<span onClick="{{ x.quitar }}" title="Quitar" style="cursor:pointer;color:#9AA9B7;font:600 13px/1 'Open Sans';padding:0 3px" style-hover="color:#B3261E">×</span></span>
-</sc-for>
-</div>
-</div>
-</sc-for>
 </div>
 </div>
 </sc-if>
@@ -2415,7 +2460,7 @@ class Component extends DCLogic {
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
-    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
+    liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
     compCli: '', compPer: '', compMonto: '',
     apoc: this.apocInit(), apocRun: false, apocQ: '',
@@ -2508,10 +2553,10 @@ class Component extends DCLogic {
     return Array.isArray(g) && g.every(x => Array.isArray(x) && typeof x[0] === 'string' && Array.isArray(x[1])) ? g : this.CARTERA_DEF;
   })();
 
-  guardarCartera(pares, accion) {
-    const m = new Map();
+  guardarCartera(pares, accion, usuarios = []) {
+    const m = new Map(usuarios.map(u => [u, []]));
     pares.forEach(([u, c]) => { if (!m.has(u)) m.set(u, []); if (!m.get(u).includes(c)) m.get(u).push(c); });
-    const cart = [...m.entries()].filter(([, cs]) => cs.length).sort((a, b) => a[0].localeCompare(b[0], 'es'));
+    const cart = [...m.entries()].filter(([u, cs]) => cs.length || usuarios.includes(u)).sort((a, b) => a[0].localeCompare(b[0], 'es'));
     this.CARTERA = cart;
     this._demo = null;
     this.lsSet('myiva.cartera', cart);
@@ -2532,16 +2577,104 @@ class Component extends DCLogic {
       iu = h.findIndex(x => /usuario/.test(x)); ic = h.findIndex(x => /cliente|razon/.test(x));
       rows = rows.slice(1);
     }
-    const pares = [], vistos = new Map(), dup = [];
+    const pares = [], vistos = new Map(), dup = [], sinUsuario = [];
     rows.forEach(r => {
       const u = r[iu], c = r[ic];
+      if (c && !u) sinUsuario.push(c);
       if (!u || !c) return;
       if (vistos.has(c) && vistos.get(c) !== u) dup.push(c);
       vistos.set(c, u);
       pares.push([u, c]);
     });
     const ult = pares.filter(([u, c]) => vistos.get(c) === u);
-    return { pares: ult, dup: [...new Set(dup)] };
+    return { pares: ult, dup: [...new Set(dup)], sinUsuario };
+  }
+
+  cartPendInit() {
+    const g = this.lsGet('myiva.cartPend', null);
+    return Array.isArray(g) ? g : ['CONSULTORA DEL PLATA SRL', 'ESTANCIA LA MARGARITA SA', 'TECNOAGRO SAS'];
+  }
+
+  guardarPend(lista) {
+    const p = [...new Set(lista)].sort((a, b) => a.localeCompare(b, 'es'));
+    this.setState({ cartPend: this.lsSet('myiva.cartPend', p) });
+  }
+
+  cartMover(c, u) {
+    const antes = (this.CARTERA.find(([, cs]) => cs.includes(c)) || [])[0];
+    if (antes === u || (!u && !antes && this.state.cartPend.includes(c))) return;
+    const pares = [].concat(...this.CARTERA.map(([uu, cs]) => cs.map(cc => [uu, cc]))).filter(([, cc]) => cc !== c);
+    this.guardarCartera(u ? pares.concat([[u, c]]) : pares,
+      u ? c + ' asignado a ' + u + (antes ? ' (antes de ' + antes + ')' : '') : c + ' quedó pendiente de asignación', this.CARTERA.map(([x]) => x));
+    this.guardarPend(u ? this.state.cartPend.filter(x => x !== c) : this.state.cartPend.concat([c]));
+  }
+
+  cartReemplazar(pares, accion, sinUsuario = []) {
+    const nuevos = new Set(pares.map(([, c]) => c));
+    const antes = [].concat(...this.CARTERA.map(([, cs]) => cs));
+    this.guardarCartera(pares, accion);
+    this.guardarPend(this.state.cartPend.concat(antes, sinUsuario).filter(c => !nuevos.has(c)));
+  }
+
+  cartVals(cartN) {
+    const s = this.state, pend = s.cartPend, arr = s.cartDrag;
+    const drag = c => (e) => {
+      try { e.dataTransfer.setData('text/plain', c); e.dataTransfer.effectAllowed = 'move'; } catch (x) { }
+      this._cartDrag = c;
+      setTimeout(() => this.setState({ cartDrag: c }), 0);
+    };
+    const zona = (key, u) => ({
+      over: (e) => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        if (this.state.cartSobre !== key) this.setState({ cartSobre: key });
+      },
+      drop: (e) => {
+        e.preventDefault();
+        const c = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || this._cartDrag;
+        this._cartDrag = null;
+        this.setState({ cartDrag: null, cartSobre: null });
+        if (c) this.cartMover(c, u);
+      }
+    });
+    const sobreP = s.cartSobre === '__pend', hay = pend.length > 0;
+    return {
+      cartKpis: [
+        { label: 'Usuarios', value: String(this.CARTERA.length), color: '#1B2733', bd: '#E3E8EE', hint: 'Cada uno liquida sólo sus clientes' },
+        { label: 'Clientes asignados', value: String(cartN), color: '#14395C', bd: '#E3E8EE', hint: 'Ya tienen un usuario responsable' },
+        { label: 'Pendientes de asignación', value: String(pend.length), color: hay ? '#B7791F' : '#2E7D5B', bd: hay ? '#F0E0BC' : '#C7E3D6', hint: hay ? 'Nadie los ve ni los liquida todavía' : 'No hay clientes sin usuario' }
+      ],
+      cartPendN: String(pend.length), cartPendHay: hay,
+      cartPendTxt: hay
+        ? 'Estos clientes todavía no tienen usuario: nadie los ve ni los liquida. Arrastrá cada uno hasta la tarjeta del usuario que corresponda.'
+        : (arr ? 'Soltá acá para dejar el cliente sin usuario.' : 'Todos los clientes tienen un usuario asignado.'),
+      cartPendZona: Object.assign(zona('__pend', null), {
+        bg: sobreP ? '#FBF3E3' : (hay ? '#FFFBF2' : '#fff'),
+        bd: sobreP ? '#B7791F' : (hay ? '#F0E0BC' : (arr ? '#B9C6D3' : '#E3E8EE')),
+        bs: arr ? 'dashed' : 'solid', ic: hay ? '#B7791F' : '#2E7D5B',
+        nBg: hay ? '#FBF3E3' : '#E8F3EE', nFg: hay ? '#8F5F14' : '#2E7D5B'
+      }),
+      cartPend: pend.map(c => ({
+        c, op: arr === c ? .45 : 1, drag: drag(c),
+        eliminar: () => {
+          if (typeof window !== 'undefined' && window.confirm && !window.confirm('¿Eliminar ' + c + ' del listado de clientes?')) return;
+          this.guardarPend(pend.filter(x => x !== c));
+          this.setState({ toast: { kind: 'ok', t: 'Cliente eliminado', d: c + ' ya no figura en el listado de clientes.' } });
+        }
+      })),
+      cartUsrs: this.CARTERA.map(([u, cs]) => {
+        const sobre = s.cartSobre === u;
+        return Object.assign(zona(u, u), {
+          u, ini: u.slice(0, 2).toUpperCase(), nTxt: cs.length === 1 ? '1 cliente' : cs.length + ' clientes',
+          vacio: !cs.length && !sobre, soltar: sobre && !!arr && !cs.includes(arr),
+          bg: sobre ? '#F4F9FD' : '#fff', bd: sobre ? '#2F80B7' : (arr ? '#B9C6D3' : '#E3E8EE'), bs: arr ? 'dashed' : 'solid',
+          cs: cs.map(c => ({ c, op: arr === c ? .45 : 1, drag: drag(c), quitar: () => this.cartMover(c, null) }))
+        });
+      }),
+      cartUOpts: this.CARTERA.map(([u]) => ({ u })),
+      cartLeave: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) this.setState({ cartSobre: null }); },
+      cartDragEnd: () => { this._cartDrag = null; this.setState({ cartDrag: null, cartSobre: null }); }
+    };
   }
 
   MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
@@ -4941,7 +5074,7 @@ class Component extends DCLogic {
     const paresAct = () => [].concat(...this.CARTERA.map(([u, cs]) => cs.map(c => [u, c])));
     const aplicar = (r, origen) => {
       if (!r.pares.length) return this.setState({ toast: { kind: 'err', t: 'No se encontraron asignaciones', d: 'Hacen falta dos columnas: Usuario y Cliente (una fila por cliente).' } });
-      this.guardarCartera(r.pares, 'Clientes por usuario cargados (' + origen + ')');
+      this.cartReemplazar(r.pares, 'Clientes por usuario cargados (' + origen + ')', r.sinUsuario);
       if (r.dup.length) this.setState({ toast: { kind: 'warn', t: 'Clientes repetidos', d: r.dup.length + ' clientes figuraban con dos usuarios; quedó la última fila: ' + r.dup.slice(0, 3).join(', ') + (r.dup.length > 3 ? '…' : '') } });
     };
     const cartN = this.CARTERA.reduce((a, [, cs]) => a + cs.length, 0);
@@ -5002,12 +5135,7 @@ class Component extends DCLogic {
         bar: s.cfgTab === k ? '#14395C' : 'transparent'
       })),
       cfgTab,
-      cartRes: this.CARTERA.length + ' usuarios · ' + cartN + ' clientes asignados',
-      cartUsrs: this.CARTERA.map(([u, cs]) => ({
-        u, n: String(cs.length),
-        cs: cs.map(c => ({ c, quitar: () => this.guardarCartera(paresAct().filter(([uu, cc]) => !(uu === u && cc === c)), 'Cliente quitado de ' + u) }))
-      })),
-      cartUOpts: this.CARTERA.map(([u]) => ({ u })),
+      ...this.cartVals(cartN),
       cartTxt: s.cartTxt, cartTxtSet: (e) => this.setState({ cartTxt: e.target.value }),
       cartU: s.cartU, cartUSet: (e) => this.setState({ cartU: e.target.value }),
       cartC: s.cartC, cartCSet: (e) => this.setState({ cartC: e.target.value }),
@@ -5024,10 +5152,10 @@ class Component extends DCLogic {
         }
       },
       cartAgregar: () => {
-        const u = s.cartU.trim(), c = s.cartC.trim();
-        if (!u || !c) return this.setState({ toast: { kind: 'warn', t: 'Completá usuario y cliente', d: 'Elegí o escribí el usuario y el nombre del cliente.' } });
-        const otro = this.CARTERA.find(([uu, cs]) => uu !== u && cs.includes(c));
-        this.guardarCartera(paresAct().filter(([, cc]) => cc !== c).concat([[u, c]]), 'Cliente asignado a ' + u + (otro ? ' (antes de ' + otro[0] + ')' : ''));
+        const u = s.cartU, c = s.cartC.trim();
+        if (!c) return this.setState({ toast: { kind: 'warn', t: 'Escribí el cliente', d: 'Completá la razón social del cliente.' } });
+        if (!u && s.cartPend.includes(c)) return this.setState({ toast: { kind: 'warn', t: 'Ya está pendiente', d: c + ' ya figura en Pendientes de asignación.' } });
+        this.cartMover(c, u || null);
         this.setState({ cartC: '' });
       },
       cartDescargar: async () => {
@@ -5038,7 +5166,7 @@ class Component extends DCLogic {
         X.utils.book_append_sheet(wb, ws, 'Clientes por usuario');
         this.descargar('Clientes por usuario.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
       },
-      cartRestaurar: () => this.guardarCartera([].concat(...this.CARTERA_DEF.map(([u, cs]) => cs.map(c => [u, c]))), 'Clientes por usuario restaurados'),
+      cartRestaurar: () => this.cartReemplazar([].concat(...this.CARTERA_DEF.map(([u, cs]) => cs.map(c => [u, c]))), 'Clientes por usuario restaurados'),
       eventos: [
         { ev: 'Diferencias detectadas en un cruce', dest: 'admin@blasco.com.ar, julietad@blasco.com.ar', asunto: '[MyIVA] Diferencias en {cliente} — {periodo}' },
         { ev: 'Liquidación completada', dest: 'admin@blasco.com.ar', asunto: '[MyIVA] Liquidación {cliente} {periodo} lista' },
