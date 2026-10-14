@@ -530,7 +530,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div onClick="{{ perClose }}" style="position:fixed;inset:0;z-index:40"></div>
 <div style="position:absolute;top:calc(100% + 6px);left:0;width:320px;max-width:92vw;background:#fff;border:1px solid #E3E8EE;border-radius:6px;box-shadow:0 8px 28px rgba(27,39,51,.2);z-index:41;padding:14px 14px 12px;user-select:none">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-<div style="font:600 15px 'Open Sans';color:#1B2733">{{ perVista }}</div>
+<div style="display:flex;align-items:center;gap:8px">
+<input value="{{ perAnioTxt }}" onChange="{{ perAnioSet }}" inputmode="numeric" maxlength="4" title="Escribí el año" style="width:68px;padding:5px 8px;border:1px solid {{ perAnioBd }};border-radius:6px;font:600 15px 'Open Sans';color:#1B2733;outline:none;user-select:text;font-variant-numeric:tabular-nums">
+<span style="font:400 11.5px 'Open Sans';color:{{ perAnioHintFg }};white-space:nowrap">{{ perAnioHint }}</span>
+</div>
 <div style="display:flex;gap:4px">
 <div onClick="{{ perPrev }}" title="Año anterior" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;opacity:{{ perPrevOp }}" style-hover="background:#F5F7FA"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B2733" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg></div>
 <div onClick="{{ perNext }}" title="Año siguiente" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;opacity:{{ perNextOp }}" style-hover="background:#F5F7FA"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B2733" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></div>
@@ -2382,7 +2385,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null,
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(),
@@ -2857,14 +2860,24 @@ class Component extends DCLogic {
     const MES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const hoy = new Date(), anioHoy = hoy.getFullYear(), mesHoy = hoy.getMonth() + 1, anioMin = anioHoy - 10;
     const vista = s.perVista || +s.liqAnio, mm = n => String(n).padStart(2, '0');
-    const elegir = (mes, anio) => this.setState({ liqMes: mm(mes), liqAnio: String(anio), perOpen: false, seqElegida: null });
+    const elegir = (mes, anio) => this.setState({ liqMes: mm(mes), liqAnio: String(anio), perOpen: false, perAnioTxt: null, seqElegida: null });
+    const txt = s.perAnioTxt, malo = txt !== null && txt.length === 4;
     return {
       perLabel: s.liqMes + ' — ' + MES[+s.liqMes - 1] + ' ' + s.liqAnio,
       perOpen: s.perOpen, perBd: s.perOpen ? '#2F80B7' : '#E3E8EE', perVista: String(vista),
-      perToggle: () => this.setState(st => ({ perOpen: !st.perOpen, perVista: +st.liqAnio })),
-      perClose: () => this.setState({ perOpen: false }),
-      perPrev: () => { if (vista > anioMin) this.setState({ perVista: vista - 1 }); },
-      perNext: () => { if (vista < anioHoy) this.setState({ perVista: vista + 1 }); },
+      perAnioTxt: txt === null ? String(vista) : txt,
+      perAnioBd: malo ? '#B3261E' : (txt !== null ? '#2F80B7' : '#E3E8EE'),
+      perAnioHint: malo ? 'Entre ' + anioMin + ' y ' + anioHoy : (txt !== null ? 'Escribí 4 dígitos' : ''),
+      perAnioHintFg: malo ? '#B3261E' : '#5A6B7B',
+      perAnioSet: (e) => {
+        const t = String(e.target.value).replace(/\D/g, '').slice(0, 4), n = +t;
+        if (t.length === 4 && n >= anioMin && n <= anioHoy) this.setState({ perVista: n, perAnioTxt: null });
+        else this.setState({ perAnioTxt: t });
+      },
+      perToggle: () => this.setState(st => ({ perOpen: !st.perOpen, perVista: +st.liqAnio, perAnioTxt: null })),
+      perClose: () => this.setState({ perOpen: false, perAnioTxt: null }),
+      perPrev: () => { if (vista > anioMin) this.setState({ perVista: vista - 1, perAnioTxt: null }); },
+      perNext: () => { if (vista < anioHoy) this.setState({ perVista: vista + 1, perAnioTxt: null }); },
       perPrevOp: vista > anioMin ? 1 : .3, perNextOp: vista < anioHoy ? 1 : .3,
       perUltimo: () => (mesHoy === 1 ? elegir(12, anioHoy - 1) : elegir(mesHoy - 1, anioHoy)),
       perMeses: MES.map((n, i) => {
