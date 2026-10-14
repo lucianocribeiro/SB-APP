@@ -2602,6 +2602,7 @@ class Component extends DCLogic {
   async cambiarPw() {
     const sb = this.sb(), s = this.state, err = (t, d) => this.setState({ toast: { kind: 'err', t, d } });
     if (!sb || !this._user) return this.setState({ toast: { kind: 'ok', t: 'Perfil guardado', d: 'Los cambios quedaron guardados.' } });
+    if (this._user.rapido) return err('Entraste por acceso rápido', 'Para cambiar la contraseña ingresá con tu mail y contraseña.');
     if (s.pwNue.length < 6) return err('Contraseña muy corta', 'La contraseña nueva tiene que tener al menos 6 caracteres.');
     if (s.pwNue !== s.pwRep) return err('Las contraseñas no coinciden', 'Escribí la misma contraseña nueva en "Nueva" y en "Repetir".');
     if (!s.pwRecup) {
@@ -2639,6 +2640,19 @@ class Component extends DCLogic {
       this._user = null;
       this._sync = null;
       this.setState({ sesionChk: false, loginBusy: false, loginErr: true, loginErrTxt: 'No se pudieron cargar los datos: ' + String(e && e.message || e) });
+    }
+  }
+
+  async entrarRapido(role, usr) {
+    const sb = this.sb(), base = { role, usr, perfil: null, screen: 'inicio', loginErr: false };
+    if (!sb) return this.setState(base);
+    this._user = { id: null, email: null, rapido: true };
+    try {
+      this.setState(Object.assign(await this.cargarDatos({ rol: role }), base));
+    } catch (e) {
+      this._user = null;
+      this._sync = null;
+      this.setState(Object.assign(base, { toast: { kind: 'err', t: 'No se pudieron cargar los datos de Supabase', d: String(e && e.message || e) } }));
     }
   }
 
@@ -4652,10 +4666,10 @@ class Component extends DCLogic {
         { label: 'Clientes asignados', value: String(misClientes.length), hint: misClientes.slice(0, 2).join(' · ') + (misClientes.length > 2 ? ' y ' + (misClientes.length - 2) + ' más' : ''), color: '#1B2733' },
         { label: 'Alertas abiertas', value: String(alertasTodas.filter(a => misClientes.indexOf(a.cli) >= 0).length), hint: 'de mis clientes', color: '#B3261E' }
       ],
-      accesoAdmin: () => this.setState({ role: 'admin', screen: 'inicio', loginErr: false }),
+      accesoAdmin: () => this.entrarRapido('admin', s.usr),
       accesoUsrs: this.CARTERA.map(([u, cs]) => ({
         nombre: u, ini: this.fold(u).slice(0, 2).toUpperCase(), cant: cs.length + ' clientes', mail: this.mailDe(u),
-        go: () => this.setState({ role: 'empleado', usr: u, screen: 'inicio', loginErr: false })
+        go: () => this.entrarRapido('empleado', u)
       })),
       cerrarSesion: () => this.salir(),
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
