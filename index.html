@@ -3770,9 +3770,11 @@ class Component extends DCLogic {
     return { kind, name, recs, per, omit, propio, excl: recs.filter(x => x.excl).length };
   }
 
-  cruzarComp(arca, libro) {
+  cruzarComp(arca, libro, regla) {
     const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
     const L = libro.recs.filter(x => !x.excl), A = arca.recs;
+    const perLiq = this.perLiq(), perK = (p) => p.slice(3) + p.slice(0, 2), pk = perK(perLiq);
+    const fueraPer = L.filter(x => { const k = perK(x.fecha.slice(3)); return regla === 'hasta' ? k > pk : k !== pk; });
     const ali = A.some(x => x.hasAli);
     const F = (ali
       ? [['n21', 'Neto gravado 21%'], ['i21', 'IVA 21%'], ['n105', 'Neto gravado 10,5%'], ['i105', 'IVA 10,5%'], ['n27', 'Neto gravado 27%'], ['i27', 'IVA 27%'], ['n5', 'Neto gravado 5%'], ['i5', 'IVA 5%'], ['n25', 'Neto gravado 2,5%'], ['i25', 'IVA 2,5%'], ['n0', 'Neto gravado 0%']]
@@ -3801,7 +3803,7 @@ class Component extends DCLogic {
     const tot = {};
     ['ngt', 'ivt', 'ng', 'ot', 'tot'].forEach(k => { tot[k] = [sum(A, k), sum(L, k)]; });
     return {
-      filas, faltA, faltL, nA: A.length, nL: L.length, excl: libro.recs.length - L.length,
+      filas, faltA, faltL, fueraPer, perLiq, regla, nA: A.length, nL: L.length, excl: libro.recs.length - L.length,
       ok: filas.filter(f => f.est === 'ok').length, dif: filas.filter(f => f.est === 'dif').length, tot
     };
   }
@@ -4168,16 +4170,16 @@ class Component extends DCLogic {
   }
 
   cruReal() {
-    const s = this.state, R = s.real || {}, base = this.apocBase();
+    const s = this.state, R = s.real || {}, base = this.apocBase(), per = this.perLiq();
     const c = this._crc;
-    if (c && c.R === R && c.base === base) return c.v;
+    if (c && c.R === R && c.base === base && c.per === per) return c.v;
     const v = {};
-    if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas);
-    if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras);
+    if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas, 'igual');
+    if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras, 'hasta');
     if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
     if (R.percep && R.ventas && R.compras) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
     if (R.aduana && (R.ventas || R.compras)) v.adu = this.cruzarAdu(R.aduana, R.ventas, R.compras);
-    this._crc = { R, base, v };
+    this._crc = { R, base, per, v };
     return v;
   }
 
@@ -4196,12 +4198,16 @@ class Component extends DCLogic {
     });
     x.faltL.forEach(a => errs.push({ k: 'Faltante en ' + lblL, comp: this.compTxt(a), ter: (a.nom || 'Sin denominación') + ' · ' + this.cuitFmt(a.cuit), det: 'Informado en ARCA el ' + a.fecha + ' y no registrado en ' + lblL, imp: fm(a.v.tot) }));
     x.faltA.forEach(l => errs.push({ k: 'Faltante en ARCA', comp: this.compTxt(l), ter: (l.nom || 'Sin denominación') + ' · ' + this.cuitFmt(l.cuit), det: 'Registrado en ' + lblL + ' el ' + l.fecha + ' y no informado en ARCA', imp: fm(l.v.tot) }));
+    const fueraTxt = (l) => 'Registrado en ' + lblL + ' con fecha ' + l.fecha + ': ' + (x.regla === 'hasta' ? 'posterior al' : 'no corresponde al') + ' período liquidado ' + x.perLiq;
+    x.fueraPer.forEach(l => errs.push({ k: 'Comprobante fuera de período', comp: this.compTxt(l), ter: (l.nom || 'Sin denominación') + ' · ' + this.cuitFmt(l.cuit), det: fueraTxt(l), imp: fm(l.v.tot) }));
     const T = x.tot, fila = (lb, k) => [lb, fm(T[k][0]), fm(T[k][1]), fm(T[k][0] - T[k][1])];
-    const falt = x.faltA.length + x.faltL.length;
+    const falt = x.faltA.length + x.faltL.length, fp = x.fueraPer.length;
     return {
-      regs: x.filas.length + falt, ok: x.ok, dif: x.dif, falt, errs,
-      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
-      res: n(x.nA) + ' comprobantes en ARCA · ' + n(x.nL) + ' en ' + lblL + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en ' + lblL + ' · ' + x.faltA.length + ' faltan en ARCA' + (x.excl ? ' · ' + x.excl + ' registros del subdiario excluidos (TC ' + this.TC_EXCL.join(', ') + ')' : ''),
+      regs: x.filas.length + falt, ok: x.ok, dif: x.dif + fp, falt, errs,
+      est: x.dif + falt + fp ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nA) + ' comprobantes en ARCA · ' + n(x.nL) + ' en ' + lblL + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en ' + lblL + ' · ' + x.faltA.length + ' faltan en ARCA'
+        + ' · ' + (fp ? n(fp) + (fp === 1 ? ' comprobante' : ' comprobantes') + ' de ' + lblL + (x.regla === 'hasta' ? (fp === 1 ? ' posterior al' : ' posteriores al') : ' fuera del') + ' período ' + x.perLiq : 'todos los comprobantes de ' + lblL + (x.regla === 'hasta' ? ' son del período ' + x.perLiq + ' o anteriores' : ' son del período ' + x.perLiq))
+        + (x.excl ? ' · ' + x.excl + ' registros del subdiario excluidos (TC ' + this.TC_EXCL.join(', ') + ')' : ''),
       cmp: [['Comprobantes', n(x.nA), n(x.nL), String(x.nA - x.nL)], fila('Neto gravado', 'ngt'), fila('IVA', 'ivt'), fila('No gravado / exento / no alcanzado', 'ng'), fila('Otros tributos y percepciones', 'ot'), fila('Importe total', 'tot')]
     };
   }
@@ -4313,6 +4319,7 @@ class Component extends DCLogic {
     x.filas.filter(f => f.est === 'dif').forEach(f => f.dif.forEach(d => rows.push(base('Coincide con diferencias', f.a, f.l).concat([d.l, d.a, d.b, d.d === null ? '' : d.d]))));
     x.faltL.forEach(a => rows.push(base('Falta en ' + lblL, a, null).concat(['Importe total', a.v.tot, '', ''])));
     x.faltA.forEach(l => rows.push(base('Falta en ARCA', null, l).concat(['Importe total', '', l.v.tot, ''])));
+    (x.fueraPer || []).forEach(l => rows.push(base('Fuera de período', null, l).concat([(x.regla === 'hasta' ? 'Posterior al período ' : 'Distinto del período ') + x.perLiq, '', l.v.tot, ''])));
     x.filas.filter(f => f.est === 'ok').forEach(f => rows.push(base('Coincide', f.a, f.l).concat(['', '', '', ''])));
     return { head: ['Resultado', 'Comprobante', 'Fecha ARCA', 'Fecha ' + lblL, 'CUIT', 'Denominación', 'Concepto', 'ARCA', lblL, 'Diferencia'], rows };
   }
@@ -4371,13 +4378,13 @@ class Component extends DCLogic {
       },
       {
         n: '2', t: 'Comprobantes Emitidos', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
-        regla: 'Mis Comprobantes Emitidos (ARCA) vs. IVA Ventas. Match simultáneo y total: se emparejan por CUIT, tipo, punto de venta y número, y se comparan fecha, neto e IVA por alícuota, no gravado / exento, otros tributos e importe total (tolerancia $ 0,03; moneda extranjera convertida a pesos). No se cruzan denominación ni tipo de documento del receptor ni código de autorización.',
+        regla: 'Mis Comprobantes Emitidos (ARCA) vs. IVA Ventas. Match simultáneo y total: se emparejan por CUIT, tipo, punto de venta y número, y se comparan fecha, neto e IVA por alícuota, no gravado / exento, otros tributos e importe total (tolerancia $ 0,03; moneda extranjera convertida a pesos). No se cruzan denominación ni tipo de documento del receptor ni código de autorización. Además, todos los comprobantes de IVA Ventas tienen que ser del período liquidado (' + this.perLiq() + ').',
         h: ['Concepto', 'Comprobantes Emitidos (ARCA)', 'IVA Ventas', 'Diferencia'],
         cmp: [['Comprobantes', '2.117', '2.116', '1'], ['IVA débito fiscal', '4.192.670,60', '4.182.905,60', '9.765,00']]
       },
       {
         n: '3', t: 'Comprobantes Recibidos', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2,
-        regla: 'Mis Comprobantes Recibidos (ARCA) vs. IVA Compras. Match simultáneo y total con las mismas reglas que Emitidos. No se cruzan denominación ni tipo de documento del emisor, tipo y número de documento del receptor ni código de autorización.',
+        regla: 'Mis Comprobantes Recibidos (ARCA) vs. IVA Compras. Match simultáneo y total con las mismas reglas que Emitidos. No se cruzan denominación ni tipo de documento del emisor, tipo y número de documento del receptor ni código de autorización. Además, todos los comprobantes de IVA Compras tienen que ser del período liquidado (' + this.perLiq() + ') o de períodos anteriores.',
         h: ['Concepto', 'Comprobantes Recibidos (ARCA)', 'IVA Compras', 'Diferencia'],
         cmp: [['Comprobantes', '1.283', '1.283', '0'], ['IVA crédito fiscal', '2.449.094,20', '2.444.516,20', '4.578,00']]
       },
