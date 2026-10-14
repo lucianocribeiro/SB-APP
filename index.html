@@ -4041,6 +4041,43 @@ class Component extends DCLogic {
 
   TC_DESPACHO = ['DI', 'DE', 'DA', 'DS', 'DIM', 'DES', 'DP'];
 
+  subsetSuma(items, obj, val, TOL) {
+    if (items.length < 2) return null;
+    const r2 = (v) => Math.round(v * 100) / 100;
+    if (Math.abs(r2(items.reduce((s, x) => s + val(x), 0)) - obj) <= TOL) return items.slice();
+    const xs = items.slice().sort((a, b) => val(b) - val(a)).slice(0, 20);
+    const pos = xs.every(x => val(x) > 0), pick = [];
+    let it = 0;
+    const dfs = (i, s) => {
+      if (++it > 50000) return null;
+      if (pick.length >= 2 && Math.abs(s - obj) <= TOL) return pick.slice();
+      for (let j = i; j < xs.length; j++) {
+        const v = val(xs[j]);
+        if (pos && s + v > obj + TOL) continue;
+        pick.push(xs[j]);
+        const r = dfs(j + 1, r2(s + v));
+        if (r) return r;
+        pick.pop();
+      }
+      return null;
+    };
+    return dfs(0, 0);
+  }
+
+  agruparRet(arca, libres, compat, TOL) {
+    const grupos = [], usA = new Set(), usC = new Set();
+    arca.slice().sort((p, q) => q.imp - p.imp).forEach(a => {
+      const g = this.subsetSuma(libres.filter(c => !usC.has(c) && compat(a, c)), a.imp, c => c.imp, TOL);
+      if (g) { usA.add(a); g.forEach(c => usC.add(c)); grupos.push({ a: [a], c: g }); }
+    });
+    libres.forEach(c => {
+      if (usC.has(c)) return;
+      const g = this.subsetSuma(arca.filter(a => !usA.has(a) && compat(a, c)), c.imp, a => a.imp, TOL);
+      if (g) { usC.add(c); g.forEach(a => usA.add(a)); grupos.push({ a: g, c: [c] }); }
+    });
+    return { grupos, faltL: arca.filter(a => !usA.has(a)), usC };
+  }
+
   cruzarRet(mr, ventas, compras) {
     const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
     const std = (v) => { let t = String(v == null ? '' : v).replace(/\D/g, ''); if (t.length > 8) t = t.slice(-8); return t ? String(parseInt(t, 10)) : ''; };
@@ -4060,11 +4097,14 @@ class Component extends DCLogic {
     });
     const sum = (xs) => r2(xs.reduce((s, x) => s + x.imp, 0));
     const esAdu = (c) => c.x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(c.x.tc);
+    const ag = this.agruparRet(faltL, V.concat(C).filter(c => !used.has(c) && !esAdu(c)),
+      (a, c) => c.x.cuit === a.cuit && c.src === (a.tipo === 'ret' ? 'IVA Ventas' : 'IVA Compras'), TOL);
+    ag.usC.forEach(c => used.add(c));
     const adu = C.filter(c => !used.has(c) && esAdu(c));
     const Cn = C.filter(c => !adu.includes(c));
     return {
-      pares, faltL, faltA: V.concat(Cn).filter(c => !used.has(c)), nRet: mr.nRet, nPer: mr.nPer, nV: V.length, nC: Cn.length, nAdu: adu.length, otros: mr.otros,
-      ok: pares.filter(p => p.est === 'ok').length, dif: pares.filter(p => p.est === 'dif').length,
+      pares, grupos: ag.grupos, faltL: ag.faltL, faltA: V.concat(Cn).filter(c => !used.has(c)), nRet: mr.nRet, nPer: mr.nPer, nV: V.length, nC: Cn.length, nAdu: adu.length, otros: mr.otros,
+      ok: pares.filter(p => p.est === 'ok').length + ag.grupos.length, dif: pares.filter(p => p.est === 'dif').length,
       tot: { ret: [sum(mr.recs.filter(x => x.tipo === 'ret')), sum(V)], per: [sum(mr.recs.filter(x => x.tipo === 'per')), sum(Cn)] }
     };
   }
@@ -4086,13 +4126,17 @@ class Component extends DCLogic {
       if (Math.abs(a.imp - c.imp) > 0.001) dif.push({ l: 'Importe', a: a.imp, b: c.imp, d: r2(a.imp - c.imp) });
       pares.push({ a, c, dif, est: dif.length ? 'dif' : 'ok' });
     });
+    const ag = this.agruparRet(faltL, pool.filter(c => c.adu && !used.has(c)), () => true, TOL);
+    ag.usC.forEach(c => used.add(c));
     const faltA = pool.filter(c => c.adu && !used.has(c));
+    const agC = [].concat(...ag.grupos.map(g => g.c));
     const sum = (xs) => r2(xs.reduce((s, x) => s + x.imp, 0));
     return {
-      pares, faltL, faltA, nA: ad.recs.length, otros: ad.otros,
-      ok: pares.filter(p => p.est === 'ok').length, dif: pares.filter(p => p.est === 'dif').length,
-      enCompras: pares.filter(p => p.c.src === 'IVA Compras').length, enVentas: pares.filter(p => p.c.src === 'IVA Ventas').length,
-      tot: [sum(ad.recs), r2(sum(pares.map(p => p.c)) + sum(faltA))], nS: pares.length + faltA.length
+      pares, grupos: ag.grupos, faltL: ag.faltL, faltA, nA: ad.recs.length, otros: ad.otros,
+      ok: pares.filter(p => p.est === 'ok').length + ag.grupos.length, dif: pares.filter(p => p.est === 'dif').length,
+      enCompras: pares.filter(p => p.c.src === 'IVA Compras').length + agC.filter(c => c.src === 'IVA Compras').length,
+      enVentas: pares.filter(p => p.c.src === 'IVA Ventas').length + agC.filter(c => c.src === 'IVA Ventas').length,
+      tot: [sum(ad.recs), r2(sum(pares.map(p => p.c)) + sum(agC) + sum(faltA))], nS: pares.length + agC.length + faltA.length
     };
   }
 
@@ -4321,6 +4365,10 @@ class Component extends DCLogic {
     return errs;
   }
 
+  agrupTxt(grupos) {
+    return grupos.length ? ' (' + grupos.length + (grupos.length === 1 ? ' agrupada' : ' agrupadas') + ': la suma de varios comprobantes coincide con uno del otro lado)' : '';
+  }
+
   cruRetVista(x) {
     const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     const lbl = (a) => (a.tipo === 'ret' ? 'Retención ' : 'Percepción ') + (a.comp || a.cert || 's/n');
@@ -4328,9 +4376,9 @@ class Component extends DCLogic {
     const errs = this.retErrs(x, lbl, subL, 'Mis Retenciones'), falt = x.faltL.length + x.faltA.length, T = x.tot;
     const fila = (l, a, b) => [l, fm(a), fm(b), fm(a - b)];
     return {
-      regs: x.pares.length + falt, ok: x.ok, dif: x.dif, falt, errs,
+      regs: x.pares.length + x.grupos.length + falt, ok: x.ok, dif: x.dif, falt, errs,
       est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
-      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · ' + n(x.nV) + ' CR en IVA Ventas · ' + n(x.nC) + ' comprobantes con percepción de IVA en IVA Compras · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' faltan en Mis Retenciones' + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '') + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
+      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · ' + n(x.nV) + ' CR en IVA Ventas · ' + n(x.nC) + ' comprobantes con percepción de IVA en IVA Compras · ' + n(x.ok) + ' coinciden' + this.agrupTxt(x.grupos) + ' · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' faltan en Mis Retenciones' + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '') + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
       cmp: [fila('Retenciones (IVA Ventas · CR)', T.ret[0], T.ret[1]), fila('Percepciones (IVA Compras)', T.per[0], T.per[1]), fila('Total', T.ret[0] + T.per[0], T.ret[1] + T.per[1])]
     };
   }
@@ -4341,9 +4389,9 @@ class Component extends DCLogic {
     const errs = this.retErrs(x, lbl, () => 'los subdiarios', 'Mis Percepciones Aduaneras'), falt = x.faltL.length + x.faltA.length;
     const donde = [x.enCompras ? n(x.enCompras) + ' en IVA Compras' : '', x.enVentas ? n(x.enVentas) + ' en IVA Ventas' : ''].filter(Boolean).join(' y ');
     return {
-      regs: x.pares.length + falt, ok: x.ok, dif: x.dif, falt, errs,
+      regs: x.pares.length + x.grupos.length + falt, ok: x.ok, dif: x.dif, falt, errs,
       est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
-      res: n(x.nA) + ' percepciones aduaneras en ARCA · ' + (donde ? 'encontradas ' + donde : 'ninguna encontrada en los subdiarios') + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' de la Aduana faltan en ARCA' + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos excluidos' : ''),
+      res: n(x.nA) + ' percepciones aduaneras en ARCA · ' + (donde ? 'encontradas ' + donde : 'ninguna encontrada en los subdiarios') + ' · ' + n(x.ok) + ' coinciden' + this.agrupTxt(x.grupos) + ' · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' de la Aduana faltan en ARCA' + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos excluidos' : ''),
       cmp: [['Percepciones', n(x.nA), n(x.nS), String(x.nA - x.nS)], ['Importe total', fm(x.tot[0]), fm(x.tot[1]), fm(x.tot[0] - x.tot[1])]]
     };
   }
@@ -4385,6 +4433,11 @@ class Component extends DCLogic {
       x.pares.filter(p => p.est === 'dif').forEach(p => rows.push(fila('Coincide con diferencias', p.a, p.c, p.dif.map(d => d.l).join(', '))));
       x.faltL.forEach(a => rows.push(fila('Falta en ' + (tipo === 'adu' ? 'los subdiarios' : (a.tipo === 'ret' ? 'IVA Ventas' : 'IVA Compras')), a, null, '')));
       x.faltA.forEach(c => rows.push(fila('Falta en ' + fuente, null, c, '')));
+      (x.grupos || []).forEach(g => {
+        const nota = g.a.length + ' en ' + fuente + ' = ' + g.c.length + ' en ' + [...new Set(g.c.map(c => c.src))].join(' / ');
+        g.a.forEach(a => rows.push(fila('Coincide agrupado', a, null, nota)));
+        g.c.forEach(c => rows.push(fila('Coincide agrupado', null, c, nota)));
+      });
       x.pares.filter(p => p.est === 'ok').forEach(p => rows.push(fila('Coincide', p.a, p.c, '')));
       return { head: ['Resultado', 'Tipo', 'Fecha ARCA', 'Fecha subdiario', 'CUIT', 'Denominación', 'Comprobante ARCA', 'Comprobante subdiario', 'Importe ARCA', 'Importe subdiario', 'Diferencias'], rows };
     }
@@ -4463,13 +4516,13 @@ class Component extends DCLogic {
       },
       {
         n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
-        regla: 'Mis Retenciones (ARCA, impuesto IVA) vs. subdiarios. Las retenciones se cruzan con los comprobantes CR de IVA Ventas (importe total) y las percepciones con la columna Percepciones IVA de IVA Compras, por CUIT del agente e importe (tolerancia $ 0,03). En las coincidencias se comparan fecha y número de comprobante (últimos 8 dígitos); lo que queda sin pareja de cada lado es faltante.',
+        regla: 'Mis Retenciones (ARCA, impuesto IVA) vs. subdiarios. Las retenciones se cruzan con los comprobantes CR de IVA Ventas (importe total) y las percepciones con la columna Percepciones IVA de IVA Compras, por CUIT del agente e importe (tolerancia $ 0,03). En las coincidencias se comparan fecha y número de comprobante (últimos 8 dígitos). Lo que queda sin pareja se agrupa por agente: si la suma de varios comprobantes coincide con uno del otro lado (en cualquier sentido), es una coincidencia agrupada; el resto es faltante.',
         h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
       {
         n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
-        regla: 'Mis Percepciones Aduaneras (ARCA) vs. subdiarios. Cada percepción se busca por importe (tolerancia $ 0,03) en la columna Percepciones IVA de IVA Compras y en los registros de retenciones de IVA Ventas, priorizando los despachos de la Aduana y la misma fecha. Se informa en qué subdiario se encontró cada una, las diferencias de fecha y los despachos de la Aduana que no figuran en ARCA.',
+        regla: 'Mis Percepciones Aduaneras (ARCA) vs. subdiarios. Cada percepción se busca por importe (tolerancia $ 0,03) en la columna Percepciones IVA de IVA Compras y en los registros de retenciones de IVA Ventas, priorizando los despachos de la Aduana y la misma fecha. Si no hay pareja uno a uno, se busca una agrupación: varias percepciones cuya suma coincide con un registro de la Aduana, o al revés. Se informa en qué subdiario se encontró cada una, las diferencias de fecha y los despachos de la Aduana que no figuran en ARCA.',
         nota: 'Subdiario de origen a confirmar con el estudio: por ahora se buscan en IVA Compras y en IVA Ventas.',
         h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
