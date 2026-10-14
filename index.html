@@ -1040,12 +1040,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option>{{ o.rz }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>01/2026</option><option>07/2025</option><option>01/2025</option></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>08/2026</option><option>07/2026</option><option>06/2026</option></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select value="{{ histF.cli }}" onChange="{{ histFSet.cli }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select value="{{ histF.desde }}" onChange="{{ histFSet.desde }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select value="{{ histF.hasta }}" onChange="{{ histFSet.hasta }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histPerOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ histEst }}" onChange="{{ histEstSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><option value="Borrador">Borrador</option><option value="Cerrada">Cerrada</option></select></div>
 <sc-if value="{{ histAdmin }}">
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Todos</option><sc-for list="{{ opUsrOpts }}" as="o" hint-placeholder-count="6"><option>{{ o.n }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario</span><select value="{{ histF.usr }}" onChange="{{ histFSet.usr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todos</option><sc-for list="{{ histUsrOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
 </sc-if>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Secuencia</span><select value="{{ histSeq }}" onChange="{{ histSeqSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option value="">Todas</option><option value="ult">Sólo la última de cada período</option><sc-for list="{{ seqOpts }}" as="o" hint-placeholder-count="10"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="flex:1"></div>
@@ -2454,7 +2454,7 @@ class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
-    pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
+    histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
@@ -4925,7 +4925,12 @@ class Component extends DCLogic {
         this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
       }
     };
+    const HF = s.histF, perH = (p) => p.slice(3) + p.slice(0, 2);
+    const setHF = (k) => (e) => this.setState(st => ({ histF: Object.assign({}, st.histF, { [k]: e.target.value }) }));
+    const histFiltrando = s.histSeq !== '' || s.histEst !== '' || !!(HF.cli || HF.desde || HF.hasta || HF.usr);
     const histVis = histFilas
+      .filter(r => (!HF.cli || r.cliente === HF.cli) && (!HF.usr || r.user === HF.usr)
+        && (!HF.desde || perH(r.per) >= perH(HF.desde)) && (!HF.hasta || perH(r.per) <= perH(HF.hasta)))
       .filter(r => s.histSeq === '' || (s.histSeq === 'ult' ? r.seq === ultSeq[r.cliente + '|' + r.per] : r.seq === Number(s.histSeq)))
       .filter(r => s.histEst === '' || this.liqEstado(r) === s.histEst)
       .map(r => {
@@ -5231,9 +5236,14 @@ class Component extends DCLogic {
         });
       },
       histExport: () => exportar(histPick),
-      histVacio: histVis.length === 0, histSeqActivo: s.histSeq !== '' || s.histEst !== '',
+      histVacio: histVis.length === 0, histSeqActivo: histFiltrando,
       histPaginas: histTotal > histVis.length, histSigFg: histTotal > histVis.length ? '#1B2733' : '#9AA9B7',
-      histVacioTxt: s.histSeq !== '' || s.histEst !== '' ? 'No hay liquidaciones con esos filtros.' : 'Todavía no hay liquidaciones registradas.', histSeqLimpiar: () => this.setState({ histSeq: '', histEst: '' }),
+      histVacioTxt: histFiltrando ? 'No hay liquidaciones con esos filtros.' : 'Todavía no hay liquidaciones registradas.',
+      histSeqLimpiar: () => this.setState({ histSeq: '', histEst: '', histF: { cli: '', desde: '', hasta: '', usr: '' } }),
+      histF: HF, histFSet: { cli: setHF('cli'), desde: setHF('desde'), hasta: setHF('hasta'), usr: setHF('usr') },
+      histCliOpts: [...new Set(histFilas.map(r => r.cliente))].sort((a, b) => a.localeCompare(b, 'es')).map(v => ({ v })),
+      histPerOpts: [...new Set(histFilas.map(r => r.per))].sort((a, b) => perH(b).localeCompare(perH(a))).map(v => ({ v })),
+      histUsrOpts: [...new Set(histFilas.map(r => r.user))].sort((a, b) => a.localeCompare(b, 'es')).map(v => ({ v })),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
       histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Tus liquidaciones · ' + histTotal + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
