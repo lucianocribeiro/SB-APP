@@ -70,6 +70,23 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer;opacity:{{ loginBtnOp }}" style-hover="background:#0E2A45;border-color:#0E2A45">{{ loginBtn }}</button>
 </div>
+<div style="margin-top:24px;padding-top:18px;border-top:1px solid #E3E8EE">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Acceso rápido por rol</div>
+<div style="font:400 12px/1.4 'Open Sans';color:#9AA9B7;margin-top:5px">Ingresá directamente como cada perfil del estudio.</div>
+<div onClick="{{ accesoAdmin }}" style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 11px;border:1px solid #14395C;border-radius:6px;cursor:pointer;background:#F4F9FD" style-hover="background:#E6EDF4">
+<div style="width:30px;height:30px;flex:none;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">AD</div>
+<div style="flex:1;min-width:0"><div style="font:600 13px 'Open Sans';color:#14395C">Administrador</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B">Todos los clientes · configuración y auditoría</div></div>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+<sc-for list="{{ accesoUsrs }}" as="u" hint-placeholder-count="5">
+<div onClick="{{ u.go }}" title="{{ u.mail }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#14395C;background:#F4F9FD">
+<div style="width:28px;height:28px;flex:none;border-radius:6px;background:#E6EDF4;color:#14395C;display:flex;align-items:center;justify-content:center;font:600 11px 'Open Sans'">{{ u.ini }}</div>
+<div style="min-width:0"><div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ u.nombre }}</div><div style="font:400 11px 'Open Sans';color:#5A6B7B">Usuario · {{ u.cant }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
 </div>
 </div>
 </div>
