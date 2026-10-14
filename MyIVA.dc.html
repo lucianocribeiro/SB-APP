@@ -2357,6 +2357,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ seqPisa }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
 </sc-if>
+<sc-if value="{{ liqFueraPer }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqFueraPerTxt }}</div>
+</sc-if>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -3770,11 +3773,15 @@ class Component extends DCLogic {
     return { kind, name, recs, per, omit, propio, excl: recs.filter(x => x.excl).length };
   }
 
+  fueraPeriodo(libro, regla) {
+    const perK = (p) => p.slice(3) + p.slice(0, 2), pk = perK(this.perLiq());
+    return libro.recs.filter(x => !x.excl).filter(x => { const k = perK(x.fecha.slice(3)); return regla === 'hasta' ? k > pk : k !== pk; });
+  }
+
   cruzarComp(arca, libro, regla) {
     const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
     const L = libro.recs.filter(x => !x.excl), A = arca.recs;
-    const perLiq = this.perLiq(), perK = (p) => p.slice(3) + p.slice(0, 2), pk = perK(perLiq);
-    const fueraPer = L.filter(x => { const k = perK(x.fecha.slice(3)); return regla === 'hasta' ? k > pk : k !== pk; });
+    const perLiq = this.perLiq(), fueraPer = this.fueraPeriodo(libro, regla);
     const ali = A.some(x => x.hasAli);
     const F = (ali
       ? [['n21', 'Neto gravado 21%'], ['i21', 'IVA 21%'], ['n105', 'Neto gravado 10,5%'], ['i105', 'IVA 10,5%'], ['n27', 'Neto gravado 27%'], ['i27', 'IVA 27%'], ['n5', 'Neto gravado 5%'], ['i5', 'IVA 5%'], ['n25', 'Neto gravado 2,5%'], ['i25', 'IVA 2,5%'], ['n0', 'Neto gravado 0%']]
@@ -4754,6 +4761,12 @@ class Component extends DCLogic {
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
     const cru = this.cruRun();
     const perL = this.perLiq(), arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
+    const RL = s.real || {};
+    const fpV = RL.ventas && RL.ventas.recs ? this.fueraPeriodo(RL.ventas, 'igual') : [];
+    const fpC = RL.compras && RL.compras.recs ? this.fueraPeriodo(RL.compras, 'hasta') : [];
+    const fpCant = (n) => n + (n === 1 ? ' comprobante' : ' comprobantes');
+    const fpTxt = [fpV.length ? 'IVA Ventas tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
+    const fpEj = fpV.concat(fpC).slice(0, 3).map(x => this.compTxt(x) + ' del ' + x.fecha).join(', ');
     const sinArr = arr.sinDj ? 'No hay DJ liquidada de ' + arr.per : '';
     const prevSaldos = [
       { label: 'Saldo a favor 1er párrafo · ' + arr.per, cero: arr.pagar1, amount: '$ ' + this.ars(arr.tec), sub: sinArr || (arr.pagar1 ? 'Resultó a pagar ($ ' + this.ars(arr.s1) + '): se trae $ 0' : 'Se traslada a la liquidación de ' + perL) },
@@ -5143,7 +5156,7 @@ class Component extends DCLogic {
       ],
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
-      liqConfirm: s.liqConfirm,
+      liqConfirm: s.liqConfirm, liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       liqConfirmOk: () => {
         const R = this.state.real || {}, tiene = k => !!(R[k] && R[k].recs);
@@ -5153,6 +5166,13 @@ class Component extends DCLogic {
           this.setState({
             liqConfirm: false, step: 4, proc: 'run', liqRes: null,
             liqErrTxt: 'Para liquidar hacen falta los subdiarios de IVA Ventas e IVA Compras. ' + (falta.length === 2 ? 'No se cargó ninguno de los dos' : 'Falta ' + falta[0]) + ': cargalo en la carga de archivos y volvé a procesar.'
+          });
+          return fin('error');
+        }
+        if (fpTxt) {
+          this.setState({
+            liqConfirm: false, step: 4, proc: 'run', liqRes: null,
+            liqErrTxt: 'No se puede liquidar ' + cli + ' · ' + perL + ': ' + fpTxt + ' (por ejemplo, ' + fpEj + '). Corregí los subdiarios y volvé a procesar. El detalle está en los errores de los cruces 2 y 3.'
           });
           return fin('error');
         }
