@@ -600,13 +600,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ seqMax }}">
 <div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">Este período ya tiene 9 rectificativas. No se pueden generar más secuencias: elegí cuál querés reemplazar.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">Este período ya tiene 9 rectificativas. No se pueden generar más secuencias: para reliquidar, eliminá primero una en Historial de liquidaciones.</div>
 </div>
 </sc-if>
 <sc-if value="{{ seqPisa }}">
-<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F5F14" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">{{ seqPisaTxt }}</div>
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">{{ seqPisaTxt }} <span onClick="{{ go.liqHistorial }}" style="font-weight:600;color:#14395C;cursor:pointer;text-decoration:underline">Ir al historial</span></div>
 </div>
 </sc-if>
 <sc-if value="{{ seqSaltea }}">
@@ -617,7 +617,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ step1Next }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Continuar</button>
+<button onClick="{{ step1Next }}" style="padding:9px 14px;background:{{ step1Bg }};color:#fff;border:1px solid {{ step1Bg }};border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Continuar</button>
 </div>
 </div>
 </sc-if>
@@ -5667,7 +5667,7 @@ class Component extends DCLogic {
         fg: s.step >= n ? '#FFFFFF' : '#5A6B7B',
         bd: s.step === n ? '#14395C' : (s.step > n ? '#2E7D5B' : '#D5DEE7'),
         lfg: s.step === n ? '#14395C' : '#5A6B7B',
-        go: this.tset('step', n)
+        go: n > 1 && (seqPisa || seqSel === null) && s.step === 1 ? () => this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia disponible', d: 'La secuencia elegida ya está liquidada. Para reliquidarla, primero eliminala en Historial de liquidaciones.' } }) : this.tset('step', n)
       })),
       stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4 },
       stepNext: () => this.setState(st => ({ step: Math.min(4, st.step + 1) })),
@@ -5703,6 +5703,7 @@ class Component extends DCLogic {
       liqConfirm: s.liqConfirm, liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       liqConfirmOk: () => {
+        if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: 'Para reliquidar ' + cli + ' · ' + perL + ' con la misma secuencia, primero eliminala en Historial de liquidaciones.' } });
         const R = this.state.real || {}, tiene = k => !!(R[k] && R[k].recs);
         const falta = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !tiene(k)).map(([, l]) => l);
         const fin = (proc) => setTimeout(() => { if (this.state.step === 4 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
@@ -5751,10 +5752,11 @@ class Component extends DCLogic {
       seqCurTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : (seqSel ?? seqLast)),
       seqMax: seqSug === null,
       seqPisa, seqSaltea, seqOtra: seqSel !== seqSug && seqSug !== null,
-      seqBadge: seqSel === null ? 'Elegí una secuencia' : (seqPisa ? 'Se reemplazará la ' : 'Se generará la ') + this.seqTxt(seqSel),
-      seqBadgeBg: seqPisa ? '#8F5F14' : '#14395C',
+      seqBadge: seqSel === null ? 'Sin secuencias disponibles' : (seqPisa ? 'Ya liquidada: ' + this.seqTxt(seqSel) : 'Se generará la ' + this.seqTxt(seqSel)),
+      seqBadgeBg: seqPisa || seqSel === null ? '#B3261E' : '#14395C',
       seqSugTxt: seqSug === null ? '' : 'El sistema sugiere la ' + this.seqTxt(seqSug) + ' según los antecedentes liquidados. Podés elegir otra secuencia haciendo clic en los casilleros de abajo.',
-      seqPisaTxt: seqPisa ? 'La ' + this.seqTxt(seqSel) + ' ya tiene una declaración jurada generada. Si continuás, la nueva liquidación la reemplaza ("pisa") y la anterior deja de figurar en el historial.' : '',
+      seqPisaTxt: seqPisa ? 'La ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' ya está liquidada. No se puede volver a liquidar: para reliquidarla, primero eliminala en Historial de liquidaciones.' : '',
+      step1Bg: seqPisa || seqSel === null ? '#9AA9B7' : '#14395C',
       seqSalteaTxt: seqSaltea ? 'Elegiste la Secuencia ' + seqSel + ': ' + (seqSel - seqSug === 1 ? 'la Secuencia ' + seqSug + ' queda' : 'las secuencias ' + seqSug + ' a ' + (seqSel - 1) + ' quedan') + ' sin liquidar.' : '',
       seqUsarSug: () => this.setState({ seqElegida: null }),
       seqTrack: Array.from({ length: this.SEQ_MAX + 1 }, (_, n) => {
@@ -5763,15 +5765,16 @@ class Component extends DCLogic {
           : (done ? ['#E8F3EE', '#C7E3D6', '#2E7D5B', '#2E7D5B'] : (sug ? ['#F4F9FD', '#14395C', '#14395C', '#14395C'] : ['#FFFFFF', '#E3E8EE', '#9AA9B7', '#9AA9B7']));
         return {
           n: String(n), tipo: n === 0 ? 'Original' : 'Rectif.',
-          tag: on ? (done ? 'Reemplazar' : (sug ? 'Sugerida' : 'A generar')) : (done ? 'Liquidada' : (sug ? 'Sugerida' : 'Disponible')),
+          tag: on ? (done ? 'Bloqueada' : (sug ? 'Sugerida' : 'A generar')) : (done ? 'Liquidada' : (sug ? 'Sugerida' : 'Disponible')),
           bg: pal[0], bd: pal[1], fg: pal[2], sub: pal[3], bs: sug && !on ? 'dashed' : 'solid',
-          hint: done ? 'Ya liquidada: elegirla reemplaza esa declaración jurada' : (sug ? 'Secuencia sugerida' : 'Elegir esta secuencia'),
+          hint: done ? 'Ya liquidada: para reliquidarla, eliminala primero en Historial de liquidaciones' : (sug ? 'Secuencia sugerida' : 'Elegir esta secuencia'),
           pick: () => this.setState({ seqElegida: n })
         };
       }),
       step1Next: () => seqSel === null
-        ? this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia', d: 'El período ya tiene 9 rectificativas: elegí cuál querés reemplazar.' } })
-        : this.setState({ step: 2 }),
+        ? this.setState({ toast: { kind: 'err', t: 'No hay secuencias disponibles', d: 'El período ya tiene 9 rectificativas. Para reliquidar, eliminá primero la secuencia en Historial de liquidaciones.' } })
+        : (seqPisa ? this.setState({ toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + '. Para reliquidarla, primero eliminala en Historial de liquidaciones.' } })
+          : this.setState({ step: 2 })),
       seqPrevFecha: s.liqSaved ? fechaHoraN : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
       seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + ultFecha + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
