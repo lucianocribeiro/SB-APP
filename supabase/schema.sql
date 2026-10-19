@@ -190,6 +190,16 @@ drop policy if exists "ddjj equipo" on storage.objects;
 create policy "ddjj equipo" on storage.objects for all to authenticated
   using (bucket_id = 'ddjj') with check (bucket_id = 'ddjj');
 
+-- Storage: bucket privado con los archivos crudos de cada liquidación (subdiarios, Mis Comprobantes, etc.)
+-- Una carpeta por liquidación; se usan para armar las hojas de crudos del Excel exportable.
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('crudos', 'crudos', false, 20971520)
+on conflict (id) do nothing;
+
+drop policy if exists "crudos equipo" on storage.objects;
+create policy "crudos equipo" on storage.objects for all to authenticated
+  using (bucket_id = 'crudos') with check (bucket_id = 'crudos');
+
 -- Carga inicial: la cartera actual de la app
 insert into public.clientes (nombre, usuario) values
   ('LANES SA', 'Agustín'), ('JUANA Y SUS HERMANAS SRL', 'Agustín'), ('LHS WORLDWIDE SA', 'Agustín'), ('SEOB SA', 'Agustín'),

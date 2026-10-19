@@ -3055,7 +3055,7 @@ class Component extends DCLogic {
 
   colLet(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
-  novaluxXlsx(cliente, rows) {
+  novaluxXlsx(cliente, rows, extras = []) {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
     const split = (tot, parts) => { const out = parts.map(p => r2(tot * p)); out[out.length - 1] = r2(tot - out.slice(0, -1).reduce((a, b) => a + b, 0)); return out; };
@@ -3155,17 +3155,84 @@ class Component extends DCLogic {
       + xf(0, 1, 2)
       + xf(166, 2, 3)
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    // Hojas extra (archivos crudos): sheet2.xml en adelante; rId2 queda para styles.
+    const ex = extras.map((e, i) => ({ n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS) }));
+    const ovr = (n) => `<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
     const files = [
-      ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
+      ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${ovr(1)}${ex.map(e => ovr(e.n)).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
       ['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RNS}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
-      ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${NS}" xmlns:r="${RNS}"><sheets><sheet name="${esc(hoja)}" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`],
-      ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RNS}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${RNS}/styles" Target="styles.xml"/></Relationships>`],
+      ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${NS}" xmlns:r="${RNS}"><sheets><sheet name="${esc(hoja)}" sheetId="1" r:id="rId1"/>${ex.map(e => `<sheet name="${esc(e.name)}" sheetId="${e.n}" r:id="${e.rid}"/>`).join('')}</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`],
+      ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RNS}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${RNS}/styles" Target="styles.xml"/>${ex.map(e => `<Relationship Id="${e.rid}" Type="${RNS}/worksheet" Target="worksheets/sheet${e.n}.xml"/>`).join('')}</Relationships>`],
       ['xl/styles.xml', styles],
       ['xl/worksheets/sheet1.xml', sheet]
-    ];
+    ].concat(ex.map(e => ['xl/worksheets/sheet' + e.n + '.xml', e.xml]));
     const pers = data.map(d => d.per);
     const name = cliente + ' - IVA ' + (pers[0] === pers[pers.length - 1] ? pers[0] : pers[0] + ' a ' + pers[pers.length - 1]).replace(/\//g, '-') + '.xlsx';
     return { name, bytes: this.zipStore(files) };
+  }
+
+  hojaXml(rows, NS) {
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    const xr = rows.map((r, i) => '<row r="' + (i + 1) + '">' + r.map((v, j) => {
+      if (v === null || v === undefined || v === '') return '';
+      const ref = this.colLet(j + 1) + (i + 1);
+      if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + '><v>' + v + '</v></c>';
+      return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
+    }).join('') + '</row>').join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="' + NS + '"><sheetData>' + xr + '</sheetData></worksheet>';
+  }
+
+  // Archivos crudos de cada liquidación: bucket "crudos" de Storage, carpeta por liquidación.
+  crudosCarpeta(id) { return this.fold(id).replace(/[^a-z0-9]+/g, '_'); }
+
+  async crudosSubir(id, R) {
+    const sb = this.sb();
+    if (!sb || !this._user) return;
+    const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && R[k].file);
+    const malos = [];
+    for (const k of ks) {
+      const f = R[k].file, ruta = dir + '/' + k + '__' + this.fold(f.name).replace(/[^a-z0-9.]+/g, '_');
+      const up = await sb.storage.from('crudos').upload(ruta, f, { upsert: true, contentType: f.type || 'application/octet-stream' }).catch(e => ({ error: e }));
+      if (up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
+    }
+    if (malos.length) this.setState({ toast: { kind: 'err', t: 'No se pudieron guardar algunos archivos crudos', d: malos.join(' · ') + '. La liquidación quedó guardada, pero esos archivos no van a salir en el Excel exportable.' } });
+  }
+
+  async crudosHojas(rows) {
+    const sb = this.sb(), hojas = [], sin = [], usados = new Set();
+    if (!sb || !this._user) return { hojas, sin: rows.map(r => r.per + ' Sec. ' + r.seq) };
+    const X = await this.xlsxLib();
+    const nombre = (t) => {
+      let b = t.replace(/[\[\]:*?\/\\]/g, '-').slice(0, 31), n = b, i = 2;
+      while (usados.has(n.toLowerCase())) { const suf = ' (' + i++ + ')'; n = b.slice(0, 31 - suf.length) + suf; }
+      usados.add(n.toLowerCase());
+      return n;
+    };
+    const celda = (v) => v instanceof Date ? this.fechaDe(v.toISOString(), false) : v;
+    for (const r of rows) {
+      const id = r.id || (r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha), dir = this.crudosCarpeta(id);
+      const ls = await sb.storage.from('crudos').list(dir);
+      const arch = (ls.data || []).filter(o => o.name && o.id);
+      if (ls.error || !arch.length) { sin.push(r.per + ' Sec. ' + r.seq); continue; }
+      for (const o of arch) {
+        const k = o.name.split('__')[0], lbl = this.UP_LBL[k] || k;
+        const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + lbl;
+        const dl = await sb.storage.from('crudos').download(dir + '/' + o.name);
+        if (dl.error) { hojas.push({ name: nombre(base), rows: [['No se pudo descargar ' + o.name + ': ' + dl.error.message]] }); continue; }
+        const bytes = new Uint8Array(await dl.data.arrayBuffer());
+        if (String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-') {
+          const t = await this.textoPdf(bytes).catch(() => null);
+          hojas.push({ name: nombre(base), rows: [[lbl + ' · ' + o.name.slice(k.length + 2)]].concat(t ? t.lineas.map(l => [l]) : [['No se pudo leer el texto del PDF.']]) });
+          continue;
+        }
+        const wb = X.read(bytes, { type: 'array', cellDates: true });
+        wb.SheetNames.forEach((sn, i) => {
+          const aoa = X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
+          hojas.push({ name: nombre(base + (wb.SheetNames.length > 1 ? ' ' + (i + 1) : '')), rows: aoa });
+        });
+      }
+    }
+    return { hojas, sin };
   }
 
   zipStore(files) {
@@ -4333,6 +4400,7 @@ class Component extends DCLogic {
         data = { kind: k, name: f.name, attach: true };
       }
       data.size = kb;
+      Object.defineProperty(data, 'file', { value: f, enumerable: false });
       this.setState(st => {
         const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' } } : { up: st.up };
         const base = Object.assign({}, st, reset);
@@ -5152,13 +5220,16 @@ class Component extends DCLogic {
       if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
       const sinDatos = rows.filter(r => r.df === '—');
       if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar.' + (rows.length > 1 ? ' Quitalo de la selección.' : ''));
-      try {
-        const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })));
+      this.setState({ toast: { kind: 'info', t: 'Generando el Excel', d: 'Se están juntando los archivos crudos de ' + (rows.length === 1 ? 'la liquidación' : 'las ' + rows.length + ' liquidaciones') + '…' } });
+      (async () => {
+        const cr = await this.crudosHojas(rows);
+        const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })), cr.hojas);
         this.descargar(x.name, x.bytes);
-        this.setState({ toast: { kind: 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna.' } });
-      } catch (err) {
+        const sin = cr.sin.length ? ' Sin archivos crudos guardados: ' + cr.sin.join(', ') + '.' : '';
+        this.setState({ toast: { kind: sin ? 'warn' : 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con los archivos crudos.' + sin } });
+      })().catch(err => {
         this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
-      }
+      });
     };
     const HF = s.histF, perH = (p) => p.slice(3) + p.slice(0, 2);
     const setHF = (k) => (e) => this.setState(st => ({ histF: Object.assign({}, st.histF, { [k]: e.target.value }) }));
@@ -5365,6 +5436,7 @@ class Component extends DCLogic {
         }
         const ahora = this.ahora();
         const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        this.crudosSubir(cli + '|' + perL + '|' + seqSel + '|' + res.fecha, R);
         this.setState(st => {
           const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
           delete le[id]; delete bo[id];

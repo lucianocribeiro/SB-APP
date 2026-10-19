@@ -17,6 +17,9 @@ create policy "pruebas" on public.perfiles for select to anon using (true);
 drop policy if exists "ddjj pruebas" on storage.objects;
 create policy "ddjj pruebas" on storage.objects for all to anon using (bucket_id = 'ddjj') with check (bucket_id = 'ddjj');
 
+drop policy if exists "crudos pruebas" on storage.objects;
+create policy "crudos pruebas" on storage.objects for all to anon using (bucket_id = 'crudos') with check (bucket_id = 'crudos');
+
 -- Desactivar:
 -- do $$ declare t text; begin
 --   foreach t in array array['clientes','liquidaciones','cruces','compensaciones','ddjj_pdf','apocrifos','config','auditoria','perfiles'] loop
@@ -24,3 +27,4 @@ create policy "ddjj pruebas" on storage.objects for all to anon using (bucket_id
 --   end loop;
 -- end $$;
 -- drop policy if exists "ddjj pruebas" on storage.objects;
+-- drop policy if exists "crudos pruebas" on storage.objects;
