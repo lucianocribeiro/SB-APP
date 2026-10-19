@@ -1170,10 +1170,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <button onClick="{{ toggleDash }}" style="padding:9px 14px;background:#fff;color:#5A6B7B;border:1px dashed #D5DEE7;border-radius:6px;font:400 12.5px 'Open Sans';cursor:pointer" style-hover="color:#14395C;border-color:#14395C">Alternar estado vacío</button>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select defaultValue="CAZATUR SA" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ cliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>03/2026</option><option>01/2026</option><option>07/2025</option></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>08/2026</option><option>07/2026</option><option>06/2026</option></select></div>
-<button style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar</button>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cliente</span><select value="{{ dashCliSel }}" onChange="{{ dashCliSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ dashCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Desde</span><select value="{{ dashDesdeSel }}" onChange="{{ dashDesdeSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ dashPerOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.per }}">{{ o.per }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Hasta</span><select value="{{ dashHastaSel }}" onChange="{{ dashHastaSet }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><sc-for list="{{ dashPerOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.per }}">{{ o.per }}</option></sc-for></select></div>
+<button onClick="{{ dashAplicar }}" style="padding:8px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Aplicar</button>
+<sc-if value="{{ dashNotaOn }}"><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B;padding-bottom:8px">{{ dashNota }}</span></sc-if>
 </div>
 <sc-if value="{{ dashEmpty }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:60px 24px;display:flex;flex-direction:column;align-items:center;gap:12px">
@@ -1248,6 +1249,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 </div>
+<sc-if value="{{ dashChartsOn }}">
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -1315,7 +1317,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-<div style="font:600 14.5px 'Open Sans'">Composición del débito por alícuota</div>
+<div><div style="font:600 14.5px 'Open Sans'">Composición del débito por alícuota</div><sc-if value="{{ dashAliNotaOn }}"><div style="font:400 12px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ dashAliNota }}</div></sc-if></div>
 <div style="display:flex;gap:12px">
 <span style="display:flex;align-items:center;gap:6px;font:400 12px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#14395C;border-radius:2px"></span>21%</span>
 <span style="display:flex;align-items:center;gap:6px;font:400 12px 'Open Sans';color:#5A6B7B"><span style="width:10px;height:10px;background:#2F80B7;border-radius:2px"></span>10,5%</span>
@@ -1375,6 +1377,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 </div>
+</sc-if>
+<sc-if value="{{ dashChartsOff }}">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:8px">
+<div style="font:600 15px 'Open Sans'">{{ dashSinDatosT }}</div>
+<div style="font:400 13px/1.55 'Open Sans';color:#5A6B7B;text-align:center;max-width:460px">Elegí otro cliente o ampliá el rango. Los gráficos se arman con la DJ vigente (última secuencia) de cada período liquidado del cliente.</div>
+</div>
+</sc-if>
 </sc-if>
 </sc-if>
 
@@ -2540,7 +2549,7 @@ class Component extends DCLogic {
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
-    prevSaldo: 'favor', arrMan: {}, apocVer: null, cruSaved: false, liqSaved: false, dashHover: null, errView: null,
+    prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
@@ -2767,6 +2776,7 @@ class Component extends DCLogic {
       if (!(r.registros > 0)) return;
       const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
       if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
+      if (r.alicuotas && r.alicuotas.a21 !== undefined) n.ali = r.alicuotas;
       reales.push({
         id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
         user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
@@ -2852,10 +2862,10 @@ class Component extends DCLogic {
       const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => ({
         id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
         debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [], estado: 'Borrador', borrada: false
-      }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}));
+      }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}, r.n.ali ? { alicuotas: r.n.ali } : {}));
       // Base sin las columnas saldo_ant1/2 (schema.sql sin actualizar): se guarda igual sin los saldos a mano.
-      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows).then(r => r.error && /saldo_ant/.test(r.error.message || '')
-        ? sb.from('liquidaciones').upsert(rows.map(x => { const y = Object.assign({}, x); delete y.saldo_ant1; delete y.saldo_ant2; return y; })) : r), 'Liquidación');
+      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows).then(r => r.error && /saldo_ant|alicuotas/.test(r.error.message || '')
+        ? sb.from('liquidaciones').upsert(rows.map(x => { const y = Object.assign({}, x); delete y.saldo_ant1; delete y.saldo_ant2; delete y.alicuotas; return y; })) : r), 'Liquidación');
       z.liqsDb = s.liqsDb;
     }
     if (s.liqEst !== z.liqEst) {
@@ -4397,7 +4407,9 @@ class Component extends DCLogic {
     const rp = r2(perc + ret);
     const s1 = r2(cf - df + arr.tec);
     const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
-    return { df, cf, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, regs: ventas.recs.length + compras.recs.length };
+    const aliV = (k) => r2(V.filter(x => x.tc !== 'NC').reduce((a, x) => a + (x.v[k] || 0), 0));
+    const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27') };
+    return { df, cf, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, ali, regs: ventas.recs.length + compras.recs.length };
   }
 
   liqResVals(res, fmt) {
@@ -5214,14 +5226,26 @@ class Component extends DCLogic {
     const liqTab = {};
     tabsDef.forEach(([k]) => { liqTab[k] = s.liqTab === k; });
 
-    const serie = [
-      { per: '03/2026', df: 2201440, cf: 1905220, rp: 61240.1, a21: 1980000, a105: 198000, a27: 23440 },
-      { per: '04/2026', df: 2455702.9, cf: 1988442.1, rp: 72118.4, a21: 2210000, a105: 221000, a27: 24702 },
-      { per: '05/2026', df: 2877010.25, cf: 2140908.6, rp: 84502.75, a21: 2600000, a105: 250000, a27: 27010 },
-      { per: '06/2026', df: 3104288, cf: 3402115.45, rp: 79330, a21: 2820000, a105: 260000, a27: 24288 },
-      { per: '07/2026', df: 3908744.15, cf: 3858148.75, rp: 92775.4, a21: 3600000, a105: 285000, a27: 23744 },
-      { per: '08/2026', df: 4182905.6, cf: 2444516.2, rp: 106284.15, a21: 3979500, a105: 176400, a27: 26005 }
-    ].map(d => Object.assign({}, d, { saldo: Math.round((d.cf + d.rp - d.df) * 100) / 100 }));
+    // Dashboard: DJ vigente (última secuencia) de cada período liquidado del cliente filtrado.
+    const perKd = (p) => p.slice(3) + p.slice(0, 2);
+    const dMine = s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === this.me().short) || [0, []])[1]);
+    const dRows = this.baseRows().filter(r => !s.ddjjBorradas[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha] && r.df !== '—' && r.est !== 'Pendiente de liquidar');
+    const dClis = [...new Set(dMine.concat(dRows.filter(r => s.role === 'admin' || dMine.includes(r.cliente)).map(r => r.cliente)))].sort((x, y) => x.localeCompare(y, 'es'));
+    const dF = s.dashF || {}, dCliDef = dClis.includes(this.liqCli()) ? this.liqCli() : (dClis[0] || '');
+    const dCli = dClis.includes(dF.cli) ? dF.cli : dCliDef;
+    const dCliSel = dClis.includes(s.dashCliSel) ? s.dashCliSel : dCli;
+    const vig = (cli) => { const m = {}; dRows.filter(r => r.cliente === cli).forEach(r => { if (!m[r.per] || r.seq > m[r.per].seq) m[r.per] = r; }); return Object.values(m).sort((x, y) => perKd(x.per).localeCompare(perKd(y.per))); };
+    const dVig = vig(dCli), dVigSel = dCliSel === dCli ? dVig : vig(dCliSel);
+    const dPers = dVigSel.map(r => r.per);
+    const dDesde = dPers.includes(dF.desde) && dCli === dCliSel ? dF.desde : (dVig.length ? dVig[Math.max(0, dVig.length - 6)].per : '');
+    const dHasta = dPers.includes(dF.hasta) && dCli === dCliSel ? dF.hasta : (dVig.length ? dVig[dVig.length - 1].per : '');
+    const enRango = dVig.filter(r => perKd(r.per) >= perKd(dDesde) && perKd(r.per) <= perKd(dHasta));
+    const serie = enRango.slice(-6).map(r => {
+      const n = r.n || {}, sd = this.saldosDj(dRows, r.cliente, r.per, r.seq), ali = n.ali || null;
+      return { per: r.per, df: n.df ?? this.numAr(r.df), cf: n.cf ?? this.numAr(r.cf), rp: n.rp ?? this.numAr(r.rp), saldo: sd ? sd.s2 : 0, a21: ali ? ali.a21 : 0, a105: ali ? ali.a105 : 0, a27: ali ? ali.a27 : 0, ali: !!ali };
+    });
+    const dSel = { cli: dCliSel, desde: s.dashDesdeSel && dPers.includes(s.dashDesdeSel) ? s.dashDesdeSel : (dCliSel === dCli ? dDesde : (dPers[Math.max(0, dPers.length - 6)] || '')), hasta: s.dashHastaSel && dPers.includes(s.dashHastaSel) ? s.dashHastaSel : (dCliSel === dCli ? dHasta : (dPers[dPers.length - 1] || '')) };
+    this._dash = { cli: dCli, desde: dDesde, hasta: dHasta, clis: dClis, sel: dSel, pers: dPers, recortado: enRango.length > serie.length };
     const saldoC = (v) => v < 0 ? '#B3261E' : '#2E7D5B';
     const fmt = (n) => {
       const neg = n < 0; n = Math.abs(n);
@@ -5230,7 +5254,7 @@ class Component extends DCLogic {
       for (let i = parts[0].length - 1; i >= 0; i--) { out = parts[0][i] + out; c++; if (c % 3 === 0 && i > 0) out = '.' + out; }
       return (neg ? '-' : '') + out + ',' + parts[1];
     };
-    const maxV = 4300000, H = 168, base = 186;
+    const maxV = Math.max(1, ...serie.map(d => Math.max(d.df, d.cf))) * 1.08, H = 168, base = 186;
     const hov = s.dashHover;
     const isHov = (c, i) => !!hov && hov.c === c && hov.i === i;
     const enter = (c, i) => () => this.setState({ dashHover: { c, i } });
@@ -5243,7 +5267,8 @@ class Component extends DCLogic {
       hl: isHov('b', i) ? '#EEF3F8' : 'transparent', lab: isHov('b', i) ? '#14395C' : '#5A6B7B',
       enter: enter('b', i)
     }));
-    const lo = -2000000, hi = 600000;
+    const sMin = Math.min(0, ...serie.map(d => d.saldo)), sMax = Math.max(0, ...serie.map(d => d.saldo)), sPad = (sMax - sMin) * 0.12 || 1;
+    const lo = sMin - sPad, hi = sMax + sPad;
     const ly = (v) => 178 - (v - lo) / (hi - lo) * 150;
     const pts = serie.map((d, i) => (36 + i * 112) + ',' + ly(d.saldo).toFixed(1)).join(' ');
     const dots = serie.map((d, i) => ({
@@ -5255,8 +5280,8 @@ class Component extends DCLogic {
     }));
     const zeroY = ly(0);
     const stack = serie.map((d, i) => {
-      const tot = d.a21 + d.a105 + d.a27, sh = tot / 4300000 * H;
-      const h21 = d.a21 / tot * sh, h105 = d.a105 / tot * sh, h27 = d.a27 / tot * sh;
+      const tot = d.a21 + d.a105 + d.a27, sh = tot / maxV * H;
+      const h21 = tot ? d.a21 / tot * sh : 0, h105 = tot ? d.a105 / tot * sh : 0, h27 = tot ? d.a27 / tot * sh : 0;
       return {
         per: d.per, x: 30 + i * 100, y21: base - sh, h21, y105: base - h105 - h27, h105, y27: base - h27, h27, labx: 30 + i * 33 * 1 + 18,
         hlx: 30 + i * 100 - 8, hitx: 30 + i * 100 - 28,
@@ -5290,12 +5315,12 @@ class Component extends DCLogic {
     })();
     const comp = serie.slice().reverse().map((d, i, arr) => {
       const prev = arr[i + 1];
-      const varp = prev ? ((d.saldo - prev.saldo) / Math.abs(prev.saldo) * 100) : null;
+      const varp = prev && prev.saldo ? ((d.saldo - prev.saldo) / Math.abs(prev.saldo) * 100) : null;
       return {
         per: d.per, df: fmt(d.df), cf: fmt(d.cf), rp: fmt(d.rp), saldo: fmt(d.saldo),
         sc: saldoC(d.saldo),
-        vr: varp === null ? '—' : (varp > 0 ? '+' : '') + fmt(d.saldo - prev.saldo) + ' (' + (varp > 0 ? '+' : '') + varp.toFixed(1).replace('.', ',') + ' %)',
-        vc: varp === null ? '#9AA9B7' : saldoC(varp)
+        vr: !prev ? '—' : ((d.saldo - prev.saldo) > 0 ? '+' : '') + fmt(d.saldo - prev.saldo) + (varp === null ? '' : ' (' + (varp > 0 ? '+' : '') + varp.toFixed(1).replace('.', ',') + ' %)'),
+        vc: !prev ? '#9AA9B7' : saldoC(d.saldo - prev.saldo)
       };
     });
 
@@ -5582,7 +5607,7 @@ class Component extends DCLogic {
           const fila = {
             id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
             df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
-            n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
+            n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
           };
           return {
             liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || []).slice(0, 200)),
@@ -5767,7 +5792,18 @@ class Component extends DCLogic {
       histFilas: histVis,
       dpKpis, dpUsr, dpCli, dpAdmin: histAdmin,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
-      dashScope: s.role === 'admin' ? 'CAZATUR SA · 03/2026 – 08/2026' : 'CAZATUR SA · 03/2026 – 08/2026 · Sólo tus clientes asignados',
+      dashScope: (this._dash.cli || 'Sin cliente') + (serie.length ? ' · ' + serie[0].per + ' – ' + serie[serie.length - 1].per : '') + (s.role === 'admin' ? '' : ' · Sólo tus clientes asignados'),
+      dashChartsOn: serie.length > 0, dashChartsOff: !serie.length,
+      dashSinDatosT: (this._dash.cli || 'El cliente') + ' no tiene liquidaciones en el rango elegido',
+      dashCliOpts: this._dash.clis.map(rz => ({ rz })), dashCliSel: this._dash.sel.cli,
+      dashPerOpts: this._dash.pers.slice().reverse().map(per => ({ per })), dashDesdeSel: this._dash.sel.desde, dashHastaSel: this._dash.sel.hasta,
+      dashCliSet: (e) => this.setState({ dashCliSel: e.target.value, dashDesdeSel: '', dashHastaSel: '' }),
+      dashDesdeSet: (e) => this.setState({ dashDesdeSel: e.target.value }),
+      dashHastaSet: (e) => this.setState({ dashHastaSel: e.target.value }),
+      dashAplicar: () => { const x = this._dash.sel, pk = (p) => p.slice(3) + p.slice(0, 2), inv = x.desde && x.hasta && pk(x.desde) > pk(x.hasta);
+        this.setState({ dashF: { cli: x.cli, desde: inv ? x.hasta : x.desde, hasta: inv ? x.desde : x.hasta }, dashHover: null }); },
+      dashNotaOn: this._dash.recortado, dashNota: 'Se muestran los últimos 6 períodos del rango.',
+      dashAliNotaOn: serie.some(d => !d.ali), dashAliNota: serie.every(d => !d.ali) ? 'Sin detalle por alícuota: se guarda a partir de las liquidaciones nuevas.' : 'Los períodos sin barra se liquidaron antes de guardar el detalle por alícuota.',
       toggleDash: () => this.setState(st => ({ dashEmpty: !st.dashEmpty })),
       bars, stack, linePts: pts, lineDots: dots, zeroY, comp,
       hoverOut: () => this.setState({ dashHover: null }),

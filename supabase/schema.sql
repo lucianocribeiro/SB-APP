@@ -67,6 +67,8 @@ create index if not exists liquidaciones_cli_per on public.liquidaciones (client
 -- Primera liquidación de un cliente: saldos a favor del período anterior ingresados a mano en el cruce 0
 alter table public.liquidaciones add column if not exists saldo_ant1 numeric(16,2);
 alter table public.liquidaciones add column if not exists saldo_ant2 numeric(16,2);
+-- Débito por alícuota (21 / 10,5 / 27) para el dashboard
+alter table public.liquidaciones add column if not exists alicuotas jsonb;
 
 -- 4) Historial de cruces
 create table if not exists public.cruces (
