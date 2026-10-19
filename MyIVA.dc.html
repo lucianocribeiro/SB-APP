@@ -2333,7 +2333,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar los cruces?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de {{ liqCli }} · 08/2026 con {{ upCountLabel }}:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de {{ liqCli }} · {{ liqPer }} con {{ upCountLabel }}:</div>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ upLoaded }}" as="u" hint-placeholder-count="2">
 <div style="display:flex;align-items:center;gap:9px;padding:8px 11px;border-bottom:1px solid #EEF1F4">
@@ -2362,7 +2362,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar {{ liqCli }} · 08/2026 como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar {{ liqCli }} · {{ liqPer }} como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
 <sc-if value="{{ seqPisa }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
 </sc-if>
@@ -4740,7 +4740,7 @@ class Component extends DCLogic {
         hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep,
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
         cruce: 'Cruce ' + c.n + ' · ' + c.t,
-        verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · 08/2026', [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
+        verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · ' + this.perLiq(), [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
         hasCmp: run && c.cmp.length > 0, hasNota: !!nota && !(apoc && !apocMal), nota,
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
         cmp: c.cmp.map(([a, b, cc, d]) => ({
