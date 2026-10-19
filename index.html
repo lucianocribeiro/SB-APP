@@ -769,7 +769,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span>
 </div>
 <div style="margin-left:38px">
+<sc-if value="{{ c.resumen }}">
 <div style="font:400 12.5px/1.45 'Open Sans';color:#1B2733;margin-top:10px">{{ c.resumen }}</div>
+</sc-if>
 <sc-if value="{{ c.hasCmp }}">
 <div style="margin-top:10px;border:1px solid #EEF1F4;border-radius:6px;overflow:hidden">
 <div style="display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:12px;padding:8px 12px;background:#F5F7FA;border-bottom:1px solid #EEF1F4;font:600 10.5px/1.3 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">
@@ -4411,7 +4413,8 @@ class Component extends DCLogic {
       res: n(x.comps) + ' comprobantes de ' + n(x.provs) + ' proveedores contra la Base APOC (' + n(ap.total) + ' CUITs' + (ap.gen ? ' · listado de ARCA del ' + ap.gen : '') + ') · '
         + (x.hits.length ? x.hits.length + (x.hits.length === 1 ? ' comprobante' : ' comprobantes') + ' de ' + x.provHits + (x.provHits === 1 ? ' proveedor apócrifo' : ' proveedores apócrifos') + ' dentro de la ventana de fechas' : 'ningún proveedor figura en la base dentro de la ventana de fechas')
         + (x.antes.length ? ' · ' + x.antes.length + ' con comprobantes anteriores a la fecha de condición' : ''),
-      cmp: Object.keys(porCuit).map(c => [porCuit[c].nom, this.cuitFmt(c), porCuit[c].fc || '—', this.ars(porCuit[c].iva)])
+      cmp: Object.keys(porCuit).map(c => [porCuit[c].nom, this.cuitFmt(c), porCuit[c].fc || '—', this.ars(porCuit[c].iva)]),
+      apocCmp: x.hits.map(h => [this.compTxt(h.x) + ' · ' + h.x.fecha, (h.x.nom || 'Sin denominación') + ' · ' + this.cuitFmt(h.x.cuit), h.fc || '—', this.ars(h.x.v.ivt)])
     };
   }
 
@@ -4562,9 +4565,10 @@ class Component extends DCLogic {
     const def = [
       {
         n: '1', t: 'Base APOC', tipo: 'IVA Compras vs Base APOC', need: [['compras', 'IVA Compras']].concat(enReal ? [['apocBase', 'la Base APOC de ARCA (Configuración → Base APOC)']] : []), regs: 312, ok: 309, dif: 3, falt: 0,
-        regla: 'IVA Compras vs. Base APOC (' + num(ap.total) + ' CUITs · actualizada el ' + ap.fecha + '). Es error si el CUIT del proveedor figura en la base y el comprobante tiene fecha igual o posterior a la condición de apócrifo.',
+        regla: 'Proveedores de IVA Compras contra la Base APOC de ARCA.',
         res: '312 proveedores analizados · 309 sin observaciones · 3 figuran en la Base APOC',
-        h: ['Proveedor observado', 'CUIT', 'En la base desde', 'IVA computado'], cmp: APOC_OBS, alerta: true
+        h: ['Proveedor observado', 'CUIT', 'En la base desde', 'IVA computado'], cmp: APOC_OBS, alerta: true,
+        apocCmp: [['FC A 0003-00004518', APOC_OBS[0][0] + ' · ' + APOC_OBS[0][1], APOC_OBS[0][2], APOC_OBS[0][3]], ['FC A 0001-00000872', APOC_OBS[1][0] + ' · ' + APOC_OBS[1][1], APOC_OBS[1][2], APOC_OBS[1][3]], ['FC A 0002-00001207', APOC_OBS[2][0] + ' · ' + APOC_OBS[2][1], APOC_OBS[2][2], APOC_OBS[2][3]]]
       },
       {
         n: '2', t: 'Comprobantes Emitidos', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
@@ -4624,6 +4628,9 @@ class Component extends DCLogic {
       const ue = (k) => (s.upErr && s.upErr[k]) || {};
       const errs = isErr ? [].concat(...malos.map(([k, l]) => this.errFile(ue(k).file || ERRF[k], l, ue(k).msg))) : (run ? (rv ? rv.errs : this.errsTipo(c.tipo)) : []);
       const cero = (v) => v === '0' || v === '0,00';
+      // Base APOC: si está ok sólo queda el estado en verde; si hay error, se listan los comprobantes observados.
+      const apoc = c0.n === '1' && run && !isErr, apocMal = apoc && c.apocCmp.length > 0;
+      if (apoc) Object.assign(c, { h: ['Comprobante', 'Proveedor', 'En la base desde', 'IVA computado'], cmp: apocMal ? c.apocCmp : [] });
       let rep = demoRep;
       if (rv) {
         const bloque = () => Object.assign({ t: c0.n + ' - ' + c0.t, hoja: rv.blk[3], est, res: rv.res }, this.reporteFilas(rv.blk[0], rv.blk[1], rv.blk[2]));
@@ -4637,7 +4644,7 @@ class Component extends DCLogic {
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
         cruce: 'Cruce ' + c.n + ' · ' + c.t,
         verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · 08/2026', [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
-        hasCmp: run && c.cmp.length > 0, hasNota: !!nota, nota,
+        hasCmp: run && c.cmp.length > 0, hasNota: !!nota && !(apoc && !apocMal), nota,
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
         cmp: c.cmp.map(([a, b, cc, d]) => ({
           a, b, c: cc, d,
@@ -4645,7 +4652,7 @@ class Component extends DCLogic {
           fw: a === 'Total' ? '600' : '400'
         })),
         nBg: isErr || est === 'Con errores' ? '#B3261E' : (!run ? '#9AA9B7' : '#14395C'),
-        resumen: isErr
+        resumen: apoc ? (apocMal ? c.apocCmp.length + (c.apocCmp.length === 1 ? ' comprobante de un contribuyente' : ' comprobantes de contribuyentes') + ' en la Base APOC:' : '') : isErr
           ? 'No se procesó: ' + malos.map(([, l]) => l).join(' y ') + (malos.length > 1 ? ' tienen' : ' tiene') + ' errores de archivo.'
           : (run
             ? (c.res || num(c.regs) + ' registros · ' + num(c.ok) + ' coincidencias · ' + c.dif + ' con diferencias · ' + c.falt + (c.falt === 1 ? ' faltante' : ' faltantes'))
