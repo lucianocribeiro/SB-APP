@@ -1269,6 +1269,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <rect x="{{ b.hlx }}" y="8" width="88" height="180" rx="4" fill="{{ b.hl }}"></rect>
 <rect x="{{ b.dfx }}" y="{{ b.dfy }}" width="34" height="{{ b.dfh }}" fill="#14395C"></rect>
 <rect x="{{ b.cfx }}" y="{{ b.cfy }}" width="34" height="{{ b.cfh }}" fill="#2F80B7"></rect>
+<text x="{{ b.dfvx }}" y="{{ b.dfvy }}" text-anchor="middle" font-family="Open Sans" font-size="10" font-weight="600" fill="#14395C">{{ b.dfTxt }}</text>
+<text x="{{ b.cfvx }}" y="{{ b.cfvy }}" text-anchor="middle" font-family="Open Sans" font-size="10" font-weight="600" fill="#2F80B7">{{ b.cfTxt }}</text>
 <text x="{{ b.labx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="{{ b.lab }}">{{ b.per }}</text>
 <rect x="{{ b.hitx }}" y="0" width="100" height="210" fill="transparent" style="cursor:crosshair" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ hoverOut }}"></rect>
 </sc-for>
@@ -1298,6 +1300,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <polyline points="{{ linePts }}" fill="none" stroke="#2F80B7" stroke-width="2.5"></polyline>
 <sc-for list="{{ lineDots }}" as="d" hint-placeholder-count="6">
 <circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="{{ d.r }}" fill="{{ d.c }}" stroke="#fff" stroke-width="{{ d.sw }}"></circle>
+<text x="{{ d.vx }}" y="{{ d.vy }}" text-anchor="middle" font-family="Open Sans" font-size="10.5" font-weight="600" fill="{{ d.c }}">{{ d.valTxt }}</text>
 <text x="{{ d.cx }}" y="202" text-anchor="middle" font-family="Open Sans" font-size="11" fill="{{ d.lab }}">{{ d.per }}</text>
 <rect x="{{ d.hitx }}" y="0" width="112" height="210" fill="transparent" style="cursor:crosshair" onMouseEnter="{{ d.enter }}" onMouseLeave="{{ hoverOut }}"></rect>
 </sc-for>
@@ -3529,6 +3532,14 @@ class Component extends DCLogic {
     return comps;
   }
 
+  // Texto dentro de un <svg>: el motor envuelve {{ }} en <span>, que el SVG no dibuja; un elemento de React se inserta tal cual.
+  svgTxt(t) { return React.createElement(React.Fragment, null, String(t)); }
+
+  corto(n) {
+    const a = Math.abs(n), sg = n < 0 ? '-' : '';
+    return a >= 1e6 ? sg + (a / 1e6).toFixed(1).replace('.', ',') + ' M' : (a >= 1e3 ? sg + Math.round(a / 1e3) + ' k' : sg + Math.round(a));
+  }
+
   compDeDb(c) {
     return { id: c.id, cliente: c.cliente, per: c.periodo, seq: c.secuencia, monto: Number(c.monto), fecha: this.fechaDe(c.fecha), user: c.usuario || '—' };
   }
@@ -5267,7 +5278,8 @@ class Component extends DCLogic {
     const isHov = (c, i) => !!hov && hov.c === c && hov.i === i;
     const enter = (c, i) => () => this.setState({ dashHover: { c, i } });
     const bars = serie.map((d, i) => ({
-      per: d.per, x: 22 + i * 100,
+      per: this.svgTxt(d.per), x: 22 + i * 100, dfTxt: this.svgTxt(this.corto(d.df)), cfTxt: this.svgTxt(this.corto(d.cf)),
+      dfvx: 22 + i * 100 + 17, cfvx: 22 + i * 100 + 55, dfvy: base - d.df / maxV * H - 5, cfvy: base - d.cf / maxV * H - 5,
       dfx: 22 + i * 100, dfy: base - d.df / maxV * H, dfh: d.df / maxV * H,
       cfx: 22 + i * 100 + 38, cfy: base - d.cf / maxV * H, cfh: d.cf / maxV * H,
       labx: 22 + i * 100 + 36,
@@ -5280,7 +5292,8 @@ class Component extends DCLogic {
     const ly = (v) => 178 - (v - lo) / (hi - lo) * 150;
     const pts = serie.map((d, i) => (36 + i * 112) + ',' + ly(d.saldo).toFixed(1)).join(' ');
     const dots = serie.map((d, i) => ({
-      cx: 36 + i * 112, cy: ly(d.saldo), per: d.per, val: fmt(d.saldo), c: saldoC(d.saldo),
+      cx: 36 + i * 112, cy: ly(d.saldo), per: this.svgTxt(d.per), val: fmt(d.saldo), c: saldoC(d.saldo),
+      valTxt: this.svgTxt('$ ' + this.corto(d.saldo)), vy: ly(d.saldo) < 30 ? ly(d.saldo) + 18 : ly(d.saldo) - 10, vx: Math.max(30, 36 + i * 112),
       hitx: 36 + i * 112 - 56,
       r: isHov('l', i) ? 6.5 : 4.5, sw: isHov('l', i) ? 2 : 0,
       guide: isHov('l', i) ? '#9AA9B7' : 'transparent', lab: isHov('l', i) ? '#14395C' : '#5A6B7B',
@@ -5291,7 +5304,7 @@ class Component extends DCLogic {
       const tot = d.a21 + d.a105 + d.a27, sh = tot / maxV * H;
       const h21 = tot ? d.a21 / tot * sh : 0, h105 = tot ? d.a105 / tot * sh : 0, h27 = tot ? d.a27 / tot * sh : 0;
       return {
-        per: d.per, x: 30 + i * 100, y21: base - sh, h21, y105: base - h105 - h27, h105, y27: base - h27, h27, labx: 30 + i * 33 * 1 + 18,
+        per: this.svgTxt(d.per), x: 30 + i * 100, y21: base - sh, h21, y105: base - h105 - h27, h105, y27: base - h27, h27, labx: 30 + i * 33 * 1 + 18,
         hlx: 30 + i * 100 - 8, hitx: 30 + i * 100 - 28,
         hl: isHov('s', i) ? '#EEF3F8' : 'transparent', lab: isHov('s', i) ? '#14395C' : '#5A6B7B',
         enter: enter('s', i)
