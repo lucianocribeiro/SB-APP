@@ -1807,7 +1807,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <span onClick="{{ r.ver }}" title="Ver resultado del cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
 </td>
 <td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center">
-<span onClick="{{ toastXls }}" title="Descargar el Excel de este cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span>
+<span onClick="{{ r.xls }}" title="Descargar el Excel de este cruce" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span>
 </td>
 </tr>
 </sc-for>
@@ -3694,6 +3694,27 @@ class Component extends DCLogic {
     }))));
     const resumen = gs.length > 1 ? gs.map(g => g.cruce + ' (' + g.errs.length + ')').join(' · ') : '';
     return () => this.setState({ errView: { title, sub, rows, resumen, cli: cli || sub.split(' · ')[0] } });
+  }
+
+  async descargarCruce(r, cruce) {
+    try {
+      const X = await this.xlsxLib();
+      const res = [
+        ['Cruce', cruce], ['Cliente', r.cliente], ['Período', r.per], ['Secuencia', this.seqTxt(r.seq || 0)],
+        ['Ejecutado', r.fecha + ' · ' + r.user], ['Estado', r.est], ['Registros', r.regs], ['Diferencias', r.dif], ['Errores', r.errs.length]
+      ];
+      const head = ['Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia'];
+      const errs = r.errs.length ? [head].concat(r.errs.map(e => [e.k, e.comp, e.ter, e.det, e.imp])) : [['Sin errores ni diferencias.']];
+      const ws = X.utils.aoa_to_sheet(res.concat([[]], errs));
+      ws['!cols'] = [{ wch: 30 }, { wch: 34 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
+      const wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, ws, 'Cruce');
+      const name = r.cliente + ' - ' + cruce.replace(/[\/\\:*?"<>|·]+/g, '-').replace(/\s+/g, ' ') + ' ' + r.per.replace('/', '-') + '.xlsx';
+      this.descargar(name, new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      this.setState({ toast: { kind: 'ok', t: 'Excel del cruce descargado', d: name } });
+    } catch (err) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel del cruce', d: String(err && err.message || err) } });
+    }
   }
 
   async descargarErrores(v, cli) {
@@ -5761,7 +5782,7 @@ class Component extends DCLogic {
           const tab = /Recibidos/.test(r.tipo) ? 'A' : (/Emitidos/.test(r.tipo) ? 'B' : (/Retenciones/.test(r.tipo) ? 'C' : null));
           const verSolo = () => this.setState({ screen: 'cruceResultado', cruceTab: tab, cruceFiltro: 'todos', drawer: false, modal: false, notif: false, cruSolo: { cliente: r.cliente, per: r.per, seq: r.seq || 0, fecha: r.fecha, user: r.user } });
           return Object.assign({}, r, this.seqChip(r.seq || 0), {
-            tipo: cruce, st: E[r.est], hasErr: r.errs.length > 0, noErr: !r.errs.length, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
+            tipo: cruce, st: E[r.est], xls: () => this.descargarCruce(r, cruce), hasErr: r.errs.length > 0, noErr: !r.errs.length, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
             ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : (tab ? verSolo : this.nav('cruceResultado'))
           });
         });
