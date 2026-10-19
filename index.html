@@ -1944,7 +1944,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 
 <sc-if value="{{ scr.config }}">
 <div>
-<div style="font:600 22px/1.2 'Open Sans'">Configuración</div>
+<div style="font:600 22px/1.2 'Open Sans'">Configuración general</div>
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Parámetros generales del estudio.</div>
 </div>
 <div style="display:flex;gap:2px;border-bottom:1px solid #E3E8EE">
@@ -2598,9 +2598,9 @@ class Component extends DCLogic {
 
   CRUMB = {
     inicio: ['MyIVA', 'Inicio'],
-    clientes: ['MyIVA', 'Clientes'],
+    clientes: ['Configuración', 'Clientes'],
     clienteFicha: ['Clientes', 'CAZATUR SA'],
-    usuarios: ['MyIVA', 'Usuarios y roles'],
+    usuarios: ['Configuración', 'Usuarios y roles'],
     liqNueva: ['Liquidador IVA', 'Nueva liquidación'],
     liqResultado: ['Liquidador IVA', 'Resultado · CAZATUR SA 08/2026'],
     liqHistorial: ['Liquidador IVA', 'Historial de liquidaciones'],
@@ -2609,7 +2609,7 @@ class Component extends DCLogic {
     liqReportes: ['Liquidador IVA', 'Reportes'],
     cruceResultado: ['Liquidador IVA', 'Resultado de cruce'],
     crucesHistorial: ['Liquidador IVA', 'Historial de cruces'],
-    config: ['MyIVA', 'Configuración'],
+    config: ['Configuración', 'General'],
     auditoria: ['MyIVA', 'Auditoría'],
     perfil: ['MyIVA', 'Mi perfil']
   };
@@ -5021,9 +5021,10 @@ class Component extends DCLogic {
       { k: 'sub', label: 'Reportes', key: 'liqReportes' }
     ];
     if (admin) raw.push(
-      { k: 'link', label: 'Clientes', key: 'clientes', icon: I.users },
-      { k: 'link', label: 'Usuarios y roles', key: 'usuarios', icon: I.users },
-      { k: 'link', label: 'Configuración', key: 'config', icon: I.gear },
+      { k: 'group', label: 'Configuración', icon: I.gear },
+      { k: 'sub', label: 'General', key: 'config' },
+      { k: 'sub', label: 'Usuarios y roles', key: 'usuarios' },
+      { k: 'sub', label: 'Clientes', key: 'clientes' },
       { k: 'link', label: 'Auditoría', key: 'auditoria', icon: I.audit }
     );
     return raw.map(it => {
@@ -5047,12 +5048,10 @@ class Component extends DCLogic {
       { label: 'Liquidador IVA', key: 'liqHistorial', icon: I.file }
     ];
     if (s.role === 'admin') items.push(
-      { label: 'Clientes', key: 'clientes', icon: I.users },
-      { label: 'Usuarios y roles', key: 'usuarios', icon: I.users },
       { label: 'Configuración', key: 'config', icon: I.gear },
       { label: 'Auditoría', key: 'auditoria', icon: I.audit }
     );
-    const fam = { liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'clientes' };
+    const fam = { usuarios: 'config', clientes: 'config', liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'config' };
     const act = fam[active] || active;
     return items.map(it => ({
       label: it.label, icon: it.icon, go: this.nav(it.key),
