@@ -1384,6 +1384,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ compPdfVer }}">
 <div style="padding:9px 12px;border-radius:6px;background:#F4F9FD;border:1px solid #CFE2F0;font:600 12.5px/1.45 'Open Sans';color:#1F6795">{{ compPdfTxt }}</div>
 </sc-if>
+<sc-if value="{{ compPdfErrVer }}">
+<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:6px;background:#FBE9E7;border:1px solid #F3CFCB;color:#B3261E">
+<div style="flex:1;min-width:0"><div style="font:600 12.5px/1.45 'Open Sans'">PDF no precargado · {{ compPdfErrT }}</div><div style="font:400 12.5px/1.45 'Open Sans'">{{ compPdfErrD }}</div></div>
+<span onClick="{{ compPdfErrX }}" title="Cerrar" style="font:600 14px/1 'Open Sans';cursor:pointer">×</span>
+</div>
+</sc-if>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cliente</div>
 <select value="{{ compCli }}" onChange="{{ compCliSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ compCliOpts }}" as="o" hint-placeholder-count="7"><option value="{{ o.rz }}">{{ o.rz }}</option></sc-for></select>
@@ -2477,7 +2483,7 @@ class Component extends DCLogic {
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
-    comps: this.compsInit(), compBusy: false,
+    comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
     apoc: this.apocInit(), apocRun: false, apocQ: '',
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
@@ -4165,7 +4171,8 @@ class Component extends DCLogic {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!f) return;
-    const err = (t, d) => this.setState({ toast: { kind: 'err', t, d } });
+    const err = (t, d) => this.setState({ compPdfErr: { t, d }, toast: { kind: 'err', t, d } });
+    this.setState({ compPdfErr: null, toast: { kind: 'info', t: 'Leyendo el PDF', d: f.name } });
     const bytes = new Uint8Array(await f.arrayBuffer());
     if (String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') return err('El archivo no es un PDF', f.name + ' no es un PDF. Subí el acuse de compensación tal como lo descarga ARCA.');
     if (bytes.length > 10 * 1024 * 1024) return err('El PDF es muy grande', f.name + ' supera los 10 MB.');
@@ -4187,7 +4194,7 @@ class Component extends DCLogic {
     }
     if (!djs.some(r => r.cliente === cli && r.per === c.per)) return err('No hay DJ de ese período', cli + ' no tiene una declaración jurada liquidada de ' + c.per + '. Liquidá ese período antes de registrar la compensación.');
     this.setState({
-      compCli: cli, compPer: c.per, compMonto: this.ars(c.monto), compPdf: { name: f.name, cli, per: c.per, monto: c.monto },
+      compCli: cli, compPer: c.per, compMonto: this.ars(c.monto), compPdf: { name: f.name, cli, per: c.per, monto: c.monto }, compPdfErr: null,
       toast: { kind: 'ok', t: 'Compensación precargada desde el PDF', d: cli + ' · ' + c.per + ' · $ ' + this.ars(c.monto) + '. Revisá los datos y tocá "Registrar compensación".' }
     });
   }
@@ -5361,11 +5368,13 @@ class Component extends DCLogic {
       });
     });
     const compVals = {
-      compCli, compCliSet: (e) => this.setState({ compCli: e.target.value, compPer: '', compMonto: '', compPdf: null }),
+      compCli, compCliSet: (e) => this.setState({ compCli: e.target.value, compPer: '', compMonto: '', compPdf: null, compPdfErr: null }),
       compCliOpts: compClis.map(rz => ({ rz })),
       compPer: djSel ? djSel.per : '', compPerSet: (e) => this.setState({ compPer: e.target.value, compMonto: '', compPdf: null }),
       compPdfSubir: (e) => this.subirCompensacion(e, djs, misClis || this.CARTERA.flatMap(([, cs]) => cs)),
       compPdfVer: !!(compPdf && djSel && compPdf.cli === djSel.cliente && compPdf.per === djSel.per),
+      compPdfErrVer: !!s.compPdfErr, compPdfErrT: s.compPdfErr ? s.compPdfErr.t : '', compPdfErrD: s.compPdfErr ? s.compPdfErr.d : '',
+      compPdfErrX: () => this.setState({ compPdfErr: null }),
       compPdfTxt: compPdf ? 'Precargado desde ' + compPdf.name + ' · Origen 30 IVA - 19 Declaración Jurada - 19 Declaración Jurada · $ ' + this.ars(compPdf.monto) : '',
       compPerOpts: compPers.map(r => {
         const v = saldo2(r);
