@@ -20,6 +20,10 @@ a:hover{color:#14395C;text-decoration:underline}
 :focus-visible{outline:2px solid #2F80B7;outline-offset:2px}
 input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Tablas compactas: las columnas se ajustan al contenido y la última toma el espacio que sobra */
+.tabla-compacta th,.tabla-compacta td{padding-left:10px!important;padding-right:10px!important}
+.tabla-compacta th{width:1%}
+.tabla-compacta th:last-child{width:auto}
 @keyframes bar{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
 @keyframes sk{0%,100%{opacity:.55}50%{opacity:1}}
 </style>
@@ -1067,7 +1071,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1480px">
+<table class="tabla-compacta" style="width:100%;border-collapse:collapse;min-width:1180px">
 <thead><tr>
 <th style="width:38px;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ histAllSel }}" onChange="{{ histToggleAll }}" title="Seleccionar todas las visibles" style="accent-color:#14395C;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
@@ -1448,7 +1452,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto;margin-bottom:64px">
 <div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Compensaciones registradas</div>
-<table style="width:100%;border-collapse:collapse;min-width:860px">
+<table class="tabla-compacta" style="width:100%;border-collapse:collapse;min-width:760px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
@@ -1786,7 +1790,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:960px">
+<table class="tabla-compacta" style="width:100%;border-collapse:collapse;min-width:820px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Tipo de cruce</th>
