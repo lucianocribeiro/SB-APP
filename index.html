@@ -5236,15 +5236,23 @@ class Component extends DCLogic {
     const dCliSel = dClis.includes(s.dashCliSel) ? s.dashCliSel : dCli;
     const vig = (cli) => { const m = {}; dRows.filter(r => r.cliente === cli).forEach(r => { if (!m[r.per] || r.seq > m[r.per].seq) m[r.per] = r; }); return Object.values(m).sort((x, y) => perKd(x.per).localeCompare(perKd(y.per))); };
     const dVig = vig(dCli), dVigSel = dCliSel === dCli ? dVig : vig(dCliSel);
-    const dPers = dVigSel.map(r => r.per);
-    const dDesde = dPers.includes(dF.desde) && dCli === dCliSel ? dF.desde : (dVig.length ? dVig[Math.max(0, dVig.length - 6)].per : '');
-    const dHasta = dPers.includes(dF.hasta) && dCli === dCliSel ? dF.hasta : (dVig.length ? dVig[dVig.length - 1].per : '');
+    // Desde / Hasta: todos los meses desde la liquidación más vieja del historial (o 24 meses atrás) hasta el mes actual.
+    const hoyD = new Date(), mmD = (m, y) => String(m).padStart(2, '0') + '/' + y;
+    const viejo = dRows.map(r => r.per).sort((x, y) => perKd(x).localeCompare(perKd(y)))[0];
+    let dy = hoyD.getFullYear() - 2, dm = hoyD.getMonth() + 1;
+    if (viejo && perKd(viejo) < perKd(mmD(dm, dy))) { dm = +viejo.slice(0, 2); dy = +viejo.slice(3); }
+    const dPers = [];
+    for (let y = dy, m = dm; y < hoyD.getFullYear() || (y === hoyD.getFullYear() && m <= hoyD.getMonth() + 1); m === 12 ? (m = 1, y++) : m++) dPers.push(mmD(m, y));
+    const defD = (v) => v.length ? v[Math.max(0, v.length - 6)].per : dPers[Math.max(0, dPers.length - 6)];
+    const defH = (v) => v.length ? v[v.length - 1].per : dPers[dPers.length - 1];
+    const dDesde = dPers.includes(dF.desde) && dF.cli === dCli ? dF.desde : defD(dVig);
+    const dHasta = dPers.includes(dF.hasta) && dF.cli === dCli ? dF.hasta : defH(dVig);
     const enRango = dVig.filter(r => perKd(r.per) >= perKd(dDesde) && perKd(r.per) <= perKd(dHasta));
     const serie = enRango.slice(-6).map(r => {
       const n = r.n || {}, sd = this.saldosDj(dRows, r.cliente, r.per, r.seq), ali = n.ali || null;
       return { per: r.per, df: n.df ?? this.numAr(r.df), cf: n.cf ?? this.numAr(r.cf), rp: n.rp ?? this.numAr(r.rp), saldo: sd ? sd.s2 : 0, a21: ali ? ali.a21 : 0, a105: ali ? ali.a105 : 0, a27: ali ? ali.a27 : 0, ali: !!ali };
     });
-    const dSel = { cli: dCliSel, desde: s.dashDesdeSel && dPers.includes(s.dashDesdeSel) ? s.dashDesdeSel : (dCliSel === dCli ? dDesde : (dPers[Math.max(0, dPers.length - 6)] || '')), hasta: s.dashHastaSel && dPers.includes(s.dashHastaSel) ? s.dashHastaSel : (dCliSel === dCli ? dHasta : (dPers[dPers.length - 1] || '')) };
+    const dSel = { cli: dCliSel, desde: dPers.includes(s.dashDesdeSel) ? s.dashDesdeSel : (dCliSel === dCli ? dDesde : defD(dVigSel)), hasta: dPers.includes(s.dashHastaSel) ? s.dashHastaSel : (dCliSel === dCli ? dHasta : defH(dVigSel)) };
     this._dash = { cli: dCli, desde: dDesde, hasta: dHasta, clis: dClis, sel: dSel, pers: dPers, recortado: enRango.length > serie.length };
     const saldoC = (v) => v < 0 ? '#B3261E' : '#2E7D5B';
     const fmt = (n) => {
@@ -5792,7 +5800,7 @@ class Component extends DCLogic {
       histFilas: histVis,
       dpKpis, dpUsr, dpCli, dpAdmin: histAdmin,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
-      dashScope: (this._dash.cli || 'Sin cliente') + (serie.length ? ' · ' + serie[0].per + ' – ' + serie[serie.length - 1].per : '') + (s.role === 'admin' ? '' : ' · Sólo tus clientes asignados'),
+      dashScope: (this._dash.cli || 'Sin cliente') + (this._dash.desde ? ' · ' + this._dash.desde + ' – ' + this._dash.hasta : '') + ' · ' + (serie.length === 1 ? '1 período liquidado' : serie.length + ' períodos liquidados') + (s.role === 'admin' ? '' : ' · Sólo tus clientes asignados'),
       dashChartsOn: serie.length > 0, dashChartsOff: !serie.length,
       dashSinDatosT: (this._dash.cli || 'El cliente') + ' no tiene liquidaciones en el rango elegido',
       dashCliOpts: this._dash.clis.map(rz => ({ rz })), dashCliSel: this._dash.sel.cli,
