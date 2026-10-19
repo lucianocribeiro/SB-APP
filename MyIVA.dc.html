@@ -3778,6 +3778,11 @@ class Component extends DCLogic {
 
   TC_EXCL = ['CG', 'IB', 'IR', 'CB', 'CS', 'CR'];
 
+  // Tipos de los subdiarios que son comprobantes de la tabla de ARCA (COMP_TAB); el resto (retenciones, etc.) no se cuenta ni se cruza.
+  TC_COMP = ['FC', 'NC', 'ND', 'RC', 'NV', 'TK', 'LQ'];
+
+  esComp(tc) { return this.TC_COMP.includes(tc) || this.TC_DESPACHO.includes(tc); }
+
   PARSEABLES = ['ventas', 'compras', 'emitidos', 'recibidos'];
 
   UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'IVA Digital' };
@@ -3961,7 +3966,7 @@ class Component extends DCLogic {
       const rec = {
         cuit, tc: t.tc, letra: t.letra, tipo: t.tc + (t.letra ? ' ' + t.letra : ''), desc: libro ? '' : (t.cod ? t.cod + ' - ' : '') + t.desc,
         pv: Math.round(n('pv')), nro: Math.round(n('nro')), fecha, nom: nom == null ? '' : String(nom).trim(),
-        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, excl: libro && this.TC_EXCL.includes(t.tc)
+        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, excl: libro && (this.TC_EXCL.includes(t.tc) || !this.esComp(t.tc))
       };
       recs.push(rec);
       const pk = fecha.slice(3);
@@ -4312,7 +4317,8 @@ class Component extends DCLogic {
     const esAdu = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
     const pool = [];
     if (compras) compras.recs.filter(x => x.v.piva).forEach(x => pool.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras', adu: esAdu(x) }));
-    if (ventas) ventas.recs.filter(x => x.excl || x.v.piva).forEach(x => pool.push({ x, imp: r2(x.excl ? Math.abs(x.v.tot) : x.v.piva), src: 'IVA Ventas', adu: esAdu(x) }));
+    const ret = (x) => this.TC_EXCL.includes(x.tc);
+    if (ventas) ventas.recs.filter(x => ret(x) || (!x.excl && x.v.piva)).forEach(x => pool.push({ x, imp: r2(ret(x) ? Math.abs(x.v.tot) : x.v.piva), src: 'IVA Ventas', adu: esAdu(x) }));
     const used = new Set(), pares = [], faltL = [];
     ad.recs.forEach(a => {
       const sc = (c) => (c.adu ? 2 : 0) + (c.x.fecha === a.fecha ? 1 : 0);
@@ -4341,7 +4347,8 @@ class Component extends DCLogic {
   liqCalc(ventas, compras, arr) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
-    const V = ventas.recs.filter(x => !x.excl), C = compras.recs.filter(x => !x.excl);
+    // La liquidación suma el IVA de todo lo que no es retención/percepción (igual que antes); el filtro por tabla de comprobantes es sólo para los cruces.
+    const noRet = (x) => !this.TC_EXCL.includes(x.tc), V = ventas.recs.filter(noRet), C = compras.recs.filter(noRet);
     const df = r2(iva(V.filter(x => x.tc !== 'NC')) + iva(C.filter(x => x.tc === 'NC')));
     const cf = r2(iva(C.filter(x => x.tc !== 'NC')) + iva(V.filter(x => x.tc === 'NC')));
     const rp = r2(compras.recs.reduce((a, x) => a + (x.tc === 'NC' ? -1 : 1) * (x.v.piva || 0), 0) + ventas.recs.filter(x => x.tc === 'CR').reduce((a, x) => a + Math.abs(x.v.tot), 0));
@@ -4523,7 +4530,7 @@ class Component extends DCLogic {
       est: x.dif + falt + fp ? 'Completado con diferencias' : 'Completado',
       res: n(x.nA) + ' comprobantes en ARCA · ' + n(x.nL) + ' en ' + lblL + ' · ' + n(x.ok) + ' coinciden · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en ' + lblL + ' · ' + x.faltA.length + ' faltan en ARCA'
         + ' · ' + (fp ? n(fp) + (fp === 1 ? ' comprobante' : ' comprobantes') + ' de ' + lblL + (x.regla === 'hasta' ? (fp === 1 ? ' posterior al' : ' posteriores al') : ' fuera del') + ' período ' + x.perLiq : 'todos los comprobantes de ' + lblL + (x.regla === 'hasta' ? ' son del período ' + x.perLiq + ' o anteriores' : ' son del período ' + x.perLiq))
-        + (x.excl ? ' · ' + x.excl + ' registros del subdiario excluidos (TC ' + this.TC_EXCL.join(', ') + ')' : ''),
+        + (x.excl ? ' · ' + x.excl + (x.excl === 1 ? ' registro' : ' registros') + ' del subdiario que no son comprobantes (retenciones y otros) no se cuentan' : ''),
       cmp: [['Comprobantes', n(x.nA), n(x.nL), String(x.nA - x.nL)], fila('Neto gravado', 'ngt'), fila('IVA', 'ivt'), fila('No gravado / exento / no alcanzado', 'ng'), fila('Otros tributos y percepciones', 'ot'), fila('Importe total', 'tot')]
     };
   }
@@ -4802,6 +4809,10 @@ class Component extends DCLogic {
       if (new Set(props.map(k => R[k].propio)).size > 1) inc.push({ t: 'Los archivos de ARCA son de CUITs distintos: ' + props.map(k => L[k] + ' ' + this.cuitFmt(R[k].propio)).join(' · ') + '.' });
       P.concat(['percep', 'aduana'].filter(k => R[k])).forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
       if (R.ivadig && R.ivadig.encontrados < this.DJ_CONC.length) inc.push({ t: 'Del PDF de IVA Digital se leyeron ' + R.ivadig.encontrados + ' de ' + this.DJ_CONC.length + ' totales: los conceptos no encontrados figuran como faltantes en el cruce 6.' });
+      P.forEach(k => {
+        const raros = [...new Set(R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).map(x => x.tc || 'vacío'))];
+        if (raros.length) { const n = R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).length; inc.push({ t: n + (n === 1 ? ' registro' : ' registros') + ' de ' + L[k] + ' con tipo ' + raros.join(', ') + ': no está en la tabla de comprobantes, no se cuenta en los cruces (sí en el IVA de la liquidación). Si es un comprobante, avisá para agregar el código.' }); }
+      });
       P.forEach(k => { const n = R[k].recs.filter(x => !x.excl && x.cuit.length !== 11).length; if (n) inc.push({ t: n + (n === 1 ? ' comprobante' : ' comprobantes') + ' de ' + L[k] + ' sin CUIT válido (11 dígitos): se cruzan igual por tipo, punto de venta y número.' }); });
     } else {
       if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
@@ -5127,7 +5138,7 @@ class Component extends DCLogic {
         : k === 'ivadig' ? 'DJ' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.DJ_CONC.length + ' totales leídos · ' + rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas')
         : k === 'percep' ? rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
-        : rf.recs.length + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + ' excluidos del cruce (TC ' + this.TC_EXCL.join(', ') + ')' : ''));
+        : (rf.recs.length - (rf.excl || 0)) + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
       return {
         n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
         errFile: ue ? ue.file : file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
