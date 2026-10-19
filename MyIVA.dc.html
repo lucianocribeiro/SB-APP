@@ -4151,10 +4151,13 @@ class Component extends DCLogic {
       let m = t.match(/periodo(?: fiscal)?\s*:?\s*(\d{1,2})\s*[\/-]\s*(\d{4})/) || t.match(/(?<![\d\/])(\d{2})\/(\d{4})(?!\d)/);
       if (m && +m[1] >= 1 && +m[1] <= 12) return m[1].padStart(2, '0') + '/' + m[2];
       m = t.match(/periodo(?: fiscal)?\s*:?\s*(\d{4})\s*[\/-]?\s*(\d{2})(?!\d)/) || t.match(/(?<!\d)(20\d{2})-?(0[1-9]|1[0-2])(?![\d\/])/);
-      return m && +m[2] >= 1 && +m[2] <= 12 ? m[2] + '/' + m[1] : '';
+      if (m && +m[2] >= 1 && +m[2] <= 12) return m[2] + '/' + m[1];
+      m = t.match(/(?<!\d)(0[1-9]|1[0-2])(20\d{2})(?!\d)/);   // F.1151: período fiscal MMAAAA (032026)
+      return m ? m[1] + '/' + m[2] : '';
     };
-    const montoDe = (t) => { const m = t.match(new RegExp('(?:importe|monto)[^0-9]{0,25}' + IMP.source)) || t.match(IMP); return m ? Math.round(this.numAr(m[1]) * 100) / 100 : null; };
-    const monto = montoDe(B) ?? montoDe(D);
+    const conLbl = (t) => t.match(new RegExp('(?:importe|monto)[^0-9]{0,25}' + IMP.source)), aMonto = (m) => m ? Math.round(this.numAr(m[1]) * 100) / 100 : null;
+    // F.1151: el importe figura arriba de "Datos del origen", en el encabezado del acuse.
+    const monto = aMonto(conLbl(B) || conLbl(L.slice(0, io).join(' ')) || B.match(IMP) || D.match(IMP));
     return { name, rz, imp, con, sub, per: perDe(B), monto };
   }
 
