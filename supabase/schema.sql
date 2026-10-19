@@ -64,6 +64,9 @@ create table if not exists public.liquidaciones (
   errores         jsonb not null default '[]'
 );
 create index if not exists liquidaciones_cli_per on public.liquidaciones (cliente, periodo);
+-- Primera liquidación de un cliente: saldos a favor del período anterior ingresados a mano en el cruce 0
+alter table public.liquidaciones add column if not exists saldo_ant1 numeric(16,2);
+alter table public.liquidaciones add column if not exists saldo_ant2 numeric(16,2);
 
 -- 4) Historial de cruces
 create table if not exists public.cruces (

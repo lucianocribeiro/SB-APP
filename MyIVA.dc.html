@@ -724,17 +724,27 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ cruArr.regla }}</div>
 </div>
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Resultado 07/2026</span>
+<sc-if value="{{ cruArr.conDj }}">
+<span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#9AA9B7">Resultado {{ cruArr.per }}</span>
 <div style="display:flex;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ prevModes }}" as="m" hint-placeholder-count="2">
 <div onClick="{{ m.go }}" style="padding:6px 10px;font:600 11.5px 'Open Sans';cursor:pointer;border-right:1px solid #E3E8EE;background:{{ m.bg }};color:{{ m.fg }}">{{ m.label }}</div>
 </sc-for>
 </div>
+</sc-if>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ cruArr.st.bg }};color:{{ cruArr.st.fg }};border:1px solid {{ cruArr.st.bd }};white-space:nowrap">{{ cruArr.st.label }}</span>
 </div>
 </div>
 <div style="margin-left:38px">
 <div style="font:400 12.5px/1.45 'Open Sans';color:#1B2733;margin-top:10px">{{ cruArr.resumen }}</div>
+<sc-if value="{{ cruArr.sinDj }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px;margin-top:12px">
+<div><div style="font:600 11px/1.35 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Saldo a favor 1er párrafo · {{ cruArr.per }}</div>
+<div style="display:flex;align-items:center;border:1px solid #D5DEE7;border-radius:6px;background:#fff"><span style="padding:9px 0 9px 11px;font:600 13.5px 'Open Sans';color:#5A6B7B">$</span><input value="{{ arrMan1 }}" onChange="{{ arrManSet1 }}" placeholder="0,00" inputmode="decimal" style="flex:1;min-width:0;padding:9px 11px 9px 6px;border:0;outline:none;font:400 13.5px 'Open Sans';font-variant-numeric:tabular-nums;background:transparent"></div></div>
+<div><div style="font:600 11px/1.35 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Saldo a favor 2do párrafo · {{ cruArr.per }}</div>
+<div style="display:flex;align-items:center;border:1px solid #D5DEE7;border-radius:6px;background:#fff"><span style="padding:9px 0 9px 11px;font:600 13.5px 'Open Sans';color:#5A6B7B">$</span><input value="{{ arrMan2 }}" onChange="{{ arrManSet2 }}" placeholder="0,00" inputmode="decimal" style="flex:1;min-width:0;padding:9px 11px 9px 6px;border:0;outline:none;font:400 13.5px 'Open Sans';font-variant-numeric:tabular-nums;background:transparent"></div></div>
+</div>
+</sc-if>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px;margin-top:12px">
 <sc-for list="{{ prevSaldos }}" as="p" hint-placeholder-count="2">
 <div style="border:1px solid {{ p.bd }};background:{{ p.bg }};border-radius:6px;padding:14px">
@@ -744,10 +754,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-for>
 </div>
-<sc-if value="{{ prevPagar }}">
+<sc-if value="{{ cruArr.pagarAviso }}">
 <div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 3l9 17H3zM12 9v5M12 17v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">La última secuencia de 07/2026 resultó a pagar: no hay saldos a favor para trasladar, por eso se informan en $ 0.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">La última secuencia de {{ cruArr.per }} resultó a pagar: no hay saldos a favor para trasladar, por eso se informan en $ 0.</div>
 </div>
 </sc-if>
 </div>
@@ -2478,7 +2488,7 @@ class Component extends DCLogic {
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
-    prevSaldo: 'favor', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
+    prevSaldo: 'favor', arrMan: {}, cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
@@ -2704,6 +2714,7 @@ class Component extends DCLogic {
       if (r.borrada) bor[r.id] = 1;
       if (!(r.registros > 0)) return;
       const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
+      if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
       reales.push({
         id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
         user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
@@ -2789,8 +2800,10 @@ class Component extends DCLogic {
       const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => ({
         id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
         debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [], estado: 'Borrador', borrada: false
-      }));
-      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows), 'Liquidación');
+      }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}));
+      // Base sin las columnas saldo_ant1/2 (schema.sql sin actualizar): se guarda igual sin los saldos a mano.
+      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows).then(r => r.error && /saldo_ant/.test(r.error.message || '')
+        ? sb.from('liquidaciones').upsert(rows.map(x => { const y = Object.assign({}, x); delete y.saldo_ant1; delete y.saldo_ant2; return y; })) : r), 'Liquidación');
       z.liqsDb = s.liqsDb;
     }
     if (s.liqEst !== z.liqEst) {
@@ -3076,11 +3089,14 @@ class Component extends DCLogic {
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
       .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
+    const man0 = data[0] && data[0].n && data[0].n.a1 != null ? data[0].n : null;
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
       if (L === C('BA')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 1er párrafo' }));
       else if (L === C('BE')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 2do párrafo' }));
+      else if (man0 && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: man0.a1 }));
+      else if (man0 && L === C('AX')) r2cells.push(cell(L + '2', ST.money, { v: man0.a2 }));
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
     rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
@@ -3596,7 +3612,8 @@ class Component extends DCLogic {
     const dj = seq === undefined ? djs.sort((a, b) => b.seq - a.seq)[0] : djs.find(r => r.seq === seq);
     if (!dj) return null;
     const prev = this.saldosDj(rows, cliente, this.perAnt(per), undefined, (prof || 0) + 1);
-    const p1 = prev ? prev.s1 : 0, p2 = prev ? r2(prev.s2 - prev.comp) : 0;
+    const man = !prev && dj.n && dj.n.a1 != null ? dj.n : null;   // saldos del período anterior ingresados a mano
+    const p1 = prev ? prev.s1 : (man ? man.a1 : 0), p2 = prev ? r2(prev.s2 - prev.comp) : (man ? man.a2 : 0);
     const cf = num(dj.cf), df = num(dj.df), rp = num(dj.rp);
     const s1 = r2(p1 < 0 ? cf - df : cf - df + p1);
     const s2 = r2(p2 < 0 ? (s1 < 0 ? s1 + rp : rp) : (s1 < 0 ? p2 + s1 + rp : rp + p2));
@@ -3608,7 +3625,11 @@ class Component extends DCLogic {
     const rows = this.baseRows().filter(r => !s.ddjjBorradas[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
     const x = this.saldosDj(rows, cli, per);
     const forz = s.prevSaldo === 'pagar';
-    if (!x || forz) return { per, dj: x ? x.dj : null, sinDj: !x, pagar: true, pagar1: true, pagar2: true, tec: 0, base: 0, comp: x ? x.comp : 0, lib: 0, s1: x ? x.s1 : 0, s2: x ? x.s2 : 0 };
+    if (!x) {
+      const m = (s.arrMan || {})[cli + '|' + per] || {}, a1 = Math.max(0, this.numAr(m.s1)), a2 = Math.max(0, this.numAr(m.s2));
+      return { per, dj: null, sinDj: true, manual: { a1, a2, s1: m.s1 || '', s2: m.s2 || '' }, pagar: a1 <= 0 && a2 <= 0, pagar1: a1 <= 0, pagar2: a2 <= 0, tec: a1, base: a2, comp: 0, lib: a2, s1: a1, s2: a2 };
+    }
+    if (forz) return { per, dj: x ? x.dj : null, sinDj: !x, pagar: true, pagar1: true, pagar2: true, tec: 0, base: 0, comp: x ? x.comp : 0, lib: 0, s1: x ? x.s1 : 0, s2: x ? x.s2 : 0 };
     const tec = Math.max(0, x.s1), base = Math.max(0, x.s2);
     return { per, dj: x.dj, sinDj: false, pagar: tec <= 0 && base <= 0, pagar1: x.s1 <= 0, pagar2: x.s2 <= 0, tec, base, comp: x.comp, lib: Math.max(0, Math.round((base - x.comp) * 100) / 100), s1: x.s1, s2: x.s2 };
   }
@@ -4652,9 +4673,10 @@ class Component extends DCLogic {
     const arrTec = this.ars(arr.tec), arrLib = this.ars(arr.lib);
     const arrastre = {
       n: '0', t: 'Saldos a favor', prevPagar,
-      regla: 'Se toman de la DJ vigente de ' + arr.per + (arr.dj ? ' (' + this.seqTxt(arr.dj.seq) + ' · ' + arr.dj.fecha + ')' : '') + ': saldo a favor de 1er párrafo y saldo a favor de 2do párrafo menos las compensaciones registradas. Si resultó a pagar, se trae $ 0.',
-      st: E['Completado'],
-      resumen: arr.sinDj ? 'No hay una DJ liquidada de ' + arr.per + ' para ' + cli + ': los saldos a favor se trasladan en $ 0.'
+      regla: arr.sinDj ? 'Saldos a favor de 1er y 2do párrafo del período anterior (' + arr.per + ').'
+        : 'Se toman de la DJ vigente de ' + arr.per + (arr.dj ? ' (' + this.seqTxt(arr.dj.seq) + ' · ' + arr.dj.fecha + ')' : '') + ': saldo a favor de 1er párrafo y saldo a favor de 2do párrafo menos las compensaciones registradas. Si resultó a pagar, se trae $ 0.',
+      st: E['Completado'], per: arr.per, sinDj: arr.sinDj, conDj: !arr.sinDj, pagarAviso: prevPagar && !arr.sinDj,
+      resumen: arr.sinDj ? 'No encuentro el período inmediato anterior (' + arr.per + ') de ' + cli + '. Si es la primera liquidación de este cliente, ingresá a mano los saldos a favor de 1er y 2do párrafo de ' + arr.per + ' (dejalos vacíos si no tiene).'
         : (prevPagar ? 'La DJ de ' + arr.per + ' resultó a pagar: no hay saldos a favor para trasladar.'
           : 'Se trasladan $ ' + arrTec + ' de saldo a favor de 1er párrafo y $ ' + arrLib + ' de 2do párrafo a ' + this.perLiq() + (arr.comp ? ' ($ ' + this.ars(arr.base) + ' de 2do párrafo menos $ ' + this.ars(arr.comp) + ' compensados).' : '.'))
     };
@@ -5054,7 +5076,7 @@ class Component extends DCLogic {
     const fpCant = (n) => n + (n === 1 ? ' comprobante' : ' comprobantes');
     const fpTxt = [fpV.length ? 'IVA Ventas tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
     const fpEj = fpV.concat(fpC).slice(0, 3).map(x => this.compTxt(x) + ' del ' + x.fecha).join(', ');
-    const sinArr = arr.sinDj ? 'No hay DJ liquidada de ' + arr.per : '';
+    const sinArr = arr.sinDj ? 'Ingresado a mano · ' + (arr.pagar ? 'sin saldo a favor' : 'se traslada a ' + perL) : '';
     const prevSaldos = [
       { label: 'Saldo a favor 1er párrafo · ' + arr.per, cero: arr.pagar1, amount: '$ ' + this.ars(arr.tec), sub: sinArr || (arr.pagar1 ? 'Resultó a pagar ($ ' + this.ars(arr.s1) + '): se trae $ 0' : 'Se traslada a la liquidación de ' + perL) },
       { label: 'Saldo a favor 2do párrafo menos compensaciones · ' + arr.per, cero: arr.pagar2, amount: '$ ' + this.ars(arr.lib), sub: sinArr || (arr.pagar2 ? 'Resultó a pagar ($ ' + this.ars(arr.s2) + '): se trae $ 0' : (arr.comp ? 'Saldo 2do párrafo $ ' + this.ars(arr.base) + ' − compensado $ ' + this.ars(arr.comp) : 'Sin compensaciones registradas · se traslada a ' + perL)) }
@@ -5063,7 +5085,7 @@ class Component extends DCLogic {
       return {
         label: p.label,
         value: z ? '$ 0' : p.amount,
-        sub: s.prevSaldo === 'pagar' ? 'Simulación: período anterior a pagar' : p.sub,
+        sub: s.prevSaldo === 'pagar' && !arr.sinDj ? 'Simulación: período anterior a pagar' : p.sub,
         fg: z ? '#5A6B7B' : '#2E7D5B',
         bg: z ? '#F5F7FA' : '#F3FAF6',
         bd: z ? '#E3E8EE' : '#C7E3D6'
@@ -5431,6 +5453,9 @@ class Component extends DCLogic {
           : { kind: 'ok', t: 'Cruces procesados', d: 'El resultado y su reporte quedaron guardados en Historial de cruces.' }
       }),
       prevPagar, prevSaldos,
+      arrMan1: arr.manual ? arr.manual.s1 : '', arrMan2: arr.manual ? arr.manual.s2 : '',
+      arrManSet1: (e) => { const k = this.liqCli() + '|' + arr.per, v = e.target.value; this.setState(st => ({ arrMan: Object.assign({}, st.arrMan, { [k]: Object.assign({}, (st.arrMan || {})[k], { s1: v }) }) })); },
+      arrManSet2: (e) => { const k = this.liqCli() + '|' + arr.per, v = e.target.value; this.setState(st => ({ arrMan: Object.assign({}, st.arrMan, { [k]: Object.assign({}, (st.arrMan || {})[k], { s2: v }) }) })); },
       prevModes: [['favor', 'A favor'], ['pagar', 'A pagar']].map(([k, label]) => ({
         label, go: this.tset('prevSaldo', k),
         bg: s.prevSaldo === k ? '#14395C' : '#FFFFFF', fg: s.prevSaldo === k ? '#FFFFFF' : '#5A6B7B'
@@ -5477,7 +5502,7 @@ class Component extends DCLogic {
           const fila = {
             id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
             df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
-            n: { df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs }
+            n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
           };
           return {
             liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || []).slice(0, 200)),
