@@ -3216,7 +3216,8 @@ class Component extends DCLogic {
       if (ls.error || !arch.length) { sin.push(r.per + ' Sec. ' + r.seq); continue; }
       for (const o of arch) {
         const k = o.name.split('__')[0], lbl = this.UP_LBL[k] || k;
-        const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + lbl;
+        const corto = { emitidos: 'Emitidos', recibidos: 'Recibidos', aduana: 'Percep. Aduaneras' }[k] || lbl;
+        const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + corto;
         const dl = await sb.storage.from('crudos').download(dir + '/' + o.name);
         if (dl.error) { hojas.push({ name: nombre(base), rows: [['No se pudo descargar ' + o.name + ': ' + dl.error.message]] }); continue; }
         const bytes = new Uint8Array(await dl.data.arrayBuffer());
@@ -3225,7 +3226,9 @@ class Component extends DCLogic {
           hojas.push({ name: nombre(base), rows: [[lbl + ' · ' + o.name.slice(k.length + 2)]].concat(t ? t.lineas.map(l => [l]) : [['No se pudo leer el texto del PDF.']]) });
           continue;
         }
-        const wb = X.read(bytes, { type: 'array', cellDates: true });
+        // Excel: tipos tal cual; CSV / texto: sin interpretar (fechas dd/mm y ceros a la izquierda quedan como vienen).
+        const libro = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
+        const wb = X.read(bytes, libro ? { type: 'array', cellDates: true } : { type: 'array', raw: true });
         wb.SheetNames.forEach((sn, i) => {
           const aoa = X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
           hojas.push({ name: nombre(base + (wb.SheetNames.length > 1 ? ' ' + (i + 1) : '')), rows: aoa });
