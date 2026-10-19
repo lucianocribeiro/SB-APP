@@ -1409,7 +1409,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="padding:9px 12px;border-radius:6px;background:{{ compMsgBg }};border:1px solid {{ compMsgBd }};font:600 12.5px/1.45 'Open Sans';color:{{ compMsgFg }}">{{ compMsg }}</div>
 <div style="display:flex;justify-content:flex-end">
-<button onClick="{{ compRegistrar }}" style="padding:9px 14px;background:{{ compBtnBg }};color:#fff;border:1px solid {{ compBtnBg }};border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Registrar compensación</button>
+<button onClick="{{ compRegistrar }}" style="padding:9px 14px;background:{{ compBtnBg }};color:#fff;border:1px solid {{ compBtnBg }};border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">{{ compBtnTxt }}</button>
 </div>
 </div>
 </div>
@@ -1428,7 +1428,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ compArrastre }}">
 <div style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 12px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><path d="M12 3l9 17H3zM12 9v5M12 17v.5"></path></svg>
-<div style="font:400 12px/1.45 'Open Sans';color:#8F5F14">Esta DJ es la que se arrastra a la liquidación de 08/2026: lo que compenses se resta del saldo de libre disponibilidad en el cruce 0 del Paso 3.</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#8F5F14">Esta DJ es la que se arrastra a la liquidación de {{ compArrPer }}: lo que compenses se resta del saldo de libre disponibilidad en el cruce 0 del Paso 3.</div>
 </div>
 </sc-if>
 </div>
@@ -2480,7 +2480,7 @@ class Component extends DCLogic {
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
-    comps: this.compsInit(),
+    comps: this.compsInit(), compBusy: false,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
     apoc: this.apocInit(), apocRun: false, apocQ: '',
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
@@ -2714,9 +2714,7 @@ class Component extends DCLogic {
     const runsLocal = !cruces.length && s.cruRuns.length > 0, cruRuns = runsLocal ? s.cruRuns : runsDb;
     z.cruRuns = runsLocal ? [] : cruRuns;
 
-    const compsDb = comps.map(c => ({ id: c.id, cliente: c.cliente, per: c.periodo, seq: c.secuencia, monto: Number(c.monto), fecha: this.fechaDe(c.fecha), user: c.usuario || '—' }));
-    const compsLocal = !comps.length && hayLocal('myiva.comps'), compsN = compsLocal ? s.comps : compsDb;
-    z.comps = compsLocal ? [] : compsN;
+    const compsN = this.guardarComps(comps.map(c => this.compDeDb(c)));
 
     const ddjjPdf = {};
     pdfs.forEach(p => { ddjjPdf[p.liquidacion_id] = { name: p.nombre, kb: p.kb, fecha: this.fechaDe(p.fecha), u: p.usuario || '—', ruta: p.ruta }; });
@@ -2809,11 +2807,6 @@ class Component extends DCLogic {
       if (rows.length) this.db(sb.from('cruces').upsert(rows), 'Cruce');
       z.cruRuns = s.cruRuns;
     }
-    if (s.comps !== z.comps) {
-      const rows = nuevos(s.comps, z.comps).map(c => ({ id: String(c.id), cliente: c.cliente, periodo: c.per, secuencia: Number(c.seq) || 0, monto: c.monto, usuario: c.user, fecha: this.isoDe(c.fecha) }));
-      if (rows.length) this.db(sb.from('compensaciones').upsert(rows), 'Compensación');
-      z.comps = s.comps;
-    }
     if (s.ddjjPdf !== z.pdf) {
       const ks = cambios(s.ddjjPdf, z.pdf), up = ks.filter(k => s.ddjjPdf[k]), del = ks.filter(k => !s.ddjjPdf[k]);
       if (up.length) this.db(sb.from('ddjj_pdf').upsert(up.map(k => {
@@ -2867,9 +2860,13 @@ class Component extends DCLogic {
   }
 
   nav(key) {
-    return () => this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false },
-      key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {}));
+    return () => {
+      this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false },
+        key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {}));
+      if (key === 'liqCompensaciones') this.compsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Compensaciones'));
+    };
   }
+
 
   liqVacia() {
     return {
@@ -3379,6 +3376,73 @@ class Component extends DCLogic {
   guardarComps(comps) {
     try { localStorage.setItem('myiva.comps', JSON.stringify(comps)); } catch (e) { }
     return comps;
+  }
+
+  compDeDb(c) {
+    return { id: c.id, cliente: c.cliente, per: c.periodo, seq: c.secuencia, monto: Number(c.monto), fecha: this.fechaDe(c.fecha), user: c.usuario || '—' };
+  }
+
+  // Con Supabase las compensaciones se leen y escriben directo en la base (no por sincronizar),
+  // así el disponible se valida contra lo que registraron todos los usuarios y no contra una copia vieja.
+  async compsBajar() {
+    const sb = this.sb();
+    if (!sb || !this._user) return this.state.comps;
+    const { data, error } = await sb.from('compensaciones').select('*').order('fecha', { ascending: false });
+    if (error) throw error;
+    const comps = this.guardarComps((data || []).map(c => this.compDeDb(c)));
+    this.setState({ comps });
+    return comps;
+  }
+
+  async compGuardar(dj, monto, saldo2, desdePdf) {
+    const sb = this.sb(), me = this.me().short, r2 = (v) => Math.round(v * 100) / 100;
+    const warn = (t, d) => this.setState({ compBusy: false, toast: { kind: 'warn', t, d } });
+    const fila = { id: 'c' + Date.now(), cliente: dj.cliente, per: dj.per, seq: dj.seq, monto, fecha: this.ahora(), user: me };
+    this.setState({ compBusy: true });
+    if (sb && this._user) {
+      try {
+        const comps = await this.compsBajar();
+        const usado = comps.filter(c => c.cliente === dj.cliente && c.per === dj.per && c.seq === dj.seq).reduce((a, c) => a + c.monto, 0);
+        const disp = Math.max(0, r2(saldo2 - usado));
+        if (monto > disp) return warn('No se puede registrar la compensación', 'Mientras cargabas, se registraron otras compensaciones sobre esta DJ. El disponible ahora es $ ' + this.ars(disp) + '.');
+        const row = { id: fila.id, cliente: fila.cliente, periodo: fila.per, secuencia: fila.seq, monto, saldo2: r2(saldo2), usuario: me, fecha: new Date().toISOString() };
+        let { error } = await sb.from('compensaciones').insert(row);
+        // Base sin la columna saldo2 (schema.sql todavía no actualizado): se guarda igual, sin el control del trigger.
+        if (error && /saldo2/.test(error.message || '')) { delete row.saldo2; ({ error } = await sb.from('compensaciones').insert(row)); }
+        if (error) throw error;
+        await this.compsBajar();
+      } catch (e) {
+        const m = String(e && e.message || e);
+        return this.setState({ compBusy: false, toast: { kind: 'err', t: 'No se pudo guardar la compensación', d: /supera el saldo/i.test(m) ? m : 'Base de datos: ' + m } });
+      }
+    } else {
+      this.setState(st => ({ comps: this.guardarComps([fila].concat(st.comps)) }));
+    }
+    this.setState(st => ({
+      compBusy: false, compMonto: '', compPdf: null,
+      audExtra: [{ f: this.ahora(), u: me, a: 'Compensación registrada', c: dj.cliente, p: dj.per, r: 'Sec. ' + dj.seq + ' · $ ' + this.ars(monto) + desdePdf, ip: '190.15.44.12' }].concat(st.audExtra),
+      toast: { kind: 'ok', t: 'Compensación registrada', d: dj.cliente + ' · ' + dj.per + ' · $ ' + this.ars(monto) + '. Se descuenta del saldo de 2do párrafo que se arrastra al período siguiente y figura en el Excel exportable.' }
+    }));
+  }
+
+  async compBorrar(c) {
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm('¿Eliminar la compensación de $ ' + this.ars(c.monto) + ' de ' + c.cliente + ' · ' + c.per + '?')) return;
+    const sb = this.sb(), me = this.me().short;
+    if (sb && this._user) {
+      try {
+        const { error } = await sb.from('compensaciones').delete().eq('id', String(c.id));
+        if (error) throw error;
+        await this.compsBajar();
+      } catch (e) {
+        return this.setState({ toast: { kind: 'err', t: 'No se pudo eliminar la compensación', d: 'Base de datos: ' + String(e && e.message || e) } });
+      }
+    } else {
+      this.setState(st => ({ comps: this.guardarComps(st.comps.filter(x => x.id !== c.id)) }));
+    }
+    this.setState(st => ({
+      audExtra: [{ f: this.ahora(), u: me, a: 'Compensación eliminada', c: c.cliente, p: c.per, r: 'Sec. ' + c.seq + ' · $ ' + this.ars(c.monto), ip: '190.15.44.12' }].concat(st.audExtra),
+      toast: { kind: 'ok', t: 'Compensación eliminada', d: c.cliente + ' · ' + c.per + ' · $ ' + this.ars(c.monto) + '. El saldo vuelve a estar disponible.' }
+    }));
   }
 
   periodoPicker(s) {
@@ -5193,11 +5257,7 @@ class Component extends DCLogic {
       return Object.assign({}, c, this.seqChip(c.seq), {
         montoTxt: this.ars(c.monto), saldoTxt: sd === null ? '—' : this.ars(sd), sc: sd === null ? '#9AA9B7' : saldoC(sd),
         puede: histAdmin || c.user === me.short,
-        borrar: () => this.setState(st => ({
-          comps: this.guardarComps(st.comps.filter(x => x.id !== c.id)),
-          audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación eliminada', c: c.cliente, p: c.per, r: 'Sec. ' + c.seq + ' · $ ' + this.ars(c.monto), ip: '190.15.44.12' }].concat(st.audExtra),
-          toast: { kind: 'ok', t: 'Compensación eliminada', d: c.cliente + ' · ' + c.per + ' · $ ' + this.ars(c.monto) + '. El saldo vuelve a estar disponible.' }
-        }))
+        borrar: () => this.compBorrar(c)
       });
     });
     const compVals = {
@@ -5218,19 +5278,15 @@ class Component extends DCLogic {
       compS2: '$ ' + this.ars(djS2), compS2c: djSel ? saldoC(djS2) : '#9AA9B7',
       compUsado: '$ ' + this.ars(djUsado), compDisp: '$ ' + this.ars(djDisp), compDispC: djDisp > 0 ? '#2E7D5B' : '#5A6B7B',
       compMsg, compMsgBg: CK[0], compMsgFg: CK[1], compMsgBd: CK[2],
-      compBtnBg: compK === 'ok' ? '#14395C' : '#9AA9B7',
-      compArrastre: djSel && djSel.per === '07/2026' && compCli === cli,
+      compBtnBg: compK === 'ok' && !s.compBusy ? '#14395C' : '#9AA9B7',
+      compArrastre: djSel && djSel.per === this.perAnt(this.perLiq()) && compCli === cli, compArrPer: this.perLiq(),
       compRegistrar: () => {
+        if (s.compBusy) return;
         if (compK !== 'ok') return this.setState({ toast: { kind: 'warn', t: 'No se puede registrar la compensación', d: compMsg } });
-        const m = r2(montoN), dj = djSel;
-        const desdePdf = compPdf && compPdf.cli === dj.cliente && compPdf.per === dj.per ? ' · desde PDF ' + compPdf.name : '';
-        this.setState(st => ({
-          comps: this.guardarComps([{ id: 'c' + Date.now(), cliente: dj.cliente, per: dj.per, seq: dj.seq, monto: m, fecha: this.ahora(), user: me.short }].concat(st.comps)),
-          compMonto: '', compPdf: null,
-          audExtra: [{ f: this.ahora(), u: me.short, a: 'Compensación registrada', c: dj.cliente, p: dj.per, r: 'Sec. ' + dj.seq + ' · $ ' + this.ars(m) + desdePdf, ip: '190.15.44.12' }].concat(st.audExtra),
-          toast: { kind: 'ok', t: 'Compensación registrada', d: dj.cliente + ' · ' + dj.per + ' · $ ' + this.ars(m) + '. Se descuenta del saldo de 2do párrafo que se arrastra al período siguiente y figura en el Excel exportable.' }
-        }));
+        const desdePdf = compPdf && compPdf.cli === djSel.cliente && compPdf.per === djSel.per ? ' · desde PDF ' + compPdf.name : '';
+        this.compGuardar(djSel, r2(montoN), djS2, desdePdf);
       },
+      compBtnTxt: s.compBusy ? 'Guardando…' : 'Registrar compensación',
       compFilas, compVacio: compFilas.length === 0,
       compKpis: [
         { label: 'Compensaciones registradas', value: String(compVis.length), color: '#1B2733' },

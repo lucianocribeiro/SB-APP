@@ -88,6 +88,30 @@ create table if not exists public.compensaciones (
   usuario    text,
   fecha      timestamptz not null default now()
 );
+alter table public.compensaciones add column if not exists saldo2 numeric(16,2);   -- saldo a favor 2do párrafo de la DJ al registrar
+create index if not exists compensaciones_dj on public.compensaciones (cliente, periodo, secuencia);
+alter table public.compensaciones drop constraint if exists compensaciones_monto_pos;
+alter table public.compensaciones add constraint compensaciones_monto_pos check (monto > 0) not valid;
+
+-- Lo compensado contra una DJ no puede superar su saldo a favor de 2do párrafo,
+-- aunque dos usuarios registren a la vez (el lock serializa las altas de la misma DJ).
+create or replace function public.compensacion_valida() returns trigger
+language plpgsql set search_path = public as $$
+declare usado numeric;
+begin
+  if new.saldo2 is null then return new; end if;
+  perform pg_advisory_xact_lock(hashtext(new.cliente || '|' || new.periodo || '|' || new.secuencia));
+  select coalesce(sum(monto), 0) into usado from public.compensaciones
+   where cliente = new.cliente and periodo = new.periodo and secuencia = new.secuencia and id <> new.id;
+  if usado + new.monto > new.saldo2 then
+    raise exception 'El monto supera el saldo a favor de 2do párrafo disponible ($ %)', greatest(new.saldo2 - usado, 0);
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists compensacion_valida on public.compensaciones;
+create trigger compensacion_valida before insert or update on public.compensaciones
+  for each row execute function public.compensacion_valida();
 
 -- 6) DDJJ en PDF adjuntas (el archivo va al bucket "ddjj" de Storage)
 create table if not exists public.ddjj_pdf (
