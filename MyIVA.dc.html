@@ -4321,7 +4321,7 @@ class Component extends DCLogic {
     const esAdu = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
     const pool = [];
     if (compras) compras.recs.filter(x => x.v.piva).forEach(x => pool.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras', adu: esAdu(x) }));
-    const ret = (x) => this.TC_EXCL.includes(x.tc);
+    const ret = (x) => x.tc === 'CR';   // sólo retenciones de IVA (CR); IB, IR, CG, CB y CS son de otros impuestos
     if (ventas) ventas.recs.filter(x => ret(x) || (!x.excl && x.v.piva)).forEach(x => pool.push({ x, imp: r2(ret(x) ? Math.abs(x.v.tot) : x.v.piva), src: 'IVA Ventas', adu: esAdu(x) }));
     const used = new Set(), pares = [], faltL = [];
     ad.recs.forEach(a => {
@@ -4355,10 +4355,16 @@ class Component extends DCLogic {
     const noRet = (x) => !this.TC_EXCL.includes(x.tc), V = ventas.recs.filter(noRet), C = compras.recs.filter(noRet);
     const df = r2(iva(V.filter(x => x.tc !== 'NC')) + iva(C.filter(x => x.tc === 'NC')));
     const cf = r2(iva(C.filter(x => x.tc !== 'NC')) + iva(V.filter(x => x.tc === 'NC')));
-    const rp = r2(compras.recs.reduce((a, x) => a + (x.tc === 'NC' ? -1 : 1) * (x.v.piva || 0), 0) + ventas.recs.filter(x => x.tc === 'CR').reduce((a, x) => a + Math.abs(x.v.tot), 0));
+    // Sólo IVA: columna "Percepciones IVA" de IVA Compras (no IIBB, otras percepciones ni otros regímenes)
+    // + constancias de retención (CR) de IVA Ventas del período liquidado, como en el workflow de n8n.
+    const per = this.perLiq();
+    const perc = r2(compras.recs.reduce((a, x) => a + (x.tc === 'NC' ? -1 : 1) * (x.v.piva || 0), 0));
+    const crs = ventas.recs.filter(x => x.tc === 'CR'), crPer = crs.filter(x => x.fecha.slice(3) === per);
+    const ret = r2(crPer.reduce((a, x) => a + Math.abs(x.v.tot), 0));
+    const rp = r2(perc + ret);
     const s1 = r2(cf - df + arr.tec);
     const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
-    return { df, cf, rp, s1, s2, regs: ventas.recs.length + compras.recs.length };
+    return { df, cf, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, regs: ventas.recs.length + compras.recs.length };
   }
 
   liqResVals(res, fmt) {
@@ -4368,7 +4374,9 @@ class Component extends DCLogic {
       : { label, value: fmt(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const saldos = [sd('Saldo 1° párrafo', res.s1), sd('Saldo 2° párrafo', res.s2)];
     return {
-      procResSub: res.cli + ' · ' + res.per + ' · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados',
+      procResSub: res.cli + ' · ' + res.per + ' · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados'
+        + (res.perc !== undefined ? ' · Retenciones y percepciones de IVA: percepciones IVA de IVA Compras ' + fmt(res.perc) + ' + retenciones CR de IVA Ventas ' + fmt(res.ret)
+          + (res.crOtros ? ' (' + res.crOtros + (res.crOtros === 1 ? ' CR de otro período no se toma' : ' CR de otros períodos no se toman') + ')' : '') : ''),
       procResKpis: [{ label: 'Débito fiscal', value: fmt(res.df) }, { label: 'Crédito fiscal', value: fmt(res.cf) }, { label: 'Retenciones y percepciones', value: fmt(res.rp) }],
       procResSaldos: saldos,
       resKpisLiq: [
@@ -4389,7 +4397,7 @@ class Component extends DCLogic {
     const filas = [
       ['df', 'Débito fiscal', df, 'IVA Ventas + débito de NC de IVA Compras'],
       ['cf', 'Crédito fiscal', cf, 'IVA Compras + crédito de NC de IVA Ventas'],
-      ['rp', 'Retenciones y percepciones', rp, 'Percepciones IVA de IVA Compras + CR de IVA Ventas'],
+      ['rp', 'Retenciones y percepciones', rp, 'Percepciones IVA de IVA Compras + CR de IVA Ventas del período'],
       ['sta', 'Saldo técnico a favor anterior (cruce 0)', arr.tec, 'Cruce 0'],
       ['lda', 'Libre disponibilidad anterior (cruce 0)', arr.lib, 'Cruce 0, neto de compensaciones'],
       ['sia', 'Saldo de impuesto a favor de ARCA', s2 < 0 ? r2(-s2) : 0, 'Calculado con la fórmula de la liquidación']
