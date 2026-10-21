@@ -2752,8 +2752,8 @@ class Component extends DCLogic {
     const [perfiles, clientes, liqs, cruces, comps, pdfs, aud, cfg] = await Promise.all([
       q(sb.from('perfiles').select('id,email,nombre,rol,activo')),
       q(sb.from('clientes').select('nombre,usuario').order('nombre')),
-      q(sb.from('liquidaciones').select('*').order('procesada', { ascending: false }).limit(1000)),
-      q(sb.from('cruces').select('*').order('fecha', { ascending: false }).limit(40)),
+      this.todas('liquidaciones', 'procesada'),
+      this.todas('cruces', 'fecha'),
       q(sb.from('compensaciones').select('*').order('fecha', { ascending: false })),
       q(sb.from('ddjj_pdf').select('*')),
       perfil.rol === 'admin' ? q(sb.from('auditoria').select('*').order('fecha', { ascending: false }).limit(300)) : [],
@@ -2813,6 +2813,17 @@ class Component extends DCLogic {
     return { cartPend: pend, cartV: (s.cartV || 0) + 1, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
   }
 
+  // Lee todas las filas de una tabla, de a 1000 (Supabase devuelve como máximo 1000 por consulta), de la más nueva a la más vieja.
+  async todas(tabla, orden) {
+    const sb = this.sb(), filas = [];
+    for (let i = 0; ; i += 1000) {
+      const { data, error } = await sb.from(tabla).select('*').order(orden, { ascending: false }).order('id').range(i, i + 999);
+      if (error) throw error;
+      filas.push(...(data || []));
+      if (!data || data.length < 1000) return filas;
+    }
+  }
+
   // Liquidaciones de la base + las liquidadas en este navegador que nunca llegaron a la base (quedan pendientes:
   // como no están en z.liqsDb, sincronizar() las vuelve a subir).
   liqsDeDb(liqs, s) {
@@ -2841,10 +2852,9 @@ class Component extends DCLogic {
   async liqsBajar() {
     const sb = this.sb(), z = this._sync;
     if (!sb || !z || !this._user) return;
-    const { data, error } = await sb.from('liquidaciones').select('*').order('procesada', { ascending: false }).limit(1000);
-    if (error) throw error;
+    const data = await this.todas('liquidaciones', 'procesada');
     if (this._sync !== z) return;
-    const lq = this.liqsDeDb(data || [], this.state);
+    const lq = this.liqsDeDb(data, this.state);
     Object.assign(z, lq.z);
     this.setState(lq.st);
   }
@@ -3643,7 +3653,7 @@ class Component extends DCLogic {
         errs: r.errs.slice(0, 500).map(e => ({ k: e.k, comp: e.comp, ter: e.ter, det: e.det, imp: e.imp }))
       }))
     };
-    return this.lsSet('myiva.cruRuns', [run].concat(this.state.cruRuns).slice(0, 40));
+    return this.lsSet('myiva.cruRuns', [run].concat(this.state.cruRuns));
   }
 
   liqEstado(r) {
@@ -5867,7 +5877,7 @@ class Component extends DCLogic {
             n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
           };
           return {
-            liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || []).slice(0, 200)),
+            liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || [])),
             liqConfirm: false, step: 4, proc: 'run', liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
             liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
           };
