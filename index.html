@@ -808,7 +808,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="width:26px;height:26px;border-radius:14px;background:#14395C;color:#fff;font:600 12.5px/26px 'Open Sans';text-align:center;flex:none">{{ cruArr.n }}</div>
 <div style="min-width:0;flex:1">
 <div style="font:600 14px/1.35 'Open Sans'">{{ cruArr.t }}</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ cruArr.regla }}</div>
 </div>
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
 <sc-if value="{{ cruArr.conDj }}">
@@ -856,7 +855,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="width:26px;height:26px;border-radius:14px;background:{{ c.nBg }};color:#fff;font:600 12.5px/26px 'Open Sans';text-align:center;flex:none">{{ c.n }}</div>
 <div style="min-width:0;flex:1">
 <div style="font:600 14px/1.35 'Open Sans'">{{ c.t }}</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">{{ c.regla }}</div>
 </div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }};white-space:nowrap">{{ c.st.label }}</span>
 </div>
@@ -4986,8 +4984,6 @@ class Component extends DCLogic {
     const arrTec = this.ars(arr.tec), arrLib = this.ars(arr.lib);
     const arrastre = {
       n: '0', t: 'Saldos a favor', prevPagar,
-      regla: arr.sinDj ? 'Saldos a favor de 1er y 2do párrafo del período anterior (' + arr.per + ').'
-        : 'Se toman de la DJ vigente de ' + arr.per + (arr.dj ? ' (' + this.seqTxt(arr.dj.seq) + ' · ' + arr.dj.fecha + ')' : '') + ': saldo a favor de 1er párrafo y saldo a favor de 2do párrafo menos las compensaciones registradas. Si resultó a pagar, se trae $ 0.',
       st: E['Completado'], per: arr.per, sinDj: arr.sinDj, conDj: !arr.sinDj, pagarAviso: prevPagar && !arr.sinDj,
       resumen: arr.sinDj ? 'No encuentro el período inmediato anterior (' + arr.per + ') de ' + cli + '. Si es la primera liquidación de este cliente, ingresá a mano los saldos a favor de 1er y 2do párrafo de ' + arr.per + ' (dejalos vacíos si no tiene).'
         : (prevPagar ? 'La DJ de ' + arr.per + ' resultó a pagar: no hay saldos a favor para trasladar.'
@@ -4997,7 +4993,6 @@ class Component extends DCLogic {
     const def = [
       {
         n: '1', t: 'Base APOC', tipo: 'IVA Compras vs Base APOC', need: [['compras', 'IVA Compras']].concat(enReal ? [['apocBase', 'la Base APOC de ARCA (Configuración → Base APOC)']] : []), regs: 312, ok: 309, dif: 3, falt: 0,
-        regla: 'Proveedores de IVA Compras contra la Base APOC de ARCA.',
         res: '312 proveedores analizados · 309 sin observaciones · 3 figuran en la Base APOC',
         h: ['Proveedor observado', 'CUIT', 'En la base desde', 'IVA computado'], cmp: APOC_OBS, alerta: true,
         apocDet: [['FC A 0003-00004518', 0], ['FC A 0001-00000872', 1], ['FC A 0002-00001207', 2]].map(([comp, i]) => ({ cuit: APOC_OBS[i][1], nom: APOC_OBS[i][0], fc: APOC_OBS[i][2], fp: APOC_OBS[i][2], comps: [{ comp, fecha: '—', iva: APOC_OBS[i][3] }] })),
@@ -5005,39 +5000,33 @@ class Component extends DCLogic {
       },
       {
         n: '2', t: 'Comprobantes Emitidos', tipo: 'Emitidos vs IVA Ventas', need: [['emitidos', 'Mis Comprobantes Emitidos'], ['ventas', 'IVA Ventas']], regs: 2117, ok: 2114, dif: 2, falt: 1,
-        regla: 'Mis Comprobantes Emitidos (ARCA) vs. IVA Ventas. Match simultáneo y total: se emparejan por CUIT, tipo, punto de venta y número, y se comparan fecha, neto e IVA por alícuota, no gravado / exento, otros tributos e importe total (tolerancia $ 0,03; moneda extranjera convertida a pesos). No se cruzan denominación ni tipo de documento del receptor ni código de autorización. Además, todos los comprobantes de IVA Ventas tienen que ser del período liquidado (' + this.perLiq() + ').',
         h: ['Concepto', 'Comprobantes Emitidos (ARCA)', 'IVA Ventas', 'Diferencia'],
         cmp: [['Comprobantes', '2.117', '2.116', '1'], ['IVA débito fiscal', '4.192.670,60', '4.182.905,60', '9.765,00']]
       },
       {
         n: '3', t: 'Comprobantes Recibidos', tipo: 'Recibidos vs IVA Compras', need: [['recibidos', 'Mis Comprobantes Recibidos'], ['compras', 'IVA Compras']], regs: 1284, ok: 1279, dif: 3, falt: 2,
-        regla: 'Mis Comprobantes Recibidos (ARCA) vs. IVA Compras. Match simultáneo y total con las mismas reglas que Emitidos. No se cruzan denominación ni tipo de documento del emisor, tipo y número de documento del receptor ni código de autorización. Además, todos los comprobantes de IVA Compras tienen que ser del período liquidado (' + this.perLiq() + ') o de períodos anteriores.',
         h: ['Concepto', 'Comprobantes Recibidos (ARCA)', 'IVA Compras', 'Diferencia'],
         cmp: [['Comprobantes', '1.283', '1.283', '0'], ['IVA crédito fiscal', '2.449.094,20', '2.444.516,20', '4.578,00']]
       },
       {
         n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
-        regla: 'Mis Retenciones (ARCA, impuesto IVA) vs. subdiarios. Las retenciones se cruzan con los comprobantes CR de IVA Ventas (importe total) y las percepciones con la columna Percepciones IVA de IVA Compras, por CUIT del agente e importe (tolerancia $ 0,03). En las coincidencias se comparan fecha y número de comprobante (últimos 8 dígitos). Lo que queda sin pareja se agrupa por agente: si la suma de varios comprobantes coincide con uno del otro lado (en cualquier sentido), es una coincidencia agrupada; el resto es faltante.',
         h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
       {
         n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
-        regla: 'Mis Percepciones Aduaneras (ARCA) vs. subdiarios. Cada percepción se busca por importe (tolerancia $ 0,03) en la columna Percepciones IVA de IVA Compras y en los registros de retenciones de IVA Ventas, priorizando los despachos de la Aduana y la misma fecha. Si no hay pareja uno a uno, se busca una agrupación: varias percepciones cuya suma coincide con un registro de la Aduana, o al revés. Se informa en qué subdiario se encontró cada una, las diferencias de fecha y los despachos de la Aduana que no figuran en ARCA.',
         nota: 'Subdiario de origen a confirmar con el estudio: por ahora se buscan en IVA Compras y en IVA Ventas.',
         h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
       {
         n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
-        regla: 'Se leen del PDF de la DJ de IVA Digital el débito y el crédito fiscal, las retenciones y percepciones, los saldos a favor del período anterior y el saldo a pagar, y se comparan con lo calculado desde IVA Ventas e IVA Compras (débito = IVA de ventas + IVA de NC de compras; crédito = IVA de compras + IVA de NC de ventas) y con el arrastre del cruce 0 (tolerancia $ 1).',
         res: '4 conceptos comparados · 3 coinciden · 1 con diferencias',
         h: ['Concepto', 'IVA Digital', 'IVA Compras + IVA Ventas', 'Diferencia'],
         cmp: [['Débito fiscal', '4.184.060,60', '4.182.905,60', '1.155,00'], ['Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00'], ['Retenciones y percepciones', '106.284,15', '106.284,15', '0,00'], ['Saldo técnico a favor anterior (cruce 0)', arrTec, arrTec, '0,00']]
       },
       {
         n: '7', t: 'Libro IVA Digital (vista previa)', tipo: 'Libro IVA Digital vs IVA Ventas + Compras', need: [['ivalib', 'Libro IVA Digital (vista previa)'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 16, ok: 16, dif: 0, falt: 0,
-        regla: 'Vista previa del Libro IVA Digital vs. subdiarios: neto gravado, exento o no gravado e IVA de operaciones y notas de crédito de ventas y de compras, exportación, operaciones que no generan crédito fiscal y crédito fiscal computable (tolerancia $ 1).',
         h: ['Concepto', 'Libro IVA Digital', 'IVA Ventas / IVA Compras', 'Diferencia'],
         cmp: [['Operaciones de Ventas · Débito fiscal', '4.182.905,60', '4.182.905,60', '0,00'], ['Operaciones de Compras · Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00']]
       }
@@ -5081,7 +5070,7 @@ class Component extends DCLogic {
         rep = () => this.descargarReporte([bloque()], cli);
       }
       return {
-        n: c.n, t: c.t, tipo: c.tipo, regla: c.regla, run, isErr, st: E[est], est, real: !!rv,
+        n: c.n, t: c.t, tipo: c.tipo, run, isErr, st: E[est], est, real: !!rv,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
         hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep,
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
