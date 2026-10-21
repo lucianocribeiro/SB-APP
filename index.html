@@ -2258,37 +2258,44 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:60"></div>
 <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;max-width:94vw;background:#fff;border-radius:6px;z-index:61;box-shadow:0 8px 28px rgba(27,39,51,.2)">
 <div style="padding:16px 20px;border-bottom:1px solid #E3E8EE;font:600 17px 'Open Sans'">Invitar usuario</div>
-<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
-<div>
+<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto">
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div style="flex:1;min-width:160px">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Nombre</div>
+<input value="{{ invNombre }}" onChange="{{ invNombreSet }}" placeholder="Como se muestra en la app: Julieta" style="width:100%;padding:9px 11px;border:1px solid #D5DEE7;border-radius:6px;font:400 13.5px 'Open Sans';outline:none;box-sizing:border-box">
+</div>
+<div style="flex:1.4;min-width:200px">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mail</div>
-<input placeholder="nombre@blasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input value="{{ invMail }}" onChange="{{ invMailSet }}" type="email" placeholder="nombre@blasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #D5DEE7;border-radius:6px;font:400 13.5px 'Open Sans';outline:none;box-sizing:border-box">
+</div>
 </div>
 <div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Rol</div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Perfil</div>
 <div style="display:flex;gap:10px">
-<label style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid #2F80B7;border-radius:6px;background:#F4F9FD;cursor:pointer">
-<input type="radio" name="rol" defaultChecked style="accent-color:#14395C;margin-top:2px">
-<span><span style="font:600 13px 'Open Sans';display:block">Usuario</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">Liquida y cruza sus clientes asignados.</span></span>
-</label>
-<label style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer">
-<input type="radio" name="rol" style="accent-color:#14395C;margin-top:2px">
-<span><span style="font:600 13px 'Open Sans';display:block">Administrador</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">Acceso total, incluida configuración.</span></span>
-</label>
+<sc-for list="{{ invRoles }}" as="r" hint-placeholder-count="2">
+<div onClick="{{ r.go }}" style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid {{ r.bd }};border-radius:6px;background:{{ r.bg }};cursor:pointer">
+<span style="width:14px;height:14px;flex:none;margin-top:2px;border-radius:50%;border:{{ r.dot }};box-sizing:border-box"></span>
+<span><span style="font:600 13px 'Open Sans';display:block">{{ r.label }}</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">{{ r.d }}</span></span>
 </div>
-</div>
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Clientes asignados</div>
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px;display:flex;gap:7px;flex-wrap:wrap">
-<sc-for list="{{ clientesChips }}" as="c" hint-placeholder-count="7">
-<div onClick="{{ c.toggle }}" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;cursor:pointer;font:600 12px 'Open Sans';border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.rz }}</div>
 </sc-for>
 </div>
-<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">{{ chipsCount }}</div>
 </div>
+<sc-if value="{{ invEsUsr }}">
+<div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Clientes asignados</div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px;display:flex;gap:7px;flex-wrap:wrap;max-height:210px;overflow-y:auto">
+<sc-for list="{{ invChips }}" as="c" hint-placeholder-count="7">
+<div onClick="{{ c.toggle }}" title="{{ c.tip }}" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;cursor:pointer;font:600 12px 'Open Sans';border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.rz }}</div>
+</sc-for>
+</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:6px">{{ invChipsCount }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ invErrOn }}"><div style="padding:9px 11px;background:#FDF5F4;border:1px solid #F3CFCB;border-radius:6px;font:400 12.5px/1.45 'Open Sans';color:#B3261E">{{ invErr }}</div></sc-if>
 </div>
 <div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
 <button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ saveInvite }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Enviar invitación</button>
+<button onClick="{{ saveInvite }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer;opacity:{{ invOp }}" style-hover="background:#0E2A45">{{ invBtn }}</button>
 </div>
 </div>
 </sc-if>
@@ -2565,7 +2572,7 @@ class Component extends DCLogic {
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', ivalib: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: { 'Julieta': 1 },
-    cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }
+    cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
   EST = {
@@ -3152,6 +3159,79 @@ class Component extends DCLogic {
   }
 
   MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
+
+  invVacio() { return { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }; }
+
+  invSet(k, v) { this.setState(st => ({ inv: Object.assign({}, st.inv, { [k]: v }) })); }
+
+  invVals(chip) {
+    const s = this.state, inv = s.inv || this.invVacio(), dueno = {};
+    this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { dueno[c] = u; }));
+    const todos = [...new Set(Object.keys(dueno).concat(s.cartPend || []))].sort((a, b) => a.localeCompare(b, 'es'));
+    const sel = todos.filter(c => inv.cs[c]), reasig = sel.filter(c => dueno[c]).length;
+    return {
+      invNombre: inv.nombre, invMail: inv.mail, invErr: inv.err, invErrOn: !!inv.err, invEsUsr: inv.rol !== 'admin',
+      invNombreSet: (e) => this.invSet('nombre', e.target.value), invMailSet: (e) => this.invSet('mail', e.target.value),
+      invRoles: [['empleado', 'Usuario', 'Liquida y cruza sus clientes asignados.'], ['admin', 'Administrador', 'Acceso total, incluida configuración.']].map(([k, label, d]) => {
+        const on = inv.rol === k;
+        return { label, d, go: () => this.invSet('rol', k), bd: on ? '#2F80B7' : '#E3E8EE', bg: on ? '#F4F9FD' : '#FFFFFF', dot: on ? '4px solid #14395C' : '1px solid #9AA9B7' };
+      }),
+      invChips: todos.map(rz => Object.assign({
+        rz, tip: dueno[rz] ? 'Hoy asignado a ' + dueno[rz] : 'Pendiente de asignación',
+        toggle: () => this.setState(st => ({ inv: Object.assign({}, st.inv, { cs: Object.assign({}, st.inv.cs, { [rz]: !st.inv.cs[rz] }) }) }))
+      }, chip(!!inv.cs[rz]))),
+      invChipsCount: sel.length + ' de ' + todos.length + ' clientes seleccionados' + (reasig ? ' · ' + (reasig === 1 ? '1 se reasigna' : reasig + ' se reasignan') + ' desde otro usuario' : ''),
+      invBtn: inv.busy ? 'Creando usuario…' : 'Crear usuario', invOp: inv.busy ? .6 : 1
+    };
+  }
+
+  // Alta de un usuario: crea la cuenta en Supabase (el perfil lo arma el trigger nuevo_usuario con el nombre y el rol),
+  // le manda el mail para elegir contraseña y actualiza Clientes por usuario con los clientes elegidos.
+  async invitar() {
+    const s = this.state, inv = s.inv || this.invVacio();
+    const err = (t) => this.setState(st => ({ inv: Object.assign({}, st.inv, { err: t, busy: false }) }));
+    if (inv.busy) return;
+    const nombre = inv.nombre.trim().replace(/\s+/g, ' '), mail = inv.mail.trim().toLowerCase(), esAdmin = inv.rol === 'admin';
+    if (!nombre) return err('Escribí el nombre del usuario.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return err('Escribí un mail válido.');
+    const perfiles = this._perfiles || [];
+    if (['administrador'].concat(this.CARTERA.map(([u]) => this.fold(u)), perfiles.map(p => this.fold(p.nombre))).includes(this.fold(nombre))) return err('Ya hay un usuario llamado ' + nombre + '. Elegí otro nombre.');
+    if (perfiles.some(p => p.email === mail)) return err('Ya hay un usuario con el mail ' + mail + '.');
+    const cs = esAdmin ? [] : Object.keys(inv.cs).filter(c => inv.cs[c]);
+    this.setState(st => ({ inv: Object.assign({}, st.inv, { busy: true, err: '' }) }));
+
+    const sb = this.sb(), lib = typeof window !== 'undefined' && window.supabase;
+    let mailTxt = 'Va a recibir un mail para elegir su contraseña.';
+    if (sb && this._user && lib) {
+      try {
+        // Cliente aparte y sin sesión guardada: el alta no cambia la sesión de quien está creando el usuario.
+        const alta = lib.createClient(sb.supabaseUrl, sb.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'myiva.alta' } });
+        const pw = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, '0')).join('');
+        const volver = location.origin + location.pathname + '?recuperar=1';
+        const { data, error } = await alta.auth.signUp({ email: mail, password: pw, options: { data: { nombre, rol: inv.rol }, emailRedirectTo: volver } });
+        if (error) return err('No se pudo crear el usuario: ' + error.message);
+        if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) return err('El mail ' + mail + ' ya tiene usuario en MyIVA.');
+        if (data.session) {
+          const r = await sb.auth.resetPasswordForEmail(mail, { redirectTo: volver });
+          if (r.error) mailTxt = 'No se pudo enviar el mail para elegir contraseña (' + r.error.message + '): desde el login puede usar "Olvidé mi contraseña".';
+        } else mailTxt = 'Va a recibir un mail para confirmar la cuenta y elegir su contraseña.';
+      } catch (e) {
+        return err('No se pudo crear el usuario: ' + String(e && e.message || e));
+      }
+    }
+
+    this._perfiles = perfiles.concat([{ email: mail, nombre, rol: esAdmin ? 'admin' : 'empleado', activo: true }]);
+    if (!esAdmin) {
+      const pares = [].concat(...this.CARTERA.map(([u, cc]) => cc.map(c => [u, c]))).filter(([, c]) => !cs.includes(c)).concat(cs.map(c => [nombre, c]));
+      this.guardarCartera(pares, nombre + ' creado con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes'), this.CARTERA.map(([u]) => u).concat([nombre]));
+      this.guardarPend(s.cartPend.filter(c => !cs.includes(c)));
+    }
+    this.setState(st => ({
+      modal: false, inv: this.invVacio(),
+      audExtra: esAdmin ? [{ f: this.ahora(), u: this.me().short, a: nombre + ' creado como administrador', c: '—', p: '—', r: mail, ip: '—' }].concat(st.audExtra) : st.audExtra,
+      toast: { kind: 'ok', t: 'Usuario creado: ' + nombre, d: (esAdmin ? 'Perfil Administrador. ' : 'Perfil Usuario con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes') + ' en Clientes por usuario. ') + mailTxt }
+    }));
+  }
 
   mailDe(nombre) {
     const pf = (this._perfiles || []).find(p => p.nombre === nombre);
@@ -5165,7 +5245,9 @@ class Component extends DCLogic {
 
     const usuarios = [
       { nombre: 'Administrador', mail: 'admin@blasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
-    ].concat(this.CARTERA.map(([u, cs]) => ({
+    ].concat((this._perfiles || []).filter(p => p.rol === 'admin' && p.activo && p.nombre !== 'Administrador').map(p => ({
+      nombre: p.nombre, mail: p.email, rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '—', est: 'Activo'
+    })), this.CARTERA.map(([u, cs]) => ({
       nombre: u, mail: this.mailDe(u), rol: 'Usuario',
       clientes: cs.length + ' clientes · ' + cs.slice(0, 2).join(', ') + (cs.length > 2 ? ' y ' + (cs.length - 2) + ' más' : ''),
       acceso: u === 'Julieta' ? '04/09/2026 11:02' : '—', est: 'Activo'
@@ -5211,7 +5293,7 @@ class Component extends DCLogic {
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
       openDrawer: () => this.setState({ drawer: true }),
-      openModal: () => this.setState({ modal: true }),
+      openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
       openConfirm: () => this.setState({ confirm: true }),
       closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null, apocVer: null }),
       apocVerOn: !!s.apocVer, apocVerSub: s.apocVer ? s.apocVer.sub : '', apocVerFilas: s.apocVer ? s.apocVer.filas : [],
@@ -5223,7 +5305,8 @@ class Component extends DCLogic {
       toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
       saveCliente: () => this.setState({ drawer: false, toast: { kind: 'ok', t: 'Cliente guardado', d: 'Ya podés liquidar períodos para este cliente.' } }),
-      saveInvite: () => this.setState({ modal: false, toast: { kind: 'ok', t: 'Invitación enviada', d: 'El usuario recibirá un mail para definir su contraseña.' } }),
+      saveInvite: () => this.invitar(),
+      ...this.invVals(chip),
       toastXls: this.showToast('ok', 'Excel generado', 'El archivo se descargó desde la app.'),
       toast: !!t, toastT: t ? t.t : '', toastD: t ? t.d : '',
       toastBd: t ? toastMap[t.kind].bd : '#E3E8EE', toastAccent: t ? toastMap[t.kind].ac : '#2F80B7',
