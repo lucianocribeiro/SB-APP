@@ -2630,6 +2630,10 @@ class Component extends DCLogic {
     if (Object.keys(st).length) this.setState(st);
     const sb = this.sb();
     if (!sb || this._authIni) return;
+    // Al volver a la ventana se releen los datos de la base: así se ve lo que hicieron otras PCs.
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this.refrescar().catch(() => { });
+    });
     this._authIni = true;
     sb.auth.getSession()
       .then(({ data }) => { const u = data && data.session && data.session.user; return u ? this.entrar(u) : this.setState({ sesionChk: false }); })
@@ -2779,18 +2783,16 @@ class Component extends DCLogic {
     }
     Object.assign(z, { cart: clientes.length ? cart : null, pend, mapa: clientes.length ? this.cartMapa(cart, pend) : {} });
 
-    const lq = this.liqsDeDb(liqs, s);
+    const lq = this.liqsDeDb(liqs);
     Object.assign(z, lq.z);
     const { liqsDb, liqEst: le, ddjjBorradas: bo } = lq.st;
 
-    const runsDb = cruces.map(r => ({ id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: this.fechaDe(r.fecha), user: r.usuario || '—', liq: r.liquidacion, cruces: r.cruces || [] }));
-    const runsLocal = !cruces.length && s.cruRuns.length > 0, cruRuns = runsLocal ? s.cruRuns : runsDb;
-    z.cruRuns = runsLocal ? [] : cruRuns;
+    const cruRuns = this.runsDeDb(cruces);
+    z.cruRuns = cruRuns;
 
     const compsN = this.guardarComps(comps.map(c => this.compDeDb(c)));
 
-    const ddjjPdf = {};
-    pdfs.forEach(p => { ddjjPdf[p.liquidacion_id] = { name: p.nombre, kb: p.kb, fecha: this.fechaDe(p.fecha), u: p.usuario || '—', ruta: p.ruta }; });
+    const ddjjPdf = this.pdfsDeDb(pdfs);
     z.pdf = ddjjPdf;
 
     const audExtra = aud.map(a => ({ f: this.fechaDe(a.fecha), u: a.usuario || '—', a: a.accion, c: a.cliente || '—', p: a.periodo || '—', r: a.resultado || '', ip: a.ip || '—' }));
@@ -2824,9 +2826,8 @@ class Component extends DCLogic {
     }
   }
 
-  // Liquidaciones de la base + las liquidadas en este navegador que nunca llegaron a la base (quedan pendientes:
-  // como no están en z.liqsDb, sincronizar() las vuelve a subir).
-  liqsDeDb(liqs, s) {
+  // Todo sale de la base de datos: el navegador no guarda liquidaciones, cruces, estados ni PDF.
+  liqsDeDb(liqs) {
     const liqEst = {}, bor = {}, reales = [];
     liqs.forEach(r => {
       if (r.estado === 'Cerrada') liqEst[r.id] = 'Cerrada';
@@ -2840,44 +2841,58 @@ class Component extends DCLogic {
         user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
       });
     });
-    const enDb = new Set(liqs.map(r => r.id));
-    const pend = (s.liqsDb || []).filter(r => r.n && r.id && !enDb.has(r.id));
-    const le = Object.assign({}, liqEst), bo = Object.assign({}, bor);
-    pend.forEach(r => { if (s.liqEst[r.id]) le[r.id] = s.liqEst[r.id]; if (s.ddjjBorradas[r.id]) bo[r.id] = s.ddjjBorradas[r.id]; });
-    return { z: { liqsDb: reales, liqEst, bor }, st: { liqsDb: this.lsSet('myiva.liqs', pend.concat(reales)), liqEst: le, ddjjBorradas: bo } };
+    return { z: { liqsDb: reales, liqEst, bor }, st: { liqsDb: reales, liqEst, ddjjBorradas: bor } };
   }
 
-  // Al entrar a Nueva liquidación se releen las liquidaciones de la base, así la secuencia sugerida
-  // considera lo liquidado por cualquier usuario desde que se abrió la sesión.
-  async liqsBajar() {
+  runsDeDb(cruces) {
+    return cruces.map(r => ({ id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: this.fechaDe(r.fecha), user: r.usuario || '—', liq: r.liquidacion, cruces: r.cruces || [] }));
+  }
+
+  pdfsDeDb(pdfs) {
+    const m = {};
+    pdfs.forEach(p => { m[p.liquidacion_id] = { name: p.nombre, kb: p.kb, fecha: this.fechaDe(p.fecha), u: p.usuario || '—', ruta: p.ruta }; });
+    return m;
+  }
+
+  // Relee de la base liquidaciones, cruces y PDF de DDJJ, así todas las PCs ven lo mismo.
+  // Se llama al entrar a las pantallas que los muestran y al volver a la ventana. Antes espera las escrituras en curso.
+  async refrescar() {
     const sb = this.sb(), z = this._sync;
-    if (!sb || !z || !this._user) return;
-    const data = await this.todas('liquidaciones', 'procesada');
-    if (this._sync !== z) return;
-    const lq = this.liqsDeDb(data, this.state);
-    Object.assign(z, lq.z);
-    this.setState(lq.st);
+    if (!sb || !z || !this._user || this._refrescando) return;
+    this._refrescando = true;
+    try {
+      await Promise.allSettled([...(this._vuelo || [])]);
+      const [liqs, cruces, pdfs] = await Promise.all([this.todas('liquidaciones', 'procesada'), this.todas('cruces', 'fecha'),
+        sb.from('ddjj_pdf').select('*').then(r => { if (r.error) throw r.error; return r.data || []; })]);
+      if (this._sync !== z) return;
+      const lq = this.liqsDeDb(liqs), cruRuns = this.runsDeDb(cruces), ddjjPdf = this.pdfsDeDb(pdfs);
+      Object.assign(z, lq.z, { cruRuns, pdf: ddjjPdf });
+      this.setState(Object.assign({}, lq.st, { cruRuns, ddjjPdf }));
+    } finally {
+      this._refrescando = false;
+    }
   }
 
-  // Sube liquidaciones a la base. Si la base no tiene alguna columna nueva (schema.sql sin actualizar), se reintenta sin ella.
+  liqFilaDb(r, estado, borrada) {
+    return Object.assign({
+      id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
+      debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [],
+      estado: estado === 'Cerrada' ? 'Cerrada' : 'Borrador', borrada: !!borrada
+    }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}, r.n.ali ? { alicuotas: r.n.ali } : {});
+  }
+
+  // Sube liquidaciones a la base y devuelve el error (null si se guardaron).
+  // Si la base no tiene alguna columna nueva (schema.sql sin actualizar), se reintenta sin ella.
   async liqsSubir(rows) {
     const sb = this.sb();
-    let err = null;
     for (let i = 0; i < 5; i++) {
       const { error } = await sb.from('liquidaciones').upsert(rows);
-      if (!error) break;
-      err = error;
+      if (!error) return null;
       const col = (String(error.message || '').match(/'([a-z0-9_]+)' column/) || [])[1];
-      if (!col || !(col in rows[0])) break;
+      if (!col || !(col in rows[0])) { console.error('No se pudo guardar la liquidación', rows, error); return error; }
       rows = rows.map(x => { const y = Object.assign({}, x); delete y[col]; return y; });
-      err = null;
     }
-    const ids = rows.map(r => r.cliente + ' · ' + r.periodo + ' · ' + this.seqTxt(r.secuencia)).join(', ');
-    if (err) {
-      console.error('No se pudo guardar la liquidación', rows, err);
-      return this.setState({ toast: { kind: 'err', t: 'La liquidación no se guardó en el historial', d: ids + ': ' + String(err.message || err) + '. Queda guardada en este navegador y se vuelve a intentar la próxima vez que ingreses.' } });
-    }
-    this.setState({ toast: { kind: 'ok', t: rows.length === 1 ? 'Liquidación guardada en el historial' : 'Liquidaciones guardadas en el historial', d: ids } });
+    return new Error('No se pudo guardar la liquidación');
   }
 
   cartMapa(cart, pend) {
@@ -2901,9 +2916,14 @@ class Component extends DCLogic {
   pdfRuta(id) { return this.fold(id).replace(/[^a-z0-9]+/g, '_') + '.pdf'; }
 
   db(p, que) {
-    return Promise.resolve(p).then(r => { if (r && r.error) throw r.error; return r && r.data; }).catch(e => {
-      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar en la base de datos', d: que + ': ' + String(e && e.message || e) } });
+    const v = Promise.resolve(p).then(r => { if (r && r.error) throw r.error; return r && r.data; }).catch(e => {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar en la base de datos', d: que + ': ' + String(e && e.message || e) + '. Se vuelven a mostrar los datos guardados.' } });
+      setTimeout(() => this.refrescar().catch(() => { }), 0);
     });
+    const vuelo = this._vuelo || (this._vuelo = new Set());
+    vuelo.add(v);
+    v.finally(() => vuelo.delete(v));
+    return v;
   }
 
   sincronizar() {
@@ -2923,12 +2943,8 @@ class Component extends DCLogic {
       Object.assign(z, { cart: this.CARTERA, pend: s.cartPend, mapa: m });
     }
     if (s.liqsDb !== z.liqsDb) {
-      const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => Object.assign({
-        id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
-        debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [],
-        estado: s.liqEst[r.id] === 'Cerrada' ? 'Cerrada' : 'Borrador', borrada: !!s.ddjjBorradas[r.id]
-      }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}, r.n.ali ? { alicuotas: r.n.ali } : {}));
-      if (rows.length) this.liqsSubir(rows).catch(e => this.db(Promise.resolve({ error: e }), 'Liquidación'));
+      const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => this.liqFilaDb(r, s.liqEst[r.id], s.ddjjBorradas[r.id]));
+      if (rows.length) this.db(this.liqsSubir(rows).then(error => ({ error })), 'Liquidación');
       z.liqsDb = s.liqsDb;
     }
     if (s.liqEst !== z.liqEst) {
@@ -3005,7 +3021,8 @@ class Component extends DCLogic {
       this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null },
         key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {},
         key === 'liqNueva' && (st.step === 1 || st.step === 4) ? { seqElegida: null } : {}));
-      if (key === 'liqNueva') this.liqsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Historial de liquidaciones'));
+      if (['inicio', 'liqNueva', 'liqHistorial', 'crucesHistorial', 'liqDashboard', 'liqCompensaciones', 'clientes', 'clienteFicha'].includes(key))
+        this.refrescar().catch(e => this.setState({ toast: { kind: 'err', t: 'No se pudieron leer los datos de la base', d: String(e && e.message || e) } }));
       if (key === 'liqCompensaciones') this.compsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Compensaciones'));
     };
   }
@@ -3540,17 +3557,20 @@ class Component extends DCLogic {
       { id: 'c2', cliente: 'BBI SA', per: '08/2026', seq: 0, monto: 20000, fecha: '09/09/2026 12:05', user: 'Rubén' },
       { id: 'c1', cliente: 'DACKET SA', per: '08/2026', seq: 1, monto: 35000, fecha: '05/09/2026 10:40', user: 'Julieta' }
     ];
-    try {
-      const g = JSON.parse(localStorage.getItem('myiva.comps') || 'null');
-      return Array.isArray(g) ? g : def;
-    } catch (e) { return def; }
+    try { localStorage.removeItem('myiva.comps'); } catch (e) { }
+    return def;
   }
 
+  // Estos datos viven sólo en la base de datos (todas las PCs ven lo mismo): no se leen ni se guardan en el navegador.
+  soloDb(k) { return ['myiva.liqs', 'myiva.liqEst', 'myiva.liqBorradas', 'myiva.cruRuns', 'myiva.ddjjPdf', 'myiva.comps'].includes(k); }
+
   lsGet(k, def) {
+    if (this.soloDb(k)) { try { localStorage.removeItem(k); } catch (e) { } return def; }
     try { const g = JSON.parse(localStorage.getItem(k) || 'null'); return g && typeof g === 'object' ? g : def; } catch (e) { return def; }
   }
 
   lsSet(k, v) {
+    if (this.soloDb(k)) return v;
     try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { }
     return v;
   }
@@ -3663,7 +3683,6 @@ class Component extends DCLogic {
   }
 
   guardarComps(comps) {
-    try { localStorage.setItem('myiva.comps', JSON.stringify(comps)); } catch (e) { }
     return comps;
   }
 
@@ -5864,25 +5883,48 @@ class Component extends DCLogic {
         }
         const ahora = this.ahora();
         const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
-        this.crudosSubir(cli + '|' + perL + '|' + seqSel + '|' + res.fecha, R);
-        this.setState(st => {
-          const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
-          delete le[id]; delete bo[id];
-          const ult = st.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
-          const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === perL && !r.liq ? Object.assign({}, r, { liq: true }) : r));
-          const eg = ult ? this.runGrupos(ult) : cru.errGroups;
-          const fila = {
-            id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
-            df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
-            n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
-          };
-          return {
-            liqsDb: this.lsSet('myiva.liqs', [fila].concat(st.liqsDb || [])),
-            liqConfirm: false, step: 4, proc: 'run', liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: ult ? this.runGrupos(ult) : cru.errGroups,
-            liqEst: this.lsSet('myiva.liqEst', le), ddjjBorradas: this.lsSet('myiva.liqBorradas', bo), cruRuns: this.lsSet('myiva.cruRuns', runs)
-          };
-        });
-        fin('done');
+        const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, ult = this.state.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
+        const eg = ult ? this.runGrupos(ult) : cru.errGroups;
+        const fila = {
+          id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
+          df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
+          n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
+        };
+        this.setState({ liqConfirm: false, step: 4, proc: 'run', liqRes: null, liqErrTxt: '' });
+        (async () => {
+          // La liquidación se da por hecha recién cuando la base de datos confirma que quedó guardada.
+          const sb = this.sb();
+          if (sb && this._user) {
+            let error = null;
+            try {
+              // Otra PC pudo haber liquidado esta secuencia mientras tanto.
+              const ya = await sb.from('liquidaciones').select('id').eq('cliente', cli).eq('periodo', perL).eq('secuencia', seqSel).eq('borrada', false).neq('id', id).limit(1);
+              if (ya.error) throw ya.error;
+              if (ya.data.length) error = new Error('la ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' ya fue liquidada desde otra PC. Elegí otra secuencia');
+              else error = await this.liqsSubir([this.liqFilaDb(fila, 'Borrador', false)]);
+            } catch (e) { error = e; }
+            if (error) {
+              this.setState({ liqRes: null, liqErrTxt: 'La liquidación no se guardó en la base de datos: ' + String(error.message || error) + '. No quedó en el historial: volvé a procesar.' });
+              this.refrescar().catch(() => { });
+              return fin('error');
+            }
+            this.crudosSubir(id, R);
+          }
+          this.setState(st => {
+            const le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
+            delete le[id]; delete bo[id];
+            const liqs = [fila].concat((st.liqsDb || []).filter(r => r.id !== id));
+            // Ya está en la base: sincronizar() no la vuelve a subir.
+            if (this._sync) this._sync.liqsDb = liqs;
+            const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === perL && !r.liq ? Object.assign({}, r, { liq: true }) : r));
+            return {
+              liqsDb: liqs, liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: eg,
+              liqEst: le, ddjjBorradas: bo, cruRuns: runs,
+              toast: sb && this._user ? { kind: 'ok', t: 'Liquidación guardada en el historial', d: cli + ' · ' + perL + ' · ' + this.seqTxt(seqSel) } : st.toast
+            };
+          });
+          fin('done');
+        })();
       },
       liqCli: cli, liqPer: perL, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
