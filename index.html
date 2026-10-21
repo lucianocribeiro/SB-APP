@@ -985,7 +985,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:10px">
 <div style="font:600 20px/1.2 'Open Sans'">{{ liqResCli }}</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Completado</span>
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">{{ seqPrevTxt }}</span>
+<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E6EDF4;color:#14395C;border:1px solid #CBD9E6">{{ liqResSeq }}</span>
 </div>
 <sc-if value="{{ liqResReal }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">{{ liqResSub }}</div></sc-if>
 <sc-if value="{{ liqResDemo }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por Administrador el {{ seqPrevFecha }}</div></sc-if>
@@ -2987,7 +2987,7 @@ class Component extends DCLogic {
 
   nav(key) {
     return () => {
-      this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false },
+      this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null },
         key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {},
         key === 'liqNueva' && (st.step === 1 || st.step === 4) ? { seqElegida: null } : {}));
       if (key === 'liqNueva') this.liqsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Historial de liquidaciones'));
@@ -5112,7 +5112,8 @@ class Component extends DCLogic {
     const E = this.EST;
     const go = {};
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
-    const crumb = this.CRUMB[s.screen] || ['MyIVA', ''];
+    const resSel = s.liqResVer && s.liqRes ? [s.liqRes.cli, s.liqRes.per] : (s.liqVer ? s.liqVer.split('|') : null);
+    const crumb = s.screen === 'liqResultado' && resSel ? ['Liquidador IVA', 'Resultado · ' + resSel[0] + ' ' + resSel[1]] : (this.CRUMB[s.screen] || ['MyIVA', '']);
 
     const owner = {};
     this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
@@ -5581,7 +5582,7 @@ class Component extends DCLogic {
           borrar: () => this.setState({ ddjjDel: { id, label, cliente: r.cliente, per: r.per, seq: r.seq, fecha: r.fecha, le }, ddjjMotivo: '' }),
           sel: !!sel[id], toggle: () => this.setState(st => ({ histSel: Object.assign({}, st.histSel, { [id]: !st.histSel[id] }) })),
           xls: () => exportar([r]),
-          st: E[r.est], ver: this.nav('liqResultado'),
+          st: E[r.est], ver: () => { this.nav('liqResultado')(); this.setState({ liqVer: id }); },
           hasErr: n > 0, errLabel: 'Errores de cruce (' + n + ')', nErr: String(n),
           errTip: eg.map(g => g.cruce + ': ' + g.errs.length).join(' · '),
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg, r.cliente)
@@ -5704,7 +5705,19 @@ class Component extends DCLogic {
 
     const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
-    const resV = this.liqResVals(s.liqRes, fmt), resReal = !!(s.liqResVer && s.liqRes);
+    // Resultado a mostrar: la liquidación recién procesada ("Ver resultado") o la DJ elegida con el ojito del historial.
+    const verRow = !(s.liqResVer && s.liqRes) && s.liqVer ? histTodas.find(r => rid(r) === s.liqVer) : null;
+    const verRes = verRow ? (() => {
+      const nv = (k) => verRow.n ? verRow.n[k] : this.numAr(verRow[k]), rr = (v) => Math.round(v * 100) / 100;
+      const df = nv('df'), cf = nv('cf'), rp = nv('rp'), sd = this.saldosDj(histTodas, verRow.cliente, verRow.per, verRow.seq);
+      const s1 = sd ? sd.s1 : rr(cf - df), s2 = sd ? sd.s2 : rr(s1 < 0 ? s1 + rp : rp);
+      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0 };
+    })() : null;
+    const resShow = (s.liqResVer && s.liqRes) || verRes;
+    const resV = this.liqResVals(resShow, fmt), resReal = !!resShow;
+    const tabsVer = resReal ? tabsDef.filter(([k]) => ['ventas', 'compras', 'retper'].includes(k)) : tabsDef;
+    const liqTabVer = resReal && !tabsVer.some(([k]) => k === s.liqTab) ? { ventas: true, compras: false, nc: false, retper: false, alertas: false } : liqTab;
+    const filaRes = (c, n, d, b) => ({ c, n, d, b, bgr: b ? '#F5F7FA' : '#FFFFFF', w: b ? '600' : '400' });
     return {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
@@ -5900,15 +5913,17 @@ class Component extends DCLogic {
         toast: { kind: 'warn', t: 'Revisá los archivos', d: 'Cargá los subdiarios de IVA Ventas e IVA Compras y volvé a procesar.' }
       }),
       procErrTxt: s.liqErrTxt,
-      ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? s.liqRes.cli : 'CAZATUR SA',
-      liqResSub: resReal ? 'Período ' + s.liqRes.per + ' · ' + this.seqTxt(s.liqRes.seq) + ' · Procesado por ' + me.short + ' el ' + s.liqRes.fechaHora + ' · Calculado con los subdiarios cargados' : '',
+      ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? resShow.cli : 'CAZATUR SA',
+      liqResSub: resReal ? 'Período ' + resShow.per + ' · ' + this.seqTxt(resShow.seq) + ' · Procesado por ' + (verRes ? verRes.user : me.short) + ' el ' + resShow.fechaHora
+        + (verRes ? ' · Datos guardados de la liquidación' : ' · Calculado con los subdiarios cargados') : '',
+      liqResSeq: this.seqTxt(resReal ? resShow.seq : (s.liqSaved ? s.liqSeqN : seqLast)),
       verResultadoReal: () => this.setState({ screen: 'liqResultado', liqResVer: true, drawer: false, modal: false, notif: false }),
-      liqTabs: tabsDef.map(([k, label]) => ({
+      liqTabs: tabsVer.map(([k, label]) => ({
         label, go: this.tset('liqTab', k),
         fg: s.liqTab === k ? '#14395C' : '#5A6B7B',
         bar: s.liqTab === k ? '#14395C' : 'transparent'
       })),
-      liqTab,
+      liqTab: liqTabVer,
       kpisLiq: (resReal && resV.resKpisLiq) || [
         { label: 'Total débito fiscal', value: '4.182.905,60', color: '#1B2733' },
         { label: 'Total crédito fiscal', value: '2.444.516,20', color: '#1B2733' },
@@ -5919,7 +5934,8 @@ class Component extends DCLogic {
         { label: 'Saldo 1° párrafo', value: '-1.738.389,40', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' },
         { label: 'Saldo 2° párrafo', value: '-1.632.105,25', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
       ],
-      ventasRows: [
+      ventasRows: resReal ? (resShow.ali ? [['IVA 21%', 'a21'], ['IVA 10,5%', 'a105'], ['IVA 27%', 'a27']].map(([c, k]) => filaRes(c, '—', this.ars(resShow.ali[k] || 0), 0)) : [])
+        .concat([filaRes('Total débito fiscal', '—', this.ars(resShow.df), 1)]) : [
         { c: 'Neto gravado 21%', n: '18.950.000,00', d: '3.979.500,00', b: 0 },
         { c: 'Neto gravado 10,5%', n: '1.680.000,00', d: '176.400,00', b: 0 },
         { c: 'Neto gravado 27%', n: '35.508,15', d: '9.587,20', b: 0 },
@@ -5935,7 +5951,7 @@ class Component extends DCLogic {
         { c: 'Otras percepciones', n: '4.118,00', d: '—', b: 0 },
         { c: 'Regímenes especiales', n: '—', d: '—', b: 0 }
       ].map(r => Object.assign({}, r, { bgr: r.b ? '#F5F7FA' : '#FFFFFF', w: r.b ? '600' : '400' })),
-      comprasRows: [
+      comprasRows: resReal ? [filaRes('Total crédito fiscal', '—', this.ars(resShow.cf), 1)] : [
         { c: 'Neto gravado 21%', n: '11.204.900,00', d: '2.353.029,00', b: 0 },
         { c: 'Neto gravado 10,5%', n: '780.000,00', d: '81.900,00', b: 0 },
         { c: 'Neto gravado 27%', n: '35.508,15', d: '9.587,20', b: 0 },
@@ -5952,7 +5968,10 @@ class Component extends DCLogic {
         { g: 'NC de compras', c: '10,5%', n: '4.200,00', d: '441,00' },
         { g: 'NC de compras', c: '27%', n: '—', d: '—' }
       ],
-      retRows: [
+      retRows: resReal ? (resShow.perc !== undefined ? [
+        { c: 'Percepciones IVA (IVA Compras)', q: '—', i: this.ars(resShow.perc) },
+        { c: 'Retenciones IVA CR (IVA Ventas)', q: '—', i: this.ars(resShow.ret) }
+      ] : []).concat([{ c: 'Total', q: '—', i: this.ars(resShow.rp) }]) : [
         { c: 'Retención IVA RG 2854', q: '3', i: '42.180,00' },
         { c: 'Percepción IVA RG 3337', q: '12', i: '38.904,15' },
         { c: 'Percepción IIBB CABA', q: '9', i: '25.200,00' },
