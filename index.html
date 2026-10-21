@@ -2774,22 +2774,9 @@ class Component extends DCLogic {
     }
     Object.assign(z, { cart: clientes.length ? cart : null, pend, mapa: clientes.length ? this.cartMapa(cart, pend) : {} });
 
-    const liqEst = {}, bor = {}, reales = [];
-    liqs.forEach(r => {
-      if (r.estado === 'Cerrada') liqEst[r.id] = 'Cerrada';
-      if (r.borrada) bor[r.id] = 1;
-      if (!(r.registros > 0)) return;
-      const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
-      if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
-      if (r.alicuotas && r.alicuotas.a21 !== undefined) n.ali = r.alicuotas;
-      reales.push({
-        id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
-        user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
-      });
-    });
-    const sinLiqs = !liqs.length;
-    const liqsDb = sinLiqs ? s.liqsDb : reales, le = sinLiqs ? s.liqEst : liqEst, bo = sinLiqs ? s.ddjjBorradas : bor;
-    Object.assign(z, { liqsDb: sinLiqs ? [] : liqsDb, liqEst: sinLiqs ? {} : le, bor: sinLiqs ? {} : bo });
+    const lq = this.liqsDeDb(liqs, s);
+    Object.assign(z, lq.z);
+    const { liqsDb, liqEst: le, ddjjBorradas: bo } = lq.st;
 
     const runsDb = cruces.map(r => ({ id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: this.fechaDe(r.fecha), user: r.usuario || '—', liq: r.liquidacion, cruces: r.cruces || [] }));
     const runsLocal = !cruces.length && s.cruRuns.length > 0, cruRuns = runsLocal ? s.cruRuns : runsDb;
@@ -2819,6 +2806,63 @@ class Component extends DCLogic {
 
     this._sync = z;
     return { cartPend: pend, cartV: (s.cartV || 0) + 1, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
+  }
+
+  // Liquidaciones de la base + las liquidadas en este navegador que nunca llegaron a la base (quedan pendientes:
+  // como no están en z.liqsDb, sincronizar() las vuelve a subir).
+  liqsDeDb(liqs, s) {
+    const liqEst = {}, bor = {}, reales = [];
+    liqs.forEach(r => {
+      if (r.estado === 'Cerrada') liqEst[r.id] = 'Cerrada';
+      if (r.borrada) bor[r.id] = 1;
+      if (!(r.registros > 0)) return;
+      const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
+      if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
+      if (r.alicuotas && r.alicuotas.a21 !== undefined) n.ali = r.alicuotas;
+      reales.push({
+        id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
+        user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
+      });
+    });
+    const enDb = new Set(liqs.map(r => r.id));
+    const pend = (s.liqsDb || []).filter(r => r.n && r.id && !enDb.has(r.id));
+    const le = Object.assign({}, liqEst), bo = Object.assign({}, bor);
+    pend.forEach(r => { if (s.liqEst[r.id]) le[r.id] = s.liqEst[r.id]; if (s.ddjjBorradas[r.id]) bo[r.id] = s.ddjjBorradas[r.id]; });
+    return { z: { liqsDb: reales, liqEst, bor }, st: { liqsDb: this.lsSet('myiva.liqs', pend.concat(reales)), liqEst: le, ddjjBorradas: bo } };
+  }
+
+  // Al entrar a Nueva liquidación se releen las liquidaciones de la base, así la secuencia sugerida
+  // considera lo liquidado por cualquier usuario desde que se abrió la sesión.
+  async liqsBajar() {
+    const sb = this.sb(), z = this._sync;
+    if (!sb || !z || !this._user) return;
+    const { data, error } = await sb.from('liquidaciones').select('*').order('procesada', { ascending: false }).limit(1000);
+    if (error) throw error;
+    if (this._sync !== z) return;
+    const lq = this.liqsDeDb(data || [], this.state);
+    Object.assign(z, lq.z);
+    this.setState(lq.st);
+  }
+
+  // Sube liquidaciones a la base. Si la base no tiene alguna columna nueva (schema.sql sin actualizar), se reintenta sin ella.
+  async liqsSubir(rows) {
+    const sb = this.sb();
+    let err = null;
+    for (let i = 0; i < 5; i++) {
+      const { error } = await sb.from('liquidaciones').upsert(rows);
+      if (!error) break;
+      err = error;
+      const col = (String(error.message || '').match(/'([a-z0-9_]+)' column/) || [])[1];
+      if (!col || !(col in rows[0])) break;
+      rows = rows.map(x => { const y = Object.assign({}, x); delete y[col]; return y; });
+      err = null;
+    }
+    const ids = rows.map(r => r.cliente + ' · ' + r.periodo + ' · ' + this.seqTxt(r.secuencia)).join(', ');
+    if (err) {
+      console.error('No se pudo guardar la liquidación', rows, err);
+      return this.setState({ toast: { kind: 'err', t: 'La liquidación no se guardó en el historial', d: ids + ': ' + String(err.message || err) + '. Queda guardada en este navegador y se vuelve a intentar la próxima vez que ingreses.' } });
+    }
+    this.setState({ toast: { kind: 'ok', t: rows.length === 1 ? 'Liquidación guardada en el historial' : 'Liquidaciones guardadas en el historial', d: ids } });
   }
 
   cartMapa(cart, pend) {
@@ -2864,13 +2908,12 @@ class Component extends DCLogic {
       Object.assign(z, { cart: this.CARTERA, pend: s.cartPend, mapa: m });
     }
     if (s.liqsDb !== z.liqsDb) {
-      const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => ({
+      const rows = nuevos(s.liqsDb, z.liqsDb).filter(r => r.n).map(r => Object.assign({
         id: r.id, cliente: r.cliente, periodo: r.per, secuencia: r.seq, usuario: r.user, procesada: this.isoDe(r.fechaHora || r.fecha),
-        debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [], estado: 'Borrador', borrada: false
+        debito: r.n.df, credito: r.n.cf, retenciones: r.n.rp, saldo1: r.n.s1, saldo2: r.n.s2, registros: r.n.regs, errores: r.eg || [],
+        estado: s.liqEst[r.id] === 'Cerrada' ? 'Cerrada' : 'Borrador', borrada: !!s.ddjjBorradas[r.id]
       }, r.n.a1 != null ? { saldo_ant1: r.n.a1, saldo_ant2: r.n.a2 } : {}, r.n.ali ? { alicuotas: r.n.ali } : {}));
-      // Base sin las columnas saldo_ant1/2 (schema.sql sin actualizar): se guarda igual sin los saldos a mano.
-      if (rows.length) this.db(sb.from('liquidaciones').upsert(rows).then(r => r.error && /saldo_ant|alicuotas/.test(r.error.message || '')
-        ? sb.from('liquidaciones').upsert(rows.map(x => { const y = Object.assign({}, x); delete y.saldo_ant1; delete y.saldo_ant2; delete y.alicuotas; return y; })) : r), 'Liquidación');
+      if (rows.length) this.liqsSubir(rows).catch(e => this.db(Promise.resolve({ error: e }), 'Liquidación'));
       z.liqsDb = s.liqsDb;
     }
     if (s.liqEst !== z.liqEst) {
@@ -2945,7 +2988,9 @@ class Component extends DCLogic {
   nav(key) {
     return () => {
       this.setState(st => Object.assign({ screen: key, drawer: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false },
-        key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {}));
+        key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {},
+        key === 'liqNueva' && (st.step === 1 || st.step === 4) ? { seqElegida: null } : {}));
+      if (key === 'liqNueva') this.liqsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Historial de liquidaciones'));
       if (key === 'liqCompensaciones') this.compsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Compensaciones'));
     };
   }
