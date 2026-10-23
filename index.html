@@ -2249,10 +2249,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Inicio de ejercicio</div>
 <input value="{{ nc.ini }}" onChange="{{ ncSet.ini }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
-<div style="grid-column:span 2">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Condición frente al IVA</div>
-<select value="{{ nc.cond }}" onChange="{{ ncSet.cond }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Responsable Inscripto</option><option>Exento</option><option>Monotributo</option></select>
-</div>
 </div>
 </div>
 <div>
@@ -2638,7 +2634,7 @@ class Component extends DCLogic {
     apoc: this.apocInit(), apocRun: false, apocQ: '',
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
-    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', cond: 'Responsable Inscripto', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
+    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
@@ -5327,9 +5323,9 @@ class Component extends DCLogic {
       goPerfil: this.nav('perfil'),
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
-      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', cond: 'Responsable Inscripto', mails: '' } }),
+      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' } }),
       nc: s.nc,
-      ncSet: ['rz', 'cuit', 'ini', 'cond', 'mails'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
+      ncSet: ['rz', 'cuit', 'ini', 'mails'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
       openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
       openConfirm: () => this.setState({ confirm: true }),
@@ -5350,7 +5346,7 @@ class Component extends DCLogic {
         const existe = [].concat(...this.CARTERA.map(([, cs]) => cs), s.cartPend).find(c => this.fold(c) === this.fold(rz));
         if (existe) return this.setState({ toast: { kind: 'warn', t: 'El cliente ya existe', d: existe + ' ya está cargado. Para cambiarle el usuario usá Clientes por usuario.' } });
         const cuitF = cuit ? this.cuitFmt(cuit) : '—';
-        this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond: nc.cond, per: '—' } })) }));
+        this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond: '—', per: '—' } })) }));
         this.cartMover(rz, u);
         const sb = this.sb();
         if (sb && this._user) this.db(sb.from('clientes').upsert([{ nombre: rz, usuario: u, cuit: cuit ? cuitF : null }], { onConflict: 'nombre' }), 'Clientes');
