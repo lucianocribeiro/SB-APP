@@ -2239,19 +2239,19 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px">
 <div style="grid-column:span 2">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Razón social</div>
-<input placeholder="Razón social" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="Razón social" value="{{ nc.rz }}" onChange="{{ ncSet.rz }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">CUIT</div>
-<input placeholder="30-00000000-0" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="30-00000000-0" value="{{ nc.cuit }}" onChange="{{ ncSet.cuit }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Inicio de ejercicio</div>
-<input value="01/01" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input value="{{ nc.ini }}" onChange="{{ ncSet.ini }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div style="grid-column:span 2">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Condición frente al IVA</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Responsable Inscripto</option><option>Exento</option><option>Monotributo</option></select>
+<select value="{{ nc.cond }}" onChange="{{ ncSet.cond }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Responsable Inscripto</option><option>Exento</option><option>Monotributo</option></select>
 </div>
 </div>
 </div>
@@ -2259,13 +2259,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Notificaciones</div>
 <div style="margin-top:13px">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mails destinatarios</div>
-<input placeholder="mail@cliente.com.ar, contador@blasco.com.ar" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="mail@cliente.com.ar, contador@blasco.com.ar" value="{{ nc.mails }}" onChange="{{ ncSet.mails }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 <div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios destinatarios con coma.</div>
 </div>
 </div>
 <div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Usuarios asignados</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Usuario asignado</div>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:8px">Si no elegís usuario, queda en Pendientes de asignación.</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
 <sc-for list="{{ usuariosChips }}" as="u" hint-placeholder-count="4">
 <div onClick="{{ u.toggle }}" style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:6px;cursor:pointer;font:600 12.5px 'Open Sans';border:1px solid {{ u.bd }};background:{{ u.bg }};color:{{ u.fg }}">{{ u.nombre }}</div>
 </sc-for>
@@ -2627,9 +2628,9 @@ class Component extends DCLogic {
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
     apoc: this.apocInit(), apocRun: false, apocQ: '',
-    up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', ivalib: 'empty' },
+    up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
-    asign: { 'Julieta': 1 },
+    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', cond: 'Responsable Inscripto', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
@@ -2828,6 +2829,7 @@ class Component extends DCLogic {
     const z = { audSet: new WeakSet() };
 
     let cart = this.CARTERA, pend = s.cartPend;
+    const cliFiscal = Object.assign({}, s.cliFiscal);
     if (clientes.length) {
       const m = new Map(perfiles.filter(p => p.rol === 'empleado' && p.activo).map(p => [p.nombre, []]));
       pend = [];
@@ -2838,6 +2840,8 @@ class Component extends DCLogic {
       });
       cart = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
       this.CARTERA = this.lsSet('myiva.cartera', cart);
+      clientes.filter(c => c.cuit).forEach(c => { cliFiscal[c.nombre] = Object.assign({ cond: '—', per: '—' }, cliFiscal[c.nombre], { cuit: c.cuit }); });
+      this.lsSet('myiva.cliFiscal', cliFiscal);
       this._demo = null;
       this.lsSet('myiva.cartPend', pend);
     }
@@ -2872,7 +2876,7 @@ class Component extends DCLogic {
     }
 
     this._sync = z;
-    return { cartPend: pend, cartV: (s.cartV || 0) + 1, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
+    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
   }
 
   // Lee todas las filas de una tabla, de a 1000 (Supabase devuelve como máximo 1000 por consulta), de la más nueva a la más vieja.
@@ -3091,7 +3095,7 @@ class Component extends DCLogic {
   liqVacia() {
     return {
       step: 1, proc: 'run', dz: 'empty', real: {}, upErr: {}, upBusy: {}, cruSaved: false, liqErrTxt: '',
-      up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', ivalib: 'empty' }
+      up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' }
     };
   }
   tset(k, v) { return () => this.setState({ [k]: v }); }
@@ -4057,7 +4061,7 @@ class Component extends DCLogic {
 
   PARSEABLES = ['ventas', 'compras', 'emitidos', 'recibidos'];
 
-  UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'IVA Digital', ivalib: 'Libro IVA Digital' };
+  UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'Libro IVA Digital' };
 
   compTipos() {
     if (this._compT) return this._compT;
@@ -4424,7 +4428,7 @@ class Component extends DCLogic {
     ['sia', 'Saldo de impuesto a favor de ARCA', /saldo (de|del) impuesto a favor de (la )?(arca|afip)/]
   ];
 
-  // Vista previa del Libro IVA Digital (ARCA): totales de IVA Ventas e IVA Compras para el cruce 7.
+  // Vista previa del Libro IVA Digital (ARCA): totales de IVA Ventas e IVA Compras para el cruce 6.
   LIB_CONC = [
     ['vOp', 'Operaciones de Ventas', /^operaciones de ventas\b/, 3],
     ['vNc', 'Notas de Crédito de Ventas', /^notas de credito de ventas\b/, 3],
@@ -4458,7 +4462,7 @@ class Component extends DCLogic {
     if (mp && +mp[1] >= 1 && +mp[1] <= 12) per = mp[1] + '/' + mp[2];
     const encontrados = Object.keys(v).length;
     if (!encontrados) throw new Error('No se encontraron los totales del Libro IVA Digital (Operaciones de Ventas, Operaciones de Compras…). Verificá que sea la vista previa en PDF.');
-    return { kind: 'ivalib', name, v, per, encontrados, paginas: pdf.paginas };
+    return { kind: 'ivadig', name, v, per, encontrados, paginas: pdf.paginas };
   }
 
   cruzarLibro(lib, ventas, compras) {
@@ -4741,25 +4745,6 @@ class Component extends DCLogic {
     };
   }
 
-  cruzarDJ(dj, ventas, compras, arr) {
-    const r2 = (v) => Math.round(v * 100) / 100;
-    const { df, cf, rp, s2 } = this.liqCalc(ventas, compras, arr);
-    const lbl = {};
-    this.DJ_CONC.forEach(([k, l]) => { lbl[k] = l; });
-    const filas = [
-      ['df', 'Débito fiscal', df, 'IVA Ventas + débito de NC de IVA Compras'],
-      ['cf', 'Crédito fiscal', cf, 'IVA Compras + crédito de NC de IVA Ventas'],
-      ['rp', 'Retenciones y percepciones', rp, 'Percepciones IVA de IVA Compras + CR de IVA Ventas del período'],
-      ['sta', 'Saldo técnico a favor anterior (cruce 0)', arr.tec, 'Cruce 0'],
-      ['lda', 'Libre disponibilidad anterior (cruce 0)', arr.lib, 'Cruce 0, neto de compensaciones'],
-      ['sia', 'Saldo de impuesto a favor de ARCA', s2 < 0 ? r2(-s2) : 0, 'Calculado con la fórmula de la liquidación']
-    ].map(([k, l, calc, origen]) => {
-      const d = dj.v[k], falta = d === undefined, dif = falta ? null : r2(d - calc);
-      return { k, l, pdf: lbl[k], dj: d, calc, origen, falta, dif, est: falta ? 'falta' : (Math.abs(dif) <= 1 ? 'ok' : 'dif') };
-    });
-    return { filas, per: dj.per };
-  }
-
   apocInit() {
     const def = { fecha: '28/09/2026 08:00', total: 12873, origen: 'ARCA · actualización automática semanal', nuevos: 0, real: false, gen: '', v: 0 };
     try {
@@ -4830,22 +4815,18 @@ class Component extends DCLogic {
         const X = await this.xlsxLib();
         data = (k === 'percep' ? this.parseRetenciones : this.parseAduana).call(this, f.name, new Uint8Array(await f.arrayBuffer()), X);
       } else if (k === 'ivadig') {
-        if (!/\.pdf$/i.test(f.name)) throw new Error('El archivo debe ser el PDF de la DJ de IVA Digital o de la vista previa del Libro IVA Digital.');
-        const pdf = await this.textoPdf(new Uint8Array(await f.arrayBuffer()));
-        const esLibro = /libro iva (ventas|compras)/.test(this.fold(pdf.lineas.join(' '))) && !/total (del )?debito fiscal/.test(this.fold(pdf.lineas.join(' ')));
-        data = esLibro ? this.parseLibroDig(f.name, pdf) : this.parseDJ(f.name, pdf);
+        if (!/\.pdf$/i.test(f.name)) throw new Error('El archivo debe ser el PDF de la vista previa del Libro IVA Digital.');
+        data = this.parseLibroDig(f.name, await this.textoPdf(new Uint8Array(await f.arrayBuffer())));
       } else {
         data = { kind: k, name: f.name, attach: true };
       }
       data.size = kb;
       Object.defineProperty(data, 'file', { value: f, enumerable: false });
       this.setState(st => {
-        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', ivalib: 'empty' } } : { up: st.up };
+        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' } } : { up: st.up };
         const base = Object.assign({}, st, reset);
-        const lib = k === 'ivadig' ? { up: Object.assign({}, setKind(base, 'loaded').up, { ivalib: data.kind === 'ivalib' ? 'loaded' : 'empty' }) } : {};
-        return Object.assign(reset, setKind(base, 'loaded'), lib, {
-          // IVA Digital: la vista previa del libro se guarda aparte (ivalib, cruce 7) y la DJ en ivadig (cruce 6).
-          real: Object.assign({}, st.real, k === 'ivadig' ? { ivadig: data.kind === 'ivadig' ? data : null, ivalib: data.kind === 'ivalib' ? data : null } : { [k]: data }),
+        return Object.assign(reset, setKind(base, 'loaded'), {
+          real: Object.assign({}, st.real, { [k]: data }),
           upErr: Object.assign({}, st.upErr, { [k]: null }),
           upBusy: Object.assign({}, st.upBusy, { [k]: null }),
           cruSaved: false
@@ -4975,21 +4956,6 @@ class Component extends DCLogic {
     };
   }
 
-  cruDigVista(x) {
-    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), comp = 'DDJJ IVA Digital' + (x.per ? ' ' + x.per : ''), errs = [];
-    x.filas.forEach(f => {
-      if (f.est === 'falta') errs.push({ k: 'Dato no encontrado en el PDF', comp, ter: f.l, det: 'No se encontró "' + f.pdf + '" en el PDF: este concepto no se pudo comparar.', imp: '—' });
-      else if (f.est === 'dif') errs.push({ k: 'Diferencia de importe', comp, ter: f.l, det: 'IVA Digital ' + fm(f.dj) + ' · ' + f.origen + ' ' + fm(f.calc), imp: fm(Math.abs(f.dif)) });
-    });
-    const c = (e) => x.filas.filter(f => f.est === e).length, ok = c('ok'), dif = c('dif'), falt = c('falta');
-    return {
-      regs: x.filas.length, ok, dif, falt, errs,
-      est: dif + falt ? 'Completado con diferencias' : 'Completado',
-      res: x.filas.length + ' conceptos comparados · ' + ok + ' coinciden · ' + dif + ' con diferencias' + (falt ? ' · ' + falt + ' no encontrados en el PDF' : '') + (x.per ? ' · DJ del período ' + x.per : ''),
-      cmp: x.filas.map(f => [f.l, f.falta ? 'No encontrado' : fm(f.dj), fm(f.calc), f.falta ? '—' : fm(f.dif)])
-    };
-  }
-
   reporteFilas(tipo, x, lblL) {
     if (tipo === 'apoc') {
       return {
@@ -5001,12 +4967,6 @@ class Component extends DCLogic {
       return {
         head: ['Concepto', 'Libro IVA Digital', 'Subdiarios', 'Origen del cálculo', 'Diferencia', 'Resultado'],
         rows: x.filas.map(f => [f.l, f.falta ? 'No encontrado' : f.dig, f.calc, f.origen, f.falta ? '' : f.dif, { ok: 'Coincide', dif: 'Diferencia', falta: 'No encontrado en el PDF' }[f.est]])
-      };
-    }
-    if (tipo === 'dig') {
-      return {
-        head: ['Concepto', 'IVA Digital', 'Subdiarios / cálculo', 'Origen del cálculo', 'Diferencia', 'Resultado'],
-        rows: x.filas.map(f => [f.l, f.falta ? 'No encontrado' : f.dj, f.calc, f.origen, f.falta ? '' : f.dif, { ok: 'Coincide', dif: 'Diferencia', falta: 'No encontrado en el PDF' }[f.est]])
       };
     }
     if (tipo === 'ret' || tipo === 'adu') {
@@ -5067,7 +5027,7 @@ class Component extends DCLogic {
     const ERRF = {
       ventas: 'CAZATUR_IVA_VENTAS_082026.docx', compras: 'CAZATUR_IVA_COMPRAS_082026.docx',
       emitidos: 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.docx', recibidos: 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.docx',
-      percep: 'CAZATUR_MIS_RETENCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_IVA_DIGITAL_082026.jpg', ivalib: 'CAZATUR_LIBRO_IVA_DIGITAL_082026.jpg'
+      percep: 'CAZATUR_MIS_RETENCIONES_082026.docx', aduana: 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.docx', ivadig: 'CAZATUR_LIBRO_IVA_DIGITAL_082026.jpg'
     };
     const cli = this.liqCli(), ap = s.apoc, arr = this.arrastre(cli), prevPagar = arr.pagar;
     const arrTec = this.ars(arr.tec), arrLib = this.ars(arr.lib);
@@ -5109,13 +5069,7 @@ class Component extends DCLogic {
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
       {
-        n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'IVA Digital'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 4, ok: 3, dif: 1, falt: 0,
-        res: '4 conceptos comparados · 3 coinciden · 1 con diferencias',
-        h: ['Concepto', 'IVA Digital', 'IVA Compras + IVA Ventas', 'Diferencia'],
-        cmp: [['Débito fiscal', '4.184.060,60', '4.182.905,60', '1.155,00'], ['Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00'], ['Retenciones y percepciones', '106.284,15', '106.284,15', '0,00'], ['Saldo técnico a favor anterior (cruce 0)', arrTec, arrTec, '0,00']]
-      },
-      {
-        n: '7', t: 'Libro IVA Digital (vista previa)', tipo: 'Libro IVA Digital vs IVA Ventas + Compras', need: [['ivalib', 'Libro IVA Digital (vista previa)'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 16, ok: 16, dif: 0, falt: 0,
+        n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'Libro IVA Digital (vista previa)'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 16, ok: 16, dif: 0, falt: 0,
         h: ['Concepto', 'Libro IVA Digital', 'IVA Ventas / IVA Compras', 'Diferencia'],
         cmp: [['Operaciones de Ventas · Débito fiscal', '4.182.905,60', '4.182.905,60', '0,00'], ['Operaciones de Compras · Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00']]
       }
@@ -5128,13 +5082,9 @@ class Component extends DCLogic {
       '4': RV.ret ? Object.assign(this.cruRetVista(RV.ret), { blk: ['ret', RV.ret, '', 'Mis Retenciones'] }) : null,
       '5': RV.adu ? Object.assign(this.cruAduVista(RV.adu), { blk: ['adu', RV.adu, '', 'Percepciones Aduaneras'] }) : null
     };
-    if (enReal && R.ivalib && R.ventas && R.compras) {
-      const lb = this.cruzarLibro(R.ivalib, R.ventas, R.compras);
-      vista['7'] = Object.assign(this.cruLibVista(lb), { blk: ['lib', lb, '', 'Libro IVA Digital'] });
-    }
     if (enReal && R.ivadig && R.ventas && R.compras) {
-      const dj = this.cruzarDJ(R.ivadig, R.ventas, R.compras, arr);
-      vista['6'] = Object.assign(this.cruDigVista(dj), { blk: ['dig', dj, '', 'Libro IVA Digital'] });
+      const lb = this.cruzarLibro(R.ivadig, R.ventas, R.compras);
+      vista['6'] = Object.assign(this.cruLibVista(lb), { blk: ['lib', lb, '', 'Libro IVA Digital'] });
     }
     const demoRep = this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.');
     const reales = [];
@@ -5185,13 +5135,12 @@ class Component extends DCLogic {
     const inc = [];
     if (enReal) {
       const L = this.UP_LBL, P = this.PARSEABLES.filter(k => R[k] && !R[k].attach);
-      const PP = P.concat(['percep', 'aduana', 'ivadig', 'ivalib'].filter(k => R[k] && R[k].per));
+      const PP = P.concat(['percep', 'aduana', 'ivadig'].filter(k => R[k] && R[k].per));
       if (new Set(PP.map(k => R[k].per)).size > 1) inc.push({ t: 'Los archivos corresponden a períodos distintos: ' + PP.map(k => L[k] + ' ' + R[k].per).join(' · ') + '.' });
       const props = P.filter(k => R[k].propio);
       if (new Set(props.map(k => R[k].propio)).size > 1) inc.push({ t: 'Los archivos de ARCA son de CUITs distintos: ' + props.map(k => L[k] + ' ' + this.cuitFmt(R[k].propio)).join(' · ') + '.' });
       P.concat(['percep', 'aduana'].filter(k => R[k])).forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
-      if (R.ivalib && R.ivalib.encontrados < this.LIB_CONC.length) inc.push({ t: 'De la vista previa del Libro IVA Digital se leyeron ' + R.ivalib.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos: los no encontrados figuran como faltantes en el cruce 7.' });
-      if (R.ivadig && R.ivadig.encontrados < this.DJ_CONC.length) inc.push({ t: 'Del PDF de IVA Digital se leyeron ' + R.ivadig.encontrados + ' de ' + this.DJ_CONC.length + ' totales: los conceptos no encontrados figuran como faltantes en el cruce 6.' });
+      if (R.ivadig && R.ivadig.encontrados < this.LIB_CONC.length) inc.push({ t: 'De la vista previa del Libro IVA Digital se leyeron ' + R.ivadig.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos: los no encontrados figuran como faltantes en el cruce 6.' });
       P.forEach(k => {
         const raros = [...new Set(R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).map(x => x.tc || 'vacío'))];
         if (raros.length) { const n = R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).length; inc.push({ t: n + (n === 1 ? ' registro' : ' registros') + ' de ' + L[k] + ' con tipo ' + raros.join(', ') + ': no está en la tabla de comprobantes, no se cuenta en los cruces (sí en el IVA de la liquidación). Si es un comprobante, avisá para agregar el código.' }); }
@@ -5285,7 +5234,7 @@ class Component extends DCLogic {
       'IDEA 2 SA': { cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026' }
     };
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
-      const f = fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
+      const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
       return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'] };
     });
 
@@ -5370,7 +5319,9 @@ class Component extends DCLogic {
       goPerfil: this.nav('perfil'),
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
-      openDrawer: () => this.setState({ drawer: true }),
+      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', cond: 'Responsable Inscripto', mails: '' } }),
+      nc: s.nc,
+      ncSet: ['rz', 'cuit', 'ini', 'cond', 'mails'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
       openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
       openConfirm: () => this.setState({ confirm: true }),
@@ -5383,7 +5334,20 @@ class Component extends DCLogic {
       errCount: s.errView ? (s.errView.rows.length === 1 ? '1 error registrado' : s.errView.rows.length + ' errores registrados') : '',
       toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
-      saveCliente: () => this.setState({ drawer: false, toast: { kind: 'ok', t: 'Cliente guardado', d: 'Ya podés liquidar períodos para este cliente.' } }),
+      saveCliente: () => {
+        const nc = s.nc, rz = nc.rz.trim().replace(/\s+/g, ' ').toUpperCase(), cuit = nc.cuit.replace(/\D/g, '');
+        const u = Object.keys(s.asign).find(n => s.asign[n]) || null;
+        if (!rz) return this.setState({ toast: { kind: 'warn', t: 'Escribí la razón social', d: 'Completá la razón social del cliente.' } });
+        if (cuit && cuit.length !== 11) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
+        const existe = [].concat(...this.CARTERA.map(([, cs]) => cs), s.cartPend).find(c => this.fold(c) === this.fold(rz));
+        if (existe) return this.setState({ toast: { kind: 'warn', t: 'El cliente ya existe', d: existe + ' ya está cargado. Para cambiarle el usuario usá Clientes por usuario.' } });
+        const cuitF = cuit ? this.cuitFmt(cuit) : '—';
+        this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond: nc.cond, per: '—' } })) }));
+        this.cartMover(rz, u);
+        const sb = this.sb();
+        if (sb && this._user) this.db(sb.from('clientes').upsert([{ nombre: rz, usuario: u, cuit: cuit ? cuitF : null }], { onConflict: 'nombre' }), 'Clientes');
+        this.setState({ drawer: false, asign: {}, toast: { kind: 'ok', t: 'Cliente guardado', d: u ? rz + ' quedó asignado a ' + u + '.' : rz + ' quedó en Pendientes de asignación.' } });
+      },
       saveInvite: () => this.invitar(),
       ...this.invVals(chip),
       toastXls: this.showToast('ok', 'Excel generado', 'El archivo se descargó desde la app.'),
@@ -5471,7 +5435,7 @@ class Component extends DCLogic {
         { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
         { tipo: 'Mis Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026', regs: '96', dif: '2', est: 'Completado con diferencias' }
       ].map(r => Object.assign({}, r, { st: E[r.est] })),
-      usuariosChips: usrNombres.map(n => Object.assign({ nombre: n, toggle: this.flip('asign', n) }, chip(s.asign[n]))),
+      usuariosChips: usrNombres.map(n => Object.assign({ nombre: n, toggle: () => this.setState(st => ({ asign: st.asign[n] ? {} : { [n]: 1 } })) }, chip(s.asign[n]))),
       clientesChips: clientes.map(c => Object.assign({ rz: c.rz, toggle: this.flip('cliSel', c.rz) }, chip(s.cliSel[c.rz]))),
       chipsCount: selCount + ' de ' + clientes.length + ' clientes seleccionados',
       asignados: [
@@ -5513,7 +5477,7 @@ class Component extends DCLogic {
       ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
       ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
       ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional · cruce 5', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
-      ['ivadig', 'IVA Digital', '.pdf', 'Opcional · cruce 6 (DJ) o cruce 7 (vista previa del libro)', 'CAZATUR_IVA_DIGITAL_082026.pdf', '310 KB · 4 páginas', 'El archivo debe ser el PDF de la DJ de IVA Digital o de la vista previa del Libro IVA Digital.']
+      ['ivadig', 'Libro IVA Digital (vista previa)', '.pdf', 'Opcional · cruce 6', 'CAZATUR_LIBRO_IVA_DIGITAL_082026.pdf', '120 KB · 1 página', 'El archivo debe ser el PDF de la vista previa del Libro IVA Digital.']
     ];
     const upState = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
     const setUp = (k, v) => () => {
@@ -5522,10 +5486,9 @@ class Component extends DCLogic {
     };
     const RF = s.real || {};
     const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
-      const kind = upState(k), rf = k === 'ivadig' ? (RF.ivadig || RF.ivalib) : RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
+      const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
       const rmeta = !rf ? '' : rf.size + ' · ' + (rf.attach ? 'adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
-        : k === 'ivadig' && rf.kind === 'ivalib' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos · cruce 7'
-        : k === 'ivadig' ? 'DJ' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.DJ_CONC.length + ' totales leídos · ' + rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas')
+        : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos · ' + rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas')
         : k === 'percep' ? rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : (rf.recs.length - (rf.excl || 0)) + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
@@ -5539,8 +5502,8 @@ class Component extends DCLogic {
         bg: kind === 'error' ? '#FDF5F4' : (kind === 'drag' ? '#F4F9FD' : '#FFFFFF'),
         pick: (e) => this.cargarArchivo(k, e),
         load: setUp(k, 'loaded'),
-        clear: () => this.setState(st => Object.assign(k === 'compras' ? { dz: 'empty' } : { up: Object.assign({}, st.up, { [k]: 'empty' }, k === 'ivadig' ? { ivalib: 'empty' } : {}) }, {
-          real: Object.assign({}, st.real, { [k]: null }, k === 'ivadig' ? { ivalib: null } : {}), upErr: Object.assign({}, st.upErr, { [k]: null }), cruSaved: false
+        clear: () => this.setState(st => Object.assign(k === 'compras' ? { dz: 'empty' } : { up: Object.assign({}, st.up, { [k]: 'empty' }) }, {
+          real: Object.assign({}, st.real, { [k]: null }), upErr: Object.assign({}, st.upErr, { [k]: null }), cruSaved: false
         }))
       };
     });
