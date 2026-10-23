@@ -739,7 +739,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">Para liquidar hacen falta IVA Ventas e IVA Compras. El resto es opcional: se procesan los cruces disponibles según los archivos que cargues.</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#1F6795">Todos los archivos son opcionales: se procesan los cruces disponibles según los archivos que cargues. Si no se carga IVA Ventas o IVA Compras, sus importes se liquidan en 0.</div>
 </div>
 <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
 <sc-for list="{{ upFiles }}" as="f" hint-placeholder-count="7">
@@ -2427,6 +2427,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar los cruces?</div>
+<sc-if value="{{ upNinguno }}">
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">No se cargó ningún archivo para {{ liqCli }} · {{ liqPer }}: los cruces se omiten y en la liquidación todos los valores de compras y ventas van a ser 0.</div>
+</sc-if>
+<sc-if value="{{ upHay }}">
 <div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se van a procesar los cruces de {{ liqCli }} · {{ liqPer }} con {{ upCountLabel }}:</div>
 <div style="margin-top:10px;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <sc-for list="{{ upLoaded }}" as="u" hint-placeholder-count="2">
@@ -2437,6 +2441,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-for>
 </div>
+</sc-if>
 <div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:10px">Los archivos no cargados se omiten. La ejecución queda registrada en auditoría.</div>
 </div>
 </div>
@@ -2459,6 +2464,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar {{ liqCli }} · {{ liqPer }} como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
 <sc-if value="{{ seqPisa }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
+</sc-if>
+<sc-if value="{{ liqSinSub }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">{{ liqSinSubTxt }}</div>
 </sc-if>
 <sc-if value="{{ liqFueraPer }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqFueraPerTxt }}</div>
@@ -5453,6 +5461,7 @@ class Component extends DCLogic {
     const fpV = RL.ventas && RL.ventas.recs ? this.fueraPeriodo(RL.ventas, 'igual') : [];
     const fpC = RL.compras && RL.compras.recs ? this.fueraPeriodo(RL.compras, 'hasta') : [];
     const fpCant = (n) => n + (n === 1 ? ' comprobante' : ' comprobantes');
+    const sinSub = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !(RL[k] && RL[k].recs)).map(([, l]) => l);
     const fpTxt = [fpV.length ? 'IVA Ventas tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
     const fpEj = fpV.concat(fpC).slice(0, 3).map(x => this.compTxt(x) + ' del ' + x.fecha).join(', ');
     const sinArr = arr.sinDj ? 'Ingresado a mano · ' + (arr.pagar ? 'sin saldo a favor' : 'se traslada a ' + perL) : '';
@@ -5856,10 +5865,8 @@ class Component extends DCLogic {
       stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4 },
       stepNext: () => this.setState(st => ({ step: Math.min(4, st.step + 1) })),
       stepPrev: () => this.setState(st => ({ step: Math.max(1, st.step - 1) })),
-      upFiles, upLoaded, upCountLabel, upConfirm: s.upConfirm,
-      openUpConfirm: () => upLoaded.length
-        ? this.setState({ upConfirm: true })
-        : this.setState({ toast: { kind: 'warn', t: 'No hay archivos cargados', d: 'Cargá al menos un archivo para procesar los cruces.' } }),
+      upFiles, upLoaded, upCountLabel, upConfirm: s.upConfirm, upHay: upLoaded.length > 0, upNinguno: !upLoaded.length,
+      openUpConfirm: () => this.setState({ upConfirm: true }),
       upConfirmOk: () => this.setState({
         upConfirm: false, step: 3, cruSaved: true, cruRuns: this.guardarRun(cru, cli, seqSel ?? Math.max(0, seqLast), me.short),
         toast: cru.nErr
@@ -5884,20 +5891,14 @@ class Component extends DCLogic {
       ],
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
-      liqConfirm: s.liqConfirm, liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
+      liqConfirm: s.liqConfirm, liqSinSub: !!sinSub.length,
+      liqSinSubTxt: sinSub.length === 2 ? 'No se cargaron IVA Ventas ni IVA Compras: débito fiscal, crédito fiscal y retenciones y percepciones se liquidan en 0.' : (sinSub.length ? 'No se cargó ' + sinSub[0] + ': sus importes se liquidan en 0.' : ''),
+      liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       liqConfirmOk: () => {
         if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: 'Para reliquidar ' + cli + ' · ' + perL + ' con la misma secuencia, primero eliminala en Historial de liquidaciones.' } });
-        const R = this.state.real || {}, tiene = k => !!(R[k] && R[k].recs);
-        const falta = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !tiene(k)).map(([, l]) => l);
+        const R = this.state.real || {}, sub = k => R[k] && R[k].recs ? R[k] : { recs: [] };
         const fin = (proc) => setTimeout(() => { if (this.state.step === 4 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
-        if (falta.length) {
-          this.setState({
-            liqConfirm: false, step: 4, proc: 'run', liqRes: null,
-            liqErrTxt: 'Para liquidar hacen falta los subdiarios de IVA Ventas e IVA Compras. ' + (falta.length === 2 ? 'No se cargó ninguno de los dos' : 'Falta ' + falta[0]) + ': cargalo en la carga de archivos y volvé a procesar.'
-          });
-          return fin('error');
-        }
         if (fpTxt) {
           this.setState({
             liqConfirm: false, step: 4, proc: 'run', liqRes: null,
@@ -5906,7 +5907,8 @@ class Component extends DCLogic {
           return fin('error');
         }
         const ahora = this.ahora();
-        const res = Object.assign(this.liqCalc(R.ventas, R.compras, arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
+        const res = Object.assign(this.liqCalc(sub('ventas'), sub('compras'), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
         const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, ult = this.state.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
         const eg = ult ? this.runGrupos(ult) : cru.errGroups;
         const fila = {
