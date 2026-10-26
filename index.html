@@ -754,10 +754,15 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9AA9B7" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"></path></svg>
 </div>
 <div style="min-width:0">
-<div style="font:600 13.5px 'Open Sans'">Arrastrá el archivo o hacé clic para buscarlo</div>
+<div style="font:600 13.5px 'Open Sans'">{{ f.emptyTxt }}</div>
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">Formatos aceptados: {{ f.ext }} — hasta 20 MB</div>
 </div>
+<sc-if value="{{ f.multi }}">
+<input type="file" multiple="{{ f.multi }}" accept="{{ f.accept }}" onChange="{{ f.pick }}" title="Elegí o soltá uno o más archivos" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+</sc-if>
+<sc-if value="{{ f.single }}">
 <input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" title="Elegí o soltá el archivo" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+</sc-if>
 </div>
 </sc-if>
 <sc-if value="{{ f.isDrag }}">
@@ -781,7 +786,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ f.meta }}</div>
 </div>
 <div style="flex:1"></div>
+<sc-if value="{{ f.multi }}">
+<label title="Suma más archivos a los ya cargados" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Agregar<input type="file" multiple="{{ f.multi }}" accept="{{ f.accept }}" onChange="{{ f.add }}" style="display:none"></label>
+<label style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar<input type="file" multiple="{{ f.multi }}" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
+</sc-if>
+<sc-if value="{{ f.single }}">
 <label style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Reemplazar<input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
+</sc-if>
 <button onClick="{{ f.clear }}" style="padding:7px 10px;background:#fff;color:#5A6B7B;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#B3261E;color:#B3261E">Quitar</button>
 </div>
 </sc-if>
@@ -795,7 +806,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E;margin-top:3px">{{ f.errMsg }}</div>
 </div>
 <div style="flex:1"></div>
+<sc-if value="{{ f.multi }}">
+<label style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar<input type="file" multiple="{{ f.multi }}" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
+</sc-if>
+<sc-if value="{{ f.single }}">
 <label style="padding:7px 12px;background:#fff;color:#B3261E;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap">Reemplazar<input type="file" accept="{{ f.accept }}" onChange="{{ f.pick }}" style="display:none"></label>
+</sc-if>
 </div>
 </sc-if>
 </div>
@@ -3431,10 +3447,10 @@ class Component extends DCLogic {
   async crudosSubir(id, R) {
     const sb = this.sb();
     if (!sb || !this._user) return;
-    const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && R[k].file);
+    const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && (R[k].file || R[k].files));
     const malos = [];
-    for (const k of ks) {
-      const f = R[k].file, ruta = dir + '/' + k + '__' + this.fold(f.name).replace(/[^a-z0-9.]+/g, '_');
+    for (const [k, f] of [].concat(...ks.map(k => (R[k].files || [R[k].file]).map(f => [k, f])))) {
+      const ruta = dir + '/' + k + '__' + this.fold(f.name).replace(/[^a-z0-9.]+/g, '_');
       const up = await sb.storage.from('crudos').upload(ruta, f, { upsert: true, contentType: f.type || 'application/octet-stream' }).catch(e => ({ error: e }));
       if (up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
     }
@@ -4833,10 +4849,29 @@ class Component extends DCLogic {
     return this.parseApoc(txt);
   }
 
-  async cargarArchivo(k, e) {
-    const f = e && e.target && e.target.files && e.target.files[0];
+  // Mis Retenciones: varios archivos (por ejemplo, uno por agente o por quincena) se juntan en uno solo. Con sumar = true se agregan a los ya cargados.
+  juntarRetenciones(partes) {
+    const vistos = new Set(), recs = [];
+    let dups = 0;
+    partes.forEach(p => p.recs.forEach(x => {
+      const key = [x.tipo, x.cuit, x.fecha, x.imp, x.comp, x.cert].join('|');
+      if (vistos.has(key)) { dups++; return; }
+      vistos.add(key);
+      recs.push(x);
+    }));
+    return {
+      kind: 'percep', name: partes.map(p => p.name).join(', '), recs, per: this.perMayor(recs.map(x => x.fecha)),
+      omit: partes.reduce((a, p) => a + (p.omit || 0), 0), otros: partes.reduce((a, p) => a + (p.otros || 0), 0), dups, nArch: partes.length,
+      nRet: recs.filter(x => x.tipo === 'ret').length, nPer: recs.filter(x => x.tipo === 'per').length
+    };
+  }
+
+  async cargarArchivo(k, e, sumar) {
+    const fs = e && e.target && e.target.files ? [...e.target.files] : [];
     if (e && e.target) e.target.value = '';
-    if (!f) return;
+    if (!fs.length) return;
+    if (k === 'percep') return this.cargarRetenciones(fs, sumar);
+    const f = fs[0];
     const parse = this.PARSEABLES.includes(k);
     const kb = f.size >= 1048576 ? (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB';
     const setKind = (st, v) => (k === 'compras' ? { dz: v } : { up: Object.assign({}, st.up, { [k]: v }) });
@@ -4872,6 +4907,51 @@ class Component extends DCLogic {
       this.setState(st => Object.assign(setKind(st, 'error'), {
         real: Object.assign({}, st.real, { [k]: null }),
         upErr: Object.assign({}, st.upErr, { [k]: { file: f.name, msg: String(err && err.message || err) } }),
+        upBusy: Object.assign({}, st.upBusy, { [k]: null })
+      }));
+    }
+  }
+
+  async cargarRetenciones(fs, sumar) {
+    const k = 'percep', previo = sumar && this.state.real && this.state.real.percep;
+    const peso = (b) => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+    const primero = (st) => !Object.values(st.real || {}).some(Boolean);
+    const nombres = fs.map(f => f.name).join(', ');
+    this.setState(st => ({ upBusy: Object.assign({}, st.upBusy, { [k]: nombres }), up: Object.assign({}, st.up, { [k]: 'drag' }) }));
+    let actual = '';
+    try {
+      const X = await this.xlsxLib(), partes = previo && previo.partes ? previo.partes.slice() : [];
+      for (const f of fs) {
+        actual = f.name;
+        if (f.size > 20 * 1048576) throw new Error('El archivo pesa ' + peso(f.size) + ': el máximo es 20 MB.');
+        if (partes.some(p => p.name === f.name && p.bytes === f.size)) continue;
+        const p = this.parseRetenciones(f.name, new Uint8Array(await f.arrayBuffer()), X);
+        p.bytes = f.size;
+        Object.defineProperty(p, 'file', { value: f, enumerable: false });
+        partes.push(p);
+      }
+      const data = this.juntarRetenciones(partes);
+      data.size = peso(partes.reduce((a, p) => a + p.bytes, 0));
+      Object.defineProperty(data, 'partes', { value: partes, enumerable: false });
+      Object.defineProperty(data, 'files', { value: partes.map(p => p.file), enumerable: false });
+      this.setState(st => {
+        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' } } : { up: st.up };
+        return Object.assign(reset, {
+          up: Object.assign({}, reset.up, { [k]: 'loaded' }),
+          real: Object.assign({}, st.real, { [k]: data }),
+          upErr: Object.assign({}, st.upErr, { [k]: null }),
+          upBusy: Object.assign({}, st.upBusy, { [k]: null }),
+          cruSaved: false
+        });
+      });
+    } catch (err) {
+      const msg = (fs.length > 1 ? actual + ': ' : '') + String(err && err.message || err);
+      // Si falla un archivo al agregar, se conservan los que ya estaban cargados.
+      if (previo) return this.setState(st => ({ up: Object.assign({}, st.up, { [k]: 'loaded' }), upBusy: Object.assign({}, st.upBusy, { [k]: null }), toast: { kind: 'err', t: 'No se pudo agregar el archivo', d: msg } }));
+      this.setState(st => ({
+        up: Object.assign({}, st.up, { [k]: 'error' }),
+        real: Object.assign({}, st.real, { [k]: null }),
+        upErr: Object.assign({}, st.upErr, { [k]: { file: actual, msg } }),
         upBusy: Object.assign({}, st.upBusy, { [k]: null })
       }));
     }
@@ -5512,7 +5592,7 @@ class Component extends DCLogic {
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
       ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
       ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
-      ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
+      ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4 · se pueden subir varios archivos', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
       ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional · cruce 5', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
       ['ivadig', 'Libro IVA Digital (vista previa)', '.pdf / .jpg / .png', 'Opcional · cruce 6', 'CAZATUR_LIBRO_IVA_DIGITAL_082026.pdf', '120 KB · 1 página', 'El archivo debe ser la vista previa del Libro IVA Digital en PDF o en imagen (JPG, PNG).']
     ];
@@ -5526,7 +5606,7 @@ class Component extends DCLogic {
       const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
       const rmeta = !rf ? '' : rf.size + ' · ' + (rf.attach ? 'adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
         : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos · ' + (rf.ocr ? 'leído como imagen (revisá los importes)' : rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas'))
-        : k === 'percep' ? rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
+        : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : (rf.recs.length - (rf.excl || 0)) + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
       return {
@@ -5538,6 +5618,9 @@ class Component extends DCLogic {
         bd: kind === 'error' ? '#B3261E' : (kind === 'drag' ? '#2F80B7' : '#D5DEE7'),
         bg: kind === 'error' ? '#FDF5F4' : (kind === 'drag' ? '#F4F9FD' : '#FFFFFF'),
         pick: (e) => this.cargarArchivo(k, e),
+        add: (e) => this.cargarArchivo(k, e, true),
+        multi: k === 'percep', single: k !== 'percep',
+        emptyTxt: k === 'percep' ? 'Arrastrá uno o más archivos o hacé clic para buscarlos' : 'Arrastrá el archivo o hacé clic para buscarlo',
         load: setUp(k, 'loaded'),
         clear: () => this.setState(st => Object.assign(k === 'compras' ? { dz: 'empty' } : { up: Object.assign({}, st.up, { [k]: 'empty' }) }, {
           real: Object.assign({}, st.real, { [k]: null }), upErr: Object.assign({}, st.upErr, { [k]: null }), cruSaved: false
