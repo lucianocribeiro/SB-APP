@@ -1066,7 +1066,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <table style="width:100%;border-collapse:collapse;min-width:560px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Concepto</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto / Importe</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
 </tr></thead>
 <tbody>
@@ -1086,7 +1086,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <table style="width:100%;border-collapse:collapse;min-width:560px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Concepto</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto / Importe</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">IVA crédito fiscal</th>
 </tr></thead>
 <tbody>
@@ -4184,6 +4184,8 @@ class Component extends DCLogic {
         ALI.forEach(a => { v[a] = n(a); });
         v.ng = n('exp') + n('exe') + n('nal') + n('ngr');
         v.exp = n('exp'); v.exn = n('exe') + n('nal') + n('ngr'); v.mono = n('mono');
+        v.exe = n('exe'); v.nal = n('nal'); v.ngr = n('ngr');
+        v.iin = n('iin'); v.piibb = n('piibb'); v.potr = n('potr'); v.oreg = n('oreg');
         v.ot = n('iin') + n('piibb') + n('piva') + n('potr') + n('oreg');
         v.piva = n('piva');
         v.tot = n('tot');
@@ -4772,7 +4774,14 @@ class Component extends DCLogic {
     const s1 = r2(cf - df + arr.tec);
     const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
     const aliV = (k) => r2(V.filter(x => x.tc !== 'NC').reduce((a, x) => a + (x.v[k] || 0), 0));
-    const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27') };
+    // Detalle para el "ojito" del historial: cada columna de los subdiarios, separando FC / ND de NC. Se guarda junto a las alícuotas.
+    const K = ['n21', 'i21', 'n105', 'i105', 'n27', 'i27', 'n5', 'i5', 'n25', 'i25', 'n0', 'exe', 'nal', 'ngr', 'exp', 'mono', 'iin', 'piibb', 'piva', 'potr', 'oreg', 'tot'];
+    const tot = (xs) => { const o = { q: xs.length }; K.forEach(k => { const v = r2(xs.reduce((a, x) => a + (x.v[k] || 0), 0)); if (v) o[k] = v; }); return o; };
+    const det = {
+      v: tot(V.filter(x => x.tc !== 'NC')), vNc: tot(V.filter(x => x.tc === 'NC')), c: tot(C.filter(x => x.tc !== 'NC')), cNc: tot(C.filter(x => x.tc === 'NC')),
+      perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
+    };
+    const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27'), det };
     return { df, cf, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, ali, regs: ventas.recs.length + compras.recs.length };
   }
 
@@ -5776,7 +5785,7 @@ class Component extends DCLogic {
     });
     const curRow = (s.liqSaved
       ? [Object.assign({ cliente: s.liqCliN, per: s.liqRes ? s.liqRes.per : '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] },
-        s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp) } : {})]
+        s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp), n: { df: s.liqRes.df, cf: s.liqRes.cf, rp: s.liqRes.rp, s1: s.liqRes.s1, s2: s.liqRes.s2, regs: s.liqRes.regs, ali: s.liqRes.ali } } : {})]
       : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === curRow[0].per && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
     const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
@@ -5956,13 +5965,33 @@ class Component extends DCLogic {
       const nv = (k) => verRow.n ? verRow.n[k] : this.numAr(verRow[k]), rr = (v) => Math.round(v * 100) / 100;
       const df = nv('df'), cf = nv('cf'), rp = nv('rp'), sd = this.saldosDj(histTodas, verRow.cliente, verRow.per, verRow.seq);
       const s1 = sd ? sd.s1 : rr(cf - df), s2 = sd ? sd.s2 : rr(s1 < 0 ? s1 + rp : rp);
-      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0 };
+      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0, perc: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.perc : undefined, ret: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.ret : undefined };
     })() : null;
     const resShow = (s.liqResVer && s.liqRes) || verRes;
     const resV = this.liqResVals(resShow, fmt), resReal = !!resShow;
     const tabsVer = resReal ? tabsDef.filter(([k]) => ['ventas', 'compras', 'retper'].includes(k)) : tabsDef;
     const liqTabVer = resReal && !tabsVer.some(([k]) => k === s.liqTab) ? { ventas: true, compras: false, nc: false, retper: false, alertas: false } : liqTab;
     const filaRes = (c, n, d, b) => ({ c, n, d, b, bgr: b ? '#F5F7FA' : '#FFFFFF', w: b ? '600' : '400' });
+    const det = resShow && resShow.ali && resShow.ali.det;
+    // Detalle de Ventas / Compras: gravado por alícuota (neto e IVA), NC, total, y lo no gravado y otros tributos (sólo neto / importe).
+    const detFilas = (k, src, kNc, lNc, total, lTotal) => {
+      const o = det[k], nc = det[kNc] || {}, m = (v) => this.ars(v || 0), z = (x) => x || 0;
+      const ALI = [['21', 'n21', 'i21'], ['10,5', 'n105', 'i105'], ['27', 'n27', 'i27'], ['5', 'n5', 'i5'], ['2,5', 'n25', 'i25'], ['0', 'n0', '']];
+      const rows = [filaRes('Facturas y notas de débito · ' + src + ' (' + o.q + ' comprobantes)', '', '', 2)];
+      ALI.forEach(([a, n, i], j) => { if (j < 3 || o[n] || o[i]) rows.push(filaRes('Neto gravado ' + a + '%', m(o[n]), i ? m(o[i]) : '—', 0)); });
+      const ngt = ALI.reduce((a, [, n]) => a + z(o[n]), 0), ivt = ALI.reduce((a, [, , i]) => a + (i ? z(o[i]) : 0), 0);
+      rows.push(filaRes('Subtotal gravado', m(ngt), m(ivt), 1));
+      if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
+      rows.push(filaRes(lTotal, '', m(total), 1));
+      rows.push(filaRes('No gravado, exento y otros', '', '', 2));
+      [['Exento', 'exe'], ['No gravado', 'ngr'], ['No alcanzado', 'nal']].concat(k === 'v' ? [['Exportación', 'exp']] : [['Compras a exentos, monotributistas y otros', 'mono']])
+        .forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
+      const otros = [['Percepciones IVA', 'piva'], ['Percepciones IIBB', 'piibb'], ['Otras percepciones', 'potr'], ['Impuestos internos', 'iin'], ['Otros regímenes especiales', 'oreg']].filter(([, f]) => k === 'c' || o[f]);
+      if (otros.length) rows.push(filaRes('Otros tributos', '', '', 2));
+      otros.forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
+      rows.push(filaRes('Total comprobantes (FC / ND)', m(o.tot), '', 1));
+      return rows.map(r => r.b === 2 ? Object.assign(r, { bgr: '#EEF3F8', w: '600', c: r.c.toUpperCase() }) : r);
+    };
     return {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
@@ -6183,8 +6212,8 @@ class Component extends DCLogic {
         { label: 'Saldo 1° párrafo', value: '-1.738.389,40', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' },
         { label: 'Saldo 2° párrafo', value: '-1.632.105,25', tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
       ],
-      ventasRows: resReal ? (resShow.ali ? [['IVA 21%', 'a21'], ['IVA 10,5%', 'a105'], ['IVA 27%', 'a27']].map(([c, k]) => filaRes(c, '—', this.ars(resShow.ali[k] || 0), 0)) : [])
-        .concat([filaRes('Total débito fiscal', '—', this.ars(resShow.df), 1)]) : [
+      ventasRows: resReal ? (det ? detFilas('v', 'IVA Ventas', 'cNc', 'notas de crédito recibidas (IVA Compras)', resShow.df, 'Total débito fiscal') : (resShow.ali ? [['IVA 21%', 'a21'], ['IVA 10,5%', 'a105'], ['IVA 27%', 'a27']].map(([c, k]) => filaRes(c, '—', this.ars(resShow.ali[k] || 0), 0)) : [])
+        .concat([filaRes('Total débito fiscal', '—', this.ars(resShow.df), 1)])) : [
         { c: 'Neto gravado 21%', n: '18.950.000,00', d: '3.979.500,00', b: 0 },
         { c: 'Neto gravado 10,5%', n: '1.680.000,00', d: '176.400,00', b: 0 },
         { c: 'Neto gravado 27%', n: '35.508,15', d: '9.587,20', b: 0 },
@@ -6200,7 +6229,7 @@ class Component extends DCLogic {
         { c: 'Otras percepciones', n: '4.118,00', d: '—', b: 0 },
         { c: 'Regímenes especiales', n: '—', d: '—', b: 0 }
       ].map(r => Object.assign({}, r, { bgr: r.b ? '#F5F7FA' : '#FFFFFF', w: r.b ? '600' : '400' })),
-      comprasRows: resReal ? [filaRes('Total crédito fiscal', '—', this.ars(resShow.cf), 1)] : [
+      comprasRows: resReal ? (det ? detFilas('c', 'IVA Compras', 'vNc', 'notas de crédito emitidas (IVA Ventas)', resShow.cf, 'Total crédito fiscal') : [filaRes('Total crédito fiscal', '—', this.ars(resShow.cf), 1)]) : [
         { c: 'Neto gravado 21%', n: '11.204.900,00', d: '2.353.029,00', b: 0 },
         { c: 'Neto gravado 10,5%', n: '780.000,00', d: '81.900,00', b: 0 },
         { c: 'Neto gravado 27%', n: '35.508,15', d: '9.587,20', b: 0 },
@@ -6218,9 +6247,9 @@ class Component extends DCLogic {
         { g: 'NC de compras', c: '27%', n: '—', d: '—' }
       ],
       retRows: resReal ? (resShow.perc !== undefined ? [
-        { c: 'Percepciones IVA (IVA Compras)', q: '—', i: this.ars(resShow.perc) },
-        { c: 'Retenciones IVA CR (IVA Ventas)', q: '—', i: this.ars(resShow.ret) }
-      ] : []).concat([{ c: 'Total', q: '—', i: this.ars(resShow.rp) }]) : [
+        { c: 'Retenciones de IVA sufridas (CR de IVA Ventas del período)', q: det ? String(det.qRet) : '—', i: this.ars(resShow.ret) },
+        { c: 'Percepciones de IVA sufridas (columna Percepciones IVA de IVA Compras)', q: det ? String(det.qPerc) : '—', i: this.ars(resShow.perc) }
+      ] : []).concat([{ c: 'Total retenciones y percepciones', q: det ? String(det.qRet + det.qPerc) : '—', i: this.ars(resShow.rp) }]) : [
         { c: 'Retención IVA RG 2854', q: '3', i: '42.180,00' },
         { c: 'Percepción IVA RG 3337', q: '12', i: '38.904,15' },
         { c: 'Percepción IIBB CABA', q: '9', i: '25.200,00' },
