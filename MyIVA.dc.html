@@ -1001,6 +1001,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Quedó en estado <b style="font-weight:600;color:#1B2733">Borrador</b> en el Historial de liquidaciones: desde ahí podés cerrarla o eliminarla.</div>
 <div style="display:flex;gap:10px;margin-top:6px">
+<button onClick="{{ liqOtra }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Nueva liquidación</button>
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
 <button onClick="{{ verResultadoReal }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
 </div>
@@ -2857,7 +2858,7 @@ class Component extends DCLogic {
     liqs.forEach(r => {
       if (r.estado === 'Cerrada') liqEst[r.id] = 'Cerrada';
       if (r.borrada) bor[r.id] = 1;
-      if (!(r.registros > 0)) return;
+      if (!(r.registros > 0) && !(r.alicuotas && r.alicuotas.det)) return;
       const n = { df: Number(r.debito), cf: Number(r.credito), rp: Number(r.retenciones), s1: Number(r.saldo1), s2: Number(r.saldo2), regs: r.registros };
       if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
       if (r.alicuotas && r.alicuotas.a21 !== undefined) n.ali = r.alicuotas;
@@ -6000,10 +6001,17 @@ class Component extends DCLogic {
         fg: s.step >= n ? '#FFFFFF' : '#5A6B7B',
         bd: s.step === n ? '#14395C' : (s.step > n ? '#2E7D5B' : '#D5DEE7'),
         lfg: s.step === n ? '#14395C' : '#5A6B7B',
-        go: n > 1 && (seqPisa || seqSel === null) && s.step === 1 ? () => this.setState({ toast: { kind: 'err', t: 'Elegí una secuencia disponible', d: 'La secuencia elegida ya está liquidada. Para reliquidarla, primero eliminala en Historial de liquidaciones.' } }) : this.tset('step', n)
+        // Los pasos se recorren en orden: desde arriba sólo se puede volver atrás. Una vez procesada la liquidación no se reabre: se empieza otra desde el paso 1.
+        go: s.step === 4 && s.proc !== 'error'
+          ? (n === 4 ? () => { } : () => this.setState({ toast: s.proc === 'done'
+            ? { kind: 'warn', t: 'La liquidación ya se procesó', d: 'No se puede reabrir. Para cargar saldos o archivos distintos, iniciá una nueva liquidación desde el paso 1 (se genera la secuencia siguiente).' }
+            : { kind: 'warn', t: 'Procesando la liquidación', d: 'Esperá a que termine.' } }))
+          : n > s.step ? () => this.setState({ toast: { kind: 'warn', t: 'Seguí los pasos en orden', d: 'Usá el botón de cada paso para pasar al siguiente.' } })
+          : this.tset('step', n)
       })),
       stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4 },
       stepNext: () => this.setState(st => ({ step: Math.min(4, st.step + 1) })),
+      liqOtra: () => this.setState(Object.assign(this.liqVacia(), { seqElegida: null })),
       stepPrev: () => this.setState(st => ({ step: Math.max(1, st.step - 1) })),
       upFiles, upLoaded, upCountLabel, upConfirm: s.upConfirm, upHay: upLoaded.length > 0, upNinguno: !upLoaded.length,
       openUpConfirm: () => this.setState({ upConfirm: true }),
@@ -6049,6 +6057,8 @@ class Component extends DCLogic {
         const ahora = this.ahora();
         // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
         const res = Object.assign(this.liqCalc(sub('ventas'), sub('compras'), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        // Cada liquidación es una fila nueva del historial: si ya hay una con el mismo id (por ejemplo, una eliminada ese mismo día), se le agrega la hora.
+        if ((this.state.liqsDb || []).some(r => r.id === cli + '|' + perL + '|' + seqSel + '|' + res.fecha)) res.fecha = ahora + ':' + String(new Date().getSeconds()).padStart(2, '0');
         const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, ult = this.state.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
         const eg = ult ? this.runGrupos(ult) : cru.errGroups;
         const fila = {
