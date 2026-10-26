@@ -2024,65 +2024,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 </sc-if>
-<sc-if value="{{ cfgTab.exp }}">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px;max-width:760px">
-<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Nomenclatura de archivos</div>
-<input value="{cliente}_{proceso}_{periodo}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
-<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:7px">Variables disponibles: {cliente} · {cuit} · {proceso} · {periodo} · {fecha} · {usuario}</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:12px">Ejemplo: <span style="font-weight:600;color:#1B2733">CAZATUR_SA_LIQUIDACION_082026.xlsx</span></div>
-<div style="height:1px;background:#E3E8EE;margin:20px 0"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Formato por defecto de reportes</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Excel (.xlsx)</option><option>PDF</option></select>
-</div>
-<div>
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Hoja por cliente</div>
-<select style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><option>Una hoja por cliente</option><option>Todo en una hoja</option></select>
-</div>
-</div>
-<div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
-<button onClick="{{ toastXls }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Guardar cambios</button>
-</div>
-</div>
-</sc-if>
-<sc-if value="{{ cfgTab.ddjj }}">
-<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap">
-<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;max-width:620px">Borrá registros de declaraciones juradas procesadas. El registro deja de figurar en el historial de liquidaciones y en la ficha del cliente, y la secuencia vuelve a quedar disponible. Cada borrado queda registrado en auditoría con su motivo.</div>
-<input value="{{ ddjjQ }}" onChange="{{ ddjjQSet }}" placeholder="Buscar cliente, período o usuario" style="width:280px;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:900px">
-<thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Procesada</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Usuario</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acción</th>
-</tr></thead>
-<tbody>
-<sc-if value="{{ ddjjVacio }}">
-<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay declaraciones juradas que coincidan con la búsqueda.</td></tr>
-</sc-if>
-<sc-for list="{{ ddjjFilas }}" as="r" hint-placeholder-count="6">
-<tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.user }}</td>
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }};white-space:nowrap">{{ r.st.label }}</span></td>
-<td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right"><span onClick="{{ r.borrar }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">Borrar</span></td>
-</tr>
-</sc-for>
-</tbody>
-</table>
-</div>
-</sc-if>
 <sc-if value="{{ cfgTab.apoc }}">
 <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
@@ -2627,7 +2568,7 @@ class Component extends DCLogic {
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
-    ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', ddjjQ: '', audExtra: [],
+    ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
@@ -5983,18 +5924,6 @@ class Component extends DCLogic {
       seqPrevFecha: s.liqSaved ? fechaHoraN : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
       seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + ultFecha + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
-      ddjjQ: s.ddjjQ, ddjjQSet: (e) => this.setState({ ddjjQ: e.target.value }),
-      ddjjFilas: (() => {
-        const q = this.fold(s.ddjjQ.trim());
-        return histFilas.filter(r => r.df !== '—' && (!q || this.fold(r.cliente + ' ' + r.per + ' ' + r.user).includes(q))).map(r => {
-          const id = rid(r), label = r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq);
-          return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
-            st: E[r.est],
-            borrar: () => this.setState({ ddjjDel: { id, label, cliente: r.cliente, per: r.per, seq: r.seq, fecha: r.fecha }, ddjjMotivo: '' })
-          });
-        });
-      })(),
-      ddjjVacio: !histFilas.some(r => r.df !== '—' && (!s.ddjjQ.trim() || this.fold(r.cliente + ' ' + r.per + ' ' + r.user).includes(this.fold(s.ddjjQ.trim())))),
       ddjjDelOpen: !!s.ddjjDel, ddjjDelLabel: s.ddjjDel ? s.ddjjDel.label : '',
       ddjjDelSub: s.ddjjDel ? 'Procesada el ' + s.ddjjDel.fecha : '',
       ddjjMotivo: s.ddjjMotivo, ddjjMotivoSet: (e) => this.setState({ ddjjMotivo: e.target.value }),
@@ -6300,7 +6229,7 @@ class Component extends DCLogic {
 
   miscVals() {
     const s = this.state;
-    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['exp', 'Exportaciones'], ['ddjj', 'Declaraciones juradas'], ['apoc', 'Base APOC']];
+    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['apoc', 'Base APOC']];
     const paresAct = () => [].concat(...this.CARTERA.map(([u, cs]) => cs.map(c => [u, c])));
     const aplicar = (r, origen) => {
       if (!r.pares.length) return this.setState({ toast: { kind: 'err', t: 'No se encontraron asignaciones', d: 'Hacen falta dos columnas: Usuario y Cliente (una fila por cliente).' } });
