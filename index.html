@@ -835,16 +835,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px">
-<sc-for list="{{ cruKpis }}" as="k" hint-placeholder-count="4">
-<div style="border:1px solid #E3E8EE;border-radius:6px;padding:14px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
-<div style="font:600 24px/1 'Open Sans';margin-top:9px;color:{{ k.color }};font-variant-numeric:tabular-nums">{{ k.value }}</div>
-</div>
-</sc-for>
-</div>
-
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin:22px 0 10px">Cruces del período</div>
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin:0 0 10px">Cruces del período</div>
 
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:flex-start;gap:12px">
@@ -6031,12 +6022,6 @@ class Component extends DCLogic {
       })),
       cruRows: cru.rows, cruArr: cru.arrastre,
       cruRep: cru.reales.length ? () => this.descargarReporte(cru.reales.map(f => f()), cli) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
-      cruKpis: [
-        { label: 'Cruces procesados', value: (cru.done.length + 1) + ' de ' + (cru.rows.length + 1), color: '#1B2733' },
-        { label: 'Registros cruzados', value: cru.tot.regs, color: '#1B2733' },
-        { label: 'Con diferencias o alertas', value: String(cru.tot.dif - cru.tot.falt), color: cru.tot.dif - cru.tot.falt ? '#B7791F' : '#2E7D5B' },
-        { label: 'Faltantes', value: String(cru.tot.falt), color: cru.tot.falt ? '#B3261E' : '#2E7D5B' }
-      ],
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm, liqSinSub: !!sinSub.length,
