@@ -4118,6 +4118,13 @@ class Component extends DCLogic {
 
   cuitTxt(v) { return String(typeof v === 'number' ? Math.round(v) : (v == null ? '' : v)).replace(/\D/g, ''); }
 
+  // Registros de un archivo que no son del período que se liquida (el que eligió el usuario). Compras / recibidos sólo cuentan los posteriores.
+  fueraDelPer(k, data) {
+    if (!data || !data.recs) return 0;
+    const perK = (p) => p.slice(3) + p.slice(0, 2), pk = perK(this.perLiq()), hasta = k === 'compras' || k === 'recibidos';
+    return data.recs.filter(x => !x.excl && x.fecha).filter(x => { const q = perK(x.fecha.slice(3)); return hasta ? q > pk : q !== pk; }).length;
+  }
+
   perMayor(fechas) {
     const pers = {};
     fechas.forEach(f => { const k = f.slice(3); pers[k] = (pers[k] || 0) + 1; });
@@ -4174,7 +4181,7 @@ class Component extends DCLogic {
         t = this.tipoLibro(g('tc'), g('letra'));
         v = {};
         ALI.forEach(a => { v[a] = n(a); });
-        v.ng = n('exp') + n('exe') + n('nal') + n('ngr');
+        v.ng = n('exe') + n('nal') + n('ngr'); // la exportación va aparte (v.exp)
         v.exp = n('exp'); v.exn = n('exe') + n('nal') + n('ngr'); v.mono = n('mono');
         v.exe = n('exe'); v.nal = n('nal'); v.ngr = n('ngr');
         v.iin = n('iin'); v.piibb = n('piibb'); v.potr = n('potr'); v.oreg = n('oreg');
@@ -5252,8 +5259,13 @@ class Component extends DCLogic {
     const inc = [];
     if (enReal) {
       const L = this.UP_LBL, P = this.PARSEABLES.filter(k => R[k] && !R[k].attach);
-      const PP = P.concat(['percep', 'aduana', 'ivadig'].filter(k => R[k] && R[k].per));
-      if (new Set(PP.map(k => R[k].per)).size > 1) inc.push({ t: 'Los archivos corresponden a períodos distintos: ' + PP.map(k => L[k] + ' ' + R[k].per).join(' · ') + '.' });
+      // Se controla contra el período que se liquida. IVA Ventas / IVA Compras ya bloquean la liquidación si tienen comprobantes de otro período.
+      const perL = this.perLiq();
+      P.filter(k => k !== 'ventas' && k !== 'compras').concat(['percep', 'aduana'].filter(k => R[k])).forEach(k => {
+        const n = this.fueraDelPer(k, R[k]);
+        if (n) inc.push({ t: L[k] + ' tiene ' + n + (n === 1 ? ' registro' : ' registros') + (k === 'recibidos' ? (n === 1 ? ' posterior' : ' posteriores') + ' al período ' : (n === 1 ? ' que no es' : ' que no son') + ' del período ') + perL + ' que se liquida.' });
+      });
+      if (R.ivadig && R.ivadig.per && R.ivadig.per !== perL) inc.push({ t: 'La vista previa del Libro IVA Digital es del período ' + R.ivadig.per + ' y se está liquidando ' + perL + '.' });
       const props = P.filter(k => R[k].propio);
       if (new Set(props.map(k => R[k].propio)).size > 1) inc.push({ t: 'Los archivos de ARCA son de CUITs distintos: ' + props.map(k => L[k] + ' ' + this.cuitFmt(R[k].propio)).join(' · ') + '.' });
       P.concat(['percep', 'aduana'].filter(k => R[k])).forEach(k => { if (R[k].omit) inc.push({ t: R[k].omit + (R[k].omit === 1 ? ' fila' : ' filas') + ' de ' + L[k] + ' sin fecha válida no se tomaron en cuenta.' }); });
@@ -5603,13 +5615,14 @@ class Component extends DCLogic {
       else this.setState(st => ({ up: Object.assign({}, st.up, { [k]: v }) }));
     };
     const RF = s.real || {};
+    const fueraTxt = (k, rf) => { const n = this.fueraDelPer(k, rf); return n ? ' · ' + n + (n === 1 ? ' registro' : ' registros') + (k === 'compras' || k === 'recibidos' ? ' posteriores al ' : ' fuera de ') + this.perLiq() : ''; };
     const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
       const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
       const rmeta = !rf ? '' : rf.size + ' · ' + (rf.attach ? 'adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
         : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos · ' + (rf.ocr ? 'leído como imagen (revisá los importes)' : rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas'))
-        : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
-        : k === 'aduana' ? rf.recs.length + ' percepciones · período ' + rf.per + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
-        : (rf.recs.length - (rf.excl || 0)) + ' comprobantes · período ' + rf.per + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
+        : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
+        : k === 'aduana' ? rf.recs.length + ' percepciones' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
+        : (rf.recs.length - (rf.excl || 0)) + ' comprobantes' + fueraTxt(k, rf) + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
       return {
         n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
         errFile: ue ? ue.file : file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
