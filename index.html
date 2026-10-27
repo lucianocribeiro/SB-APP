@@ -5639,7 +5639,7 @@ class Component extends DCLogic {
     });
     const upLoaded = upFiles.filter(f => f.isLoaded).map(f => ({ label: f.label, file: f.file }));
     const upCountLabel = upLoaded.length === 1 ? '1 de ' + upDef.length + ' archivos cargado' : upLoaded.length + ' de ' + upDef.length + ' archivos cargados';
-    const tabsDef = [['ventas', 'Ventas'], ['compras', 'Compras'], ['nc', 'Notas de crédito'], ['retper', 'Retenciones y percepciones'], ['alertas', 'Alertas']];
+    const tabsDef = [['ventas', 'Débito Fiscal'], ['compras', 'Crédito Fiscal'], ['nc', 'Notas de crédito'], ['retper', 'Retenciones y Percepciones'], ['alertas', 'Alertas']];
     const liqTab = {};
     tabsDef.forEach(([k]) => { liqTab[k] = s.liqTab === k; });
 
@@ -5984,7 +5984,7 @@ class Component extends DCLogic {
       rows.push(filaRes('Subtotal gravado', m(ngt), m(ivt), 1));
       if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
       rows.push(filaRes(lTotal, '', m(total), 1));
-      rows.push(filaRes('No gravado, exento y otros', '', '', 2));
+      rows.push(filaRes('No gravado, exento y otros (' + src + ')', '', '', 2));
       [['Exento', 'exe'], ['No gravado', 'ngr'], ['No alcanzado', 'nal']].concat(k === 'v' ? [['Exportación', 'exp']] : [['Compras a exentos, monotributistas y otros', 'mono']])
         .forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
       const otros = [['Percepciones IVA', 'piva'], ['Percepciones IIBB', 'piibb'], ['Otras percepciones', 'potr'], ['Impuestos internos', 'iin'], ['Otros regímenes especiales', 'oreg']].filter(([, f]) => k === 'c' || o[f]);
