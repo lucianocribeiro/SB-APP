@@ -4664,13 +4664,21 @@ class Component extends DCLogic {
         if (xs.length >= cant) v[k] = cant === 3 ? { neto: xs[0], exn: xs[1], iva: xs[2] } : xs[0];
       }
     });
+    // Presentación ya enviada (portal de ARCA): trae además los totales para la DJ.
+    const tot = {};
+    [['tdf', /^total del debito fiscal\b/], ['tcf', /^total del credito fiscal\b/]].forEach(([k, re]) => {
+      const i = L.findIndex(l => re.test(l));
+      if (i >= 0) { const xs = nums(L[i].replace(re, '')); if (xs.length) tot[k] = xs[0]; }
+    });
     let per = '';
-    const mp = todo.match(/vista previa\s*\|?\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/periodo[^0-9]{0,25}(\d{2})\s*\/\s*(\d{4})/);
-    // Con OCR el período no es confiable (confunde dígitos): no se toma.
-    if (mp && +mp[1] >= 1 && +mp[1] <= 12 && !pdf.ocr) per = mp[1] + '/' + mp[2];
+    const mp = todo.match(/vista previa\s*\|?\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/presentacion\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/periodo[^0-9]{0,25}(\d{2})\s*\/\s*(\d{4})/);
+    // Con OCR un dígito puede leerse mal (09/2026 → 09/2076): sólo se toma si el año es razonable.
+    const anioOk = (a) => a >= 2015 && a <= new Date().getFullYear() + 1;
+    if (mp && +mp[1] >= 1 && +mp[1] <= 12 && (!pdf.ocr || anioOk(+mp[2]))) per = mp[1] + '/' + mp[2];
     const encontrados = Object.keys(v).length;
+    Object.assign(v, tot);
     if (!encontrados) throw new Error('No se encontraron los totales del Libro IVA Digital (Operaciones de Ventas, Operaciones de Compras…). Verificá que sea la vista previa y que se lea con claridad.');
-    return { kind: 'ivadig', name, v, per, encontrados, paginas: pdf.paginas };
+    return { kind: 'ivadig', name, v, per, encontrados, totDj: Object.keys(tot).length, paginas: pdf.paginas };
   }
 
   cruzarLibro(lib, ventas, compras) {
@@ -4699,6 +4707,10 @@ class Component extends DCLogic {
     fila('cRes', '', lib.v.cRes, S.cNc.iva, 'IVA Compras · crédito fiscal de NC');
     fila('vAj', '', lib.v.vAj, 0, 'Sin ajustes en el subdiario');
     fila('cAj', '', lib.v.cAj, 0, 'Sin ajustes en el subdiario');
+    // Sólo en la presentación enviada: totales para la DJ contra el débito y crédito de la liquidación.
+    L.tdf = 'Total del Débito Fiscal (DJ)'; L.tcf = 'Total del Crédito Fiscal (DJ)';
+    if (lib.v.tdf !== undefined) fila('tdf', '', lib.v.tdf, r2(S.vOp.iva + S.cNc.iva), 'IVA Ventas (FC / ND) + NC de IVA Compras');
+    if (lib.v.tcf !== undefined) fila('tcf', '', lib.v.tcf, r2(S.cOp.iva + S.vNc.iva), 'IVA Compras (FC / ND) + NC de IVA Ventas');
     return { filas, per: lib.per };
   }
 
@@ -5765,7 +5777,7 @@ class Component extends DCLogic {
     const upFiles = upDef.map(([k, label, ext, hint, file, meta, errMsg], i) => {
       const kind = upState(k), rf = RF[k], ue = s.upErr && s.upErr[k], busy = s.upBusy && s.upBusy[k];
       const rmeta = !rf ? '' : rf.size + ' · ' + (rf.attach ? 'adjunto (el cruce de este archivo todavía usa datos de ejemplo)'
-        : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos · ' + (rf.ocr ? 'leído como imagen (revisá los importes)' : rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas'))
+        : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos' + (rf.totDj ? ' + totales para la DJ' : '') + ' · ' + (rf.ocr ? 'leído como imagen (revisá los importes)' : rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas'))
         : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : (rf.recs.length - (rf.excl || 0)) + ' comprobantes' + fueraTxt(k, rf) + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
