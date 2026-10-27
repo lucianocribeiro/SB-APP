@@ -679,6 +679,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 </div>
 </div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:12px;font:400 12.5px/1.45 'Open Sans';color:#5A6B7B">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2" stroke-linecap="round" style="flex:none"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+<span>{{ vencCliTxt }}</span>
+</div>
 <div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
 <div style="flex:1">
@@ -2029,6 +2033,40 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 </sc-if>
+<sc-if value="{{ cfgTab.venc }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
+<div style="font:600 14.5px 'Open Sans'">Agenda de vencimientos de IVA</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Fechas de presentación de la DJ de IVA / Libro IVA Digital de cada período, según la terminación del CUIT. Se carga una vez por año desde un Excel y la ven todos los usuarios.</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Períodos cargados</div><div style="font:600 15px 'Open Sans';margin-top:7px">{{ vencN }}</div></div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Última carga</div><div style="font:600 13px 'Open Sans';margin-top:7px">{{ vencFecha }}</div></div>
+</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#5A6B7B;margin-top:8px">{{ vencOrigen }}</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #E3E8EE">
+<label style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Cargar Excel<input type="file" accept=".xls,.xlsx,.csv" onChange="{{ vencArchivo }}" style="display:none"></label>
+<button onClick="{{ vencPlantilla }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Descargar plantilla</button>
+</div>
+<div style="font:400 12px/1.5 'Open Sans';color:#9AA9B7;margin-top:10px">El Excel lleva una fila por período: <b style="color:#5A6B7B">Período</b> (por ejemplo 08/2026) y las fechas de vencimiento para CUIT terminados en <b style="color:#5A6B7B">0 y 1, 2 y 3, 4 y 5, 6 y 7, 8 y 9</b> (dd/mm/aaaa o 18-sep). También se puede pegar la tabla tal como la publica ARCA. Los períodos que ya estaban se actualizan y el resto se conserva.</div>
+</div>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:520px">
+<thead><tr>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
+<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">0 y 1</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">2 y 3</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">4 y 5</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">6 y 7</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:9px 12px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">8 y 9</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{ vencFilas }}" as="v" hint-placeholder-count="12">
+<tr style="background:{{ v.bg }}">
+<td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;font-weight:600">{{ v.per }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;text-align:right">{{ v.d0 }}</td><td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;text-align:right">{{ v.d1 }}</td><td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;text-align:right">{{ v.d2 }}</td><td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;text-align:right">{{ v.d3 }}</td><td style="font:400 13px 'Open Sans';padding:8px 12px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;text-align:right">{{ v.d4 }}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+</sc-if>
 <sc-if value="{{ cfgTab.apoc }}">
 <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
@@ -2577,7 +2615,7 @@ class Component extends DCLogic {
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
-    apoc: this.apocInit(), apocRun: false, apocQ: '',
+    apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.lsGet('myiva.venc', null) || this.vencDef(),
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
@@ -2825,8 +2863,11 @@ class Component extends DCLogic {
       }
     }
 
+    const cv = cfg.find(c => c.clave === 'vencimientos');
+    const venc = cv && cv.valor && cv.valor.pers ? this.lsSet('myiva.venc', cv.valor) : s.venc;
+
     this._sync = z;
-    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc };
+    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc };
   }
 
   // Lee todas las filas de una tabla, de a 1000 (Supabase devuelve como máximo 1000 por consulta), de la más nueva a la más vieja.
@@ -3787,6 +3828,12 @@ class Component extends DCLogic {
     const txt = s.perAnioTxt, malo = txt !== null && txt.length === 4;
     return {
       perLabel: s.liqMes + ' — ' + MES[+s.liqMes - 1] + ' ' + s.liqAnio,
+      vencCliTxt: (() => {
+        const per = this.perLiq(), cli = this.liqCli(), cuit = this.cuitCli(cli), f = ((s.venc || {}).pers || {})[per];
+        if (!f) return 'Sin agenda de vencimientos para ' + per + ': cargala en Configuración → Vencimientos.';
+        if (!cuit) return 'Vencimiento de ' + per + ': del ' + f[0] + ' al ' + f[4] + ' según terminación de CUIT (falta el CUIT de ' + cli + ' para saber el día exacto).';
+        return 'Vencimiento de presentación de ' + per + ': ' + this.vencDe(per, cuit) + ' (CUIT ' + cuit + ', terminado en ' + cuit.replace(/\D/g, '').slice(-1) + ').';
+      })(),
       perOpen: s.perOpen, perBd: s.perOpen ? '#2F80B7' : '#E3E8EE', perVista: String(vista),
       perAnioTxt: txt === null ? String(vista) : txt,
       perAnioBd: malo ? '#B3261E' : (txt !== null ? '#2F80B7' : '#E3E8EE'),
@@ -4121,6 +4168,81 @@ class Component extends DCLogic {
     if (!data || !data.recs) return 0;
     const perK = (p) => p.slice(3) + p.slice(0, 2), pk = perK(this.perLiq()), hasta = k === 'compras' || k === 'recibidos';
     return data.recs.filter(x => !x.excl && x.fecha).filter(x => { const q = perK(x.fecha.slice(3)); return hasta ? q > pk : q !== pk; }).length;
+  }
+
+  // Agenda de vencimientos de IVA: { pers: { 'mm/aaaa': [dd/mm/aaaa × 5 (CUIT 0-1, 2-3, 4-5, 6-7, 8-9)] }, fecha, origen }.
+  // Viene precargada con la agenda 2026 publicada por ARCA; se reemplaza / amplía desde Configuración → Vencimientos.
+  vencDef() {
+    const t = { '12/2025': '19/01/2026 20/01/2026 21/01/2026 22/01/2026 23/01/2026', '01/2026': '18/02/2026 19/02/2026 20/02/2026 23/02/2026 24/02/2026',
+      '02/2026': '18/03/2026 19/03/2026 20/03/2026 23/03/2026 25/03/2026', '03/2026': '20/04/2026 21/04/2026 22/04/2026 23/04/2026 24/04/2026',
+      '04/2026': '18/05/2026 19/05/2026 20/05/2026 21/05/2026 22/05/2026', '05/2026': '18/06/2026 19/06/2026 22/06/2026 23/06/2026 24/06/2026',
+      '06/2026': '20/07/2026 21/07/2026 22/07/2026 23/07/2026 24/07/2026', '07/2026': '18/08/2026 19/08/2026 20/08/2026 21/08/2026 24/08/2026',
+      '08/2026': '18/09/2026 21/09/2026 22/09/2026 23/09/2026 24/09/2026', '09/2026': '19/10/2026 20/10/2026 21/10/2026 22/10/2026 23/10/2026',
+      '10/2026': '18/11/2026 19/11/2026 20/11/2026 24/11/2026 25/11/2026', '11/2026': '18/12/2026 21/12/2026 22/12/2026 23/12/2026 24/12/2026' };
+    const pers = {};
+    Object.keys(t).forEach(k => { pers[k] = t[k].split(' '); });
+    return { pers, fecha: '', origen: 'Agenda 2026 precargada en la app (períodos 12/2025 a 11/2026)' };
+  }
+
+  FISCAL_DEMO = {
+    'CAZATUR SA': { cuit: '30-71234567-8', cond: 'Responsable Inscripto', per: '08/2026' },
+    'DACKET SA': { cuit: '30-70998877-2', cond: 'Responsable Inscripto', per: '08/2026' },
+    'DASYC SRL': { cuit: '33-69887766-9', cond: 'Responsable Inscripto', per: '08/2026' },
+    'NOVALUX S.A.': { cuit: '30-71559900-4', cond: 'Responsable Inscripto', per: '08/2026' },
+    'FIDEICOMISO PAMPA PILAR': { cuit: '30-71802233-1', cond: 'Responsable Inscripto', per: '07/2026' },
+    'RODIALE SA': { cuit: '33-70445566-3', cond: 'Exento', per: '07/2026' },
+    'IDEA 2 SA': { cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026' }
+  };
+
+  cuitCli(rz) { const f = (this.state.cliFiscal || {})[rz] || this.FISCAL_DEMO[rz]; return f && f.cuit && f.cuit !== '—' ? f.cuit : ''; }
+
+  MESES_AB = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+  // Período de una celda: 08/2026, 8-2026, fecha de Excel o "Agosto 2026 y pago diferido…".
+  vencPer(v) {
+    const p = (n) => String(n).padStart(2, '0');
+    if (v instanceof Date && !isNaN(v)) return p(v.getMonth() + 1) + '/' + v.getFullYear();
+    if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return p(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+    const t = this.fold(v == null ? '' : v).trim();
+    let m = t.match(/^(\d{1,2})\s*[\/\-.]\s*(\d{4})$/);
+    if (m && +m[1] >= 1 && +m[1] <= 12) return p(m[1]) + '/' + m[2];
+    m = t.match(/^(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s+(?:de\s+)?(\d{4})/);
+    if (m) return p(['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'].indexOf(m[1] === 'setiembre' ? 'septiembre' : m[1]) + 1) + '/' + m[2];
+    return '';
+  }
+
+  // Fecha de vencimiento de una celda (dd/mm/aaaa, fecha de Excel o "18-sep"); sin año, se toma el siguiente al período.
+  vencFecha(v, per) {
+    const f = this.fechaTxt(v);
+    if (f) return f;
+    const m = this.fold(v == null ? '' : v).trim().match(/^(\d{1,2})\s*[-\/ ]\s*([a-z]{3})/);
+    if (!m || !per) return '';
+    const mes = this.MESES_AB.indexOf(m[2]) + 1;
+    if (!mes) return '';
+    const pm = +per.slice(0, 2), pa = +per.slice(3);
+    return String(m[1]).padStart(2, '0') + '/' + String(mes).padStart(2, '0') + '/' + (mes < pm ? pa + 1 : pa);
+  }
+
+  parseVenc(aoa) {
+    const pers = {};
+    let pend = '';
+    aoa.forEach(r => {
+      const celdas = (r || []).filter(x => x !== null && x !== '');
+      if (!celdas.length) return;
+      const per = this.vencPer(celdas[0]) || this.vencPer(String(celdas[0]).split(/\s+y\s+pago/i)[0]);
+      const resto = per ? celdas.slice(1) : celdas;
+      const ref = per || pend;
+      const fechas = resto.map(x => this.vencFecha(x, ref)).filter(Boolean);
+      if (ref && fechas.length >= 5) { pers[ref] = fechas.slice(0, 5); pend = ''; }
+      else if (per) pend = per;   // tabla de ARCA: el período va en una fila y las fechas en la siguiente ("IVA 18-sep …")
+    });
+    return pers;
+  }
+
+  // Vencimiento de un período para un CUIT (según su último dígito); '' si no hay agenda o CUIT.
+  vencDe(per, cuit) {
+    const v = (this.state.venc || {}).pers || {}, f = v[per], d = String(cuit || '').replace(/\D/g, '');
+    return f && d.length === 11 ? f[Math.floor(+d[10] / 2)] : '';
   }
 
   perMayor(fechas) {
@@ -5364,15 +5486,7 @@ class Component extends DCLogic {
 
     const owner = {};
     this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
-    const fiscal = {
-      'CAZATUR SA': { cuit: '30-71234567-8', cond: 'Responsable Inscripto', per: '08/2026' },
-      'DACKET SA': { cuit: '30-70998877-2', cond: 'Responsable Inscripto', per: '08/2026' },
-      'DASYC SRL': { cuit: '33-69887766-9', cond: 'Responsable Inscripto', per: '08/2026' },
-      'NOVALUX S.A.': { cuit: '30-71559900-4', cond: 'Responsable Inscripto', per: '08/2026' },
-      'FIDEICOMISO PAMPA PILAR': { cuit: '30-71802233-1', cond: 'Responsable Inscripto', per: '07/2026' },
-      'RODIALE SA': { cuit: '33-70445566-3', cond: 'Exento', per: '07/2026' },
-      'IDEA 2 SA': { cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026' }
-    };
+    const fiscal = this.FISCAL_DEMO;
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
       const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
       return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'] };
@@ -5523,7 +5637,7 @@ class Component extends DCLogic {
       cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
       usrResumen: usuarios.length + ' usuarios · ' + usrNombres.length + ' con clientes asignados',
       meMail: me.mail,
-      inicioScope: isAdmin ? 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026' : 'Período en curso 08/2026 · vencimiento de presentación 18/09/2026 · Mostrando sólo tus operaciones',
+      inicioScope: 'Período en curso 08/2026 · ' + (((s.venc || {}).pers || {})['08/2026'] ? 'vencimiento de presentación del ' + s.venc.pers['08/2026'][0] + ' al ' + s.venc.pers['08/2026'][4] + ' según terminación de CUIT' : 'sin agenda de vencimientos cargada') + (isAdmin ? '' : ' · Mostrando sólo tus operaciones'),
       procesos, clientes, usuarios,
       alertas: alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0),
       notifs: [
@@ -6451,7 +6565,7 @@ class Component extends DCLogic {
 
   miscVals() {
     const s = this.state;
-    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['apoc', 'Base APOC']];
+    const cfgDef = [['params', 'Parámetros generales'], ['notif', 'Notificaciones'], ['venc', 'Vencimientos'], ['apoc', 'Base APOC']];
     const paresAct = () => [].concat(...this.CARTERA.map(([u, cs]) => cs.map(c => [u, c])));
     const aplicar = (r, origen) => {
       if (!r.pares.length) return this.setState({ toast: { kind: 'err', t: 'No se encontraron asignaciones', d: 'Hacen falta dos columnas: Usuario y Cliente (una fila por cliente).' } });
@@ -6481,6 +6595,43 @@ class Component extends DCLogic {
       apocActualizar: () => {
         window.open('https://servicioscf.afip.gob.ar/facturacion/facturasapocrifas/DownloadFile.aspx', '_blank');
         this.setState({ toast: { kind: 'ok', t: 'Descargando el listado completo de ARCA', d: 'Se descarga FacturasApocrifas.zip. Cargalo acá con "Cargar archivo" para actualizar la base.' } });
+      },
+      vencN: String(Object.keys(((s.venc || {}).pers) || {}).length),
+      vencFecha: (s.venc && s.venc.fecha) || '—',
+      vencOrigen: (s.venc && s.venc.origen) || '',
+      vencFilas: (() => {
+        const v = ((s.venc || {}).pers) || {}, k = (p) => p.slice(3) + p.slice(0, 2), act = this.perLiq();
+        return Object.keys(v).sort((a, b) => k(b).localeCompare(k(a))).map(per => ({ per, d0: v[per][0], d1: v[per][1], d2: v[per][2], d3: v[per][3], d4: v[per][4], bg: per === act ? '#F4F9FD' : '#FFFFFF' }));
+      })(),
+      vencPlantilla: async () => {
+        const X = await this.xlsxLib(), v = ((s.venc || {}).pers) || {}, k = (p) => p.slice(3) + p.slice(0, 2);
+        const filas = Object.keys(v).sort((a, b) => k(a).localeCompare(k(b))).map(per => [per].concat(v[per]));
+        const ws = X.utils.aoa_to_sheet([['Período', 'CUIT 0 y 1', 'CUIT 2 y 3', 'CUIT 4 y 5', 'CUIT 6 y 7', 'CUIT 8 y 9']].concat(filas));
+        ws['!cols'] = [{ wch: 12 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }];
+        const wb = X.utils.book_new();
+        X.utils.book_append_sheet(wb, ws, 'Vencimientos IVA');
+        this.descargar('Vencimientos IVA.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      },
+      vencArchivo: async (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        try {
+          const X = await this.xlsxLib(), nuevos = this.parseVenc(this.leerHoja(new Uint8Array(await f.arrayBuffer()), X));
+          const n = Object.keys(nuevos).length;
+          if (!n) return this.setState({ toast: { kind: 'err', t: 'No se encontraron vencimientos', d: f.name + ': hace falta una fila por período (por ejemplo 08/2026) con las 5 fechas según terminación de CUIT. Descargá la plantilla para ver el formato.' } });
+          const venc = { pers: Object.assign({}, ((this.state.venc || {}).pers) || {}, nuevos), fecha: this.ahora(), origen: 'Excel · ' + f.name + ' · ' + this.me().short };
+          this.setState({ venc: this.lsSet('myiva.venc', venc) });
+          const sb = this.sb(), k = (p) => p.slice(3) + p.slice(0, 2), ps = Object.keys(nuevos).sort((a, b) => k(a).localeCompare(k(b)));
+          const rango = ps[0] + (ps.length > 1 ? ' a ' + ps[ps.length - 1] : '');
+          if (sb && this._user) {
+            const r = await sb.from('config').upsert({ clave: 'vencimientos', valor: venc, actualizado: new Date().toISOString() });
+            if (r.error) return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar en la base de datos', d: 'Vencimientos: ' + r.error.message + '. Quedaron sólo en esta PC.' } });
+          }
+          this.setState({ toast: { kind: 'ok', t: 'Vencimientos cargados', d: n + (n === 1 ? ' período' : ' períodos') + ' (' + rango + '). Los ven todos los usuarios.' } });
+        } catch (err) {
+          this.setState({ toast: { kind: 'err', t: 'No se pudo leer el archivo', d: String(err && err.message || err) } });
+        }
       },
       apocArchivo: async (e) => {
         const f = e.target.files && e.target.files[0];
