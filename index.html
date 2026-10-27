@@ -682,6 +682,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;gap:8px;margin-top:12px;font:400 12.5px/1.45 'Open Sans';color:#5A6B7B">
 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2" stroke-linecap="round" style="flex:none"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
 <span>{{ vencCliTxt }}</span>
+<sc-if value="{{ vencBadgeHay }}">
+<span style="display:inline-block;padding:2px 9px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ vencBadge.bg }};color:{{ vencBadge.fg }};border:1px solid {{ vencBadge.bd }};white-space:nowrap">{{ vencBadge.txt }}</span>
+</sc-if>
 </div>
 <div style="display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 14px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
@@ -2442,6 +2445,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="min-width:0;flex:1">
 <div style="font:600 16px 'Open Sans'">¿Está seguro de que desea procesar la liquidación?</div>
 <div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Se va a liquidar {{ liqCli }} · {{ liqPer }} como <b style="color:#1B2733">{{ seqNextTxt }}</b>, trasladando los saldos del período anterior:</div>
+<sc-if value="{{ liqVencida }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqVencidaTxt }}</div>
+</sc-if>
 <sc-if value="{{ seqPisa }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
 </sc-if>
@@ -3828,6 +3834,8 @@ class Component extends DCLogic {
     const txt = s.perAnioTxt, malo = txt !== null && txt.length === 4;
     return {
       perLabel: s.liqMes + ' — ' + MES[+s.liqMes - 1] + ' ' + s.liqAnio,
+      vencBadge: this.vencEstado(this.perLiq(), this.cuitCli(this.liqCli())) || {},
+      vencBadgeHay: !!this.vencEstado(this.perLiq(), this.cuitCli(this.liqCli())),
       vencCliTxt: (() => {
         const per = this.perLiq(), cli = this.liqCli(), cuit = this.cuitCli(cli), f = ((s.venc || {}).pers || {})[per];
         if (!f) return 'Sin agenda de vencimientos para ' + per + ': cargala en Configuración → Vencimientos.';
@@ -4243,6 +4251,18 @@ class Component extends DCLogic {
   vencDe(per, cuit) {
     const v = (this.state.venc || {}).pers || {}, f = v[per], d = String(cuit || '').replace(/\D/g, '');
     return f && d.length === 11 ? f[Math.floor(+d[10] / 2)] : '';
+  }
+
+  // En término o vencida: compara la fecha de presentación (hoy, o la fecha dada dd/mm/aaaa) con el vencimiento del CUIT.
+  vencEstado(per, cuit, ref) {
+    const f = this.vencDe(per, cuit);
+    if (!f) return null;
+    const d = (t) => { const [dd, mm, aa] = String(t).slice(0, 10).split('/').map(Number); return Date.UTC(aa, mm - 1, dd); };
+    const h = new Date(), hoy = ref ? d(ref) : Date.UTC(h.getFullYear(), h.getMonth(), h.getDate());
+    const dias = Math.round((d(f) - hoy) / 864e5), pl = (n) => n + (n === 1 ? ' día' : ' días');
+    if (dias < 0) return { f, dias, vencida: true, txt: 'Vencida hace ' + pl(-dias), bg: '#FBE9E7', fg: '#B3261E', bd: '#F3CFCB' };
+    const cerca = dias <= 3;
+    return { f, dias, vencida: false, txt: 'En término · ' + (dias === 0 ? 'vence hoy' : 'vence en ' + pl(dias)), bg: cerca ? '#FBF3E3' : '#E8F3EE', fg: cerca ? '#8F5F14' : '#2E7D5B', bd: cerca ? '#F0E0BC' : '#C7E3D6' };
   }
 
   perMayor(fechas) {
@@ -5707,6 +5727,7 @@ class Component extends DCLogic {
     const fpV = RL.ventas && RL.ventas.recs ? this.fueraPeriodo(RL.ventas, 'igual') : [];
     const fpC = RL.compras && RL.compras.recs ? this.fueraPeriodo(RL.compras, 'hasta') : [];
     const fpCant = (n) => n + (n === 1 ? ' comprobante' : ' comprobantes');
+    const vEst = this.vencEstado(perL, this.cuitCli(this.liqCli()));
     const sinSub = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !(RL[k] && RL[k].recs)).map(([, l]) => l);
     const fpTxt = [fpV.length ? 'IVA Ventas tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
     const fpEj = fpV.concat(fpC).slice(0, 3).map(x => this.compTxt(x) + ' del ' + x.fecha).join(', ');
@@ -6163,6 +6184,8 @@ class Component extends DCLogic {
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
       liqConfirm: s.liqConfirm, liqSinSub: !!sinSub.length,
+      liqVencida: !!(vEst && vEst.vencida),
+      liqVencidaTxt: vEst && vEst.vencida ? 'El vencimiento de ' + perL + ' para ' + cli + ' fue el ' + vEst.f + ' (hace ' + -vEst.dias + (vEst.dias === -1 ? ' día' : ' días') + '): la declaración jurada se presenta fuera de término.' : '',
       liqSinSubTxt: sinSub.length === 2 ? 'No se cargaron IVA Ventas ni IVA Compras: débito fiscal, crédito fiscal y retenciones y percepciones se liquidan en 0.' : (sinSub.length ? 'No se cargó ' + sinSub[0] + ': sus importes se liquidan en 0.' : ''),
       liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
@@ -6180,6 +6203,9 @@ class Component extends DCLogic {
         const ahora = this.ahora();
         // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
         const res = Object.assign(this.liqCalc(sub('ventas'), sub('compras'), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        // Se guarda si se liquidó en término o vencida (va junto a las alícuotas de la liquidación).
+        const ve = this.vencEstado(perL, this.cuitCli(cli), res.fecha);
+        if (ve) res.ali.venc = { f: ve.f, vencida: ve.vencida, dias: ve.dias };
         // Cada liquidación es una fila nueva del historial: si ya hay una con el mismo id (por ejemplo, una eliminada ese mismo día), se le agrega la hora.
         if ((this.state.liqsDb || []).some(r => r.id === cli + '|' + perL + '|' + seqSel + '|' + res.fecha)) res.fecha = ahora + ':' + String(new Date().getSeconds()).padStart(2, '0');
         const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, ult = this.state.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
@@ -6326,6 +6352,7 @@ class Component extends DCLogic {
       procErrTxt: s.liqErrTxt,
       ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? resShow.cli : 'CAZATUR SA',
       liqResSub: resReal ? 'Período ' + resShow.per + ' · ' + this.seqTxt(resShow.seq) + ' · Procesado por ' + (verRes ? verRes.user : me.short) + ' el ' + resShow.fechaHora
+        + (resShow.ali && resShow.ali.venc ? (resShow.ali.venc.vencida ? ' · Fuera de término (venció el ' + resShow.ali.venc.f + ')' : ' · En término (vencía el ' + resShow.ali.venc.f + ')') : '')
         + (verRes ? ' · Datos guardados de la liquidación' : ' · Calculado con los subdiarios cargados') : '',
       liqResSeq: this.seqTxt(resReal ? resShow.seq : (s.liqSaved ? s.liqSeqN : seqLast)),
       verResultadoReal: () => this.setState({ screen: 'liqResultado', liqResVer: true, drawer: false, modal: false, notif: false }),
