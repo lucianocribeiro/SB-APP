@@ -918,11 +918,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ c.hasErr }}">
 <span onClick="{{ c.verErr }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer;white-space:nowrap">{{ c.errLabel }}</span>
 </sc-if>
-<sc-if value="{{ c.apocDetVer }}">
-<span onClick="{{ c.verApoc }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Ver detalle de los CUIT en la Base APOC</span>
-</sc-if>
 <sc-if value="{{ c.hasDif }}">
-<span onClick="{{ c.rep }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Reporte de diferencias</span>
+<span onClick="{{ c.rep }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;white-space:nowrap">Descargar reporte en Excel</span>
 </sc-if>
 </div>
 </div>
@@ -5240,7 +5237,6 @@ class Component extends DCLogic {
         cruce: 'Cruce ' + c.n + ' · ' + c.t,
         verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · ' + this.perLiq(), [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
         hasCmp: run && c.cmp.length > 0, hasNota: !!nota && !(apoc && !apocMal), nota,
-        apocDetVer: apocMal && !!(c.apocDet && c.apocDet.length),
         verApoc: () => this.setState({ apocVer: { sub: cli + ' · ' + this.perLiq(), filas: c.apocDet || [] } }),
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
         cmp: c.cmp.map(([a, b, cc, d]) => ({
