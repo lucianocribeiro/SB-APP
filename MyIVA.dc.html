@@ -4095,7 +4095,7 @@ class Component extends DCLogic {
     return this._xlsxP;
   }
 
-  leerHoja(bytes, X) {
+  leerHoja(bytes, X, todas) {
     let wb;
     try {
       const bin = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
@@ -4107,6 +4107,7 @@ class Component extends DCLogic {
       }
       wb = txt === null ? X.read(bytes, { type: 'array' }) : X.read(txt, { type: 'string', raw: true });
     } catch (e) { throw new Error('No se pudo leer el archivo: no es un Excel (.xls / .xlsx) ni un CSV válido.'); }
+    if (todas) return wb.SheetNames.map(n => X.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null }));
     const ws = wb.Sheets[wb.SheetNames[0]];
     return ws ? X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }) : [];
   }
@@ -4275,33 +4276,47 @@ class Component extends DCLogic {
   }
 
   parseRetenciones(name, bytes, X) {
-    const aoa = this.leerHoja(bytes, X);
-    let hi = -1, keys = [];
-    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
-      const ks = (aoa[i] || []).map(h => this.hkey(h));
-      if (ks.some(x => x.startsWith('cuitagente')) && ks.some(x => x.startsWith('importeret'))) { hi = i; keys = ks; break; }
-    }
+    // Se busca el encabezado en todas las hojas (primeras 40 filas): CUIT del agente + importe.
+    const hojas = this.leerHoja(bytes, X, true);
+    let aoa = [], hi = -1, keys = [];
+    hojas.some(h => {
+      for (let i = 0; i < Math.min(h.length, 40); i++) {
+        const ks = (h[i] || []).map(x => this.hkey(x));
+        if (ks.some(x => x.startsWith('cuitagente') || x === 'cuit') && ks.some(x => x.startsWith('importeret') || x.startsWith('importe') || x.startsWith('monto'))) { aoa = h; hi = i; keys = ks; return true; }
+      }
+      return false;
+    });
     if (hi < 0) throw new Error('No se encontró la fila de encabezados de Mis Retenciones (CUIT Agente Ret./Perc., Importe Ret./Perc.…). Cargá el archivo tal como se exporta de ARCA.');
     const col = (...ps) => { for (const p of ps) { const i = keys.findIndex(x => x.startsWith(p)); if (i >= 0) return i; } return -1; };
     const C = {
-      cuit: col('cuitagente'), nom: col('denominacion', 'razonsocial'), fecha: col('fecharet', 'fecha'), op: col('descripcionoperacion', 'operacion'),
-      imp: col('importeret'), comp: col('numerocomprobante', 'nrocomprobante'), cert: col('numerocertificado', 'nrocertificado'), impu: col('descripcionimpuesto', 'impuesto')
+      cuit: col('cuitagente', 'cuit'), nom: col('denominacion', 'razonsocial'), fecha: col('fecharet', 'fechadere', 'fecha'), op: col('descripcionoperacion', 'operacion'),
+      imp: col('importeret', 'importe', 'monto'), comp: col('numerocomprobante', 'nrocomprobante'), cert: col('numerocertificado', 'nrocertificado'),
+      impu: col('descripcionimpuesto', 'impuesto'), cimp: keys.indexOf('impuesto'), reg: col('descripcionregimen', 'regimen')
     };
-    if (C.op < 0) throw new Error('Falta la columna "Descripción Operación" de Mis Retenciones: sin ella no se pueden distinguir retenciones de percepciones.');
-    const recs = [];
-    let omit = 0, otros = 0;
+    if (C.op < 0 && C.reg < 0) throw new Error('Falta la columna "Descripción Operación" de Mis Retenciones: sin ella no se pueden distinguir retenciones de percepciones.');
+    const recs = [], otrosImp = new Set();
+    let omit = 0, otros = 0, sinOp = 0;
+    // IVA: código 767 (SICORE), 216 (SIRE) o 30, o la descripción dice IVA / Valor Agregado.
+    const esIva = (t) => /\b(767|216|30)\b|\bi\.?v\.?a\b|valor agregado/.test(t);
     for (let i = hi + 1; i < aoa.length; i++) {
       const r = aoa[i] || [], g = (f) => (C[f] < 0 ? null : r[C[f]]), s = (f) => (g(f) == null ? '' : String(g(f)).trim());
       const fecha = this.fechaTxt(g('fecha'));
       if (!fecha) { if (r.some(x => x !== null && x !== '') && !/total/i.test(r.join(' '))) omit++; continue; }
-      const impu = this.fold(s('impu'));
-      if (impu && !/\b767\b|\biva\b|valor agregado/.test(impu)) { otros++; continue; }
-      const op = this.fold(s('op'));
+      const impu = this.fold(s('impu') + ' ' + s('cimp')).trim();
+      if (impu && !esIva(impu)) { otros++; otrosImp.add(s('impu') || s('cimp')); continue; }
+      const op = this.fold(s('op') + ' ' + (C.op < 0 ? s('reg') : ''));
       const tipo = /percep/.test(op) ? 'per' : (/retenc/.test(op) ? 'ret' : '');
-      if (!tipo) { otros++; continue; }
+      if (!tipo) { sinOp++; continue; }
       recs.push({ tipo, cuit: this.cuitTxt(g('cuit')), nom: s('nom'), fecha, imp: Math.round(this.numAr(g('imp')) * 100) / 100, comp: s('comp'), cert: s('cert'), fila: i + 1 });
     }
-    if (!recs.length) throw new Error('El archivo no tiene retenciones ni percepciones de IVA: se leyó el encabezado pero ninguna fila válida.');
+    otros += sinOp;
+    if (!recs.length) {
+      const pq = [];
+      if (omit) pq.push(omit + ' sin fecha válida');
+      if (otrosImp.size) pq.push((otros - sinOp) + ' de otros impuestos (' + [...otrosImp].slice(0, 4).join(', ') + ')');
+      if (sinOp) pq.push(sinOp + ' con una operación que no es retención ni percepción');
+      throw new Error('El archivo no tiene retenciones ni percepciones de IVA. Se leyó el encabezado (fila ' + (hi + 1) + ') y ' + (aoa.length - hi - 1) + (aoa.length - hi - 1 === 1 ? ' fila' : ' filas') + (pq.length ? ': ' + pq.join(', ') : '') + '.');
+    }
     return { kind: 'percep', name, recs, per: this.perMayor(recs.map(x => x.fecha)), omit, otros, nRet: recs.filter(x => x.tipo === 'ret').length, nPer: recs.filter(x => x.tipo === 'per').length };
   }
 
