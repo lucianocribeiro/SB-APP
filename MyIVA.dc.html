@@ -3350,7 +3350,6 @@ class Component extends DCLogic {
   novaluxXlsx(cliente, rows, extras = []) {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
-    const split = (tot, parts) => { const out = parts.map(p => r2(tot * p)); out[out.length - 1] = r2(tot - out.slice(0, -1).reduce((a, b) => a + b, 0)); return out; };
     const C = (orig) => this.colLet(this.colNum(orig) + 1);
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const pk = (r) => r.per.slice(3) + r.per.slice(0, 2) + String(r.seq).padStart(2, '0');
@@ -3380,20 +3379,29 @@ class Component extends DCLogic {
     rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
     data.forEach((d, i) => {
       const r = first + i, p = r - 1, df = num(d.df), cf = num(d.cf), rp = num(d.rp);
-      const [F, G, H] = split(df, [0.93, 0.05, 0.02]);
-      const [AA, AB, AC] = split(cf, [0.9, 0.07, 0.03]);
-      // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
-      // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
+      // Columnas por alícuota y de NC: salen del detalle guardado en la liquidación (det, ver liqCalc). Las NC se guardan en positivo:
+      // las NC de Compras suman al débito (T/U) y las de Ventas al crédito (AE-AJ), como en liqCalc. Así, por fila:
+      // I = F + G + H + U y AD = AA + AB + AC + AH + AI + AJ (salvo IVA al 5 % / 2,5 %, que no tiene columna propia).
+      // Las liquidaciones viejas sin det dejan esas columnas vacías: no se inventan importes; los totales I / AD / AM / AN se mantienen.
       const det = d.n && d.n.ali && d.n.ali.det;
       const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
-      const v = {
-        B: r2(F / 0.21), C: r2(G / 0.105), D: r2(H / 0.27), F, G, H, I: df,
-        J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, T: 0, U: 0, V: 0, W: 0,
-        X: r2(AA / 0.21), Y: r2(AB / 0.105), Z: r2(AC / 0.27), AA, AB, AC, AD: cf,
-        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0)
-      };
+      const v = { I: df, J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: cf, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0) };
+      if (det && det.v && det.c) {
+        const z = (o, k) => r2((o && o[k]) || 0), sum = (o, ks) => r2(ks.reduce((a, k) => a + z(o, k), 0));
+        const NET = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0'], IVA = ['i21', 'i105', 'i27', 'i5', 'i25'];
+        Object.assign(v, {
+          B: z(det.v, 'n21'), C: z(det.v, 'n105'), D: z(det.v, 'n27'), E: sum(det.v, NET),
+          F: z(det.v, 'i21'), G: z(det.v, 'i105'), H: z(det.v, 'i27'),
+          T: sum(det.cNc, NET), U: sum(det.cNc, IVA),
+          X: z(det.c, 'n21'), Y: z(det.c, 'n105'), Z: z(det.c, 'n27'),
+          AA: z(det.c, 'i21'), AB: z(det.c, 'i105'), AC: z(det.c, 'i27'),
+          AE: z(det.vNc, 'n21'), AF: z(det.vNc, 'n105'), AG: z(det.vNc, 'n27'),
+          AH: z(det.vNc, 'i21'), AI: z(det.vNc, 'i105'), AJ: z(det.vNc, 'i27')
+        });
+      }
+      // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
+      // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
       if (sep) { v.AK = r2(det.perc); v.AL = r2(det.ret); }
-      v.E = r2(v.B + v.C + v.D);
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
       const f = {
