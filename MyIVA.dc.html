@@ -2041,16 +2041,24 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
 <div style="font:600 14.5px 'Open Sans'">Agenda de vencimientos de IVA</div>
 <div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:4px">Fechas de presentación de la DJ de IVA / Libro IVA Digital de cada período, según la terminación del CUIT. Se carga una vez por año desde un Excel y la ven todos los usuarios.</div>
-<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-top:14px">Historial por año</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+<sc-for list="{{ vencAnios }}" as="y" hint-placeholder-count="3">
+<span onClick="{{ y.go }}" style="padding:5px 11px;border:1px solid {{ y.bd }};border-radius:14px;background:{{ y.bg }};color:{{ y.fg }};font:600 12.5px 'Open Sans';cursor:pointer">{{ y.label }}</span>
+</sc-for>
+<span onClick="{{ vencAgregarAnio }}" title="Agregar la agenda de un año anterior para cargarla desde un Excel" style="padding:5px 11px;border:1px dashed #B9C6D3;border-radius:14px;background:#fff;color:#14395C;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">+ Año anterior</span>
+</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#5A6B7B;margin-top:8px">{{ vencAnioRango }}</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px">
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Períodos cargados</div><div style="font:600 15px 'Open Sans';margin-top:7px">{{ vencN }}</div></div>
 <div style="border:1px solid #E3E8EE;border-radius:6px;padding:10px 12px"><div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Última carga</div><div style="font:600 13px 'Open Sans';margin-top:7px">{{ vencFecha }}</div></div>
 </div>
 <div style="font:400 12px/1.45 'Open Sans';color:#5A6B7B;margin-top:8px">{{ vencOrigen }}</div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #E3E8EE">
-<label style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Cargar Excel<input type="file" accept=".xls,.xlsx,.csv" onChange="{{ vencArchivo }}" style="display:none"></label>
-<button onClick="{{ vencPlantilla }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Descargar plantilla</button>
+<label style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">{{ vencBtnCargar }}<input type="file" accept=".xls,.xlsx,.csv" onChange="{{ vencArchivo }}" style="display:none"></label>
+<button onClick="{{ vencPlantilla }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">{{ vencBtnPlantilla }}</button>
 </div>
-<div style="font:400 12px/1.5 'Open Sans';color:#9AA9B7;margin-top:10px">El Excel lleva una fila por período: <b style="color:#5A6B7B">Período</b> (por ejemplo 08/2026) y las fechas de vencimiento para CUIT terminados en <b style="color:#5A6B7B">0 y 1, 2 y 3, 4 y 5, 6 y 7, 8 y 9</b> (dd/mm/aaaa o 18-sep). También se puede pegar la tabla tal como la publica ARCA. Los períodos que ya estaban se actualizan y el resto se conserva.</div>
+<div style="font:400 12px/1.5 'Open Sans';color:#9AA9B7;margin-top:10px">El Excel lleva una fila por período: <b style="color:#5A6B7B">Período</b> (por ejemplo 08/2026) y las fechas de vencimiento para CUIT terminados en <b style="color:#5A6B7B">0 y 1, 2 y 3, 4 y 5, 6 y 7, 8 y 9</b> (dd/mm/aaaa o 18-sep). También se puede pegar la tabla tal como la publica ARCA. Cada Excel carga sólo la agenda del año elegido: sus períodos se actualizan y los demás años no se tocan.</div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
 <table style="width:100%;border-collapse:collapse;min-width:520px">
@@ -2621,7 +2629,7 @@ class Component extends DCLogic {
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
-    apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)),
+    apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)), vencAnio: null, vencAniosExtra: [],
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
@@ -6693,43 +6701,81 @@ class Component extends DCLogic {
         window.open('https://servicioscf.afip.gob.ar/facturacion/facturasapocrifas/DownloadFile.aspx', '_blank');
         this.setState({ toast: { kind: 'ok', t: 'Descargando el listado completo de ARCA', d: 'Se descarga FacturasApocrifas.zip. Cargalo acá con "Cargar archivo" para actualizar la base.' } });
       },
-      vencN: String(Object.keys(((s.venc || {}).pers) || {}).length),
-      vencFecha: (s.venc && s.venc.fecha) || '—',
-      vencOrigen: (s.venc && s.venc.origen) || '',
-      vencFilas: (() => {
-        const v = ((s.venc || {}).pers) || {}, k = (p) => p.slice(3) + p.slice(0, 2), act = this.perLiq();
-        return Object.keys(v).sort((a, b) => k(b).localeCompare(k(a))).map(per => ({ per, d0: v[per][0], d1: v[per][1], d2: v[per][2], d3: v[per][3], d4: v[per][4], bg: per === act ? '#F4F9FD' : '#FFFFFF' }));
-      })(),
-      vencPlantilla: async () => {
-        const X = await this.xlsxLib(), v = ((s.venc || {}).pers) || {}, k = (p) => p.slice(3) + p.slice(0, 2);
-        const filas = Object.keys(v).sort((a, b) => k(a).localeCompare(k(b))).map(per => [per].concat(v[per]));
-        const ws = X.utils.aoa_to_sheet([['Período', 'CUIT 0 y 1', 'CUIT 2 y 3', 'CUIT 4 y 5', 'CUIT 6 y 7', 'CUIT 8 y 9']].concat(filas));
-        ws['!cols'] = [{ wch: 12 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }];
-        const wb = X.utils.book_new();
-        X.utils.book_append_sheet(wb, ws, 'Vencimientos IVA');
-        this.descargar('Vencimientos IVA.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
-      },
-      vencArchivo: async (e) => {
-        const f = e.target.files && e.target.files[0];
-        e.target.value = '';
-        if (!f) return;
-        try {
-          const X = await this.xlsxLib(), nuevos = this.parseVenc(this.leerHoja(new Uint8Array(await f.arrayBuffer()), X));
-          const n = Object.keys(nuevos).length;
-          if (!n) return this.setState({ toast: { kind: 'err', t: 'No se encontraron vencimientos', d: f.name + ': hace falta una fila por período (por ejemplo 08/2026) con las 5 fechas según terminación de CUIT. Descargá la plantilla para ver el formato.' } });
-          const venc = { pers: Object.assign({}, ((this.state.venc || {}).pers) || {}, nuevos), fecha: this.ahora(), origen: 'Excel · ' + f.name + ' · ' + this.me().short };
+      ...(() => {
+        // Agenda por año, como la publica ARCA: la agenda 2026 son los períodos 12/2025 a 11/2026.
+        const vp = ((s.venc || {}).pers) || {}, meta = ((s.venc || {}).anios) || {};
+        const anioDe = (per) => +per.slice(3) + (per.slice(0, 2) === '12' ? 1 : 0);
+        const persDe = (y) => ['12/' + (y - 1)].concat(Array.from({ length: 11 }, (_, i) => String(i + 1).padStart(2, '0') + '/' + y));
+        const act = anioDe(this.perLiq());
+        const anios = [...new Set(Object.keys(vp).map(anioDe).concat(s.vencAniosExtra || [], [act]))].sort((x, y) => y - x);
+        const sel = anios.includes(s.vencAnio) ? s.vencAnio : act;
+        const cargados = persDe(sel).filter(p => vp[p]);
+        const guardar = async (venc, toastOk) => {
           this.setState({ venc: this.lsSet('myiva.venc', venc) });
-          const sb = this.sb(), k = (p) => p.slice(3) + p.slice(0, 2), ps = Object.keys(nuevos).sort((a, b) => k(a).localeCompare(k(b)));
-          const rango = ps[0] + (ps.length > 1 ? ' a ' + ps[ps.length - 1] : '');
+          const sb = this.sb();
           if (sb && this._user) {
             const r = await sb.from('config').upsert({ clave: 'vencimientos', valor: venc, actualizado: new Date().toISOString() });
             if (r.error) return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar en la base de datos', d: 'Vencimientos: ' + r.error.message + '. Quedaron sólo en esta PC.' } });
           }
-          this.setState({ toast: { kind: 'ok', t: 'Vencimientos cargados', d: n + (n === 1 ? ' período' : ' períodos') + ' (' + rango + '). Los ven todos los usuarios.' } });
-        } catch (err) {
-          this.setState({ toast: { kind: 'err', t: 'No se pudo leer el archivo', d: String(err && err.message || err) } });
-        }
-      },
+          this.setState({ toast: toastOk });
+        };
+        return {
+          vencAnios: anios.map(y => {
+            const on = y === sel;
+            return { label: 'Agenda ' + y, go: () => this.setState({ vencAnio: y }), bg: on ? '#14395C' : '#fff', fg: on ? '#fff' : '#14395C', bd: on ? '#14395C' : '#D5DEE7' };
+          }),
+          vencAgregarAnio: () => {
+            const y = Math.min(...anios) - 1;
+            this.setState(st => ({ vencAniosExtra: [...new Set((st.vencAniosExtra || []).concat(y))], vencAnio: y }));
+          },
+          vencAnioRango: 'Agenda ' + sel + ': períodos 12/' + (sel - 1) + ' a 11/' + sel + '.',
+          vencN: cargados.length + ' de 12',
+          vencFecha: (meta[sel] && meta[sel].fecha) || (cargados.length ? 'Precargada' : '—'),
+          vencOrigen: meta[sel] ? meta[sel].origen
+            : cargados.length ? 'Fechas de la Agenda de Vencimientos de ARCA, precargadas en la app.' : 'Todavía no se cargó esta agenda: descargá la plantilla, completala y cargala.',
+          vencBtnCargar: 'Cargar Excel ' + sel,
+          vencBtnPlantilla: 'Descargar plantilla ' + sel,
+          vencFilas: persDe(sel).reverse().map(per => {
+            const f = vp[per] || [];
+            return { per, d0: f[0] || '—', d1: f[1] || '—', d2: f[2] || '—', d3: f[3] || '—', d4: f[4] || '—', bg: per === this.perLiq() ? '#F4F9FD' : '#FFFFFF' };
+          }),
+          vencPlantilla: async () => {
+            const X = await this.xlsxLib();
+            const filas = persDe(sel).map(per => [per].concat(vp[per] || ['', '', '', '', '']));
+            const ws = X.utils.aoa_to_sheet([['Período', 'CUIT 0 y 1', 'CUIT 2 y 3', 'CUIT 4 y 5', 'CUIT 6 y 7', 'CUIT 8 y 9']].concat(filas));
+            ws['!cols'] = [{ wch: 12 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }];
+            const wb = X.utils.book_new();
+            X.utils.book_append_sheet(wb, ws, 'Vencimientos IVA ' + sel);
+            this.descargar('Vencimientos IVA ' + sel + '.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+          },
+          vencArchivo: async (e) => {
+            const f = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!f) return;
+            try {
+              const X = await this.xlsxLib(), leidos = this.parseVenc(this.leerHoja(new Uint8Array(await f.arrayBuffer()), X));
+              if (!Object.keys(leidos).length) return this.setState({ toast: { kind: 'err', t: 'No se encontraron vencimientos', d: f.name + ': hace falta una fila por período (por ejemplo 08/' + sel + ') con las 5 fechas según terminación de CUIT. Descargá la plantilla para ver el formato.' } });
+              const nuevos = {}, otros = [];
+              Object.keys(leidos).forEach(p => { if (anioDe(p) === sel) nuevos[p] = leidos[p]; else otros.push(p); });
+              const n = Object.keys(nuevos).length;
+              if (!n) return this.setState({ toast: { kind: 'err', t: 'El Excel no es de la agenda ' + sel, d: f.name + ' trae períodos de otro año (' + otros.slice(0, 4).join(', ') + (otros.length > 4 ? '…' : '') + '). Elegí ese año arriba y volvé a cargarlo.' } });
+              const fecha = this.ahora(), origen = 'Excel · ' + f.name + ' · ' + this.me().short;
+              const venc = Object.assign({}, s.venc, {
+                pers: Object.assign({}, vp, nuevos), fecha, origen,
+                anios: Object.assign({}, meta, { [sel]: { fecha, origen } })
+              });
+              const k = (p) => p.slice(3) + p.slice(0, 2), ps = Object.keys(nuevos).sort((x, y) => k(x).localeCompare(k(y)));
+              await guardar(venc, {
+                kind: otros.length ? 'warn' : 'ok', t: 'Agenda ' + sel + ' cargada',
+                d: n + (n === 1 ? ' período' : ' períodos') + ' (' + ps[0] + (n > 1 ? ' a ' + ps[n - 1] : '') + '). Los ven todos los usuarios.'
+                  + (otros.length ? ' Se ignoraron ' + otros.length + ' de otros años (' + otros.slice(0, 3).join(', ') + (otros.length > 3 ? '…' : '') + '): cargalos eligiendo su año.' : '')
+              });
+            } catch (err) {
+              this.setState({ toast: { kind: 'err', t: 'No se pudo leer el archivo', d: String(err && err.message || err) } });
+            }
+          }
+        };
+      })(),
       apocArchivo: async (e) => {
         const f = e.target.files && e.target.files[0];
         e.target.value = '';
