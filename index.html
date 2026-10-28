@@ -4928,10 +4928,13 @@ class Component extends DCLogic {
   cruzarRet(mr, ventas, compras) {
     const TOL = 0.03, r2 = (v) => Math.round(v * 100) / 100;
     const std = (v) => { let t = String(v == null ? '' : v).replace(/\D/g, ''); if (t.length > 8) t = t.slice(-8); return t ? String(parseInt(t, 10)) : ''; };
-    const V = ventas.recs.filter(x => x.tc === 'CR').map(x => ({ x, imp: r2(Math.abs(x.v.tot)), src: 'IVA Ventas' }));
-    const C = compras.recs.filter(x => x.v.piva).map(x => ({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras' }));
+    // Se cruza con lo que se cargó: sin IVA Ventas no se controlan las retenciones y sin IVA Compras, las percepciones
+    // (no se marcan como faltantes en los subdiarios).
+    const V = ventas ? ventas.recs.filter(x => x.tc === 'CR').map(x => ({ x, imp: r2(Math.abs(x.v.tot)), src: 'IVA Ventas' })) : [];
+    const C = compras ? compras.recs.filter(x => x.v.piva).map(x => ({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras' })) : [];
+    const ctrl = (a) => (a.tipo === 'ret' ? !!ventas : !!compras);
     const used = new Set(), pares = [], faltL = [];
-    mr.recs.forEach(a => {
+    mr.recs.filter(ctrl).forEach(a => {
       const cand = (a.tipo === 'ret' ? V : C).filter(c => !used.has(c) && c.x.cuit === a.cuit && Math.abs(c.imp - a.imp) <= TOL);
       const c = cand.find(q => q.x.fecha === a.fecha) || cand[0];
       if (!c) return faltL.push(a);
@@ -4951,6 +4954,7 @@ class Component extends DCLogic {
     const Cn = C.filter(c => !adu.includes(c));
     return {
       pares, grupos: ag.grupos, faltL: ag.faltL, faltA: V.concat(Cn).filter(c => !used.has(c)), nRet: mr.nRet, nPer: mr.nPer, nV: V.length, nC: Cn.length, nAdu: adu.length, otros: mr.otros,
+      sinV: !ventas, sinC: !compras,
       ok: pares.filter(p => p.est === 'ok').length + ag.grupos.length, dif: pares.filter(p => p.est === 'dif').length,
       tot: { ret: [sum(mr.recs.filter(x => x.tipo === 'ret')), sum(V)], per: [sum(mr.recs.filter(x => x.tipo === 'per')), sum(Cn)] }
     };
@@ -5205,7 +5209,7 @@ class Component extends DCLogic {
     if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas, 'igual');
     if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras, 'hasta');
     if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
-    if (R.percep && R.ventas && R.compras) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
+    if (R.percep && (R.ventas || R.compras)) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
     if (R.aduana && (R.ventas || R.compras)) v.adu = this.cruzarAdu(R.aduana, R.ventas, R.compras);
     this._crc = { R, base, per, v };
     return v;
@@ -5294,8 +5298,13 @@ class Component extends DCLogic {
     return {
       regs: x.pares.length + x.grupos.length + falt, ok: x.ok, dif: x.dif, falt, errs,
       est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
-      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · ' + n(x.nV) + ' CR en IVA Ventas · ' + n(x.nC) + ' comprobantes con percepción de IVA en IVA Compras · ' + n(x.ok) + ' coinciden' + this.agrupTxt(x.grupos) + ' · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' faltan en Mis Retenciones' + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '') + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
-      cmp: [fila('Retenciones (IVA Ventas · CR)', T.ret[0], T.ret[1]), fila('Percepciones (IVA Compras)', T.per[0], T.per[1]), fila('Total', T.ret[0] + T.per[0], T.ret[1] + T.per[1])]
+      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · '
+        + (x.sinV ? 'IVA Ventas no se cargó: las retenciones no se controlaron · ' : n(x.nV) + ' CR en IVA Ventas · ')
+        + (x.sinC ? 'IVA Compras no se cargó: las percepciones no se controlaron · ' : n(x.nC) + ' comprobantes con percepción de IVA en IVA Compras · ') + n(x.ok) + ' coinciden' + this.agrupTxt(x.grupos) + ' · ' + x.dif + ' con diferencias · ' + x.faltL.length + ' faltan en los subdiarios · ' + x.faltA.length + ' faltan en Mis Retenciones' + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '') + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
+      cmp: [
+        x.sinV ? ['Retenciones (IVA Ventas · CR)', fm(T.ret[0]), 'No cargado', '—'] : fila('Retenciones (IVA Ventas · CR)', T.ret[0], T.ret[1]),
+        x.sinC ? ['Percepciones (IVA Compras)', fm(T.per[0]), 'No cargado', '—'] : fila('Percepciones (IVA Compras)', T.per[0], T.per[1])
+      ].concat(x.sinV || x.sinC ? [] : [fila('Total', T.ret[0] + T.per[0], T.ret[1] + T.per[1])])
     };
   }
 
@@ -5414,7 +5423,7 @@ class Component extends DCLogic {
         cmp: [['Comprobantes', '1.283', '1.283', '0'], ['IVA crédito fiscal', '2.449.094,20', '2.444.516,20', '4.578,00']]
       },
       {
-        n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 96, ok: 92, dif: 3, falt: 1,
+        n: '4', t: 'Mis retenciones (y percepciones)', tipo: 'Retenciones y percepciones vs Mis Retenciones', need: [['percep', 'Mis Retenciones'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 96, ok: 92, dif: 3, falt: 1,
         h: ['Concepto', 'Mis Retenciones (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
