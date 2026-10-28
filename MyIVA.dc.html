@@ -3496,9 +3496,13 @@ class Component extends DCLogic {
     const sb = this.sb();
     if (!sb || !this._user) return;
     const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && (R[k].file || R[k].files));
-    const malos = [];
+    const malos = [], rutas = new Set();
     for (const [k, f] of [].concat(...ks.map(k => (R[k].files || [R[k].file]).map(f => [k, f])))) {
-      const ruta = dir + '/' + k + '__' + this.fold(f.name).replace(/[^a-z0-9.]+/g, '_');
+      // Dos archivos con el mismo nombre (por ejemplo, dos "MisRetenciones.xlsx") no se pisan: el segundo lleva _2.
+      const limpio = this.fold(f.name).replace(/[^a-z0-9.]+/g, '_'), punto = limpio.lastIndexOf('.');
+      let ruta = dir + '/' + k + '__' + limpio;
+      for (let i = 2; rutas.has(ruta); i++) ruta = dir + '/' + k + '__' + (punto > 0 ? limpio.slice(0, punto) + '_' + i + limpio.slice(punto) : limpio + '_' + i);
+      rutas.add(ruta);
       const up = await sb.storage.from('crudos').upload(ruta, f, { upsert: true, contentType: f.type || 'application/octet-stream' }).catch(e => ({ error: e }));
       if (up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
     }
@@ -3516,12 +3520,28 @@ class Component extends DCLogic {
       return n;
     };
     const celda = (v) => v instanceof Date ? this.fechaDe(v.toISOString(), false) : v;
+    // Mismo orden que la pantalla de carga; lo que no esté en la lista va al final.
+    const ORDEN = ['ventas', 'compras', 'emitidos', 'recibidos', 'percep', 'aduana', 'ivadig'];
+    const pos = (n) => { const i = ORDEN.indexOf(n.split('__')[0]); return i < 0 ? ORDEN.length : i; };
+    // Dentro de un mismo tipo, en el orden en que se subieron: "x.xlsx" antes que "x_2.xlsx".
+    const nro = (n) => { const m = n.match(/^(.*?)(?:_(\d+))?(\.[a-z0-9]+)?$/); return [m[1] + (m[3] || ''), Number(m[2] || 1)]; };
+    const cmp = (a, b) => { const [x, i] = nro(a), [y, j] = nro(b); return x.localeCompare(y) || i - j; };
     for (const r of rows) {
       const id = r.id || (r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha), dir = this.crudosCarpeta(id);
-      const ls = await sb.storage.from('crudos').list(dir);
-      const arch = (ls.data || []).filter(o => o.name && o.id);
-      if (ls.error || !arch.length) { sin.push(r.per + ' Sec. ' + r.seq); continue; }
+      const ls = await sb.storage.from('crudos').list(dir, { limit: 1000 });
+      const arch = (ls.data || []).filter(o => o.name && o.id).sort((a, b) => pos(a.name) - pos(b.name) || cmp(a.name, b.name));
+      // La DDJJ adjuntada a la liquidación (PDF de ARCA) también va, después de los archivos crudos.
+      const dj = (this.state.ddjjPdf || {})[id];
+      if (ls.error || (!arch.length && !dj)) { sin.push(r.per + ' Sec. ' + r.seq); continue; }
+      if (dj) {
+        const base = r.per.replace('/', '-') + ' S' + r.seq + ' DDJJ';
+        const dl = await sb.storage.from('ddjj').download(dj.ruta || this.pdfRuta(id));
+        let lineas = null;
+        if (!dl.error) lineas = await this.textoPdf(new Uint8Array(await dl.data.arrayBuffer())).then(t => t.lineas).catch(() => null);
+        arch.push({ dj: true, base, rows: [['DDJJ adjuntada · ' + (dj.name || 'DDJJ.pdf')]].concat(dl.error ? [['No se pudo descargar: ' + dl.error.message]] : lineas ? lineas.map(l => [l]) : [['No se pudo leer el texto del PDF.']]) });
+      }
       for (const o of arch) {
+        if (o.dj) { hojas.push({ name: nombre(o.base), rows: o.rows }); continue; }
         const k = o.name.split('__')[0], lbl = this.UP_LBL[k] || k;
         const corto = { emitidos: 'Emitidos', recibidos: 'Recibidos', aduana: 'Percep. Aduaneras' }[k] || lbl;
         const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + corto;
