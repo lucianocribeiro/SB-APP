@@ -3523,16 +3523,8 @@ class Component extends DCLogic {
   }
 
   async crudosHojas(rows) {
-    const sb = this.sb(), hojas = [], sin = [], usados = new Set(), archivos = [], fallidos = [], rutasZip = new Set();
-    if (!sb || !this._user) return { hojas, sin: rows.map(r => r.per + ' Sec. ' + r.seq), archivos, fallidos };
-    // Archivo original tal cual se cargó, dentro de una carpeta por liquidación del ZIP (sin nombres repetidos).
-    const alZip = (carpeta, nom, bytes) => {
-      let ruta = carpeta + '/' + nom.replace(/[\\/:*?"<>|]+/g, '_'), i = 2;
-      const punto = ruta.lastIndexOf('.'), b = punto > carpeta.length ? ruta.slice(0, punto) : ruta, ext = punto > carpeta.length ? ruta.slice(punto) : '';
-      while (rutasZip.has(ruta.toLowerCase())) ruta = b + ' (' + i++ + ')' + ext;
-      rutasZip.add(ruta.toLowerCase());
-      archivos.push([ruta, bytes]);
-    };
+    const sb = this.sb(), hojas = [], sin = [], usados = new Set();
+    if (!sb || !this._user) return { hojas, sin: rows.map(r => r.per + ' Sec. ' + r.seq) };
     const X = await this.xlsxLib();
     const nombre = (t) => {
       let b = t.replace(/[\[\]:*?\/\\]/g, '-').slice(0, 31), n = b, i = 2;
@@ -3554,17 +3546,11 @@ class Component extends DCLogic {
       // La DDJJ adjuntada a la liquidación (PDF de ARCA) también va, después de los archivos crudos.
       const dj = (this.state.ddjjPdf || {})[id];
       if (ls.error || (!arch.length && !dj)) { sin.push(r.per + ' Sec. ' + r.seq); continue; }
-      const carpeta = r.per.replace('/', '-') + ' Sec ' + r.seq;
       if (dj) {
         const base = r.per.replace('/', '-') + ' S' + r.seq + ' DDJJ';
         const dl = await sb.storage.from('ddjj').download(dj.ruta || this.pdfRuta(id));
         let lineas = null;
-        if (dl.error) fallidos.push(carpeta + ' · DDJJ: ' + dl.error.message);
-        else {
-          const b = new Uint8Array(await dl.data.arrayBuffer());
-          alZip(carpeta, 'DDJJ - ' + (dj.name || 'DDJJ.pdf'), b);
-          lineas = await this.textoPdf(b).then(t => t.lineas).catch(() => null);
-        }
+        if (!dl.error) lineas = await this.textoPdf(new Uint8Array(await dl.data.arrayBuffer())).then(t => t.lineas).catch(() => null);
         arch.push({ dj: true, base, rows: [['DDJJ adjuntada · ' + (dj.name || 'DDJJ.pdf')]].concat(dl.error ? [['No se pudo descargar: ' + dl.error.message]] : lineas ? lineas.map(l => [l]) : [['No se pudo leer el texto del PDF.']]) });
       }
       for (const o of arch) {
@@ -3573,9 +3559,8 @@ class Component extends DCLogic {
         const corto = { emitidos: 'Emitidos', recibidos: 'Recibidos', aduana: 'Percep. Aduaneras' }[k] || lbl;
         const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + corto;
         const dl = await sb.storage.from('crudos').download(dir + '/' + o.name);
-        if (dl.error) { fallidos.push(carpeta + ' · ' + lbl + ': ' + dl.error.message); hojas.push({ name: nombre(base), rows: [['No se pudo descargar ' + o.name + ': ' + dl.error.message]] }); continue; }
+        if (dl.error) { hojas.push({ name: nombre(base), rows: [['No se pudo descargar ' + o.name + ': ' + dl.error.message]] }); continue; }
         const bytes = new Uint8Array(await dl.data.arrayBuffer());
-        alZip(carpeta, lbl + ' - ' + o.name.slice(k.length + 2), bytes);
         if (String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-') {
           const t = await this.textoPdf(bytes).catch(() => null);
           hojas.push({ name: nombre(base), rows: [[lbl + ' · ' + o.name.slice(k.length + 2)]].concat(t ? t.lineas.map(l => [l]) : [['No se pudo leer el texto del PDF.']]) });
@@ -3586,7 +3571,7 @@ class Component extends DCLogic {
           continue;
         }
         // Excel: tipos tal cual; CSV / texto: sin interpretar (fechas dd/mm y ceros a la izquierda quedan como vienen).
-        // Si un archivo no se puede volcar a una hoja, igual va en el ZIP: nunca se descarta.
+        // Cada archivo usado tiene su hoja: si uno no se puede leer como planilla, su hoja lo dice y el Excel se genera igual.
         try {
           const libro = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
           const wb = X.read(bytes, libro ? { type: 'array', cellDates: true } : { type: 'array', raw: true });
@@ -3595,11 +3580,11 @@ class Component extends DCLogic {
             hojas.push({ name: nombre(base + (wb.SheetNames.length > 1 ? ' ' + (i + 1) : '')), rows: aoa });
           });
         } catch (e) {
-          hojas.push({ name: nombre(base), rows: [[lbl + ' · ' + o.name.slice(k.length + 2)], ['No se pudo volcar al Excel: el archivo original va en el ZIP.']] });
+          hojas.push({ name: nombre(base), rows: [[lbl + ' · ' + o.name.slice(k.length + 2)], ['No se pudo leer el contenido del archivo. Está guardado junto a la liquidación.']] });
         }
       }
     }
-    return { hojas, sin, archivos, fallidos };
+    return { hojas, sin };
   }
 
   zipStore(files) {
@@ -3610,7 +3595,7 @@ class Component extends DCLogic {
     let off = 0;
     const u16 = (v) => [v & 0xFF, (v >>> 8) & 0xFF], u32 = (v) => [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF];
     files.forEach(([name, txt]) => {
-      const nb = enc.encode(name), db = typeof txt === 'string' ? enc.encode(txt) : txt, crc = crc32(db);
+      const nb = enc.encode(name), db = enc.encode(txt), crc = crc32(db);
       const common = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(db.length), ...u32(db.length), ...u16(nb.length), ...u16(0)];
       const local = Uint8Array.from([...u32(0x04034b50), ...common]);
       parts.push(local, nb, db);
@@ -3626,7 +3611,7 @@ class Component extends DCLogic {
   }
 
   descargar(name, bytes) {
-    const blob = new Blob([bytes], { type: /\.zip$/i.test(name) ? 'application/zip' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -6064,15 +6049,9 @@ class Component extends DCLogic {
       (async () => {
         const cr = await this.crudosHojas(rows);
         const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })), cr.hojas);
-        // Con archivos guardados se baja un ZIP: el Excel y, por liquidación, todos los archivos originales que se usaron.
-        const nArch = cr.archivos.length, zipName = x.name.replace(/\.xlsx$/i, '.zip');
-        if (nArch) this.descargar(zipName, this.zipStore([[x.name, x.bytes]].concat(cr.archivos)));
-        else this.descargar(x.name, x.bytes);
+        this.descargar(x.name, x.bytes);
         const sin = cr.sin.length ? ' Sin archivos crudos guardados: ' + cr.sin.join(', ') + '.' : '';
-        const mal = cr.fallidos.length ? ' No se pudieron descargar: ' + cr.fallidos.join(' · ') + '.' : '';
-        this.setState({ toast: { kind: sin || mal ? 'warn' : 'ok', t: nArch ? 'Excel y archivos descargados' : 'Excel descargado',
-          d: (nArch ? zipName + ' · el Excel y ' + nArch + (nArch === 1 ? ' archivo original' : ' archivos originales') + ' · ' : x.name + ' · ')
-            + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con los archivos crudos.' + sin + mal } });
+        this.setState({ toast: { kind: sin ? 'warn' : 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con los archivos crudos.' + sin } });
       })().catch(err => {
         this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
       });
