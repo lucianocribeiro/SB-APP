@@ -2621,7 +2621,7 @@ class Component extends DCLogic {
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
-    apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.lsGet('myiva.venc', null) || this.vencDef(),
+    apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)),
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
@@ -2870,7 +2870,7 @@ class Component extends DCLogic {
     }
 
     const cv = cfg.find(c => c.clave === 'vencimientos');
-    const venc = cv && cv.valor && cv.valor.pers ? this.lsSet('myiva.venc', cv.valor) : s.venc;
+    const venc = cv && cv.valor && cv.valor.pers ? this.vencConHistoria(this.lsSet('myiva.venc', cv.valor)) : s.venc;
 
     this._sync = z;
     return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc };
@@ -4216,9 +4216,23 @@ class Component extends DCLogic {
   }
 
   // Agenda de vencimientos de IVA: { pers: { 'mm/aaaa': [dd/mm/aaaa × 5 (CUIT 0-1, 2-3, 4-5, 6-7, 8-9)] }, fecha, origen }.
-  // Viene precargada con la agenda 2026 publicada por ARCA; se reemplaza / amplía desde Configuración → Vencimientos.
+  // Viene precargada con las agendas 2024, 2025 y 2026 de ARCA (Agenda de Vencimientos, IVA, presentación de la DJ mensual RG 715 / RG 4010);
+  // se amplía o corrige desde Configuración → Vencimientos. Período 10/2025: ARCA fijó una sola fecha para CUIT 6 a 9.
   vencDef() {
-    const t = { '12/2025': '19/01/2026 20/01/2026 21/01/2026 22/01/2026 23/01/2026', '01/2026': '18/02/2026 19/02/2026 20/02/2026 23/02/2026 24/02/2026',
+    const t = {
+      '12/2023': '18/01/2024 19/01/2024 22/01/2024 23/01/2024 24/01/2024', '01/2024': '19/02/2024 20/02/2024 21/02/2024 22/02/2024 23/02/2024',
+      '02/2024': '18/03/2024 19/03/2024 20/03/2024 21/03/2024 22/03/2024', '03/2024': '18/04/2024 19/04/2024 22/04/2024 23/04/2024 24/04/2024',
+      '04/2024': '20/05/2024 21/05/2024 22/05/2024 23/05/2024 24/05/2024', '05/2024': '18/06/2024 19/06/2024 24/06/2024 25/06/2024 26/06/2024',
+      '06/2024': '18/07/2024 19/07/2024 22/07/2024 23/07/2024 24/07/2024', '07/2024': '19/08/2024 20/08/2024 21/08/2024 22/08/2024 23/08/2024',
+      '08/2024': '18/09/2024 19/09/2024 20/09/2024 23/09/2024 24/09/2024', '09/2024': '18/10/2024 21/10/2024 22/10/2024 23/10/2024 24/10/2024',
+      '10/2024': '19/11/2024 20/11/2024 21/11/2024 22/11/2024 25/11/2024', '11/2024': '18/12/2024 19/12/2024 20/12/2024 23/12/2024 26/12/2024',
+      '12/2024': '20/01/2025 21/01/2025 22/01/2025 23/01/2025 24/01/2025', '01/2025': '18/02/2025 19/02/2025 20/02/2025 21/02/2025 24/02/2025',
+      '02/2025': '18/03/2025 19/03/2025 20/03/2025 21/03/2025 25/03/2025', '03/2025': '21/04/2025 22/04/2025 23/04/2025 24/04/2025 25/04/2025',
+      '04/2025': '19/05/2025 20/05/2025 21/05/2025 22/05/2025 23/05/2025', '05/2025': '18/06/2025 19/06/2025 23/06/2025 24/06/2025 25/06/2025',
+      '06/2025': '18/07/2025 21/07/2025 22/07/2025 23/07/2025 24/07/2025', '07/2025': '18/08/2025 19/08/2025 20/08/2025 21/08/2025 22/08/2025',
+      '08/2025': '18/09/2025 19/09/2025 22/09/2025 23/09/2025 24/09/2025', '09/2025': '20/10/2025 21/10/2025 22/10/2025 23/10/2025 24/10/2025',
+      '10/2025': '18/11/2025 19/11/2025 20/11/2025 25/11/2025 25/11/2025', '11/2025': '18/12/2025 19/12/2025 22/12/2025 23/12/2025 26/12/2025',
+      '12/2025': '19/01/2026 20/01/2026 21/01/2026 22/01/2026 23/01/2026', '01/2026': '18/02/2026 19/02/2026 20/02/2026 23/02/2026 24/02/2026',
       '02/2026': '18/03/2026 19/03/2026 20/03/2026 23/03/2026 25/03/2026', '03/2026': '20/04/2026 21/04/2026 22/04/2026 23/04/2026 24/04/2026',
       '04/2026': '18/05/2026 19/05/2026 20/05/2026 21/05/2026 22/05/2026', '05/2026': '18/06/2026 19/06/2026 22/06/2026 23/06/2026 24/06/2026',
       '06/2026': '20/07/2026 21/07/2026 22/07/2026 23/07/2026 24/07/2026', '07/2026': '18/08/2026 19/08/2026 20/08/2026 21/08/2026 24/08/2026',
@@ -4226,7 +4240,14 @@ class Component extends DCLogic {
       '10/2026': '18/11/2026 19/11/2026 20/11/2026 24/11/2026 25/11/2026', '11/2026': '18/12/2026 21/12/2026 22/12/2026 23/12/2026 24/12/2026' };
     const pers = {};
     Object.keys(t).forEach(k => { pers[k] = t[k].split(' '); });
-    return { pers, fecha: '', origen: 'Agenda 2026 precargada en la app (períodos 12/2025 a 11/2026)' };
+    return { pers, fecha: '', origen: 'Agendas 2024, 2025 y 2026 precargadas en la app (períodos 12/2023 a 11/2026)' };
+  }
+
+  // Agenda cargada (Excel / base de datos) sobre la precargada: los períodos cargados mandan y los demás años siguen estando.
+  vencConHistoria(v) {
+    const def = this.vencDef();
+    if (!v || !v.pers) return def;
+    return Object.assign({}, v, { pers: Object.assign({}, def.pers, v.pers) });
   }
 
   FISCAL_DEMO = {
