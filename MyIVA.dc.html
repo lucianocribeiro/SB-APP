@@ -3382,13 +3382,17 @@ class Component extends DCLogic {
       const r = first + i, p = r - 1, df = num(d.df), cf = num(d.cf), rp = num(d.rp);
       const [F, G, H] = split(df, [0.93, 0.05, 0.02]);
       const [AA, AB, AC] = split(cf, [0.9, 0.07, 0.03]);
-      const [AK, AL] = split(rp, [0.7, 0.3]);
+      // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
+      // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
+      const det = d.n && d.n.ali && d.n.ali.det;
+      const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
       const v = {
         B: r2(F / 0.21), C: r2(G / 0.105), D: r2(H / 0.27), F, G, H, I: df,
         J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, T: 0, U: 0, V: 0, W: 0,
         X: r2(AA / 0.21), Y: r2(AB / 0.105), Z: r2(AC / 0.27), AA, AB, AC, AD: cf,
-        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AK, AL, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0)
+        AE: 0, AF: 0, AG: 0, AH: 0, AI: 0, AJ: 0, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0)
       };
+      if (sep) { v.AK = r2(det.perc); v.AL = r2(det.ret); }
       v.E = r2(v.B + v.C + v.D);
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
