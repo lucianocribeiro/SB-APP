@@ -3338,7 +3338,8 @@ class Component extends DCLogic {
     ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AM', 'Total Débito Fiscal'], ['AN', 'Total Crédito Fiscal'],
     ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
     ['AS', 'Total Crédito Fiscal Computable'], ['AT', 'Total Crédito Fiscal No Computable'], ['AU', 'Ajustes Prorrateo'],
-    ['AV', 'Total Retenciones y Percecpiones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'], ['AZ', 'Compensaciones'],
+    // AV y AVP: retenciones y percepciones en dos columnas (antes era una sola, "Total Retenciones y Percepciones").
+    ['AV', 'Retenciones'], ['AVP', 'Percepciones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'], ['AZ', 'Compensaciones'],
     ['BA', 'Débito Fiscal'], ['BB', 'Crédito Fiscal'], ['BC', 'Saldo anterior'], ['BD', 'Saldo técnico a favor ARCA (D)'],
     ['BE', 'Saldo técnico a favor ARCA (PM)'], ['BF', 'SLD anterior'], ['BG', 'Retenciones y Perc.'], ['BH', 'Saldo a favor ARCA']
   ];
@@ -3350,7 +3351,9 @@ class Component extends DCLogic {
   novaluxXlsx(cliente, rows, extras = []) {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
-    const C = (orig) => this.colLet(this.colNum(orig) + 1);
+    // Columna real de cada clave de NOVALUX_COLS: van seguidas desde la C (A = período, B = secuencia).
+    const pos = Object.fromEntries(this.NOVALUX_COLS.map(([o], i) => [o, i]));
+    const C = (orig) => this.colLet(pos[orig] + 3);
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const pk = (r) => r.per.slice(3) + r.per.slice(0, 2) + String(r.seq).padStart(2, '0');
     const data = rows.slice().sort((a, b) => pk(a).localeCompare(pk(b)));
@@ -3385,7 +3388,7 @@ class Component extends DCLogic {
       // Las liquidaciones viejas sin det dejan esas columnas vacías: no se inventan importes; los totales I / AD / AM / AN se mantienen.
       const det = d.n && d.n.ali && d.n.ali.det;
       const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
-      const v = { I: df, J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: cf, AM: df, AN: cf, AV: rp, AZ: r2(d.comp || 0) };
+      const v = { I: df, J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: cf, AM: df, AN: cf, AZ: r2(d.comp || 0) };
       if (det && det.v && det.c) {
         const z = (o, k) => r2((o && o[k]) || 0), sum = (o, ks) => r2(ks.reduce((a, k) => a + z(o, k), 0));
         const NET = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0'], IVA = ['i21', 'i105', 'i27', 'i5', 'i25'];
@@ -3401,7 +3404,9 @@ class Component extends DCLogic {
       }
       // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
       // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
-      if (sep) { v.AK = r2(det.perc); v.AL = r2(det.ret); }
+      // AV / AVP: las mismas, junto a los saldos. Sin detalle quedan vacías y el saldo usa el total guardado de la liquidación.
+      if (sep) { v.AK = r2(det.perc); v.AL = r2(det.ret); v.AV = r2(det.ret); v.AVP = r2(det.perc); }
+      const retPer = sep ? `(${C('AV')}${r}+${C('AVP')}${r})` : `(${rp})`;
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
       const f = {
@@ -3409,7 +3414,7 @@ class Component extends DCLogic {
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
         AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
         AW: `IF(${C('AW')}${p}>0,${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r}+${C('AW')}${p},${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r})`,
-        AX: `IF(${axAnt}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}),IF(${C('AW')}${r}<0,${axAnt}+${C('AW')}${r}+${C('AV')}${r},${C('AV')}${r}+${axAnt}))`,
+        AX: `IF(${axAnt}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${retPer},${retPer}),IF(${C('AW')}${r}<0,${axAnt}+${C('AW')}${r}+${retPer},${retPer}+${axAnt}))`,
         AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
       };
       const SALDO = { AW: 1, AX: 1, AY: 1 };
@@ -3425,10 +3430,10 @@ class Component extends DCLogic {
     const tc = [cell('A' + tot, ST.totLabel, { t: 'Total año fiscal' }), cell('B' + tot, ST.totEmpty)];
     const tRatio = `IFERROR((${C('J')}${tot}+${C('K')}${tot})/(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot}),0)`;
     this.NOVALUX_COLS.forEach(([o]) => {
-      const L = C(o), ref = L + tot, n = this.colNum(o);
+      const L = C(o), ref = L + tot, n = pos[o];
       if (o === 'AO') tc.push(cell(ref, ST.totPct, { f: `1-${tRatio}` }));
       else if (o === 'AW' || o === 'AX') tc.push(cell(ref, ST.totMoney, { f: `${L}${last}` }));
-      else if (o === 'AU' || n > this.colNum('AZ')) tc.push(cell(ref, ST.totEmpty));
+      else if (o === 'AU' || n > pos.AZ) tc.push(cell(ref, ST.totEmpty));
       else tc.push(cell(ref, ST.totMoney, { f: `SUM(${L}${first}:${L}${last})` }));
     });
     rowsXml.push(`<row r="${tot}">${tc.join('')}</row>`);
