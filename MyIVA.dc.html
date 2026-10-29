@@ -1308,13 +1308,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">DDJJ</th>
+<th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">IVA Digital</th>
 <th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Acciones</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cerrar</th>
 <th style="text-align:center;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 10px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Eliminar</th>
 </tr></thead>
 <tbody>
 <sc-if value="{{ histVacio }}">
-<tr><td colspan="16" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
+<tr><td colspan="17" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ histVacioTxt }} <sc-if value="{{ histSeqActivo }}"><span onClick="{{ histSeqLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todas</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ histFilas }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -1343,6 +1344,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <label title="Adjuntar el PDF de la declaración jurada" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px dashed #B9C6D3;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M12 17v-6M9 14l3-3 3 3"></path></svg><input type="file" accept=".pdf,application/pdf" onChange="{{ r.pdfSubir }}" style="display:none"></label>
 </sc-if>
 <sc-if value="{{ r.pdfNo }}"><span style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
+</td>
+<td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center;white-space:nowrap">
+<sc-if value="{{ r.ivdTiene }}">
+<span onClick="{{ r.ivdVer }}" title="Ver el Libro IVA Digital usado en esta liquidación{{ r.ivdTip }}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #CFE2F0;background:#F4F9FD;border-radius:6px;cursor:pointer" style-hover="border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M9 13h6M9 17h4"></path></svg></span>
+</sc-if>
+<sc-if value="{{ r.ivdNo }}"><span style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
 </td>
 <td style="padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:5px;align-items:center">
@@ -2542,6 +2549,22 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ ivdAbierto }}">
+<div onClick="{{ ivdCerrar }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
+<div style="position:fixed;top:4vh;left:50%;transform:translateX(-50%);width:900px;max-width:94vw;height:92vh;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2);display:flex;flex-direction:column">
+<div style="padding:14px 18px;border-bottom:1px solid #E3E8EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="min-width:0"><div style="font:600 15px 'Open Sans'">Libro IVA Digital</div><div style="font:400 12.5px 'Open Sans';color:#5A6B7B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ivdSub }} · {{ ivdNombre }}</div></div>
+<div style="display:flex;gap:8px;flex:none">
+<a href="{{ ivdUrl }}" download="{{ ivdNombre }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';text-decoration:none">Descargar</a>
+<button onClick="{{ ivdCerrar }}" style="padding:7px 12px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer">Cerrar</button>
+</div>
+</div>
+<div style="flex:1;min-height:0;background:#F5F7FA;display:flex;align-items:center;justify-content:center;overflow:auto">
+<sc-if value="{{ ivdPdf }}"><iframe src="{{ ivdUrl }}" title="Libro IVA Digital" style="width:100%;height:100%;border:0"></iframe></sc-if>
+<sc-if value="{{ ivdImg }}"><img src="{{ ivdUrl }}" alt="Libro IVA Digital" style="max-width:100%;height:auto;display:block;margin:auto"></sc-if>
+</div>
+</div>
+</sc-if>
 <sc-if value="{{ liqConfirm }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
 <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
@@ -2717,7 +2740,7 @@ class Component extends DCLogic {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
-    step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {},
+    step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
@@ -3652,6 +3675,7 @@ class Component extends DCLogic {
       for (const o of arch) {
         if (o.dj) { hojas.push({ name: nombre(o.base), rows: o.rows }); continue; }
         const k = o.name.split('__')[0], lbl = this.UP_LBL[k] || k;
+        if (k === 'ivadig') continue;   // PDF / imagen: no se vuelca al Excel; se ve desde la columna "IVA Digital" del historial
         const corto = { emitidos: 'Emitidos', recibidos: 'Recibidos', aduana: 'Percep. Aduaneras', respaldo: 'Respaldo' }[k] || lbl;
         const base = r.per.replace('/', '-') + ' S' + r.seq + ' ' + corto;
         const dl = await sb.storage.from('crudos').download(dir + '/' + o.name);
@@ -3856,6 +3880,26 @@ class Component extends DCLogic {
       audExtra: [{ f: meta.fecha, u, a: 'DDJJ adjuntada', c: r.cliente, p: r.per, r: 'Sec. ' + r.seq + ' · ' + f.name, ip: '190.15.44.12' }].concat(st.audExtra),
       toast: { kind: per ? 'ok' : 'warn', t: 'Declaración jurada adjuntada', d: f.name + ' quedó guardada junto a ' + r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq) + '.' + (per ? '' : ' No se pudo leer el período del PDF: verificá que sea el correcto.') }
     }));
+  }
+
+  // Vista previa del Libro IVA Digital (PDF o imagen) guardado con la liquidación, en la carpeta de archivos crudos.
+  async verIvaDig(r, id) {
+    const sb = this.sb(), err = (d) => this.setState({ toast: { kind: 'warn', t: 'Libro IVA Digital', d } });
+    if (!sb || !this._user) return err('El archivo se guarda en la base de datos: no está disponible en esta sesión.');
+    try {
+      const dir = this.crudosCarpeta(r.id || id), ls = await sb.storage.from('crudos').list(dir, { limit: 1000 });
+      if (ls.error) throw ls.error;
+      const o = (ls.data || []).find(x => x.name && x.name.indexOf('ivadig__') === 0);
+      if (!o) return err('Esta liquidación no tiene guardado el archivo del Libro IVA Digital.');
+      const dl = await sb.storage.from('crudos').download(dir + '/' + o.name);
+      if (dl.error) throw dl.error;
+      const nombre = (r.n && r.n.ali && r.n.ali.ivadig) || o.name.slice(8), pdf = /\.pdf$/i.test(o.name);
+      const url = URL.createObjectURL(pdf ? new Blob([dl.data], { type: 'application/pdf' }) : dl.data);
+      if (this.state.ivdVer) URL.revokeObjectURL(this.state.ivdVer.url);
+      this.setState({ ivdVer: { url, nombre, pdf, sub: r.cliente + ' · ' + r.per + ' · ' + this.seqTxt(r.seq) } });
+    } catch (x) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo abrir el Libro IVA Digital', d: String(x && x.message || x) } });
+    }
   }
 
   async verDJ(id) {
@@ -5927,12 +5971,15 @@ class Component extends DCLogic {
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
       openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' } }),
+      ivdAbierto: !!s.ivdVer, ivdUrl: s.ivdVer ? s.ivdVer.url : '', ivdNombre: s.ivdVer ? s.ivdVer.nombre : '', ivdSub: s.ivdVer ? s.ivdVer.sub : '',
+      ivdPdf: !!(s.ivdVer && s.ivdVer.pdf), ivdImg: !!(s.ivdVer && !s.ivdVer.pdf),
+      ivdCerrar: () => { if (s.ivdVer) setTimeout(() => URL.revokeObjectURL(s.ivdVer.url), 1000); this.setState({ ivdVer: null }); },
       nc: s.nc,
       ncSet: ['rz', 'cuit', 'ini', 'mails'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
       openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null, apocVer: null }),
+      closeAll: () => this.setState({ ivdVer: null, drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null, apocVer: null }),
       apocVerOn: !!s.apocVer, apocVerSub: s.apocVer ? s.apocVer.sub : '', apocVerFilas: s.apocVer ? s.apocVer.filas : [],
       apocVerBase: (() => { const a = s.apoc || {}; return 'Base APOC cargada: ' + (a.origen || '—') + ' · ' + String(a.total || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' CUITs' + (a.gen ? ' · listado de ARCA del ' + a.gen : '') + (a.fecha ? ' · subida el ' + a.fecha : ''); })(),
       errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
@@ -6315,6 +6362,9 @@ class Component extends DCLogic {
           pdfTiene: !!pdf, pdfPuede: !pdf && r.df !== '—', pdfNo: !pdf && r.df === '—', pdfQuitable: !!pdf && puedeBorrar,
           pdfTip: pdf ? pdf.name + ' · ' + pdf.kb + ' KB · adjuntada por ' + pdf.u + ' el ' + pdf.fecha : '',
           pdfSubir: (e) => this.adjuntarDJ(e, r, id), pdfVer: () => this.verDJ(id), pdfQuitar: () => this.quitarDJ(r, id),
+          // Libro IVA Digital usado (archivo #7). Las liquidaciones nuevas guardan su nombre (o null si no se cargó); en las anteriores se busca al abrir.
+          ivdTiene: r.df !== '—' && !(r.n && r.n.ali && r.n.ali.ivadig === null), ivdNo: r.df === '—' || !!(r.n && r.n.ali && r.n.ali.ivadig === null),
+          ivdTip: r.n && r.n.ali && r.n.ali.ivadig ? ' · ' + r.n.ali.ivadig : '', ivdVer: () => this.verIvaDig(r, id),
           le: le ? E[le] : { label: '—', bg: 'transparent', fg: '#9AA9B7', bd: 'transparent' },
           puedeCerrar: le === 'Borrador', puedeBorrar,
           cerrar: () => this.setState({ liqCierre: { id, label, cliente: r.cliente, per: r.per, seq: r.seq } }),
@@ -6521,6 +6571,7 @@ class Component extends DCLogic {
         // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
         const res = Object.assign(this.liqAjustar(this.liqCalc(sub('ventas'), sub('compras'), arr), this.liqAjVals(), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
         // Se guarda si se liquidó en término o vencida (va junto a las alícuotas de la liquidación).
+        res.ali.ivadig = R.ivadig && R.ivadig.name ? R.ivadig.name : null;
         const ve = this.vencEstado(perL, this.cuitCli(cli), res.fecha);
         if (ve) res.ali.venc = { f: ve.f, vencida: ve.vencida, dias: ve.dias };
         // Cada liquidación es una fila nueva del historial: si ya hay una con el mismo id (por ejemplo, una eliminada ese mismo día), se le agrega la hora.
