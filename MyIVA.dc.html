@@ -1029,8 +1029,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
-<button onClick="{{ toastXls }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar PDF</button>
-<button onClick="{{ toastXls }}" style="padding:9px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Exportar Excel</button>
+<button onClick="{{ liqExpPdf }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar PDF</button>
+<button onClick="{{ liqExpXls }}" style="padding:9px 13px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Exportar Excel</button>
 </div>
 </div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px">
@@ -4184,6 +4184,17 @@ class Component extends DCLogic {
 
   compTxt(x) { return x.tc + (x.letra ? ' ' + x.letra : '') + ' ' + String(x.pv).padStart(5, '0') + '-' + String(x.nro).padStart(8, '0'); }
 
+  pdfGenLib() {
+    if (typeof window !== 'undefined' && window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable) return Promise.resolve(window.jspdf.jsPDF);
+    if (this._pdfGenP) return this._pdfGenP;
+    const sc = (src) => new Promise((ok, ko) => { const e = document.createElement('script'); e.src = src; e.async = true; e.onload = ok; e.onerror = () => { e.remove(); ko(new Error('No se pudo cargar el generador de PDF. Revisá la conexión a internet y volvé a intentar.')); }; document.head.appendChild(e); });
+    this._pdfGenP = sc('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      .then(() => sc('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'))
+      .then(() => window.jspdf.jsPDF)
+      .catch(e => { this._pdfGenP = null; throw e; });
+    return this._pdfGenP;
+  }
+
   xlsxLib() {
     if (typeof window !== 'undefined' && window.XLSX) return Promise.resolve(window.XLSX);
     if (this._xlsxP) return this._xlsxP;
@@ -6235,7 +6246,7 @@ class Component extends DCLogic {
       rows.push(filaRes('Total comprobantes (FC / ND)', m(o.tot), '', 1));
       return rows.map(r => r.b === 2 ? Object.assign(r, { bgr: '#EEF3F8', w: '600', c: r.c.toUpperCase() }) : r);
     };
-    return {
+    const V = {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
         n: String(n), label,
@@ -6548,6 +6559,55 @@ class Component extends DCLogic {
         { cliente: 'DACKET SA', per: '07/2026', df: '2.744.900,00', cf: '2.408.115,40', ret: '48.900,00', saldo: '-287.884,60' }
       ].map(r => Object.assign({}, r, { sc: r.saldo[0] === '-' ? '#B3261E' : '#2E7D5B' }))
     };
+    // Exportar la liquidación que se está viendo (resultado / ojito del historial).
+    const expDatos = () => {
+      const per = resReal ? resShow.per : '08/2026', seq = resReal ? resShow.seq : 0;
+      const tabs = [['Débito Fiscal', ['Concepto', 'Neto / Importe', 'Débito fiscal'], V.ventasRows.map(r => [r.c, r.n, r.d, r.b])],
+        ['Crédito Fiscal', ['Concepto', 'Neto / Importe', 'IVA crédito fiscal'], V.comprasRows.map(r => [r.c, r.n, r.d, r.b])],
+        ['Retenciones y Percepciones', ['Régimen', 'Comprobantes', 'Importe'], V.retRows.map((r, k, a) => [r.c, r.q, r.i, k === a.length - 1 ? 1 : 0])]];
+      return { cli: V.liqResCli, per, seq, sub: V.liqResSub, kpis: V.kpisLiq, saldos: V.saldos, tabs, nombre: V.liqResCli + ' - Liquidacion IVA ' + per.replace('/', '-') + ' - Sec ' + seq };
+    };
+    const numX = (t) => (typeof t === 'string' && /^-?\d{1,3}(\.\d{3})*,\d{2}$/.test(t.trim()) ? this.numAr(t.trim()) : (t === '—' ? '' : t));
+    V.liqExpXls = async () => {
+      try {
+        const X = await this.xlsxLib(), d = expDatos(), wb = X.utils.book_new();
+        const res = [['Cliente', d.cli], ['Período', d.per], ['Secuencia', this.seqTxt(d.seq)], ['Detalle', d.sub], []]
+          .concat(d.kpis.map(k => [k.label, numX(k.value)])).concat([[]]).concat(d.saldos.map(x => [x.label, numX(x.value), x.tag]));
+        const ws = X.utils.aoa_to_sheet(res);
+        ws['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 12 }];
+        X.utils.book_append_sheet(wb, ws, 'Resumen');
+        d.tabs.forEach(([t, head, rows]) => {
+          const w = X.utils.aoa_to_sheet([head].concat(rows.map(r => [r[0], numX(r[1]), numX(r[2])])));
+          w['!cols'] = [{ wch: 58 }, { wch: 18 }, { wch: 18 }];
+          X.utils.book_append_sheet(wb, w, t.slice(0, 31));
+        });
+        this.descargar(d.nombre + '.xlsx', new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })));
+      } catch (e) { this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(e && e.message || e) } }); }
+    };
+    V.liqExpPdf = async () => {
+      try {
+        const J = await this.pdfGenLib(), d = expDatos(), doc = new J({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth();
+        const azul = [20, 57, 92];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...azul);
+        doc.text(d.cli + ' · Liquidación de IVA ' + d.per, 40, 50);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 107, 123);
+        doc.text(doc.splitTextToSize(d.sub, W - 80), 40, 68);
+        const base = { theme: 'grid', styles: { fontSize: 8.5, cellPadding: 4, textColor: [27, 39, 51], lineColor: [213, 222, 231] }, headStyles: { fillColor: [238, 243, 248], textColor: [20, 57, 92], fontStyle: 'bold' }, margin: { left: 40, right: 40 } };
+        doc.autoTable(Object.assign({}, base, { startY: 92, head: [['Concepto', 'Importe', '']], body: d.kpis.map(k => [k.label, k.value, '']).concat(d.saldos.map(x => [x.label, x.value, x.tag])),
+          columnStyles: { 1: { halign: 'right' }, 2: { halign: 'center' } } }));
+        d.tabs.forEach(([t, head, rows]) => {
+          let y = doc.lastAutoTable.finalY + 22;
+          if (y > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); y = 50; }
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(...azul); doc.text(t, 40, y);
+          doc.autoTable(Object.assign({}, base, { startY: y + 8, head: [head], body: rows.map(r => r.slice(0, 3)), columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } },
+            didParseCell: (h) => { const b = h.section === 'body' && rows[h.row.index][3]; if (b) { h.cell.styles.fontStyle = 'bold'; h.cell.styles.fillColor = b === 2 ? [238, 243, 248] : [245, 247, 250]; } } }));
+        });
+        const n = doc.internal.getNumberOfPages();
+        for (let k = 1; k <= n; k++) { doc.setPage(k); doc.setFontSize(8); doc.setTextColor(154, 169, 183); doc.text('MyIVA · Estudio Blasco · generado el ' + this.ahora() + ' · página ' + k + ' de ' + n, 40, doc.internal.pageSize.getHeight() - 24); }
+        doc.save(d.nombre + '.pdf');
+      } catch (e) { this.setState({ toast: { kind: 'err', t: 'No se pudo generar el PDF', d: String(e && e.message || e) } }); }
+    };
+    return V;
   }
 
   cruVals() {
