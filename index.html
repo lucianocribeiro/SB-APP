@@ -4270,6 +4270,9 @@ class Component extends DCLogic {
 
   tipoLibro(tc, letra) {
     let t = String(tc == null ? '' : tc).trim().toUpperCase(), l = String(letra == null ? '' : letra).trim().toUpperCase();
+    // Notas de crédito escritas de otra forma: "N/C", "N.C.", "NCR", "Nota de crédito…".
+    const tf = this.fold(t).toUpperCase();
+    if (/^NOTA\s*DE\s*CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR') t = 'NC';
     const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
     if (m && !l) { t = m[1]; l = m[2]; }
     t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC' }[t] || t;
@@ -4646,12 +4649,16 @@ class Component extends DCLogic {
         v.ngt = v.n21 + v.n105 + v.n27 + v.n5 + v.n25 + v.n0;
         v.ivt = v.i21 + v.i105 + v.i27 + v.i5 + v.i25;
       }
+      // Subdiarios: un comprobante con importes negativos (total, o IVA si el total viene vacío) es una nota de crédito
+      // aunque el TC diga FC / ND (hay sistemas que las cargan así). Se toma como NC y se avisa en las incidencias.
+      let ncNeg = false;
+      if (libro && t.tc !== 'NC' && !this.TC_EXCL.includes(t.tc) && (v.tot < 0 || (!v.tot && v.ivt < 0))) { t = { tc: 'NC', letra: t.letra }; ncNeg = true; }
       Object.keys(v).forEach(a => { v[a] = r2(t.tc === 'NC' ? Math.abs(v[a]) : v[a]); });
       const nom = g('nom');
       const rec = {
         cuit, tc: t.tc, letra: t.letra, tipo: t.tc + (t.letra ? ' ' + t.letra : ''), desc: libro ? '' : (t.cod ? t.cod + ' - ' : '') + t.desc,
         pv: Math.round(n('pv')), nro: Math.round(n('nro')), fecha, nom: nom == null ? '' : String(nom).trim(),
-        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, excl: libro && (this.TC_EXCL.includes(t.tc) || !this.esComp(t.tc))
+        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, ncNeg, excl: libro && (this.TC_EXCL.includes(t.tc) || !this.esComp(t.tc))
       };
       recs.push(rec);
       const pk = fecha.slice(3);
@@ -5754,6 +5761,7 @@ class Component extends DCLogic {
         const raros = [...new Set(R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).map(x => x.tc || 'vacío'))];
         if (raros.length) { const n = R[k].recs.filter(x => x.excl && !this.TC_EXCL.includes(x.tc)).length; inc.push({ t: n + (n === 1 ? ' registro' : ' registros') + ' de ' + L[k] + ' con tipo ' + raros.join(', ') + ': no está en la tabla de comprobantes, no se cuenta en los cruces (sí en el IVA de la liquidación). Si es un comprobante, avisá para agregar el código.' }); }
       });
+      P.forEach(k => { const n = R[k].recs.filter(x => x.ncNeg).length; if (n) inc.push({ t: n + (n === 1 ? ' comprobante' : ' comprobantes') + ' de ' + L[k] + ' con importes negativos ' + (n === 1 ? 'se tomó' : 'se tomaron') + ' como nota de crédito (en el subdiario figura' + (n === 1 ? '' : 'n') + ' como factura o nota de débito).' }); });
       P.forEach(k => { const n = R[k].recs.filter(x => !x.excl && x.cuit.length !== 11).length; if (n) inc.push({ t: n + (n === 1 ? ' comprobante' : ' comprobantes') + ' de ' + L[k] + ' sin CUIT válido (11 dígitos): se cruzan igual por tipo, punto de venta y número.' }); });
     } else {
       if (has('ventas')) inc.push({ t: '12 comprobantes de ventas sin CUIT informado — se liquidan como consumidor final.' });
