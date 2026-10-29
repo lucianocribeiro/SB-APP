@@ -5008,7 +5008,8 @@ class Component extends DCLogic {
       fila(k, ivaL, d && d.iva, S[k].iva, origen);
     });
     fila('vExp', '', lib.v.vExp, sum(op(V), x => x.v.exp), 'IVA Ventas · Importe operaciones exportación');
-    fila('cNo', '', lib.v.cNo, sum(op(C), x => x.v.mono), 'IVA Compras · Compras a exentos, monotributistas y otros');
+    // ARCA resta las notas de crédito de proveedores exentos / monotributistas (caso Andalux 09/2026).
+    fila('cNo', '', lib.v.cNo, r2(sum(op(C), x => x.v.mono) - sum(nc(C), x => x.v.mono)), 'IVA Compras · Compras a exentos, monotributistas y otros (facturas − NC)');
     fila('cCom', '', lib.v.cCom, S.cOp.iva, 'IVA Compras · crédito fiscal de FC / ND');
     fila('cRes', '', lib.v.cRes, S.cNc.iva, 'IVA Compras · crédito fiscal de NC');
     fila('vAj', '', lib.v.vAj, 0, 'Sin ajustes en el subdiario');
