@@ -3446,9 +3446,8 @@ class Component extends DCLogic {
     ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
     ['AS', 'Total Crédito Fiscal Computable'], ['AT', 'Total Crédito Fiscal No Computable'], ['AU', 'Ajustes Prorrateo'],
     // AV y AVP: retenciones y percepciones en dos columnas (antes era una sola, "Total Retenciones y Percepciones").
-    ['AV', 'Retenciones'], ['AVP', 'Percepciones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'], ['AZ', 'Compensaciones'],
-    ['BA', 'Débito Fiscal'], ['BB', 'Crédito Fiscal'], ['BC', 'Saldo anterior'], ['BD', 'Saldo técnico a favor ARCA (D)'],
-    ['BE', 'Saldo técnico a favor ARCA (PM)'], ['BF', 'SLD anterior'], ['BG', 'Retenciones y Perc.'], ['BH', 'Saldo a favor ARCA']
+    ['AV', 'Retenciones'], ['AVP', 'Percepciones'], ['AW', 'Saldo 1 Párrafo'], ['AX', 'Saldo 2 Párrafo'], ['AY', 'Saldo a pagar'], ['AZ', 'Compensaciones']
+    // Las columnas de validación contra ARCA (1er y 2do párrafo) se quitaron: quedaron en desuso.
   ];
 
   colNum(l) { return l.split('').reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0); }
@@ -3472,7 +3471,7 @@ class Component extends DCLogic {
       if (o && o.v !== undefined) return `<c r="${ref}" s="${s}"><v>${o.v}</v></c>`;
       return `<c r="${ref}" s="${s}"/>`;
     };
-    const lastCol = C('BH'), first = 3, last = first + data.length - 1, tot = last + 1;
+    const lastCol = C('AZ'), first = 3, last = first + data.length - 1, tot = last + 1;
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
       .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
@@ -3480,9 +3479,7 @@ class Component extends DCLogic {
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
-      if (L === C('BA')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 1er párrafo' }));
-      else if (L === C('BE')) r2cells.push(cell(L + '2', ST.head, { t: 'Validación 2do párrafo' }));
-      else if (man0 && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: man0.a1 }));
+      if (man0 && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: man0.a1 }));
       else if (man0 && L === C('AX')) r2cells.push(cell(L + '2', ST.money, { v: man0.a2 }));
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
@@ -3552,7 +3549,7 @@ class Component extends DCLogic {
     const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${tot}"/>`
       + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
       + `<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml.join('')}</sheetData>`
-      + `<mergeCells count="2"><mergeCell ref="${C('BA')}2:${C('BD')}2"/><mergeCell ref="${C('BE')}2:${C('BH')}2"/></mergeCells></worksheet>`;
+      + `</worksheet>`;
     const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
       + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;$&quot;#,##0.00"/></numFmts>`
