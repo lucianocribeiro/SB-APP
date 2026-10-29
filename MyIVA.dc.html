@@ -952,15 +952,114 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 
 <div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
-<button onClick="{{ openLiqConfirm }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar liquidación</button>
+<button onClick="{{ stepNext }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver vista previa</button>
 </div>
 </div>
 </sc-if>
 
 <sc-if value="{{ stepIs.p4 }}">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:6px">
+<div style="font:600 15.5px 'Open Sans'">Paso 4 — Vista previa de la liquidación</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }}</div>
+</div>
+<div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B">Así va a quedar la liquidación con los archivos cargados. Todavía no se guardó: revisala y, si hace falta, cargá ajustes antes de procesarla.</div>
+
+<div style="margin-top:16px;padding:14px 16px;border:1px solid #E3E8EE;border-radius:6px;background:#FAFBFC">
+<div style="font:600 13px 'Open Sans';color:#14395C">Ajustes manuales</div>
+<div style="font:400 12px/1.45 'Open Sans';color:#5A6B7B;margin-top:3px">Importe positivo suma y negativo resta (por ejemplo 1.500,00 o -250,50). Vacío = sin ajuste. Quedan guardados con la liquidación.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px">
+<sc-for list="{{ ajCampos }}" as="a" hint-placeholder-count="4">
+<div>
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">{{ a.label }}</div>
+<div style="display:flex;align-items:center;border:1px solid {{ a.bd }};border-radius:6px;background:#fff"><span style="padding:8px 0 8px 10px;font:600 13px 'Open Sans';color:#5A6B7B">$</span><input value="{{ a.val }}" onChange="{{ a.set }}" placeholder="0,00" inputmode="decimal" style="flex:1;min-width:0;padding:8px 10px 8px 5px;border:0;outline:none;font:600 13px 'Open Sans';text-align:right;font-variant-numeric:tabular-nums;background:transparent"></div>
+<div style="font:400 11.5px 'Open Sans';color:{{ a.hfg }};margin-top:4px">{{ a.hint }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px">
+<sc-for list="{{ pvKpis }}" as="k" hint-placeholder-count="3">
+<div style="border:1px solid #E3E8EE;border-radius:6px;padding:12px 14px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ k.label }}</div>
+<div style="font:600 21px/1 'Open Sans';margin-top:9px;font-variant-numeric:tabular-nums">{{ k.value }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px">
+<sc-for list="{{ pvSaldos }}" as="p" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:6px;background:{{ p.bg }};border:1px solid {{ p.bd }}">
+<div><div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">{{ p.label }}</div><div style="font:600 21px/1 'Open Sans';margin-top:8px;color:{{ p.fg }};font-variant-numeric:tabular-nums">{{ p.value }}</div></div>
+<span style="padding:3px 9px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:#fff;color:{{ p.fg }};border:1px solid {{ p.bd }}">{{ p.tag }}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top:14px;padding:12px 14px;background:#F4F7FA;border-left:3px solid #2F80B7;border-radius:4px">
+<div style="font:600 12px 'Open Sans';color:#14395C;margin-bottom:4px">Cómo se calcula</div>
+<sc-for list="{{ pvCalc }}" as="c" hint-placeholder-count="5">
+<div style="font:400 12.5px/1.6 'Open Sans';color:#1B2733;font-variant-numeric:tabular-nums">{{ c.t }}</div>
+</sc-for>
+</div>
+
+<div style="font:600 13.5px 'Open Sans';color:#14395C;margin:18px 0 8px">Débito Fiscal</div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:520px">
+<thead><tr><th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Concepto</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto / Importe</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th></tr></thead>
+<tbody>
+<sc-for list="{{ pvVentas }}" as="r" hint-placeholder-count="8">
+<tr style="background:{{ r.bgr }}">
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4">{{ r.c }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.n }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.d }}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="font:600 13.5px 'Open Sans';color:#14395C;margin:18px 0 8px">Crédito Fiscal</div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:520px">
+<thead><tr><th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Concepto</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Neto / Importe</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th></tr></thead>
+<tbody>
+<sc-for list="{{ pvCompras }}" as="r" hint-placeholder-count="8">
+<tr style="background:{{ r.bgr }}">
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4">{{ r.c }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.n }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.d }}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="font:600 13.5px 'Open Sans';color:#14395C;margin:18px 0 8px">Retenciones y Percepciones</div>
+<div style="border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;min-width:520px">
+<thead><tr><th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Concepto</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Comprobantes</th><th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Importe</th></tr></thead>
+<tbody>
+<sc-for list="{{ pvRet }}" as="r" hint-placeholder-count="8">
+<tr style="background:{{ r.bgr }}">
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4">{{ r.c }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.q }}</td>
+<td style="font-family:'Open Sans';font-size:13px;font-weight:{{ r.w }};padding:8px 14px;border-bottom:1px solid #EEF1F4;text-align:right;font-variant-numeric:tabular-nums">{{ r.i }}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+
+<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
+<button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
+<button onClick="{{ pvProcesar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar liquidación</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ stepIs.p5 }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:760px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:8px">
-<div style="font:600 15.5px 'Open Sans'">Paso 4 — Procesamiento</div>
+<div style="font:600 15.5px 'Open Sans'">Paso 5 — Procesamiento</div>
 </div>
 <sc-if value="{{ procIs.run }}">
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
@@ -2618,7 +2717,7 @@ class Component extends DCLogic {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
-    step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false,
+    step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {},
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
@@ -3088,8 +3187,8 @@ class Component extends DCLogic {
   nav(key) {
     return () => {
       this.setState(st => Object.assign({ screen: key, drawer: false, menuMovil: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null },
-        key === 'liqNueva' && st.step === 4 && st.proc === 'done' ? this.liqVacia() : {},
-        key === 'liqNueva' && (st.step === 1 || st.step === 4) ? { seqElegida: null } : {}));
+        key === 'liqNueva' && st.step === 5 && st.proc === 'done' ? this.liqVacia() : {},
+        key === 'liqNueva' && (st.step === 1 || st.step === 5) ? { seqElegida: null } : {}));
       if (['inicio', 'liqNueva', 'liqHistorial', 'crucesHistorial', 'liqDashboard', 'liqCompensaciones', 'clientes', 'clienteFicha'].includes(key))
         this.refrescar().catch(e => this.setState({ toast: { kind: 'err', t: 'No se pudieron leer los datos de la base', d: String(e && e.message || e) } }));
       if (key === 'liqCompensaciones') this.compsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Compensaciones'));
@@ -3099,7 +3198,7 @@ class Component extends DCLogic {
 
   liqVacia() {
     return {
-      step: 1, proc: 'run', dz: 'empty', real: {}, upErr: {}, upBusy: {}, cruSaved: false, liqErrTxt: '',
+      step: 1, proc: 'run', dz: 'empty', real: {}, upErr: {}, upBusy: {}, cruSaved: false, liqErrTxt: '', liqAj: {},
       up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' }
     };
   }
@@ -4358,6 +4457,102 @@ class Component extends DCLogic {
   vencDe(per, cuit) {
     const v = (this.state.venc || {}).pers || {}, f = v[per], d = String(cuit || '').replace(/\D/g, '');
     return f && d.length === 11 ? f[Math.floor(+d[10] / 2)] : '';
+  }
+
+  // Detalle de Ventas / Compras: gravado por alícuota (neto e IVA), NC, ajuste manual, total, y lo no gravado y otros tributos (sólo neto / importe).
+  detFilasDe(det, k, src, kNc, lNc, total, lTotal, aj) {
+    const filaRes = (c, n, d, b) => ({ c, n, d, b, bgr: b ? '#F5F7FA' : '#FFFFFF', w: b ? '600' : '400' });
+    const o = det[k], nc = det[kNc] || {}, m = (v) => this.ars(v || 0), z = (x) => x || 0;
+    const ALI = [['21', 'n21', 'i21'], ['10,5', 'n105', 'i105'], ['27', 'n27', 'i27'], ['5', 'n5', 'i5'], ['2,5', 'n25', 'i25'], ['0', 'n0', '']];
+    const rows = [filaRes('Facturas y notas de débito · ' + src + ' (' + o.q + ' comprobantes)', '', '', 2)];
+    ALI.forEach(([a, n, i], j) => { if (j < 3 || o[n] || o[i]) rows.push(filaRes('Neto gravado ' + a + '%', m(o[n]), i ? m(o[i]) : '—', 0)); });
+    const ngt = ALI.reduce((a, [, n]) => a + z(o[n]), 0), ivt = ALI.reduce((a, [, , i]) => a + (i ? z(o[i]) : 0), 0);
+    rows.push(filaRes('Subtotal gravado', m(ngt), m(ivt), 1));
+    if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
+    if (aj) rows.push(filaRes((k === 'v' ? 'Ajuste al Débito Fiscal' : 'Ajuste al Crédito Fiscal') + ' (ingresado a mano)', '', m(aj), 0));
+    rows.push(filaRes(lTotal, '', m(total), 1));
+    rows.push(filaRes('No gravado, exento y otros (' + src + ')', '', '', 2));
+    [['Exento', 'exe'], ['No gravado', 'ngr'], ['No alcanzado', 'nal']].concat(k === 'v' ? [['Exportación', 'exp']] : [['Compras a exentos, monotributistas y otros', 'mono']])
+      .forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
+    const otros = [['Percepciones IVA', 'piva'], ['Percepciones IIBB', 'piibb'], ['Otras percepciones', 'potr'], ['Impuestos internos', 'iin'], ['Otros regímenes especiales', 'oreg']].filter(([, f]) => k === 'c' || o[f]);
+    if (otros.length) rows.push(filaRes('Otros tributos', '', '', 2));
+    otros.forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
+    rows.push(filaRes('Total comprobantes (FC / ND)', m(o.tot), '', 1));
+    return rows.map(r => r.b === 2 ? Object.assign(r, { bgr: '#EEF3F8', w: '600', c: r.c.toUpperCase() }) : r);
+  }
+
+  // Retenciones y percepciones del detalle (con los ajustes manuales, si hay).
+  retFilasDe(res) {
+    const det = res.ali && res.ali.det, aj = (res.ali && res.ali.aj) || {}, f = [];
+    f.push({ c: 'Retenciones de IVA sufridas (CR de IVA Ventas del período)', q: det ? String(det.qRet) : '—', i: this.ars(res.ret - (aj.ret || 0)) });
+    if (aj.ret) f.push({ c: 'Ajuste Retenciones (ingresado a mano)', q: '—', i: this.ars(aj.ret) });
+    f.push({ c: 'Percepciones de IVA sufridas (columna Percepciones IVA de IVA Compras)', q: det ? String(det.qPerc) : '—', i: this.ars(res.perc - (aj.perc || 0)) });
+    if (aj.perc) f.push({ c: 'Ajuste Percepciones (ingresado a mano)', q: '—', i: this.ars(aj.perc) });
+    f.push({ c: 'Total retenciones y percepciones', q: det ? String(det.qRet + det.qPerc) : '—', i: this.ars(res.rp) });
+    return f;
+  }
+
+  // Ajustes manuales del paso 4: se suman (o restan, si son negativos) al débito, crédito, retenciones y percepciones,
+  // y los saldos se recalculan con las mismas fórmulas de liqCalc. Quedan guardados en res.ali.aj.
+  liqAjustar(res, aj, arr) {
+    const r2 = (v) => Math.round(v * 100) / 100, a = { df: aj.df || 0, cf: aj.cf || 0, ret: aj.ret || 0, perc: aj.perc || 0 };
+    if (!a.df && !a.cf && !a.ret && !a.perc) return res;
+    const df = r2(res.df + a.df), cf = r2(res.cf + a.cf), ret = r2(res.ret + a.ret), perc = r2(res.perc + a.perc), rp = r2(perc + ret);
+    const s1 = r2(cf - df + arr.tec), s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
+    return Object.assign({}, res, { df, cf, ret, perc, rp, s1, s2, ali: Object.assign({}, res.ali, { aj: a }) });
+  }
+
+  // Paso 4: vista previa de la liquidación con los archivos cargados y los ajustes manuales.
+  pvVals(arr) {
+    const s = this.state, m = (v) => this.ars(v || 0);
+    const AJ = [['df', 'Ajuste al Débito Fiscal'], ['cf', 'Ajuste al Crédito Fiscal'], ['ret', 'Ajuste Retenciones'], ['perc', 'Ajuste Percepciones']];
+    const raw = s.liqAj || {}, malos = AJ.filter(([k]) => this.ajNum(raw[k]) === null);
+    const ajCampos = AJ.map(([k, label]) => {
+      const v = raw[k] || '', n = this.ajNum(v), mal = n === null;
+      return {
+        label, val: v, bd: mal ? '#B3261E' : '#D5DEE7', hfg: mal ? '#B3261E' : '#9AA9B7',
+        hint: mal ? 'Importe no válido: usá números, con coma decimal (ej. -1.234,56)' : (n ? (n > 0 ? 'Suma ' : 'Resta ') + m(Math.abs(n)) : 'Sin ajuste'),
+        set: (e) => { const t = e.target.value; this.setState(st => ({ liqAj: Object.assign({}, st.liqAj, { [k]: t }) })); }
+      };
+    });
+    const pvProcesar = () => malos.length
+      ? this.setState({ toast: { kind: 'err', t: 'Revisá los ajustes', d: malos.map(([, l]) => l).join(', ') + ': el importe no es válido.' } })
+      : this.setState({ liqConfirm: true });
+    if (s.step !== 4) return { ajCampos, pvProcesar, pvKpis: [], pvSaldos: [], pvCalc: [], pvVentas: [], pvCompras: [], pvRet: [] };
+    const R = s.real || {}, sub = (k) => (R[k] && R[k].recs ? R[k] : { recs: [] });
+    const base = this.liqCalc(sub('ventas'), sub('compras'), arr), aj = this.liqAjVals(), pv = this.liqAjustar(base, aj, arr);
+    const sd = (label, v) => v < 0 ? { label, value: m(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' } : { label, value: m(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
+    const mas = (v, t) => (v ? (v > 0 ? ' + ' : ' − ') + t + ' ' + m(Math.abs(v)) : '');
+    const det = pv.ali.det;
+    return {
+      ajCampos, pvProcesar,
+      pvKpis: [{ label: 'Total débito fiscal', value: m(pv.df) }, { label: 'Total crédito fiscal', value: m(pv.cf) }, { label: 'Retenciones y percepciones', value: m(pv.rp) }],
+      pvSaldos: [sd('Saldo 1° párrafo (técnico)', pv.s1), sd('Saldo 2° párrafo (libre disponibilidad)', pv.s2)],
+      pvCalc: [
+        'Débito fiscal = ' + m(base.df) + mas(aj.df, 'ajuste') + ' = ' + m(pv.df),
+        'Crédito fiscal = ' + m(base.cf) + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
+        'Retenciones y percepciones = retenciones ' + m(base.ret) + mas(aj.ret, 'ajuste') + ' + percepciones ' + m(base.perc) + mas(aj.perc, 'ajuste') + ' = ' + m(pv.rp),
+        'Saldo 1° párrafo = crédito ' + m(pv.cf) + ' − débito ' + m(pv.df) + ' + saldo técnico anterior ' + m(arr.tec) + ' = ' + m(pv.s1),
+        'Saldo 2° párrafo = ' + (pv.s1 < 0 ? 'libre disponibilidad anterior ' + m(arr.lib) + ' + saldo 1° párrafo ' + m(pv.s1) + ' + retenciones y percepciones ' + m(pv.rp) : 'retenciones y percepciones ' + m(pv.rp) + ' + libre disponibilidad anterior ' + m(arr.lib)) + ' = ' + m(pv.s2)
+      ].map(t => ({ t })),
+      pvVentas: this.detFilasDe(det, 'v', 'IVA Ventas', 'cNc', 'notas de crédito recibidas (IVA Compras)', pv.df, 'Total débito fiscal', aj.df),
+      pvCompras: this.detFilasDe(det, 'c', 'IVA Compras', 'vNc', 'notas de crédito emitidas (IVA Ventas)', pv.cf, 'Total crédito fiscal', aj.cf),
+      pvRet: this.retFilasDe(pv)
+    };
+  }
+
+  liqAjVals() {
+    const a = this.state.liqAj || {}, o = {};
+    ['df', 'cf', 'ret', 'perc'].forEach(k => { o[k] = this.ajNum(a[k]) || 0; });
+    return o;
+  }
+
+  // Texto de un ajuste → número (acepta 1.234,56 · -1234,56 · 1234.56). null si no es un importe válido; vacío = 0.
+  ajNum(t) {
+    const v = String(t == null ? '' : t).trim().replace(/[$\s]/g, '');
+    if (!v) return 0;
+    if (!/^[-+]?(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/.test(v) && !/^[-+]?\d+(\.\d{1,2})?$/.test(v)) return null;
+    return Math.round(this.numAr(v.replace(/^\+/, '')) * 100) / 100;
   }
 
   // En término o vencida: compara la fecha de presentación (hoy, o la fecha dada dd/mm/aaaa) con el vencimiento del CUIT.
@@ -5852,7 +6047,7 @@ class Component extends DCLogic {
 
   liqVals() {
     const s = this.state, E = this.EST;
-    const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Procesamiento']];
+    const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Vista previa'], [5, 'Procesamiento']];
     const cru = this.cruRun();
     const perL = this.perLiq(), arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
     const RL = s.real || {};
@@ -6249,7 +6444,7 @@ class Component extends DCLogic {
       const nv = (k) => verRow.n ? verRow.n[k] : this.numAr(verRow[k]), rr = (v) => Math.round(v * 100) / 100;
       const df = nv('df'), cf = nv('cf'), rp = nv('rp'), sd = this.saldosDj(histTodas, verRow.cliente, verRow.per, verRow.seq);
       const s1 = sd ? sd.s1 : rr(cf - df), s2 = sd ? sd.s2 : rr(s1 < 0 ? s1 + rp : rp);
-      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0, perc: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.perc : undefined, ret: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.ret : undefined };
+      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0, perc: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.perc + ((verRow.n.ali.aj || {}).perc || 0) : undefined, ret: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.ret + ((verRow.n.ali.aj || {}).ret || 0) : undefined };
     })() : null;
     const resShow = (s.liqResVer && s.liqRes) || verRes;
     const resV = this.liqResVals(resShow, fmt), resReal = !!resShow;
@@ -6257,25 +6452,7 @@ class Component extends DCLogic {
     const liqTabVer = resReal && !tabsVer.some(([k]) => k === s.liqTab) ? { ventas: true, compras: false, nc: false, retper: false, alertas: false } : liqTab;
     const filaRes = (c, n, d, b) => ({ c, n, d, b, bgr: b ? '#F5F7FA' : '#FFFFFF', w: b ? '600' : '400' });
     const det = resShow && resShow.ali && resShow.ali.det;
-    // Detalle de Ventas / Compras: gravado por alícuota (neto e IVA), NC, total, y lo no gravado y otros tributos (sólo neto / importe).
-    const detFilas = (k, src, kNc, lNc, total, lTotal) => {
-      const o = det[k], nc = det[kNc] || {}, m = (v) => this.ars(v || 0), z = (x) => x || 0;
-      const ALI = [['21', 'n21', 'i21'], ['10,5', 'n105', 'i105'], ['27', 'n27', 'i27'], ['5', 'n5', 'i5'], ['2,5', 'n25', 'i25'], ['0', 'n0', '']];
-      const rows = [filaRes('Facturas y notas de débito · ' + src + ' (' + o.q + ' comprobantes)', '', '', 2)];
-      ALI.forEach(([a, n, i], j) => { if (j < 3 || o[n] || o[i]) rows.push(filaRes('Neto gravado ' + a + '%', m(o[n]), i ? m(o[i]) : '—', 0)); });
-      const ngt = ALI.reduce((a, [, n]) => a + z(o[n]), 0), ivt = ALI.reduce((a, [, , i]) => a + (i ? z(o[i]) : 0), 0);
-      rows.push(filaRes('Subtotal gravado', m(ngt), m(ivt), 1));
-      if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
-      rows.push(filaRes(lTotal, '', m(total), 1));
-      rows.push(filaRes('No gravado, exento y otros (' + src + ')', '', '', 2));
-      [['Exento', 'exe'], ['No gravado', 'ngr'], ['No alcanzado', 'nal']].concat(k === 'v' ? [['Exportación', 'exp']] : [['Compras a exentos, monotributistas y otros', 'mono']])
-        .forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
-      const otros = [['Percepciones IVA', 'piva'], ['Percepciones IIBB', 'piibb'], ['Otras percepciones', 'potr'], ['Impuestos internos', 'iin'], ['Otros regímenes especiales', 'oreg']].filter(([, f]) => k === 'c' || o[f]);
-      if (otros.length) rows.push(filaRes('Otros tributos', '', '', 2));
-      otros.forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
-      rows.push(filaRes('Total comprobantes (FC / ND)', m(o.tot), '', 1));
-      return rows.map(r => r.b === 2 ? Object.assign(r, { bgr: '#EEF3F8', w: '600', c: r.c.toUpperCase() }) : r);
-    };
+    const detFilas = (k, src, kNc, lNc, total, lTotal) => this.detFilasDe(det, k, src, kNc, lNc, total, lTotal, ((resShow.ali || {}).aj || {})[k === 'v' ? 'df' : 'cf']);
     const V = {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
@@ -6285,15 +6462,15 @@ class Component extends DCLogic {
         bd: s.step === n ? '#14395C' : (s.step > n ? '#2E7D5B' : '#D5DEE7'),
         lfg: s.step === n ? '#14395C' : '#5A6B7B',
         // Los pasos se recorren en orden: desde arriba sólo se puede volver atrás. Una vez procesada la liquidación no se reabre: se empieza otra desde el paso 1.
-        go: s.step === 4 && s.proc !== 'error'
-          ? (n === 4 ? () => { } : () => this.setState({ toast: s.proc === 'done'
+        go: s.step === 5 && s.proc !== 'error'
+          ? (n === 5 ? () => { } : () => this.setState({ toast: s.proc === 'done'
             ? { kind: 'warn', t: 'La liquidación ya se procesó', d: 'No se puede reabrir. Para cargar saldos o archivos distintos, iniciá una nueva liquidación desde el paso 1 (se genera la secuencia siguiente).' }
             : { kind: 'warn', t: 'Procesando la liquidación', d: 'Esperá a que termine.' } }))
           : n > s.step ? () => this.setState({ toast: { kind: 'warn', t: 'Seguí los pasos en orden', d: 'Usá el botón de cada paso para pasar al siguiente.' } })
           : this.tset('step', n)
       })),
-      stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4 },
-      stepNext: () => this.setState(st => ({ step: Math.min(4, st.step + 1) })),
+      stepIs: { p1: s.step === 1, p2: s.step === 2, p3: s.step === 3, p4: s.step === 4, p5: s.step === 5 },
+      stepNext: () => this.setState(st => ({ step: Math.min(5, st.step + 1) })),
       liqOtra: () => this.setState(Object.assign(this.liqVacia(), { seqElegida: null })),
       stepPrev: () => this.setState(st => ({ step: Math.max(1, st.step - 1) })),
       upFiles, upLoaded, upCountLabel, upConfirm: s.upConfirm, upHay: upLoaded.length > 0, upNinguno: !upLoaded.length,
@@ -6322,20 +6499,21 @@ class Component extends DCLogic {
       liqSinSubTxt: sinSub.length === 2 ? 'No se cargaron IVA Ventas ni IVA Compras: débito fiscal, crédito fiscal y retenciones y percepciones se liquidan en 0.' : (sinSub.length ? 'No se cargó ' + sinSub[0] + ': sus importes se liquidan en 0.' : ''),
       liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
+      ...this.pvVals(arr),
       liqConfirmOk: () => {
         if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: 'Para reliquidar ' + cli + ' · ' + perL + ' con la misma secuencia, primero eliminala en Historial de liquidaciones.' } });
         const R = this.state.real || {}, sub = k => R[k] && R[k].recs ? R[k] : { recs: [] };
-        const fin = (proc) => setTimeout(() => { if (this.state.step === 4 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
+        const fin = (proc) => setTimeout(() => { if (this.state.step === 5 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
         if (fpTxt) {
           this.setState({
-            liqConfirm: false, step: 4, proc: 'run', liqRes: null,
+            liqConfirm: false, step: 5, proc: 'run', liqRes: null,
             liqErrTxt: 'No se puede liquidar ' + cli + ' · ' + perL + ': ' + fpTxt + ' (por ejemplo, ' + fpEj + '). Corregí los subdiarios y volvé a procesar. El detalle está en los errores de los cruces 2 y 3.'
           });
           return fin('error');
         }
         const ahora = this.ahora();
         // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
-        const res = Object.assign(this.liqCalc(sub('ventas'), sub('compras'), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        const res = Object.assign(this.liqAjustar(this.liqCalc(sub('ventas'), sub('compras'), arr), this.liqAjVals(), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
         // Se guarda si se liquidó en término o vencida (va junto a las alícuotas de la liquidación).
         const ve = this.vencEstado(perL, this.cuitCli(cli), res.fecha);
         if (ve) res.ali.venc = { f: ve.f, vencida: ve.vencida, dias: ve.dias };
@@ -6348,7 +6526,7 @@ class Component extends DCLogic {
           df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
           n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
         };
-        this.setState({ liqConfirm: false, step: 4, proc: 'run', liqRes: null, liqErrTxt: '' });
+        this.setState({ liqConfirm: false, step: 5, proc: 'run', liqRes: null, liqErrTxt: '' });
         (async () => {
           // La liquidación se da por hecha recién cuando la base de datos confirma que quedó guardada.
           const sb = this.sb();
@@ -6539,10 +6717,7 @@ class Component extends DCLogic {
         { g: 'NC de compras', c: '10,5%', n: '4.200,00', d: '441,00' },
         { g: 'NC de compras', c: '27%', n: '—', d: '—' }
       ],
-      retRows: resReal ? (resShow.perc !== undefined ? [
-        { c: 'Retenciones de IVA sufridas (CR de IVA Ventas del período)', q: det ? String(det.qRet) : '—', i: this.ars(resShow.ret) },
-        { c: 'Percepciones de IVA sufridas (columna Percepciones IVA de IVA Compras)', q: det ? String(det.qPerc) : '—', i: this.ars(resShow.perc) }
-      ] : []).concat([{ c: 'Total retenciones y percepciones', q: det ? String(det.qRet + det.qPerc) : '—', i: this.ars(resShow.rp) }]) : [
+      retRows: resReal ? (resShow.perc !== undefined ? this.retFilasDe(resShow) : [{ c: 'Total retenciones y percepciones', q: '—', i: this.ars(resShow.rp) }]) : [
         { c: 'Retención IVA RG 2854', q: '3', i: '42.180,00' },
         { c: 'Percepción IVA RG 3337', q: '12', i: '38.904,15' },
         { c: 'Percepción IIBB CABA', q: '9', i: '25.200,00' },
