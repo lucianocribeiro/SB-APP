@@ -317,6 +317,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Razón social</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">CUIT</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Condición IVA</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Sistema</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Último período</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Usuarios asignados</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Estado</th>
@@ -324,13 +325,14 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ cliVacio }}">
-<tr><td colspan="7" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
+<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
 </sc-if>
 <sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
 <td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span onClick="{{ go.clienteFicha }}" style="cursor:pointer;color:#14395C">{{ c.rz }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;color:#5A6B7B">{{ c.cond }}</td>
+<td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ c.per }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ c.users }}</td>
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span></td>
@@ -2350,6 +2352,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Inicio de ejercicio</div>
 <input value="{{ nc.ini }}" onChange="{{ ncSet.ini }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
+<div style="grid-column:span 2">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Sistema contable</div>
+<select value="{{ nc.sis }}" onChange="{{ ncSet.sis }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Define el formato de los archivos que se van a cargar en la liquidación.</div>
+</div>
 </div>
 </div>
 <div>
@@ -2754,7 +2761,7 @@ class Component extends DCLogic {
     apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)), vencAnio: null, vencAniosExtra: [],
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' },
     real: {}, upErr: {}, upBusy: {},
-    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' }, cliFiscal: this.lsGet('myiva.cliFiscal', {}),
+    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' }, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}),
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
@@ -2999,11 +3006,13 @@ class Component extends DCLogic {
       }
     }
 
+    const csis = cfg.find(c => c.clave === 'clientes_sistema');
+    const cliSistema = csis && csis.valor && typeof csis.valor === 'object' ? this.lsSet('myiva.cliSistema', csis.valor) : s.cliSistema;
     const cv = cfg.find(c => c.clave === 'vencimientos');
     const venc = cv && cv.valor && cv.valor.pers ? this.vencConHistoria(this.lsSet('myiva.venc', cv.valor)) : s.venc;
 
     this._sync = z;
-    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc };
+    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc, cliSistema };
   }
 
   // Lee todas las filas de una tabla, de a 1000 (Supabase devuelve como máximo 1000 por consulta), de la más nueva a la más vieja.
@@ -3465,7 +3474,8 @@ class Component extends DCLogic {
     ['AA', 'IVA CF 21%'], ['AB', 'IVA CF 10.5%'], ['AC', 'IVA CF 27%'], ['AD', 'Total Crédito'],
     ['AE', 'NC Ventas Neto 21%'], ['AF', 'NC Ventas Neto 10.5%'], ['AG', 'NC Ventas Neto 27%'],
     ['AH', 'CF NC Ventas 21%'], ['AI', 'CF NC Ventas 10.5%'], ['AJ', 'CF NC Ventas 27%'],
-    ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AM', 'Total Débito Fiscal'], ['AN', 'Total Crédito Fiscal'],
+    // AJD / AJC: ajustes manuales del paso 4 (Vista previa), justo antes del total al que suman.
+    ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AJD', 'Ajuste al Débito Fiscal'], ['AM', 'Total Débito Fiscal'], ['AJC', 'Ajuste al Crédito Fiscal'], ['AN', 'Total Crédito Fiscal'],
     ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
     ['AS', 'Total Crédito Fiscal Computable'], ['AT', 'Total Crédito Fiscal No Computable'], ['AU', 'Ajustes Prorrateo'],
     // AV y AVP: retenciones y percepciones en dos columnas (antes era una sola, "Total Retenciones y Percepciones").
@@ -3498,12 +3508,18 @@ class Component extends DCLogic {
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
       .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
+    // Fila "Saldo anterior": los saldos del período anterior al primero exportado, recalculados en cadena desde la DJ vigente
+    // (con sus compensaciones); si ese período no está en la app, los saldos que se cargaron a mano en el cruce 0.
     const man0 = data[0] && data[0].n && data[0].n.a1 != null ? data[0].n : null;
+    const vivas = this.baseRows().filter(r => !(this.state.ddjjBorradas || {})[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
+    const prev0 = data[0] ? this.saldosDj(vivas, data[0].cliente || cliente, this.perAnt(data[0].per)) : null;
+    const ant = prev0 ? { s1: prev0.s1, s2: prev0.s2, comp: prev0.comp || 0 } : (man0 ? { s1: man0.a1, s2: man0.a2, comp: 0 } : null);
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
-      if (man0 && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: man0.a1 }));
-      else if (man0 && L === C('AX')) r2cells.push(cell(L + '2', ST.money, { v: man0.a2 }));
+      if (ant && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: ant.s1 }));
+      else if (ant && L === C('AX')) r2cells.push(cell(L + '2', ST.money, { v: ant.s2 }));
+      else if (ant && ant.comp && L === C('AZ')) r2cells.push(cell(L + '2', ST.money, { v: ant.comp }));
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
     rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
@@ -3515,10 +3531,19 @@ class Component extends DCLogic {
       // Las liquidaciones viejas sin det dejan esas columnas vacías: no se inventan importes; los totales I / AD / AM / AN se mantienen.
       const det = d.n && d.n.ali && d.n.ali.det;
       const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
-      const v = { I: df, J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: cf, AM: df, AN: cf, AZ: r2(d.comp || 0) };
+      // Ajustes manuales del paso 4: el débito / crédito guardado ya los incluye; acá se muestran aparte y el total los suma.
+      const aj = (d.n && d.n.ali && d.n.ali.aj) || {}, ajD = r2(aj.df || 0), ajC = r2(aj.cf || 0);
+      const v = { I: r2(df - ajD), J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: r2(cf - ajC), AJD: ajD, AJC: ajC, AZ: r2(d.comp || 0) };
       if (det && det.v && det.c) {
         const z = (o, k) => r2((o && o[k]) || 0), sum = (o, ks) => r2(ks.reduce((a, k) => a + z(o, k), 0));
         const NET = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0'], IVA = ['i21', 'i105', 'i27', 'i5', 'i25'];
+        // Ventas y compras no gravadas, exentas, exportación y otros tributos: facturas menos notas de crédito.
+        const nv = (k) => r2(z(det.v, k) - z(det.vNc, k)), nc = (k) => r2(z(det.c, k) - z(det.cNc, k));
+        Object.assign(v, {
+          J: nv('exe'), K: nv('ngr'), L: nv('nal'), M: nv('exp'), N: nv('iin'), O: nv('piibb'), P: nv('piva'), Q: nv('potr'), R: nv('oreg'),
+          S: r2(nv('exe') + nv('ngr') + nv('nal')),
+          V: r2(nc('exe') + nc('ngr') + nc('nal')), W: nc('mono')
+        });
         Object.assign(v, {
           B: z(det.v, 'n21'), C: z(det.v, 'n105'), D: z(det.v, 'n27'), E: sum(det.v, NET),
           F: z(det.v, 'i21'), G: z(det.v, 'i105'), H: z(det.v, 'i27'),
@@ -3532,11 +3557,15 @@ class Component extends DCLogic {
       // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
       // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
       // AV / AVP: las mismas, junto a los saldos. Sin detalle quedan vacías y el saldo usa el total guardado de la liquidación.
-      if (sep) { v.AK = r2(det.perc); v.AL = r2(det.ret); v.AV = r2(det.ret); v.AVP = r2(det.perc); }
+      if (sep) {
+        const perc = r2(det.perc + (aj.perc || 0)), ret = r2(det.ret + (aj.ret || 0));   // incluye los ajustes de Retenciones / Percepciones
+        v.AK = perc; v.AL = ret; v.AV = ret; v.AVP = perc;
+      }
       const retPer = sep ? `(${C('AV')}${r}+${C('AVP')}${r})` : `(${rp})`;
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
       const f = {
+        AM: `${C('I')}${r}+${C('AJD')}${r}`, AN: `${C('AD')}${r}+${C('AJC')}${r}`,
         AO: `1-${ratio}`,
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
         AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
@@ -4407,6 +4436,20 @@ class Component extends DCLogic {
     return data.recs.filter(x => !x.excl && x.fecha).filter(x => { const q = perK(x.fecha.slice(3)); return hasta ? q > pk : q !== pk; }).length;
   }
 
+  // Sistema contable de cada cliente: define el formato de los archivos (el 90 % es Bejerman). Se guarda en config ('clientes_sistema').
+  SISTEMAS = ['Bejerman', 'Tango', 'SAP', 'Catedral', 'Lanes'];
+
+  async guardarSistema(rz, sis, silencioso) {
+    const mapa = Object.assign({}, this.state.cliSistema || {}, { [rz]: sis });
+    this.setState({ cliSistema: this.lsSet('myiva.cliSistema', mapa) });
+    const sb = this.sb();
+    if (sb && this._user) {
+      const r = await sb.from('config').upsert({ clave: 'clientes_sistema', valor: mapa, actualizado: new Date().toISOString() });
+      if (r.error) return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar el sistema del cliente', d: r.error.message } });
+    }
+    if (!silencioso) this.setState({ toast: { kind: 'ok', t: 'Sistema actualizado', d: rz + ' usa ' + sis + '.' } });
+  }
+
   // Agenda de vencimientos de IVA: { pers: { 'mm/aaaa': [dd/mm/aaaa × 5 (CUIT 0-1, 2-3, 4-5, 6-7, 8-9)] }, fecha, origen }.
   // Viene precargada con las agendas 2024, 2025 y 2026 de ARCA (Agenda de Vencimientos, IVA, presentación de la DJ mensual RG 715 / RG 4010);
   // se amplía o corrige desde Configuración → Vencimientos. Período 10/2025: ARCA fijó una sola fecha para CUIT 6 a 9.
@@ -4705,10 +4748,12 @@ class Component extends DCLogic {
       const pk = fecha.slice(3);
       pers[pk] = (pers[pk] || 0) + 1;
     }
-    if (!recs.length) throw new Error('El archivo no tiene comprobantes: se leyó el encabezado pero ninguna fila con fecha válida.');
-    const per = Object.keys(pers).sort((a, b) => pers[b] - pers[a])[0];
+    // Archivo sin movimientos (sólo el encabezado, o el encabezado y la fila de totales): se acepta y vale 0.
+    // Si tiene filas con datos pero ninguna fecha legible, es un error de lectura y se avisa.
+    if (!recs.length && omit) throw new Error('El archivo tiene ' + omit + (omit === 1 ? ' fila' : ' filas') + ' con datos pero ninguna con fecha válida: revisá el formato de la columna Fecha.');
+    const per = Object.keys(pers).sort((a, b) => pers[b] - pers[a])[0] || '';
     const propio = (titulo.match(/cuit\s*(\d{11})/) || [])[1] || '';
-    return { kind, name, recs, per, omit, propio, excl: recs.filter(x => x.excl).length };
+    return { kind, name, recs, per, omit, propio, excl: recs.filter(x => x.excl).length, vacio: !recs.length };
   }
 
   fueraPeriodo(libro, regla) {
@@ -5886,7 +5931,8 @@ class Component extends DCLogic {
     const fiscal = this.FISCAL_DEMO;
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
       const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
-      return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'] };
+      return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'],
+        sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value) };
     });
 
     const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -5970,12 +6016,13 @@ class Component extends DCLogic {
       goPerfil: this.nav('perfil'),
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
-      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '' } }),
+      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' } }),
+      sistemasOpts: this.SISTEMAS.map(v => ({ v })),
       ivdAbierto: !!s.ivdVer, ivdUrl: s.ivdVer ? s.ivdVer.url : '', ivdNombre: s.ivdVer ? s.ivdVer.nombre : '', ivdSub: s.ivdVer ? s.ivdVer.sub : '',
       ivdPdf: !!(s.ivdVer && s.ivdVer.pdf), ivdImg: !!(s.ivdVer && !s.ivdVer.pdf),
       ivdCerrar: () => { if (s.ivdVer) setTimeout(() => URL.revokeObjectURL(s.ivdVer.url), 1000); this.setState({ ivdVer: null }); },
       nc: s.nc,
-      ncSet: ['rz', 'cuit', 'ini', 'mails'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
+      ncSet: ['rz', 'cuit', 'ini', 'mails', 'sis'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
       openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
       openConfirm: () => this.setState({ confirm: true }),
@@ -5998,6 +6045,7 @@ class Component extends DCLogic {
         const cuitF = cuit ? this.cuitFmt(cuit) : '—';
         this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond: '—', per: '—' } })) }));
         this.cartMover(rz, u);
+        this.guardarSistema(rz, nc.sis || 'Bejerman', true);
         const sb = this.sb();
         if (sb && this._user) this.db(sb.from('clientes').upsert([{ nombre: rz, usuario: u, cuit: cuit ? cuitF : null }], { onConflict: 'nombre' }), 'Clientes');
         this.setState({ drawer: false, asign: {}, toast: { kind: 'ok', t: 'Cliente guardado', d: u ? rz + ' quedó asignado a ' + u + '.' : rz + ' quedó en Pendientes de asignación.' } });
@@ -6149,6 +6197,7 @@ class Component extends DCLogic {
         : k === 'ivadig' ? 'Vista previa del Libro IVA Digital' + (rf.per ? ' del período ' + rf.per : '') + ' · ' + rf.encontrados + ' de ' + this.LIB_CONC.length + ' conceptos leídos' + (rf.totDj ? ' + totales para la DJ' : '') + ' · ' + (rf.ocr ? 'leído como imagen (revisá los importes)' : rf.paginas + (rf.paginas === 1 ? ' página' : ' páginas'))
         : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
+        : rf.vacio ? 'sin comprobantes: se toma como 0'
         : (rf.recs.length - (rf.excl || 0)) + ' comprobantes' + fueraTxt(k, rf) + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
       return {
         n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
@@ -6285,7 +6334,8 @@ class Component extends DCLogic {
     const del = s.ddjjBorradas;
     const rid = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
     const baseRows = this.baseRows();
-    const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli;
+    // La liquidación recién guardada sólo cuenta para su mismo cliente y período (antes se tomaba para cualquier período del cliente).
+    const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli && !!s.liqRes && s.liqRes.per === perL;
     const delPer = baseRows.filter(r => r.cliente === cli && r.per === perL && r.df !== '—');
     const hasHist = delPer.length > 0;
     const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && r.seq === s.liqSeqN));
@@ -6377,7 +6427,8 @@ class Component extends DCLogic {
           verErr: this.openErr('Errores de cruce · ' + r.cliente + ' ' + r.per, this.seqTxt(r.seq) + ' · ' + r.fecha + ' · ' + r.user, eg, r.cliente)
         });
       });
-    const histTotal = histAdmin && !this._user ? 142 + histFilas.length - 9 : histFilas.length;
+    // Se muestran todas las filas filtradas en una sola página: el total es lo filtrado.
+    const histTotal = histVis.length;
 
     const dpCart = this.CARTERA.filter(([u]) => histAdmin || u === me.short);
     const dpCli = [].concat(...dpCart.map(([u, cs]) => cs.map(cliente => {
@@ -6698,7 +6749,7 @@ class Component extends DCLogic {
       },
       histExport: () => exportar(histPick),
       histVacio: histVis.length === 0, histSeqActivo: histFiltrando,
-      histPaginas: histTotal > histVis.length, histSigFg: histTotal > histVis.length ? '#1B2733' : '#9AA9B7',
+      histPaginas: false, histSigFg: '#9AA9B7',
       histVacioTxt: histFiltrando ? 'No hay liquidaciones con esos filtros.' : 'Todavía no hay liquidaciones registradas.',
       histSeqLimpiar: () => this.setState({ histSeq: '', histEst: '', histF: { cli: '', desde: '', hasta: '', usr: '' } }),
       histF: HF, histFSet: { cli: setHF('cli'), desde: setHF('desde'), hasta: setHF('hasta'), usr: setHF('usr') },
@@ -6706,7 +6757,7 @@ class Component extends DCLogic {
       histPerOpts: [...new Set(histFilas.map(r => r.per))].sort((a, b) => perH(b).localeCompare(perH(a))).map(v => ({ v })),
       histUsrOpts: [...new Set(histFilas.map(r => r.user))].sort((a, b) => a.localeCompare(b, 'es')).map(v => ({ v })),
       seqOpts: Array.from({ length: this.SEQ_MAX + 1 }, (_, i) => ({ v: String(i), l: 'Secuencia ' + i + ' · ' + this.seqTipo(i) })),
-      histScope: histAdmin ? histTotal + ' liquidaciones registradas' : 'Liquidaciones de tus clientes · ' + histTotal + ' registradas',
+      histScope: histAdmin ? histFilas.length + ' liquidaciones registradas' : 'Liquidaciones de tus clientes · ' + histFilas.length + ' registradas',
       dzModes: ['empty', 'drag', 'loaded', 'error'].map(k => ({
         label: { empty: 'Vacío', drag: 'Arrastrando', loaded: 'Cargado', error: 'Error de formato' }[k],
         go: this.tset('dz', k),
