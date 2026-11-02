@@ -4308,7 +4308,7 @@ class Component extends DCLogic {
   TC_EXCL = ['CG', 'IB', 'IR', 'CB', 'CS', 'CR'];
 
   // Tipos de los subdiarios que son comprobantes de la tabla de ARCA (COMP_TAB); el resto (retenciones, etc.) no se cuenta ni se cruza.
-  TC_COMP = ['FC', 'NC', 'ND', 'RC', 'NV', 'TK', 'LQ'];
+  TC_COMP = ['FC', 'NC', 'ND', 'RC', 'NV', 'TK', 'LQ', 'LP'];
 
   esComp(tc) { return this.TC_COMP.includes(tc) || this.TC_DESPACHO.includes(tc); }
 
@@ -4331,21 +4331,47 @@ class Component extends DCLogic {
     return { tc, letra: m ? m[1] : (/EXPORTACION|EXTERIOR/.test(d) ? 'E' : '') };
   }
 
+  // Tabla de equivalencias de comprobantes (Tabla comprobantes 2.0, Kairos / Estudio Blasco): código de ARCA en
+  // Mis Comprobantes → tipo y letra como lo registra Bejerman (columna C, el formato principal). Los que no están acá
+  // se deducen de la descripción de ARCA (tipoDesc).
+  ARCA_BEJ = '1:FC A|2:ND A|3:NC A|4:FC A|6:FC B|7:ND B|8:NC B|9:FC B|11:FC C|12:ND C|13:NC C|15:FC A|'
+    + '201:FC A|202:ND A|203:NC A|206:FC B|207:ND B|208:NC B|211:FC C|212:ND C|213:NC C|19:FC E|20:ND E|21:NC E|'
+    + '160:FC T|161:ND T|162:NC T|51:FC M|52:ND M|53:NC M|54:RC M|251:FC M|252:ND M|253:NC M|195:FC E|196:ND E|197:NC E|'
+    + '81:TK A|82:TK B|83:TK C|111:TK A|115:TK B|119:TK C|22:FC E|33:LP|60:LQ A|61:LQ B|63:FC A|64:FC B|17:FC A|18:FC B|66:DI';
+
+  arcaBej() {
+    if (this._arcaBej) return this._arcaBej;
+    const m = {};
+    this.ARCA_BEJ.split('|').forEach(x => { const [c, t] = x.split(':'), [tc, letra] = t.split(' '); m[c] = { tc, letra: letra || '' }; });
+    return (this._arcaBej = m);
+  }
+
   tipoArca(v) {
     const t = String(v == null ? '' : v).trim(), m = t.match(/^(\d+)/);
     const cod = m ? String(Number(m[1])) : '';
     const desc = (cod && this.compTipos()[cod]) || t.replace(/^\d+\s*-\s*/, '');
-    return Object.assign({ cod, desc }, this.tipoDesc(desc));
+    let eq = cod && this.arcaBej()[cod];
+    // 51 a 54: son M, salvo los "A con leyenda Operación sujeta a retención" (mismo código), que Bejerman registra como A.
+    if (eq && ['51', '52', '53', '54'].includes(cod) && /LEYENDA/.test(this.fold(t + ' ' + desc).toUpperCase())) eq = { tc: cod === '54' ? 'FC' : eq.tc, letra: 'A' };
+    return Object.assign({ cod, desc }, this.tipoDesc(desc), eq || {});
   }
 
   tipoLibro(tc, letra) {
     let t = String(tc == null ? '' : tc).trim().toUpperCase(), l = String(letra == null ? '' : letra).trim().toUpperCase();
-    // Notas de crédito escritas de otra forma: "N/C", "N.C.", "NCR", "Nota de crédito…".
-    const tf = this.fold(t).toUpperCase();
-    if (/^NOTA\s*DE\s*CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR') t = 'NC';
+    // Formatos de los otros sistemas (Tabla comprobantes 2.0): se llevan al de Bejerman.
+    // Un solo campo con la letra al final (Lanes: "FACTURA A", "TICKET-FACTURA B"): se separa la letra.
+    let tf = this.fold(t).toUpperCase().replace(/\s+/g, ' ').trim();
+    const ml = tf.match(/^(.*\S)\s+([ABCMET])$/);
+    if (ml && !l && ml[1].length > 2) { tf = ml[1]; l = ml[2]; t = tf; }
+    if (/^NOTA\s*DE\s*CRED|^TICKET-NOTA\s*(DE\s*)?CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR' || t === 'NC#') t = 'NC';
+    else if (/^NOTA\s*DE\s*DEB|^TICKET-NOTA\s*(DE\s*)?DEB/.test(tf) || /^N\s*[\/.]\s*D\.?$/.test(t) || t === 'ND#') t = 'ND';
+    else if (/^TICKET(-FACTURA)?$/.test(tf)) t = 'TK';
+    else if (/^FACTURA$|^FAC$/.test(tf)) t = 'FC';
+    else if (/^LIQUIDO PRODUCTO/.test(tf)) t = 'LQ';
     const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
     if (m && !l) { t = m[1]; l = m[2]; }
-    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC' }[t] || t;
+    // FCC / NDC / NCC: comprobantes de crédito electrónica MiPyME en Bejerman (con letra aparte).
+    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC', FCC: 'FC', NDC: 'ND', NCC: 'NC' }[t] || t;
     if (!l && ['FC', 'NC', 'ND'].includes(t)) l = 'A';
     return { tc: t, letra: l };
   }
