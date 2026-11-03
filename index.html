@@ -728,6 +728,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 12.5px/1.45 'Open Sans';color:#B3261E">{{ seqPisaTxt }} <span onClick="{{ go.liqHistorial }}" style="font-weight:600;color:#14395C;cursor:pointer;text-decoration:underline">Ir al historial</span></div>
 </div>
 </sc-if>
+<sc-if value="{{ seqPisaBorr }}">
+<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px">
+<div style="font:400 12.5px/1.45 'Open Sans';color:#8F5F14">{{ seqPisaBorrTxt }}</div>
+</div>
+</sc-if>
 <sc-if value="{{ seqSaltea }}">
 <div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
@@ -1345,7 +1350,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ r.pdfPuede }}">
 <label title="Adjuntar el PDF de la declaración jurada" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px dashed #B9C6D3;border-radius:6px;cursor:pointer" style-hover="background:#F4F9FD;border-color:#2F80B7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round"><path d="M14 3H6v18h12V7z"></path><path d="M14 3v4h4M12 17v-6M9 14l3-3 3 3"></path></svg><input type="file" accept=".pdf,application/pdf" onChange="{{ r.pdfSubir }}" style="display:none"></label>
 </sc-if>
-<sc-if value="{{ r.pdfNo }}"><span style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
+<sc-if value="{{ r.pdfNo }}"><span title="{{ r.pdfNoTip }}" style="font:400 13px 'Open Sans';color:#9AA9B7">—</span></sc-if>
 </td>
 <td style="padding:9px 10px;border-bottom:1px solid #E3E8EE;text-align:center;white-space:nowrap">
 <sc-if value="{{ r.ivdTiene }}">
@@ -1724,88 +1729,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-for>
 </tbody>
 </table>
-</div>
-</sc-if>
-
-<sc-if value="{{ scr.liqReportes }}">
-<div>
-<div style="font:600 22px/1.2 'Open Sans'">Reportes</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Armá el reporte y previsualizá el resultado antes de exportarlo.</div>
-</div>
-<div style="display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start;padding-bottom:64px">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:20px">
-<div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Clientes</div>
-<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px">
-<sc-for list="{{ clientesChips }}" as="c" hint-placeholder-count="7">
-<div onClick="{{ c.toggle }}" style="padding:5px 10px;border-radius:6px;cursor:pointer;font:600 12px 'Open Sans';border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.rz }}</div>
-</sc-for>
-</div>
-</div>
-<div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Rango de períodos</div>
-<div style="display:flex;gap:10px;margin-top:12px">
-<select style="flex:1;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Desde 01/2026</option></select>
-<select style="flex:1;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';background:#fff"><option>Hasta 08/2026</option></select>
-</div>
-</div>
-<div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Tipo de reporte</div>
-<div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
-<sc-for list="{{ repTipos }}" as="t" hint-placeholder-count="5">
-<div onClick="{{ t.go }}" style="padding:9px 11px;border-radius:6px;cursor:pointer;font:600 13px 'Open Sans';border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div>
-</sc-for>
-</div>
-</div>
-<div>
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Columnas a incluir</div>
-<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
-<sc-for list="{{ repCols }}" as="c" hint-placeholder-count="9">
-<label style="display:flex;align-items:center;gap:9px;font:400 13px 'Open Sans';cursor:pointer"><input type="checkbox" defaultChecked style="accent-color:#14395C;width:15px;height:15px">{{ c }}</label>
-</sc-for>
-</div>
-</div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-<div>
-<div style="font:600 14.5px 'Open Sans'">{{ repTipo }}</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">Previsualización · 5 de 24 filas · 01/2026 – 08/2026</div>
-</div>
-<span style="padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E9F1F8;color:#1F6795;border:1px solid #CFE2F0">Vista previa</span>
-</div>
-<div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:780px">
-<thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Cliente</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Ret. y perc.</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Saldo 2° párrafo</th>
-</tr></thead>
-<tbody>
-<sc-for list="{{ repPreview }}" as="r" hint-placeholder-count="5">
-<tr>
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
-<td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.ret }}</td>
-<td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
-</tr>
-</sc-for>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div style="position:sticky;bottom:0;margin:0 -24px -56px;padding:13px 24px;background:#fff;border-top:1px solid #E3E8EE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">2 clientes · 8 períodos · 24 filas a exportar</div>
-<div style="display:flex;gap:9px">
-<button onClick="{{ toastXls }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Programar envío por mail</button>
-<button onClick="{{ toastXls }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Exportar a Excel</button>
-</div>
 </div>
 </sc-if>
 
@@ -2585,8 +2508,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ liqVencida }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqVencidaTxt }}</div>
 </sc-if>
-<sc-if value="{{ seqPisa }}">
-<div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Esta secuencia ya estaba liquidada: se va a reemplazar la declaración jurada generada anteriormente.</div>
+<sc-if value="{{ seqPisaBorr }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">Ya existe un borrador de esta secuencia. ¿Querés sobrescribirlo? Si confirmás, el borrador anterior se reemplaza por esta liquidación.</div>
 </sc-if>
 <sc-if value="{{ liqSinSub }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBF3E3;border:1px solid #F0E0BC;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#8F5F14">{{ liqSinSubTxt }}</div>
@@ -2749,7 +2672,7 @@ class Component extends DCLogic {
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
-    dashEmpty: false, indSel: null, repTipo: 'Resumen fiscal', cfgTab: 'params',
+    dashEmpty: false, indSel: null, cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
@@ -2803,7 +2726,6 @@ class Component extends DCLogic {
     liqHistorial: ['Liquidador IVA', 'Historial de liquidaciones'],
     liqCompensaciones: ['Liquidador IVA', 'Compensaciones'],
     liqDashboard: ['Liquidador IVA', 'Dashboard de liquidaciones'],
-    liqReportes: ['Liquidador IVA', 'Reportes'],
     cruceResultado: ['Liquidador IVA', 'Resultado de cruce'],
     crucesHistorial: ['Liquidador IVA', 'Historial de cruces'],
     config: ['Configuración', 'General'],
@@ -3517,8 +3439,8 @@ class Component extends DCLogic {
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
-      if (ant && L === C('AW')) r2cells.push(cell(L + '2', ST.money, { v: ant.s1 }));
-      else if (ant && L === C('AX')) r2cells.push(cell(L + '2', ST.money, { v: ant.s2 }));
+      if (ant && L === C('AW')) r2cells.push(cell(L + '2', ST.saldo, { v: ant.s1 }));
+      else if (ant && L === C('AX')) r2cells.push(cell(L + '2', ST.saldo, { v: ant.s2 }));
       else if (ant && ant.comp && L === C('AZ')) r2cells.push(cell(L + '2', ST.money, { v: ant.comp }));
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
@@ -3604,7 +3526,7 @@ class Component extends DCLogic {
       + `</worksheet>`;
     const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
-      + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;$&quot;#,##0.00"/></numFmts>`
+      + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00;-&quot;$&quot;#,##0.00;&quot;-&quot;"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;-&quot;"/></numFmts>`
       + `<fonts count="3"><font><sz val="10"/><color rgb="FF000000"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="10"/><color rgb="FF000000"/><name val="Calibri"/></font></fonts>`
       + `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF073763"/><bgColor rgb="FF073763"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9FC5E8"/><bgColor rgb="FF9FC5E8"/></patternFill></fill></fills>`
       + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border></borders>`
@@ -3612,14 +3534,14 @@ class Component extends DCLogic {
       + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
       + xf(0, 1, 2, '<alignment horizontal="center" vertical="center" wrapText="1"/>')
       + xf(165, 2, 3, '<alignment horizontal="left"/>')
-      + xf(164, 2, 3)
+      + xf(164, 2, 0)
       + xf(1, 2, 3, '<alignment horizontal="center"/>')
-      + xf(10, 2, 3)
+      + xf(10, 2, 0)
       + xf(0, 1, 2)
       + xf(164, 1, 2, '<alignment horizontal="right"/>')
       + xf(10, 1, 2)
       + xf(0, 1, 2)
-      + xf(0, 2, 3)
+      + xf(0, 2, 0)
       + xf(0, 1, 2)
       + xf(166, 2, 3)
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
@@ -4119,6 +4041,8 @@ class Component extends DCLogic {
   }
 
   ars(n) {
+    // Los importes en 0 se muestran como "-" en toda la app (numAr lo vuelve a leer como 0).
+    if (!(Math.abs(+n) >= 0.005)) return '-';
     const neg = n < 0, p = Math.abs(n).toFixed(2).split('.');
     return (neg ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + p[1];
   }
@@ -5109,8 +5033,34 @@ class Component extends DCLogic {
     if (mp && +mp[1] >= 1 && +mp[1] <= 12 && (!pdf.ocr || anioOk(+mp[2]))) per = mp[1] + '/' + mp[2];
     const encontrados = Object.keys(v).length;
     Object.assign(v, tot);
+    if (pdf.ocr) this.corregirOcrDig(v);
     if (!encontrados) throw new Error('No se encontraron los totales del Libro IVA Digital (Operaciones de Ventas, Operaciones de Compras…). Verificá que sea la vista previa y que se lea con claridad.');
     return { kind: 'ivadig', name, v, per, encontrados, totDj: Object.keys(tot).length, paginas: pdf.paginas };
+  }
+
+  // OCR: a veces lee un dígito de más (caso MEDA 09/2026: "7.688.057,56" salió "76.088.057,56").
+  // Los totales para la DJ se controlan contra los otros importes del mismo PDF: si sacando un solo dígito
+  // coinciden, se toma el importe corregido. Si no coincide con nada, se deja como se leyó (el cruce lo marca).
+  corregirOcrDig(v) {
+    const r2 = (x) => Math.round(x * 100) / 100, z = (x) => +x || 0, iva = (k) => z(v[k] && v[k].iva);
+    const cerca = (a, b) => Math.abs(a - b) <= 1;
+    const fix = (val, esperados) => {
+      if (typeof val !== 'number' || esperados.some(e => cerca(val, e))) return val;
+      const neg = val < 0, d = String(Math.round(Math.abs(val) * 100));
+      for (let i = 0; i < d.length; i++) {
+        const c = (neg ? -1 : 1) * +(d.slice(0, i) + d.slice(i + 1)) / 100;
+        if (esperados.some(e => e && cerca(c, e))) return r2(c);
+      }
+      return val;
+    };
+    const dfE = [iva('vOp') + iva('cNc') + z(v.vAj), iva('vOp') - iva('vNc') + z(v.vAj)].map(r2);
+    const cfE = [z(v.cCom) + z(v.cAj), z(v.cCom) - z(v.cRes) + z(v.cAj), iva('cOp') + iva('vNc') + z(v.cAj), iva('cOp') - iva('cNc') + z(v.cAj)].map(r2);
+    if (v.tdf !== undefined) v.tdf = fix(v.tdf, dfE);
+    if (v.tcf !== undefined) v.tcf = fix(v.tcf, cfE);
+    // Al revés: si el total de la DJ está bien, corrige el débito / crédito de las operaciones.
+    if (v.tdf !== undefined && v.vOp) v.vOp.iva = fix(v.vOp.iva, [r2(v.tdf - iva('cNc') - z(v.vAj)), r2(v.tdf + iva('vNc') - z(v.vAj))]);
+    if (v.tcf !== undefined && v.cCom !== undefined) v.cCom = fix(v.cCom, [r2(v.tcf - z(v.cAj)), r2(v.tcf + z(v.cRes) - z(v.cAj))]);
+    return v;
   }
 
   cruzarLibro(lib, ventas, compras) {
@@ -5121,6 +5071,10 @@ class Component extends DCLogic {
     const op = (xs) => xs.filter(x => x.tc !== 'NC'), nc = (xs) => xs.filter(x => x.tc === 'NC');
     const tri = (xs) => ({ neto: sum(xs, x => x.v.ngt), exn: sum(xs, x => x.v.exn), iva: sum(xs, x => x.v.ivt) });
     const S = { vOp: tri(op(V)), vNc: tri(nc(V)), cOp: tri(op(C)), cNc: tri(nc(C)) };
+    // Crédito fiscal no computable por prorrateo (misma fórmula que la liquidación): ARCA informa el computable.
+    const K = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0', 'exe', 'ngr', 'exp'], tk = (xs) => Object.fromEntries(K.map(k => [k, sum(xs, x => x.v[k])]));
+    const prR = this.prorrRatio({ v: tk(op(V)), vNc: tk(nc(V)) }), noComp = r2(prR * r2(S.cOp.iva + S.vNc.iva));
+    const prTxt = prR ? ' − no computable por prorrateo ' + this.ars(noComp) : '';
     const filas = [], L = {};
     this.LIB_CONC.forEach(([k, l]) => { L[k] = l; });
     const fila = (k, sub, dig, calc, origen) => {
@@ -5136,14 +5090,14 @@ class Component extends DCLogic {
     fila('vExp', '', lib.v.vExp, sum(op(V), x => x.v.exp), 'IVA Ventas · Importe operaciones exportación');
     // ARCA resta las notas de crédito de proveedores exentos / monotributistas (caso Andalux 09/2026).
     fila('cNo', '', lib.v.cNo, r2(sum(op(C), x => x.v.mono) - sum(nc(C), x => x.v.mono)), 'IVA Compras · Compras a exentos, monotributistas y otros (facturas − NC)');
-    fila('cCom', '', lib.v.cCom, S.cOp.iva, 'IVA Compras · crédito fiscal de FC / ND');
+    fila('cCom', '', lib.v.cCom, r2(S.cOp.iva - (prR ? r2(prR * S.cOp.iva) : 0)), 'IVA Compras · crédito fiscal de FC / ND' + (prR ? ' − no computable por prorrateo (' + this.pctProrr(prR) + ' computable)' : ''));
     fila('cRes', '', lib.v.cRes, S.cNc.iva, 'IVA Compras · crédito fiscal de NC');
     fila('vAj', '', lib.v.vAj, 0, 'Sin ajustes en el subdiario');
     fila('cAj', '', lib.v.cAj, 0, 'Sin ajustes en el subdiario');
     // Sólo en la presentación enviada: totales para la DJ contra el débito y crédito de la liquidación.
     L.tdf = 'Total del Débito Fiscal (DJ)'; L.tcf = 'Total del Crédito Fiscal (DJ)';
     if (lib.v.tdf !== undefined) fila('tdf', '', lib.v.tdf, r2(S.vOp.iva + S.cNc.iva), 'IVA Ventas (FC / ND) + NC de IVA Compras');
-    if (lib.v.tcf !== undefined) fila('tcf', '', lib.v.tcf, r2(S.cOp.iva + S.vNc.iva), 'IVA Compras (FC / ND) + NC de IVA Ventas');
+    if (lib.v.tcf !== undefined) fila('tcf', '', lib.v.tcf, r2(S.cOp.iva + S.vNc.iva - noComp), 'IVA Compras (FC / ND) + NC de IVA Ventas' + prTxt);
     return { filas, per: lib.per };
   }
 
@@ -5333,7 +5287,7 @@ class Component extends DCLogic {
     const pool = [];
     if (compras) compras.recs.filter(x => x.v.piva).forEach(x => pool.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva), src: 'IVA Compras', adu: esAdu(x) }));
     const ret = (x) => x.tc === 'CR';   // sólo retenciones de IVA (CR); IB, IR, CG, CB y CS son de otros impuestos
-    if (ventas) ventas.recs.filter(x => ret(x) || (!x.excl && x.v.piva)).forEach(x => pool.push({ x, imp: r2(ret(x) ? Math.abs(x.v.tot) : x.v.piva), src: 'IVA Ventas', adu: esAdu(x) }));
+    // Las percepciones aduaneras (archivo 6) se cruzan sólo contra IVA Compras: IVA Ventas no se usa.
     const used = new Set(), pares = [], faltL = [];
     ad.recs.forEach(a => {
       const sc = (c) => (c.adu ? 2 : 0) + (c.x.fecha === a.fecha ? 1 : 0);
@@ -5605,7 +5559,7 @@ class Component extends DCLogic {
     if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras, 'hasta');
     if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
     if (R.percep && (R.ventas || R.compras)) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
-    if (R.aduana && (R.ventas || R.compras)) v.adu = this.cruzarAdu(R.aduana, R.ventas, R.compras);
+    if (R.aduana && R.compras) v.adu = this.cruzarAdu(R.aduana, null, R.compras);
     this._crc = { R, base, per, v };
     return v;
   }
@@ -5861,7 +5815,7 @@ class Component extends DCLogic {
       const est = isErr ? 'Con errores' : (!run ? 'Omitido' : (rv ? rv.est : (c.dif + c.falt ? 'Completado con diferencias' : 'Completado')));
       const ue = (k) => (s.upErr && s.upErr[k]) || {};
       const errs = isErr ? [].concat(...malos.map(([k, l]) => this.errFile(ue(k).file || ERRF[k], l, ue(k).msg))) : (run ? (rv ? rv.errs : this.errsTipo(c.tipo)) : []);
-      const cero = (v) => v === '0' || v === '0,00';
+      const cero = (v) => v === '0' || v === '0,00' || v === '-';
       // Base APOC: si está ok sólo queda el estado en verde; si hay error, se listan los comprobantes observados.
       const apoc = c0.n === '1' && run && !isErr, apocMal = apoc && c.apocCmp.length > 0;
       if (apoc) Object.assign(c, { h: ['Comprobante', 'Proveedor', 'Fecha condición / publicación', 'IVA computado'], cmp: apocMal ? c.apocCmp : [] });
@@ -5937,8 +5891,7 @@ class Component extends DCLogic {
       { k: 'sub', label: 'Historial de cruces', key: 'crucesHistorial' },
       { k: 'sub', label: 'Historial de liquidaciones', key: 'liqHistorial' },
       { k: 'sub', label: 'Compensaciones', key: 'liqCompensaciones' },
-      { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' },
-      { k: 'sub', label: 'Reportes', key: 'liqReportes' }
+      { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' }
     ];
     if (admin) raw.push(
       { k: 'group', label: 'Configuración', icon: I.gear },
@@ -5971,7 +5924,7 @@ class Component extends DCLogic {
       { label: 'Configuración', key: 'config', icon: I.gear },
       { label: 'Auditoría', key: 'auditoria', icon: I.audit }
     );
-    const fam = { usuarios: 'config', clientes: 'config', liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqReportes: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'config' };
+    const fam = { usuarios: 'config', clientes: 'config', liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'config' };
     const act = fam[active] || active;
     return items.map(it => ({
       label: it.label, icon: it.icon, go: this.nav(it.key),
@@ -5983,7 +5936,7 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const scr = {};
-    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqCompensaciones', 'liqDashboard', 'liqReportes', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
+    ['login', 'inicio', 'clientes', 'clienteFicha', 'usuarios', 'liqNueva', 'liqResultado', 'liqHistorial', 'liqCompensaciones', 'liqDashboard', 'cruceResultado', 'crucesHistorial', 'config', 'auditoria', 'perfil'].forEach(k => { scr[k] = s.screen === k; });
     const E = this.EST;
     const go = {};
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
@@ -6410,10 +6363,14 @@ class Component extends DCLogic {
     const ultFecha = nueva.length && seqLast === s.liqSeqN ? fechaHoraN : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
     const seqSel = s.seqElegida ?? seqSug;
-    const seqPisa = seqSel !== null && liqDone.includes(seqSel);
+    // La secuencia elegida ya existe: si está cerrada no se toca; si es un borrador, se pregunta y se sobrescribe.
+    const seqExiste = seqSel !== null && liqDone.includes(seqSel);
+    const seqFilas = seqExiste ? hechas.filter(r => r.seq === seqSel) : [];
+    const seqPisaBorr = seqExiste && seqFilas.length > 0 && seqFilas.every(r => this.liqEstado(r) !== 'Cerrada');
+    const seqPisa = seqExiste && !seqPisaBorr;
     const seqSaltea = seqSel !== null && seqSug !== null && seqSel > seqSug;
     const histAdmin = s.role === 'admin', me = this.me();
-    const num = (v) => parseFloat(v.replace(/\./g, '').replace(',', '.'));
+    const num = (v) => this.numAr(v);
     const conSaldo = (r) => {
       if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7', saldo1: '—', sc1: '#9AA9B7' });
       const sd = this.saldosDj(histTodas, r.cliente, r.per, r.seq);
@@ -6474,7 +6431,9 @@ class Component extends DCLogic {
         const puedeBorrar = le !== 'Cerrada' || histAdmin;
         const pdf = s.ddjjPdf[id];
         return Object.assign({}, conSaldo(r), this.seqChip(r.seq), {
-          pdfTiene: !!pdf, pdfPuede: !pdf && r.df !== '—', pdfNo: !pdf && r.df === '—', pdfQuitable: !!pdf && puedeBorrar,
+          // El PDF de la DDJJ sólo se adjunta a liquidaciones cerradas (en borrador todavía puede cambiar).
+          pdfTiene: !!pdf, pdfPuede: !pdf && r.df !== '—' && le === 'Cerrada', pdfNo: !pdf && (r.df === '—' || le !== 'Cerrada'), pdfQuitable: !!pdf && puedeBorrar,
+          pdfNoTip: r.df !== '—' && le !== 'Cerrada' ? 'Cerrá la liquidación para adjuntar el PDF de la DDJJ' : '',
           pdfTip: pdf ? pdf.name + ' · ' + pdf.kb + ' KB · adjuntada por ' + pdf.u + ' el ' + pdf.fecha : '',
           pdfSubir: (e) => this.adjuntarDJ(e, r, id), pdfVer: () => this.verDJ(id), pdfQuitar: () => this.quitarDJ(r, id),
           // Libro IVA Digital usado (archivo #7). Las liquidaciones nuevas guardan su nombre (o null si no se cargó); en las anteriores se busca al abrir.
@@ -6608,7 +6567,6 @@ class Component extends DCLogic {
       ]
     };
 
-    const repTipos = ['Resumen fiscal', 'Detalle por alícuota', 'Retenciones y percepciones', 'Evolución de saldos', 'Papel de trabajo completo'];
 
     // Resultado a mostrar: la liquidación recién procesada ("Ver resultado") o la DJ elegida con el ojito del historial.
     const verRow = !(s.liqResVer && s.liqRes) && s.liqVer ? histTodas.find(r => rid(r) === s.liqVer) : null;
@@ -6674,7 +6632,8 @@ class Component extends DCLogic {
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       ...this.pvVals(arr),
       liqConfirmOk: () => {
-        if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: 'Para reliquidar ' + cli + ' · ' + perL + ' con la misma secuencia, primero eliminala en Historial de liquidaciones.' } });
+        if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia está cerrada', d: 'Una DDJJ cerrada no se puede sobrescribir. Para rectificar ' + cli + ' · ' + perL + ', generá la secuencia siguiente.' } });
+        const pisadas = seqPisaBorr ? seqFilas : [];
         const R = this.state.real || {}, sub = k => R[k] && R[k].recs ? R[k] : { recs: [] };
         const fin = (proc) => setTimeout(() => { if (this.state.step === 5 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
         if (fpTxt) {
@@ -6708,6 +6667,8 @@ class Component extends DCLogic {
             let error = null;
             try {
               // Otra PC pudo haber liquidado esta secuencia mientras tanto.
+              // Borrador que se sobrescribe: se da de baja antes de guardar la liquidación nueva.
+              if (pisadas.length) { const e0 = await this.liqsSubir(pisadas.filter(r => r.n).map(r => this.liqFilaDb(r, 'Borrador', true))); if (e0) throw e0; }
               const ya = await sb.from('liquidaciones').select('id').eq('cliente', cli).eq('periodo', perL).eq('secuencia', seqSel).eq('borrada', false).neq('id', id).limit(1);
               if (ya.error) throw ya.error;
               if (ya.data.length) error = new Error('la ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' ya fue liquidada desde otra PC. Elegí otra secuencia');
@@ -6723,6 +6684,8 @@ class Component extends DCLogic {
           this.setState(st => {
             const le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
             delete le[id]; delete bo[id];
+            pisadas.forEach(r => { bo[rid(r)] = 1; });
+            if (pisadas.length) this.lsSet('myiva.liqBorradas', bo);
             const liqs = [fila].concat((st.liqsDb || []).filter(r => r.id !== id));
             // Ya está en la base: sincronizar() no la vuelve a subir.
             if (this._sync) this._sync.liqsDb = liqs;
@@ -6730,6 +6693,7 @@ class Component extends DCLogic {
             return {
               liqsDb: liqs, liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: eg,
               liqEst: le, ddjjBorradas: bo, cruRuns: runs,
+              audExtra: pisadas.length ? [{ f: this.ahora(), u: me.short, a: 'Borrador sobrescrito', c: cli, p: perL, r: 'Sec. ' + seqSel, ip: '190.15.44.12' }].concat(st.audExtra) : st.audExtra,
               toast: sb && this._user ? { kind: 'ok', t: 'Liquidación guardada en el historial', d: cli + ' · ' + perL + ' · ' + this.seqTxt(seqSel) } : st.toast
             };
           });
@@ -6745,10 +6709,11 @@ class Component extends DCLogic {
       seqCurTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : (seqSel ?? seqLast)),
       seqMax: seqSug === null,
       seqPisa, seqSaltea, seqOtra: seqSel !== seqSug && seqSug !== null,
-      seqBadge: seqSel === null ? 'Sin secuencias disponibles' : (seqPisa ? 'Ya liquidada: ' + this.seqTxt(seqSel) : 'Se generará la ' + this.seqTxt(seqSel)),
+      seqPisaBorr, seqPisaBorrTxt: seqPisaBorr ? 'La ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' ya existe en estado Borrador. Si procesás, el sistema te pide confirmación y la sobrescribe con esta liquidación.' : '',
+      seqBadge: seqSel === null ? 'Sin secuencias disponibles' : (seqPisa ? 'Cerrada: ' + this.seqTxt(seqSel) : (seqPisaBorr ? 'Se sobrescribe el borrador de la ' + this.seqTxt(seqSel) : 'Se generará la ' + this.seqTxt(seqSel))),
       seqBadgeBg: seqPisa || seqSel === null ? '#B3261E' : '#14395C',
       seqSugTxt: seqSug === null ? '' : 'El sistema sugiere la ' + this.seqTxt(seqSug) + ' según los antecedentes liquidados. Podés elegir otra secuencia haciendo clic en los casilleros de abajo.',
-      seqPisaTxt: seqPisa ? 'La ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' ya está liquidada. No se puede volver a liquidar: para reliquidarla, primero eliminala en Historial de liquidaciones.' : '',
+      seqPisaTxt: seqPisa ? 'La ' + this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' está cerrada: no se puede tocar ni sobrescribir. Para rectificar, generá la secuencia siguiente.' : '',
       step1Bg: seqPisa || seqSel === null ? '#9AA9B7' : '#14395C',
       seqSalteaTxt: seqSaltea ? 'Elegiste la Secuencia ' + seqSel + ': ' + (seqSel - seqSug === 1 ? 'la Secuencia ' + seqSug + ' queda' : 'las secuencias ' + seqSug + ' a ' + (seqSel - 1) + ' quedan') + ' sin liquidar.' : '',
       seqUsarSug: () => this.setState({ seqElegida: null }),
@@ -6921,22 +6886,7 @@ class Component extends DCLogic {
       bars, stack, linePts: pts, lineDots: dots, zeroY, comp,
       hoverOut: () => this.setState({ dashHover: null }),
       tipB: !!tip && tip.c === 'b', tipL: !!tip && tip.c === 'l', tipS: !!tip && tip.c === 's',
-      tipPer: tip ? tip.per : '', tipLeft: tip ? tip.left : 'auto', tipRight: tip ? tip.right : 'auto', tipRows: tip ? tip.rows : [],
-      repTipos: repTipos.map(t => ({
-        label: t, go: this.tset('repTipo', t),
-        bg: s.repTipo === t ? '#E6EDF4' : '#FFFFFF',
-        bd: s.repTipo === t ? '#14395C' : '#E3E8EE',
-        fg: s.repTipo === t ? '#14395C' : '#1B2733'
-      })),
-      repTipo: s.repTipo,
-      repCols: ['Cliente', 'CUIT', 'Período', 'Débito fiscal', 'Crédito fiscal', 'Retenciones', 'Saldo 1° párrafo', 'Saldo 2° párrafo', 'Estado'],
-      repPreview: [
-        { cliente: 'CAZATUR SA', per: '08/2026', df: '4.182.905,60', cf: '2.444.516,20', ret: '106.284,15', saldo: '-1.632.105,25' },
-        { cliente: 'DACKET SA', per: '08/2026', df: '2.907.114,85', cf: '3.166.402,70', ret: '54.220,00', saldo: '313.507,85' },
-        { cliente: 'DASYC SRL', per: '08/2026', df: '1.455.230,10', cf: '987.640,55', ret: '22.140,80', saldo: '-445.448,75' },
-        { cliente: 'CAZATUR SA', per: '07/2026', df: '3.908.744,15', cf: '3.858.148,75', ret: '98.410,05', saldo: '47.814,65' },
-        { cliente: 'DACKET SA', per: '07/2026', df: '2.744.900,00', cf: '2.408.115,40', ret: '48.900,00', saldo: '-287.884,60' }
-      ].map(r => Object.assign({}, r, { sc: r.saldo[0] === '-' ? '#B3261E' : '#2E7D5B' }))
+      tipPer: tip ? tip.per : '', tipLeft: tip ? tip.left : 'auto', tipRight: tip ? tip.right : 'auto', tipRows: tip ? tip.rows : []
     };
     // Exportar la liquidación que se está viendo (resultado / ojito del historial).
     const expDatos = () => {
@@ -6946,7 +6896,7 @@ class Component extends DCLogic {
         ['Retenciones y Percepciones', ['Régimen', 'Comprobantes', 'Importe'], V.retRows.map((r, k, a) => [r.c, r.q, r.i, k === a.length - 1 ? 1 : 0])]];
       return { cli: V.liqResCli, per, seq, sub: V.liqResSub, kpis: V.kpisLiq, saldos: V.saldos, tabs, nombre: V.liqResCli + ' - Liquidacion IVA ' + per.replace('/', '-') + ' - Sec ' + seq };
     };
-    const numX = (t) => (typeof t === 'string' && /^-?\d{1,3}(\.\d{3})*,\d{2}$/.test(t.trim()) ? this.numAr(t.trim()) : (typeof t === 'string' && /^\d+$/.test(t) ? { t: 'n', v: +t, z: '#,##0' } : (t === '—' ? '' : t)));
+    const numX = (t) => t === '-' ? { t: 'n', v: 0, z: '#,##0.00;-#,##0.00;"-"' } : (typeof t === 'string' && /^-?\d{1,3}(\.\d{3})*,\d{2}$/.test(t.trim()) ? this.numAr(t.trim()) : (typeof t === 'string' && /^\d+$/.test(t) ? { t: 'n', v: +t, z: '#,##0' } : (t === '—' ? '' : t)));
     V.liqExpXls = async () => {
       try {
         const X = await this.xlsxLib(), d = expDatos(), wb = X.utils.book_new();
