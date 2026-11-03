@@ -5164,7 +5164,8 @@ class Component extends DCLogic {
     const V = ventas.recs.filter(noRet), C = compras.recs.filter(noRet);
     const sum = (xs, f) => r2(xs.reduce((a, x) => a + (f(x) || 0), 0));
     const op = (xs) => xs.filter(x => x.tc !== 'NC'), nc = (xs) => xs.filter(x => x.tc === 'NC');
-    const tri = (xs) => ({ neto: sum(xs, x => x.v.ngt), exn: sum(xs, x => x.v.exn), iva: sum(xs, x => x.v.ivt) });
+    // ARCA informa el neto al 0 % dentro de «Exento o No Gravado», no en el neto gravado (caso Andalux 09/2026, BBVA).
+    const tri = (xs) => ({ neto: sum(xs, x => (x.v.ngt || 0) - (x.v.n0 || 0)), exn: sum(xs, x => (x.v.exn || 0) + (x.v.n0 || 0)), iva: sum(xs, x => x.v.ivt) });
     const S = { vOp: tri(op(V)), vNc: tri(nc(V)), cOp: tri(op(C)), cNc: tri(nc(C)) };
     // Crédito fiscal no computable por prorrateo (misma fórmula que la liquidación): ARCA informa el computable.
     const K = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0', 'exe', 'ngr', 'exp'], tk = (xs) => Object.fromEntries(K.map(k => [k, sum(xs, x => x.v[k])]));
