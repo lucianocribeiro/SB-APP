@@ -4716,9 +4716,133 @@ class Component extends DCLogic {
     return Object.keys(pers).sort((a, b) => pers[b] - pers[a])[0] || '';
   }
 
+  // ===== Subdiarios de otros sistemas (Tango, SAP, Catedral, Lanes, RP…) =====
+  // Reconoce las columnas por sus nombres habituales y arma el subdiario en el formato de Bejerman, así el resto de la app
+  // (liquidación y cruces) no cambia. Junta en un comprobante las filas que vienen separadas por alícuota (Tango).
+  SUB_SIN = {
+    fecha: ['fecha', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
+    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'tipodoc', 'comprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
+    letra: ['letra', 'let', 'letracomprobante'],
+    pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'pventa'],
+    nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'referencia'],
+    cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil'],
+    nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente'],
+    cond: ['cativa', 'condiva', 'condicioniva', 'categoriaiva', 'sitiva', 'condicionfrentealiva', 'categoria'],
+    porc: ['porciva', 'alicuota', 'aliciva', 'alicuotaiva', 'tasaiva', 'porcentajeiva', 'tasa', 'porc'],
+    exe: ['impexento', 'importeexento', 'exento', 'montoexento', 'exentas'],
+    ngr: ['impnogravado', 'importenogravado', 'nogravado', 'nogravadas', 'montonogravado'],
+    nal: ['importenoalcanzado', 'noalcanzado', 'impnoalcanzado'],
+    exp: ['importeoperacionesexportacion', 'exportacion', 'impexportacion', 'exportaciones'],
+    mono: ['comprasaexentosmonotributistasyotros', 'monotributo', 'comprasmonotributo'],
+    neto: ['impgravad', 'impneto', 'netogravado', 'impnetogravado', 'importegravado', 'importeneto', 'neto', 'gravado', 'baseimponible', 'netogravadototal'],
+    iva: ['iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
+    iin: ['importeimpuestosinternos', 'impuestosinternos', 'impint', 'impinternos'],
+    piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos'],
+    piva: ['percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva'],
+    potr: ['otraspercepciones', 'otrosimp', 'otrosimpuestos', 'otrostributos', 'otrasperc'],
+    oreg: ['otrosregimenesespeciales', 'regimenesespeciales'],
+    tot: ['totalcomprobante', 'importe', 'imptotal', 'importetotal', 'total', 'montototal']
+  };
+
+  convertirSubdiario(aoa, k) {
+    const hk = (h) => this.hkey(h), SIN = this.SUB_SIN;
+    // Columnas por alícuota ya separadas (Bejerman y algunos SAP / Lanes): Neto 21%, IVA 21%…
+    const ALIS = [['21', 21], ['105', 10.5], ['27', 27], ['0', 0], ['25', 2.5], ['5', 5]];
+    let hi = -1, keys = [];
+    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+      const ks = (aoa[i] || []).map(hk);
+      if (SIN.fecha.some(x => ks.includes(x)) && (SIN.tipo.some(x => ks.includes(x)) || SIN.nro.some(x => ks.includes(x)))) { hi = i; keys = ks; break; }
+    }
+    if (hi < 0) return null;
+    // Ya viene en formato Bejerman: no se toca.
+    if (keys.includes('tc') && keys.includes('letra') && keys.includes('totalcomprobante')) return null;
+    const col = (f) => { for (const n of SIN[f]) { const i = keys.indexOf(n); if (i >= 0) return i; } return -1; };
+    const C = {}; Object.keys(SIN).forEach(f => { C[f] = col(f); });
+    const AC = {}; ALIS.forEach(([a]) => { AC['n' + a] = keys.indexOf('neto' + a); AC['i' + a] = keys.indexOf('iva' + a); });
+    const porAli = Object.values(AC).some(i => i >= 0);
+    if (C.tot < 0 && C.neto < 0 && C.iva < 0 && !porAli) return null;
+    const num = (v) => this.numAr(v), r2 = (v) => Math.round(v * 100) / 100;
+    const txt = (v) => (v == null ? '' : String(v).trim());
+    const STD = [21, 10.5, 27, 5, 2.5];
+    const grupos = new Map();
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [], g = (f) => (C[f] >= 0 ? r[C[f]] : null);
+      const fecha = this.fechaTxt(g('fecha'));
+      if (!fecha) continue;   // totales y filas vacías
+      // Número: "A0000300016739" (Tango: letra + punto de venta + número), "0003-00016739", "A-0003-00016739"…
+      let letra = txt(g('letra')).toUpperCase(), pv = num(g('pv')), nro = 0, tipoTxt = txt(g('tipo'));
+      const nt = txt(g('nro')).toUpperCase();
+      let m = nt.match(/^([A-Z])\s*-?\s*(\d{1,5})\s*-?\s*(\d{1,8})$/) || nt.match(/^([A-Z])(\d{5})(\d{8})$/);
+      if (m) { if (!letra) letra = m[1]; if (!pv) pv = +m[2]; nro = +m[3]; }
+      else if ((m = nt.match(/^(\d{1,5})\s*-\s*(\d{1,8})$/))) { if (!pv) pv = +m[1]; nro = +m[2]; }
+      else if (/^[A-Z]/.test(nt) && !letra) { letra = nt[0]; nro = +(nt.replace(/\D/g, '').slice(-8) || 0); }
+      else nro = +(nt.replace(/\D/g, '').slice(-8) || 0);
+      // Tipos de Tango y otros: NC1 / ND2 / FA1… → NC / ND / FC.
+      const tf = tipoTxt.toUpperCase().replace(/\s+/g, ' ');
+      if (/^(NC|ND|FC|FA|FAC)\d+$/.test(tf)) tipoTxt = { NC: 'NC', ND: 'ND', FC: 'FC', FA: 'FC', FAC: 'FC' }[tf.replace(/\d+$/, '')];
+      let t = this.tipoLibro(tipoTxt, letra);
+      // Despachos de importación (Aduana): letra I o número de despacho.
+      if (letra === 'I' || /DESPACHO|IMPORTACION/.test(this.fold(tipoTxt).toUpperCase())) t = { tc: 'DI', letra: '' };
+      const cuit = this.cuitTxt(g('cuit'));
+      const key = [t.tc, t.letra, pv, nro, cuit].join('|');
+      let G = grupos.get(key);
+      if (!G) grupos.set(key, G = { fecha, tc: t.tc, letra: t.letra, pv, nro, cuit, nom: txt(g('nom')), cond: this.fold(txt(g('cond'))).toUpperCase(),
+        neto: 0, iva: {}, ivaSin: 0, piva: 0, exe: 0, ngr: 0, nal: 0, exp: 0, mono: 0, iin: 0, piibb: 0, potr: 0, oreg: 0, tot: 0, ali: {}, mainR: null, mainN: 0 });
+      ['exe', 'ngr', 'nal', 'exp', 'mono', 'iin', 'piibb', 'potr', 'oreg', 'tot'].forEach(f => { G[f] += num(g(f)); });
+      G.piva += num(g('piva'));
+      if (porAli) ALIS.forEach(([a]) => { G.ali['n' + a] = (G.ali['n' + a] || 0) + (AC['n' + a] >= 0 ? num(r[AC['n' + a]]) : 0); G.ali['i' + a] = (G.ali['i' + a] || 0) + (AC['i' + a] >= 0 ? num(r[AC['i' + a]]) : 0); });
+      const neto = num(g('neto')), iva = num(g('iva'));
+      let rate = C.porc >= 0 && g('porc') !== null && g('porc') !== '' ? num(String(g('porc')).replace('%', '')) : null;
+      if (rate !== null && rate > 0 && rate < 1) rate = r2(rate * 100);
+      G.neto += neto;
+      if (rate === null) { if (iva) G.ivaSin += iva; }
+      else if (rate > 0 && !STD.includes(rate)) G.piva += iva;            // 3 %, 1,5 %…: percepción de IVA (Tango)
+      else if (rate > 0) G.iva[rate] = (G.iva[rate] || 0) + iva;
+      if (Math.abs(neto) > Math.abs(G.mainN)) { G.mainN = neto; G.mainR = rate; }
+    }
+    if (!grupos.size) return null;
+    const venta = k === 'ventas';
+    const head = ['Fecha', 'TC', 'Letra', 'Pto. Vta.', 'Nro. Desde', 'Nro. Hasta', 'Razón Social', 'CUIT', 'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 27%', 'IVA 27%', 'Neto 0%', 'IVA 0%', 'Neto 2.5%', 'IVA 2.5%', 'Neto 5%', 'IVA 5%']
+      .concat(venta ? ['Importe operaciones exportación', 'Importe Exento', 'Importe No Alcanzado', 'Importe no gravado'] : ['Importe Exento', 'Importe No Alcanzado', 'Importe no gravado', 'Compras a exentos, monotributistas y otros'])
+      .concat(['Importe Impuestos Internos', 'Percepciones IIBB', 'Percepciones IVA', 'Otras Percepciones', 'Otros regímenes especiales', 'Total Comprobante']);
+    const out = [head];
+    grupos.forEach(G => {
+      const A = { n21: 0, i21: 0, n105: 0, i105: 0, n27: 0, i27: 0, n0: 0, i0: 0, n25: 0, i25: 0, n5: 0, i5: 0 }, ak = (r) => String(r).replace('.', '');
+      if (porAli) Object.keys(A).forEach(x => { A[x] = G.ali[x] || 0; });
+      else {
+        // Sin alícuota en la fila: se deduce de IVA / neto.
+        if (G.ivaSin) { const r = G.neto ? STD.reduce((b, x) => (Math.abs(G.ivaSin / G.neto * 100 - x) < Math.abs(G.ivaSin / G.neto * 100 - b) ? x : b), 21) : 21; G.iva[r] = (G.iva[r] || 0) + G.ivaSin; if (G.mainR === null) G.mainR = r; }
+        const rates = Object.keys(G.iva).map(Number).filter(r => G.iva[r]);
+        // El neto viene en una sola fila (la principal); el de las otras alícuotas sale de su IVA.
+        const main = rates.includes(G.mainR) ? G.mainR : (rates.length === 1 ? rates[0] : null);
+        let resto = G.neto;
+        rates.filter(r => r !== main).forEach(r => { const n = r2(G.iva[r] / (r / 100)); A['n' + ak(r)] += n; A['i' + ak(r)] += G.iva[r]; resto -= n; });
+        if (main !== null) { const n = r2(resto) || r2(G.iva[main] / (main / 100)); A['n' + ak(main)] += n; A['i' + ak(main)] += G.iva[main]; resto = 0; }
+        if (r2(resto)) A.n0 += r2(resto);   // neto sin IVA: al 0 %
+      }
+      let { exe, ngr, nal, exp, mono } = G;
+      const monoProv = /^(RS|MT|MONO|EX|EXE|EXENTO|IVA EXENTO)/.test(G.cond) || G.letra === 'C';
+      if (!venta && monoProv && !Object.keys(A).some(x => x[0] === 'i' && A[x])) {
+        // Compras a monotributistas / exentos (facturas C): todo va a "Compras a exentos, monotributistas y otros".
+        mono += exe + ngr + A.n0 + A.n21 + A.n105 + A.n27 + A.n5 + A.n25; exe = 0; ngr = 0; Object.keys(A).forEach(x => { A[x] = 0; });
+        if (!mono && G.tot) mono = G.tot - (G.iin + G.piibb + G.piva + G.potr + G.oreg);   // sólo viene el total
+      }
+      if (venta && G.letra === 'E') { exp += exe + A.n0; exe = 0; A.n0 = 0; }   // Factura E: exportación
+      const tot = G.tot || (Object.values(A).reduce((a, b) => a + b, 0) + exe + ngr + nal + exp + mono + G.iin + G.piibb + G.piva + G.potr + G.oreg);
+      const R = (x) => r2(x);
+      out.push([G.fecha, G.tc, G.letra, G.pv || '', G.nro || '', '', G.nom, G.cuit, R(A.n21), R(A.i21), R(A.n105), R(A.i105), R(A.n27), R(A.i27), R(A.n0), R(A.i0), R(A.n25), R(A.i25), R(A.n5), R(A.i5)]
+        .concat(venta ? [R(exp), R(exe), R(nal), R(ngr)] : [R(exe), R(nal), R(ngr), R(mono)])
+        .concat([R(G.iin), R(G.piibb), R(G.piva), R(G.potr), R(G.oreg), R(tot)]));
+    });
+    out.convertido = { filas: grupos.size };
+    return out;
+  }
+
   parseComprobantes(k, name, bytes, X) {
     const LBL = this.UP_LBL;
-    const aoa = this.leerHoja(bytes, X);
+    const aoa0 = this.leerHoja(bytes, X);
+    // Subdiarios de Tango, SAP, Catedral, Lanes…: se pasan al formato Bejerman antes de leerlos.
+    const aoa = ((k === 'ventas' || k === 'compras') && this.convertirSubdiario(aoa0, k)) || aoa0;
     const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
