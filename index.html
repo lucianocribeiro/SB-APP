@@ -4158,7 +4158,8 @@ class Component extends DCLogic {
     const prev = this.saldosDj(rows, cliente, this.perAnt(per), undefined, (prof || 0) + 1);
     const man = !prev && dj.n && dj.n.a1 != null ? dj.n : null;   // saldos del período anterior ingresados a mano
     const p1 = prev ? prev.s1 : (man ? man.a1 : 0), p2 = prev ? r2(prev.s2 - prev.comp) : (man ? man.a2 : 0);
-    const cf = num(dj.cf), df = num(dj.df), rp = num(dj.rp);
+    const df = num(dj.df), rp = num(dj.rp);
+    const cf = r2(num(dj.cf) - this.cfNoComp({ cf: num(dj.cf), ali: dj.n && dj.n.ali }));   // crédito fiscal computable
     const s1 = r2(p1 < 0 ? cf - df : cf - df + p1);
     const s2 = r2(p2 < 0 ? (s1 < 0 ? s1 + rp : rp) : (s1 < 0 ? p2 + s1 + rp : rp + p2));
     return { dj, s1, s2, comp: this.compSum(cliente, per, dj.seq), prev };
@@ -4584,6 +4585,12 @@ class Component extends DCLogic {
     if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
     if (aj) rows.push(filaRes((k === 'v' ? 'Ajuste al Débito Fiscal' : 'Ajuste al Crédito Fiscal') + ' (ingresado a mano)', '', m(aj), 0));
     rows.push(filaRes(lTotal, '', m(total), 1));
+    const pr = k === 'c' ? this.prorrRatio(det) : 0;
+    if (pr) {
+      const noC = Math.round(pr * (total - (aj || 0)) * 100) / 100;
+      rows.push(filaRes('Menos: crédito fiscal no computable por prorrateo (' + (pr * 100).toLocaleString('es-AR', { maximumFractionDigits: 5 }) + ' % de ventas exentas y no gravadas)', '', m(-noC), 0));
+      rows.push(filaRes('Crédito fiscal computable (prorrateo ' + this.pctProrr(pr) + ')', '', m(total - noC), 1));
+    }
     rows.push(filaRes('No gravado, exento y otros (' + src + ')', '', '', 2));
     [['Exento', 'exe'], ['No gravado', 'ngr'], ['No alcanzado', 'nal']].concat(k === 'v' ? [['Exportación', 'exp']] : [['Compras a exentos, monotributistas y otros', 'mono']])
       .forEach(([l, f]) => rows.push(filaRes(l, m(o[f]), '—', 0)));
@@ -4611,8 +4618,9 @@ class Component extends DCLogic {
     const r2 = (v) => Math.round(v * 100) / 100, a = { df: aj.df || 0, cf: aj.cf || 0, ret: aj.ret || 0, perc: aj.perc || 0 };
     if (!a.df && !a.cf && !a.ret && !a.perc) return res;
     const df = r2(res.df + a.df), cf = r2(res.cf + a.cf), ret = r2(res.ret + a.ret), perc = r2(res.perc + a.perc), rp = r2(perc + ret);
-    const s1 = r2(cf - df + arr.tec), s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
-    return Object.assign({}, res, { df, cf, ret, perc, rp, s1, s2, ali: Object.assign({}, res.ali, { aj: a }) });
+    const cfNoComp = res.cfNoComp || 0;
+    const s1 = r2(cf - cfNoComp - df + arr.tec), s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
+    return Object.assign({}, res, { df, cf, cfNoComp, ret, perc, rp, s1, s2, ali: Object.assign({}, res.ali, { aj: a }) });
   }
 
   // Paso 4: vista previa de la liquidación con los archivos cargados y los ajustes manuales.
@@ -4639,13 +4647,16 @@ class Component extends DCLogic {
     const det = pv.ali.det;
     return {
       ajCampos, pvProcesar,
-      pvKpis: [{ label: 'Total débito fiscal', value: m(pv.df) }, { label: 'Total crédito fiscal', value: m(pv.cf) }, { label: 'Retenciones y percepciones', value: m(pv.rp) }],
+      pvKpis: [{ label: 'Total débito fiscal', value: m(pv.df) }, { label: 'Total crédito fiscal', value: m(pv.cf) }]
+        .concat(pv.cfNoComp ? [{ label: 'Crédito fiscal computable', value: m(pv.cf - pv.cfNoComp) }] : [], [{ label: 'Retenciones y percepciones', value: m(pv.rp) }]),
       pvSaldos: [sd('Saldo 1° párrafo (técnico)', pv.s1), sd('Saldo 2° párrafo (libre disponibilidad)', pv.s2)],
       pvCalc: [
         'Débito fiscal = ' + m(base.df) + mas(aj.df, 'ajuste') + ' = ' + m(pv.df),
         'Crédito fiscal = ' + m(base.cf) + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
+        ...(pv.cfNoComp ? ['Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas) = ' + this.pctProrr(this.prorrRatio(det))
+          + ' · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)] : []),
         'Retenciones y percepciones = retenciones ' + m(base.ret) + mas(aj.ret, 'ajuste') + ' + percepciones ' + m(base.perc) + mas(aj.perc, 'ajuste') + ' = ' + m(pv.rp),
-        'Saldo 1° párrafo = crédito ' + m(pv.cf) + ' − débito ' + m(pv.df) + ' + saldo técnico anterior ' + m(arr.tec) + ' = ' + m(pv.s1),
+        'Saldo 1° párrafo = crédito' + (pv.cfNoComp ? ' computable ' + m(pv.cf - pv.cfNoComp) : ' ' + m(pv.cf)) + ' − débito ' + m(pv.df) + ' + saldo técnico anterior ' + m(arr.tec) + ' = ' + m(pv.s1),
         'Saldo 2° párrafo = ' + (pv.s1 < 0 ? 'libre disponibilidad anterior ' + m(arr.lib) + ' + saldo 1° párrafo ' + m(pv.s1) + ' + retenciones y percepciones ' + m(pv.rp) : 'retenciones y percepciones ' + m(pv.rp) + ' + libre disponibilidad anterior ' + m(arr.lib)) + ' = ' + m(pv.s2)
       ].map(t => ({ t })),
       pvVentas: this.detFilasDe(det, 'v', 'IVA Ventas', 'cNc', 'notas de crédito recibidas (IVA Compras)', pv.df, 'Total débito fiscal', aj.df),
@@ -5348,6 +5359,28 @@ class Component extends DCLogic {
     };
   }
 
+  // Prorrateo del crédito fiscal (fórmula acordada con Julieta Díaz, Estudio Blasco, dic. 2025; la misma de la columna AO del papel de trabajo):
+  // proporción no computable = (Venta exenta + Venta no gravada) / (Ventas netas gravadas + Exenta + No gravada + Exportaciones − NC de ventas gravadas).
+  // Exenta, no gravada y exportaciones van netas de sus notas de crédito. El no alcanzado (recupero de gastos) no entra.
+  prorrRatio(det) {
+    if (!det || !det.v) return 0;
+    const z = (o, k) => (o && o[k]) || 0, nv = (k) => z(det.v, k) - z(det.vNc, k);
+    const grav = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0'].reduce((a, k) => a + z(det.v, k), 0);
+    const ncGrav = z(det.vNc, 'n21') + z(det.vNc, 'n105') + z(det.vNc, 'n27');
+    const num = nv('exe') + nv('ngr'), den = grav + num + nv('exp') - ncGrav;
+    return num > 0 && den > 0 ? Math.min(1, num / den) : 0;
+  }
+
+  // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica al crédito sin los ajustes manuales.
+  // Se calcula del detalle guardado, así también corrige las liquidaciones ya procesadas sin volver a cargarlas.
+  cfNoComp(o) {
+    const ali = o && o.ali, r = this.prorrRatio(ali && ali.det);
+    if (!r) return 0;
+    return Math.round(r * ((+o.cf || 0) - ((ali.aj || {}).cf || 0)) * 100) / 100;
+  }
+
+  pctProrr(r) { return ((1 - r) * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 5 }) + ' %'; }
+
   liqCalc(ventas, compras, arr) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
@@ -5362,8 +5395,6 @@ class Component extends DCLogic {
     const crs = ventas.recs.filter(x => x.tc === 'CR'), crPer = crs.filter(x => x.fecha.slice(3) === per);
     const ret = r2(crPer.reduce((a, x) => a + Math.abs(x.v.tot), 0));
     const rp = r2(perc + ret);
-    const s1 = r2(cf - df + arr.tec);
-    const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
     const aliV = (k) => r2(V.filter(x => x.tc !== 'NC').reduce((a, x) => a + (x.v[k] || 0), 0));
     // Detalle para el "ojito" del historial: cada columna de los subdiarios, separando FC / ND de NC. Se guarda junto a las alícuotas.
     const K = ['n21', 'i21', 'n105', 'i105', 'n27', 'i27', 'n5', 'i5', 'n25', 'i25', 'n0', 'exe', 'nal', 'ngr', 'exp', 'mono', 'iin', 'piibb', 'piva', 'potr', 'oreg', 'tot'];
@@ -5373,7 +5404,11 @@ class Component extends DCLogic {
       perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
     };
     const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27'), det };
-    return { df, cf, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, ali, regs: ventas.recs.length + compras.recs.length };
+    // Saldo técnico con el crédito fiscal computable (prorrateo por ventas exentas / no gravadas).
+    const cfNoComp = this.cfNoComp({ cf, ali });
+    const s1 = r2(cf - cfNoComp - df + arr.tec);
+    const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
+    return { df, cf, cfNoComp, rp, perc, ret, crOtros: crs.length - crPer.length, s1, s2, ali, regs: ventas.recs.length + compras.recs.length };
   }
 
   liqResVals(res, fmt) {
@@ -5382,15 +5417,18 @@ class Component extends DCLogic {
       ? { label, value: fmt(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' }
       : { label, value: fmt(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const saldos = [sd('Saldo 1° párrafo', res.s1), sd('Saldo 2° párrafo', res.s2)];
+    const noC = this.cfNoComp(res), pr = this.prorrRatio(res.ali && res.ali.det);
+    const kComp = noC ? [{ label: 'Crédito fiscal computable (prorrateo ' + this.pctProrr(pr) + ')', value: fmt(Math.round((res.cf - noC) * 100) / 100), color: '#1B2733' }] : [];
     return {
       procResSub: res.cli + ' · ' + res.per + ' · ' + String(res.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' registros de IVA Ventas e IVA Compras procesados'
         + (res.perc !== undefined ? ' · Retenciones y percepciones de IVA: percepciones IVA de IVA Compras ' + fmt(res.perc) + ' + retenciones CR de IVA Ventas ' + fmt(res.ret)
           + (res.crOtros ? ' (' + res.crOtros + (res.crOtros === 1 ? ' CR de otro período no se toma' : ' CR de otros períodos no se toman') + ')' : '') : ''),
-      procResKpis: [{ label: 'Débito fiscal', value: fmt(res.df) }, { label: 'Crédito fiscal', value: fmt(res.cf) }, { label: 'Retenciones y percepciones', value: fmt(res.rp) }],
+      procResKpis: [{ label: 'Débito fiscal', value: fmt(res.df) }, { label: 'Crédito fiscal', value: fmt(res.cf) }].concat(kComp.map(k => ({ label: k.label, value: k.value })), [{ label: 'Retenciones y percepciones', value: fmt(res.rp) }]),
       procResSaldos: saldos,
       resKpisLiq: [
         { label: 'Total débito fiscal', value: fmt(res.df), color: '#1B2733' },
         { label: 'Total crédito fiscal', value: fmt(res.cf), color: '#1B2733' },
+        ...kComp,
         { label: 'Retenciones y percepciones', value: fmt(res.rp), color: '#1B2733' },
         { label: res.s2 < 0 ? 'Saldo a pagar' : 'Saldo a favor', value: fmt(res.s2), color: res.s2 < 0 ? '#B3261E' : '#2E7D5B' }
       ],
@@ -6379,8 +6417,9 @@ class Component extends DCLogic {
     const conSaldo = (r) => {
       if (r.df === '—') return Object.assign({}, r, { rp: '—', saldo: '—', sc: '#9AA9B7', saldo1: '—', sc1: '#9AA9B7' });
       const sd = this.saldosDj(histTodas, r.cliente, r.per, r.seq);
-      const saldo = sd ? sd.s2 : num(r.cf) + num(r.rp) - num(r.df);
-      const saldo1 = sd ? sd.s1 : num(r.cf) - num(r.df);
+      const cfC = num(r.cf) - this.cfNoComp({ cf: num(r.cf), ali: r.n && r.n.ali });
+      const saldo = sd ? sd.s2 : cfC + num(r.rp) - num(r.df);
+      const saldo1 = sd ? sd.s1 : cfC - num(r.df);
       return Object.assign({}, r, { saldo: fmt(saldo), sc: saldoC(saldo), saldo1: fmt(saldo1), sc1: saldoC(saldo1) });
     };
     const pendRows = [], vistos = {};
@@ -6576,8 +6615,9 @@ class Component extends DCLogic {
     const verRes = verRow ? (() => {
       const nv = (k) => verRow.n ? verRow.n[k] : this.numAr(verRow[k]), rr = (v) => Math.round(v * 100) / 100;
       const df = nv('df'), cf = nv('cf'), rp = nv('rp'), sd = this.saldosDj(histTodas, verRow.cliente, verRow.per, verRow.seq);
-      const s1 = sd ? sd.s1 : rr(cf - df), s2 = sd ? sd.s2 : rr(s1 < 0 ? s1 + rp : rp);
-      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0, perc: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.perc + ((verRow.n.ali.aj || {}).perc || 0) : undefined, ret: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.ret + ((verRow.n.ali.aj || {}).ret || 0) : undefined };
+      const cfNoComp = this.cfNoComp({ cf, ali: verRow.n && verRow.n.ali });
+      const s1 = sd ? sd.s1 : rr(cf - cfNoComp - df), s2 = sd ? sd.s2 : rr(s1 < 0 ? s1 + rp : rp);
+      return { cli: verRow.cliente, per: verRow.per, seq: verRow.seq, fechaHora: verRow.fechaHora || verRow.fecha, user: verRow.user, df, cf, cfNoComp, rp, s1, s2, ali: verRow.n && verRow.n.ali, regs: verRow.n ? verRow.n.regs : 0, perc: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.perc + ((verRow.n.ali.aj || {}).perc || 0) : undefined, ret: verRow.n && verRow.n.ali && verRow.n.ali.det ? verRow.n.ali.det.ret + ((verRow.n.ali.aj || {}).ret || 0) : undefined };
     })() : null;
     const resShow = (s.liqResVer && s.liqRes) || verRes;
     const resV = this.liqResVals(resShow, fmt), resReal = !!resShow;
