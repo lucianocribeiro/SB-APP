@@ -329,7 +329,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 <sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span onClick="{{ go.clienteFicha }}" style="cursor:pointer;color:#14395C">{{ c.rz }}</span></td>
+<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span onClick="{{ c.abrir }}" style="cursor:pointer;color:#14395C">{{ c.rz }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;color:#5A6B7B">{{ c.cond }}</td>
 <td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></td>
@@ -338,7 +338,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span></td>
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
-<span onClick="{{ go.clienteFicha }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Abrir ficha</span>
+<span onClick="{{ c.abrir }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Abrir ficha</span>
 <span onClick="{{ openConfirm }}" style="font:600 12.5px 'Open Sans';color:#5A6B7B;cursor:pointer">Desactivar</span>
 </div>
 </td>
@@ -362,12 +362,15 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
 <div>
 <div style="display:flex;align-items:center;gap:10px">
-<div style="font:600 22px/1.2 'Open Sans'">CAZATUR SA</div>
+<div style="font:600 22px/1.2 'Open Sans'">{{ fichaRz }}</div>
 <span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Activo</span>
 </div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">CUIT 30-71234567-8 · Responsable Inscripto · Inicio de ejercicio 01/01 · Último período liquidado 08/2026</div>
+<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ fichaSub }}</div>
 </div>
-<div style="display:flex;gap:9px">
+<div style="display:flex;gap:9px;flex-wrap:wrap">
+<sc-if value="{{ fichaPuedeEditar }}">
+<button onClick="{{ fichaEditar }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#F4F9FD">Editar ficha</button>
+</sc-if>
 <button onClick="{{ go.clientes }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al listado</button>
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
@@ -426,7 +429,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <tbody>
 <sc-for list="{{ liqCliente }}" as="r" hint-placeholder-count="5">
 <tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ go.liqResultado }}" style="cursor:pointer;color:#14395C">{{ r.per }}</span></td>
+<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ r.ver }}" style="cursor:pointer;color:#14395C">{{ r.per }}</span></td>
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
@@ -453,7 +456,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <tbody>
 <sc-for list="{{ crucesCliente }}" as="r" hint-placeholder-count="3">
 <tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ go.cruceResultado }}" style="cursor:pointer;color:#14395C">{{ r.tipo }}</span></td>
+<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="color:#14395C">{{ r.tipo }}</span></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.regs }}</td>
@@ -470,8 +473,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Mails de notificación</div>
 <div style="display:flex;flex-direction:column;gap:7px">
-<div style="font:400 13px 'Open Sans';color:#1B2733">administracion@cazatur.com.ar</div>
-<div style="font:400 13px 'Open Sans';color:#1B2733">julietad@blasco.com.ar</div>
+<sc-for list="{{ fichaMails }}" as="m" hint-placeholder-count="2">
+<div style="font:400 13px 'Open Sans';color:#1B2733">{{ m.m }}</div>
+</sc-for>
+<sc-if value="{{ fichaSinMails }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7">Sin mails cargados. Agregalos con «Editar ficha».</div></sc-if>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
@@ -2254,8 +2259,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="position:fixed;top:0;right:0;bottom:0;width:480px;max-width:92vw;background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-2px 0 12px rgba(27,39,51,.14)">
 <div style="padding:16px 20px;border-bottom:1px solid #E3E8EE;display:flex;align-items:center;justify-content:space-between">
 <div>
-<div style="font:600 17px 'Open Sans'">Nuevo cliente</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">Completá los datos para habilitar liquidaciones.</div>
+<div style="font:600 17px 'Open Sans'">{{ ncTitulo }}</div>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;margin-top:3px">{{ ncSub }}</div>
 </div>
 <div onClick="{{ closeAll }}" style="cursor:pointer;padding:6px;border-radius:6px" style-hover="background:#F5F7FA"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
 </div>
@@ -2287,7 +2292,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="margin-top:13px">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mails destinatarios</div>
 <input placeholder="mail@cliente.com.ar, contador@blasco.com.ar" value="{{ nc.mails }}" onChange="{{ ncSet.mails }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
-<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios destinatarios con coma.</div>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios destinatarios con coma. Por ahora sólo se guardan los mails @blasco.com.ar: los demás se borran al guardar.</div>
 </div>
 </div>
 <div>
@@ -2302,7 +2307,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
 <button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
-<button onClick="{{ saveCliente }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Guardar cliente</button>
+<button onClick="{{ saveCliente }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">{{ ncBoton }}</button>
 </div>
 </div>
 </sc-if>
@@ -2684,7 +2689,7 @@ class Component extends DCLogic {
     apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)), vencAnio: null, vencAniosExtra: [],
     up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' },
     real: {}, upErr: {}, upBusy: {},
-    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' }, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}),
+    asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' }, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}), cliFicha: this.lsGet('myiva.cliFicha', {}), fichaCli: null, ncEdit: null, ncGuardando: false,
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
@@ -2930,11 +2935,13 @@ class Component extends DCLogic {
 
     const csis = cfg.find(c => c.clave === 'clientes_sistema');
     const cliSistema = csis && csis.valor && typeof csis.valor === 'object' ? this.lsSet('myiva.cliSistema', csis.valor) : s.cliSistema;
+    const cfi = cfg.find(c => c.clave === 'clientes_ficha');
+    const cliFicha = cfi && cfi.valor && typeof cfi.valor === 'object' ? this.lsSet('myiva.cliFicha', cfi.valor) : s.cliFicha;
     const cv = cfg.find(c => c.clave === 'vencimientos');
     const venc = cv && cv.valor && cv.valor.pers ? this.vencConHistoria(this.lsSet('myiva.venc', cv.valor)) : s.venc;
 
     this._sync = z;
-    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc, cliSistema };
+    return { cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal, liqsDb, liqEst: le, ddjjBorradas: bo, cruRuns, comps: compsN, ddjjPdf, audExtra, apoc, venc, cliSistema, cliFicha };
   }
 
   // Lee todas las filas de una tabla, de a 1000 (Supabase devuelve como máximo 1000 por consulta), de la más nueva a la más vieja.
@@ -4389,6 +4396,94 @@ class Component extends DCLogic {
 
   // Sistema contable de cada cliente: define el formato de los archivos (el 90 % es Bejerman). Se guarda en config ('clientes_sistema').
   SISTEMAS = ['Bejerman', 'Tango', 'SAP', 'Catedral', 'Lanes'];
+
+  // Datos de la ficha que no están en la tabla clientes: inicio de ejercicio y mails de notificación. Se guardan en config ('clientes_ficha').
+  async guardarFicha(mapa) {
+    this.setState({ cliFicha: this.lsSet('myiva.cliFicha', mapa) });
+    const sb = this.sb();
+    if (sb && this._user) {
+      const r = await sb.from('config').upsert({ clave: 'clientes_ficha', valor: mapa, actualizado: new Date().toISOString() });
+      if (r.error) throw r.error;
+    }
+  }
+
+  // Por ahora sólo se notifica al estudio: quedan los mails @blasco.com.ar.
+  mailsBlasco(t) {
+    const todos = String(t || '').split(/[,;\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
+    const ok = [...new Set(todos.filter(x => /^[^@\s]+@blasco\.com\.ar$/.test(x)))];
+    return { ok, fuera: todos.filter(x => !ok.includes(x)) };
+  }
+
+  // Cambia el nombre de un cliente en toda la app: liquidaciones (su id lleva el nombre), PDF de DDJJ, archivos guardados,
+  // cruces, compensaciones, clientes y configuración. El historial queda intacto con el nombre nuevo. Sólo administradores.
+  async renombrarCliente(viejo, nuevo) {
+    const sb = this.sb();
+    if (!sb || !this._user) throw new Error('hay que estar conectado a la base para cambiar el nombre');
+    const ok = (r) => { if (r && r.error) throw r.error; return r; };
+    const liqs = ok(await sb.from('liquidaciones').select('id').eq('cliente', viejo)).data || [];
+    for (const { id } of liqs) {
+      const nid = nuevo + id.slice(viejo.length);
+      ok(await sb.from('liquidaciones').update({ id: nid, cliente: nuevo }).eq('id', id));
+      ok(await sb.from('ddjj_pdf').update({ liquidacion_id: nid }).eq('liquidacion_id', id));
+      // Archivos originales de la liquidación: la carpeta se arma con el id.
+      const de = this.crudosCarpeta(id), a = this.crudosCarpeta(nid);
+      if (de !== a) {
+        const ls = await sb.storage.from('crudos').list(de, { limit: 1000 });
+        for (const o of (ls.data || [])) await sb.storage.from('crudos').move(de + '/' + o.name, a + '/' + o.name);
+      }
+    }
+    ok(await sb.from('cruces').update({ cliente: nuevo }).eq('cliente', viejo));
+    ok(await sb.from('compensaciones').update({ cliente: nuevo }).eq('cliente', viejo));
+    ok(await sb.from('clientes').update({ nombre: nuevo }).eq('nombre', viejo));
+    // Cartera, datos fiscales, sistema y ficha (locales y en config).
+    const s = this.state, mv = (o) => { const x = Object.assign({}, o || {}); if (viejo in x) { x[nuevo] = x[viejo]; delete x[viejo]; } return x; };
+    this.CARTERA = this.lsSet('myiva.cartera', this.CARTERA.map(([u, cs]) => [u, cs.map(c => (c === viejo ? nuevo : c))]));
+    const pend = this.lsSet('myiva.cartPend', (s.cartPend || []).map(c => (c === viejo ? nuevo : c)));
+    if (this._sync) Object.assign(this._sync, { cart: this.CARTERA, pend, mapa: this.cartMapa(this.CARTERA, pend) });
+    const cliSistema = mv(s.cliSistema), cliFicha = mv(s.cliFicha);
+    this.setState({ cartPend: pend, cartV: (s.cartV || 0) + 1, cliFiscal: this.lsSet('myiva.cliFiscal', mv(s.cliFiscal)), cliSistema: this.lsSet('myiva.cliSistema', cliSistema), cliFicha: this.lsSet('myiva.cliFicha', cliFicha), fichaCli: nuevo });
+    ok(await sb.from('config').upsert({ clave: 'clientes_sistema', valor: cliSistema, actualizado: new Date().toISOString() }));
+    ok(await sb.from('config').upsert({ clave: 'clientes_ficha', valor: cliFicha, actualizado: new Date().toISOString() }));
+    await this.refrescar();
+    this.compsBajar().catch(() => { });
+    return liqs.length;
+  }
+
+  async editarCliente() {
+    const s = this.state, viejo = s.ncEdit, nc = s.nc;
+    const rz = nc.rz.trim().replace(/\s+/g, ' ').toUpperCase(), cuit = nc.cuit.replace(/\D/g, '');
+    if (!rz) return this.setState({ toast: { kind: 'warn', t: 'Escribí la razón social', d: 'La razón social no puede quedar vacía.' } });
+    if (cuit && cuit.length !== 11) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
+    if (!/^\d{2}\/\d{2}$/.test(nc.ini.trim())) return this.setState({ toast: { kind: 'warn', t: 'Inicio de ejercicio inválido', d: 'Usá el formato DD/MM (por ejemplo 01/01).' } });
+    const renombra = rz !== viejo;
+    if (renombra) {
+      const existe = [].concat(...this.CARTERA.map(([, cs]) => cs), s.cartPend).find(c => c !== viejo && this.fold(c) === this.fold(rz));
+      if (existe) return this.setState({ toast: { kind: 'warn', t: 'Ya existe un cliente con ese nombre', d: existe + ' ya está cargado.' } });
+      if (!window.confirm('¿Cambiar el nombre de ' + viejo + ' a ' + rz + '?\n\nSe actualizan sus liquidaciones, cruces, compensaciones y DDJJ con el nombre nuevo.')) return;
+    }
+    const m = this.mailsBlasco(nc.mails);
+    this.setState({ ncGuardando: true });
+    try {
+      let n = 0;
+      if (renombra) n = await this.renombrarCliente(viejo, rz);
+      const cuitF = cuit ? this.cuitFmt(cuit) : '—';
+      const sb = this.sb();
+      if (sb && this._user) { const r = await sb.from('clientes').update({ cuit: cuit ? cuitF : null }).eq('nombre', rz); if (r.error) throw r.error; }
+      this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ cond: '—', per: '—' }, st.cliFiscal[rz], { cuit: cuitF }) })) }));
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: { ini: nc.ini.trim(), mails: m.ok } }));
+      if ((this.state.cliSistema || {})[rz] !== nc.sis) await this.guardarSistema(rz, nc.sis || 'Bejerman', true);
+      const u = Object.keys(s.asign).find(x => s.asign[x]) || null;
+      this.cartMover(rz, u);
+      const me = this.me();
+      this.setState(st => ({
+        drawer: false, ncEdit: null, ncGuardando: false, fichaCli: rz,
+        audExtra: [{ f: this.ahora(), u: me.short, a: renombra ? 'Cliente renombrado' : 'Ficha de cliente editada', c: rz, p: '—', r: renombra ? 'Antes: ' + viejo : 'Datos de la ficha', ip: '190.15.44.12' }].concat(st.audExtra),
+        toast: { kind: 'ok', t: 'Ficha guardada', d: (renombra ? viejo + ' ahora se llama ' + rz + (n ? ' (' + n + (n === 1 ? ' liquidación actualizada' : ' liquidaciones actualizadas') + ')' : '') + '. ' : '') + (m.fuera.length ? 'No se guardaron ' + m.fuera.join(', ') + ': por ahora sólo mails @blasco.com.ar.' : 'Datos actualizados.') }
+      }));
+    } catch (e) {
+      this.setState({ ncGuardando: false, toast: { kind: 'err', t: 'No se pudo guardar la ficha', d: String(e && e.message || e) + '. Volvé a intentar: lo que ya se cambió queda con el nombre nuevo.' } });
+    }
+  }
 
   async guardarSistema(rz, sis, silencioso) {
     const mapa = Object.assign({}, this.state.cliSistema || {}, { [rz]: sis });
@@ -5941,7 +6036,7 @@ class Component extends DCLogic {
     const go = {};
     Object.keys(this.CRUMB).forEach(k => { go[k] = this.nav(k); });
     const resSel = s.liqResVer && s.liqRes ? [s.liqRes.cli, s.liqRes.per] : (s.liqVer ? s.liqVer.split('|') : null);
-    const crumb = s.screen === 'liqResultado' && resSel ? ['Liquidador IVA', 'Resultado · ' + resSel[0] + ' ' + resSel[1]] : (this.CRUMB[s.screen] || ['MyIVA', '']);
+    const crumb = s.screen === 'liqResultado' && resSel ? ['Liquidador IVA', 'Resultado · ' + resSel[0] + ' ' + resSel[1]] : (s.screen === 'clienteFicha' && s.fichaCli ? ['Clientes', s.fichaCli] : (this.CRUMB[s.screen] || ['MyIVA', '']));
 
     const owner = {};
     this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
@@ -5949,7 +6044,8 @@ class Component extends DCLogic {
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
       const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
       return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'],
-        sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value) };
+        sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
+        abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
     });
 
     const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -6033,7 +6129,10 @@ class Component extends DCLogic {
       goPerfil: this.nav('perfil'),
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
-      openDrawer: () => this.setState({ drawer: true, asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' } }),
+      openDrawer: () => this.setState({ drawer: true, asign: {}, ncEdit: null, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' } }),
+      ncTitulo: s.ncEdit ? 'Editar ficha' : 'Nuevo cliente',
+      ncSub: s.ncEdit ? 'Cambiá los datos de ' + s.ncEdit + '. Si cambiás la razón social, se actualiza en todo el historial.' : 'Completá los datos para habilitar liquidaciones.',
+      ncBoton: s.ncGuardando ? 'Guardando...' : (s.ncEdit ? 'Guardar cambios' : 'Guardar cliente'),
       sistemasOpts: this.SISTEMAS.map(v => ({ v })),
       ivdAbierto: !!s.ivdVer, ivdUrl: s.ivdVer ? s.ivdVer.url : '', ivdNombre: s.ivdVer ? s.ivdVer.nombre : '', ivdSub: s.ivdVer ? s.ivdVer.sub : '',
       ivdPdf: !!(s.ivdVer && s.ivdVer.pdf), ivdImg: !!(s.ivdVer && !s.ivdVer.pdf),
@@ -6053,6 +6152,8 @@ class Component extends DCLogic {
       toastReporte: this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       confirmOk: () => this.setState({ confirm: false, toast: { kind: 'ok', t: 'Acción confirmada', d: 'El proceso quedó encolado y registrado en auditoría.' } }),
       saveCliente: () => {
+        if (s.ncGuardando) return;
+        if (s.ncEdit) return this.editarCliente();
         const nc = s.nc, rz = nc.rz.trim().replace(/\s+/g, ' ').toUpperCase(), cuit = nc.cuit.replace(/\D/g, '');
         const u = Object.keys(s.asign).find(n => s.asign[n]) || null;
         if (!rz) return this.setState({ toast: { kind: 'warn', t: 'Escribí la razón social', d: 'Completá la razón social del cliente.' } });
@@ -6063,6 +6164,7 @@ class Component extends DCLogic {
         this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond: '—', per: '—' } })) }));
         this.cartMover(rz, u);
         this.guardarSistema(rz, nc.sis || 'Bejerman', true);
+        this.guardarFicha(Object.assign({}, s.cliFicha, { [rz]: { ini: (nc.ini || '01/01').trim(), mails: this.mailsBlasco(nc.mails).ok } })).catch(e => this.db(Promise.resolve({ error: e }), 'Clientes'));
         const sb = this.sb();
         if (sb && this._user) this.db(sb.from('clientes').upsert([{ nombre: rz, usuario: u, cuit: cuit ? cuitF : null }], { onConflict: 'nombre' }), 'Clientes');
         this.setState({ drawer: false, asign: {}, toast: { kind: 'ok', t: 'Cliente guardado', d: u ? rz + ' quedó asignado a ' + u + '.' : rz + ' quedó en Pendientes de asignación.' } });
@@ -6119,47 +6221,57 @@ class Component extends DCLogic {
         bar: s.cliTab === k ? '#14395C' : 'transparent'
       })),
       cliTab,
-      kpisCliente: [
-        { label: 'Último saldo a pagar', value: '-1.738.389,40', color: '#B3261E' },
-        { label: 'Liquidaciones registradas', value: '8', color: '#1B2733' },
-        { label: 'Cruces del período', value: '3', color: '#1B2733' },
-        { label: 'Alertas abiertas', value: '1', color: '#B7791F' }
-      ],
-      datosFiscales: [
-        { k: 'CUIT', v: '30-71234567-8' },
-        { k: 'Condición frente al IVA', v: 'Responsable Inscripto' },
-        { k: 'Inicio de ejercicio', v: '01/01' },
-        { k: 'Mails de notificación', v: '2 destinatarios' }
-      ],
-      actividadCliente: [
-        { t: 'Liquidación 08/2026 completada por Administrador', when: 'hace 2 h' },
-        { t: 'Cruce Recibidos vs IVA Compras · 3 diferencias', when: 'hace 2 h' },
-        { t: 'Parámetro modificado: mail de notificación agregado', when: '01/09/2026' },
-        { t: 'Reporte Papel de trabajo exportado', when: '30/08/2026' },
-        { t: 'Liquidación 07/2026 completada por Julieta', when: '14/08/2026' }
-      ],
-      liqCliente: (s.liqSaved && s.liqCliN === 'CAZATUR SA' ? [
-        s.liqRes
-          ? { per: '08/2026', seq: s.liqSeqN, fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), saldo: this.ars(s.liqRes.s2), sc: s.liqRes.s2 < 0 ? '#B3261E' : '#2E7D5B', est: 'Completado' }
-          : { per: '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.632.105,25', sc: '#B3261E', est: 'Completado' }
-      ] : []).concat([
-        { per: '08/2026', seq: 0, fecha: '04/09/2026', df: '4.182.905,60', cf: '2.444.516,20', saldo: '-1.738.389,40', sc: '#B3261E', est: 'Completado' },
-        { per: '07/2026', seq: 2, fecha: '12/08/2026', df: '3.908.744,15', cf: '3.858.148,75', saldo: '42.180,00', sc: '#2E7D5B', est: 'Completado' },
-        { per: '07/2026', seq: 1, fecha: '08/08/2026', df: '3.902.110,40', cf: '3.858.148,75', saldo: '48.813,75', sc: '#2E7D5B', est: 'Completado con diferencias' },
-        { per: '07/2026', seq: 0, fecha: '05/08/2026', df: '3.895.004,00', cf: '2.598.212,35', saldo: '-1.296.791,65', sc: '#B3261E', est: 'Completado con diferencias' },
-        { per: '06/2026', seq: 0, fecha: '15/07/2026', df: '3.104.288,00', cf: '3.402.115,45', saldo: '297.827,45', sc: '#2E7D5B', est: 'Completado' }
-      ].filter(r => !(s.liqSaved && s.liqCliN === 'CAZATUR SA' && r.per === '08/2026' && r.seq === s.liqSeqN))).filter(r => !s.ddjjBorradas['CAZATUR SA|' + r.per + '|' + r.seq + '|' + r.fecha]).map(r => Object.assign({}, r, this.seqChip(r.seq), { st: E[r.est] })),
-      crucesCliente: [
-        { tipo: 'Mis Comprobantes Recibidos vs IVA Compras', per: '08/2026', fecha: '04/09/2026', regs: '1.284', dif: '3', est: 'Completado con diferencias' },
-        { tipo: 'Mis Comprobantes Emitidos vs IVA Ventas', per: '08/2026', fecha: '04/09/2026', regs: '2.117', dif: '0', est: 'Completado' },
-        { tipo: 'Mis Retenciones vs IVA Ventas / Compras', per: '08/2026', fecha: '04/09/2026', regs: '96', dif: '2', est: 'Completado con diferencias' }
-      ].map(r => Object.assign({}, r, { st: E[r.est] })),
       usuariosChips: usrNombres.map(n => Object.assign({ nombre: n, toggle: () => this.setState(st => ({ asign: st.asign[n] ? {} : { [n]: 1 } })) }, chip(s.asign[n]))),
       clientesChips: clientes.map(c => Object.assign({ rz: c.rz, toggle: this.flip('cliSel', c.rz) }, chip(s.cliSel[c.rz]))),
       chipsCount: selCount + ' de ' + clientes.length + ' clientes seleccionados',
-      asignados: [
-        { ini: 'JU', nombre: owner['CAZATUR SA'], rol: 'Usuario' }
-      ]
+      ...(() => {
+        // Ficha del cliente abierto (antes era siempre CAZATUR SA, de ejemplo).
+        const rz = s.fichaCli && owner[s.fichaCli] !== undefined ? s.fichaCli : (s.fichaCli || (clientes[0] || {}).rz || '');
+        const f = s.cliFiscal[rz] || fiscal[rz] || {}, fi = (s.cliFicha || {})[rz] || {}, sis = (s.cliSistema || {})[rz] || 'Bejerman';
+        const idDe = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha, pk = (per) => per.slice(3) + per.slice(0, 2);
+        const todas = this.baseRows().filter(r => !s.ddjjBorradas[idDe(r)]);
+        const liqs = todas.filter(r => r.cliente === rz && r.df !== '—').sort((x, y) => pk(y.per).localeCompare(pk(x.per)) || y.seq - x.seq);
+        const runs = (s.cruRuns || []).filter(r => r.cliente === rz);
+        const sd = (r) => this.saldosDj(todas, r.cliente, r.per, r.seq);
+        const ult = liqs[0], ultSd = ult ? sd(ult) : null, mails = fi.mails || [];
+        const fechaK = (t) => { const m = String(t || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? m[3] + m[2] + m[1] : ''; };
+        const act = liqs.map(r => ({ t: 'Liquidación ' + r.per + ' · ' + this.seqTxt(r.seq) + ' procesada por ' + r.user, when: r.fecha, k: fechaK(r.fecha) }))
+          .concat(runs.map(r => ({ t: 'Cruces ' + r.per + ' ejecutados por ' + r.user, when: r.fecha, k: fechaK(r.fecha) })))
+          .sort((x, y) => y.k.localeCompare(x.k)).slice(0, 5);
+        return {
+          fichaRz: rz,
+          fichaSub: 'CUIT ' + (f.cuit || '—') + ' · Sistema ' + sis + ' · Inicio de ejercicio ' + (fi.ini || '01/01') + ' · Último período liquidado ' + (ult ? ult.per : '—'),
+          fichaPuedeEditar: s.role === 'admin' && !!rz,
+          fichaEditar: () => {
+            const u = owner[rz];
+            this.setState({ drawer: true, ncEdit: rz, asign: u ? { [u]: 1 } : {}, nc: { rz, cuit: f.cuit && f.cuit !== '—' ? f.cuit : '', ini: fi.ini || '01/01', mails: mails.join(', '), sis } });
+          },
+          fichaMails: mails.map(m => ({ m })), fichaSinMails: !mails.length,
+          kpisCliente: [
+            { label: 'Último saldo (2° párrafo)', value: ultSd ? this.ars(ultSd.s2) : '-', color: ultSd && ultSd.s2 < 0 ? '#B3261E' : '#2E7D5B' },
+            { label: 'Liquidaciones registradas', value: String(liqs.length), color: '#1B2733' },
+            { label: 'Cruces ejecutados', value: String(runs.length), color: '#1B2733' },
+            { label: 'Sistema contable', value: sis, color: '#1B2733' }
+          ],
+          datosFiscales: [
+            { k: 'CUIT', v: f.cuit || '—' },
+            { k: 'Sistema contable', v: sis },
+            { k: 'Inicio de ejercicio', v: fi.ini || '01/01' },
+            { k: 'Mails de notificación', v: mails.length ? mails.length + (mails.length === 1 ? ' destinatario' : ' destinatarios') : 'Sin mails' },
+            { k: 'Usuario asignado', v: owner[rz] || 'Pendiente de asignación' }
+          ],
+          actividadCliente: act.length ? act : [{ t: 'Todavía no hay liquidaciones ni cruces de este cliente.', when: '' }],
+          liqCliente: liqs.map(r => {
+            const x = sd(r), le = this.liqEstado(r) || 'Borrador', id = idDe(r);
+            return Object.assign({ per: r.per, fecha: r.fecha, df: r.df, cf: r.cf, saldo: x ? this.ars(x.s2) : '-', sc: x && x.s2 < 0 ? '#B3261E' : '#2E7D5B', st: E[le],
+              ver: () => { this.nav('liqResultado')(); this.setState({ liqVer: id }); } }, this.seqChip(r.seq));
+          }),
+          crucesCliente: [].concat(...runs.map(r => (r.cruces || []).map(c => ({
+            tipo: c.cruce || c.tipo || c.t || 'Cruce', per: r.per, fecha: r.fecha, regs: c.regs || '-', dif: c.dif || '0', st: E[c.est] || E['Completado']
+          })))),
+          asignados: owner[rz] ? [{ ini: owner[rz].slice(0, 2).toUpperCase(), nombre: owner[rz], rol: 'Usuario' }] : []
+        };
+      })(),
     });
   }
 
