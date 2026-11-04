@@ -196,7 +196,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 <div onClick="{{ toggleNotif }}" style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5A6B7B" stroke-width="1.8" stroke-linecap="round"><path d="M18 15V10a6 6 0 10-12 0v5l-2 3h16zM10 21h4"></path></svg>
-<span style="position:absolute;top:4px;right:5px;min-width:15px;height:15px;padding:0 3px;background:#B3261E;color:#fff;border-radius:8px;font:600 9.5px/15px 'Open Sans';text-align:center">3</span>
+<sc-if value="{{ notifHay }}"><span style="position:absolute;top:4px;right:5px;min-width:15px;height:15px;padding:0 3px;background:#B3261E;color:#fff;border-radius:8px;font:600 9.5px/15px 'Open Sans';text-align:center">{{ notifN }}</span></sc-if>
 </div>
 <div onClick="{{ goPerfil }}" style="display:flex;align-items:center;gap:9px;padding:5px 8px 5px 5px;border-radius:6px;cursor:pointer" style-hover="background:#F5F7FA">
 <div style="width:29px;height:29px;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">{{ meIni }}</div>
@@ -268,6 +268,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </td>
 </tr>
 </sc-for>
+<sc-if value="{{ sinProcesos }}"><tr><td colspan="8" style="padding:18px 14px;font:400 13px 'Open Sans';color:#9AA9B7;text-align:center">Todavía no hay liquidaciones ni cruces procesados.</td></tr></sc-if>
 </tbody>
 </table>
 </div>
@@ -285,8 +286,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 </sc-for>
+<sc-if value="{{ sinAlertas }}"><div style="padding:16px;font:400 13px 'Open Sans';color:#9AA9B7">Sin alertas: los últimos cruces no dejaron diferencias.</div></sc-if>
 </div>
-<div style="padding:11px 16px"><a href="#1a" style="font:400 13px 'Open Sans'">Ver todas las alertas</a></div>
+<div style="padding:11px 16px"><span onClick="{{ go.crucesHistorial }}" style="font:400 13px 'Open Sans';color:#2F80B7;cursor:pointer">Ver el historial de cruces</span></div>
 </div>
 </div>
 </sc-if>
@@ -1425,7 +1427,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ dashFull }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<div style="font:600 14.5px 'Open Sans'">Avance del período 08/2026</div>
+<div style="font:600 14.5px 'Open Sans'">Avance del período {{ dpPerTxt }}</div>
 <span style="padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#FBF3E3;color:#8F5F14;border:1px solid #F0E0BC">Prueba · a confirmar con Daniela / Sergio</span>
 </div>
 <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:12px">
@@ -2680,7 +2682,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: '08', liqAnio: '2026', perOpen: false, perVista: null, perAnioTxt: null,
+    cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
@@ -3034,6 +3036,20 @@ class Component extends DCLogic {
   isoDe(f) {
     const m = String(f || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
     return (m ? new Date(+m[3], +m[2] - 1, +m[1], m[4] ? +m[4] : 12, m[5] ? +m[5] : 0) : new Date()).toISOString();
+  }
+
+  // Período que se está liquidando: el mes anterior al actual (en noviembre se presenta octubre).
+  perCurso() {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 1);
+    return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  }
+
+  // "dd/mm/aaaa hh:mm" → número ordenable.
+  fechaOrd(t) {
+    const m = String(t || '').match(/(\d{2})\/(\d{2})\/(\d{4})(?:\D+(\d{2}):(\d{2}))?/);
+    return m ? Number(m[3] + m[2] + m[1] + (m[4] || '00') + (m[5] || '00')) : 0;
   }
 
   fechaDe(iso, hora = true) {
@@ -6184,7 +6200,7 @@ class Component extends DCLogic {
     const pers = [...new Set(clientes.map(c => c.per))].sort((a, b) => (a === '—') - (b === '—') || b.slice(3).localeCompare(a.slice(3)) || b.localeCompare(a));
 
     const isAdmin = s.role === 'admin', me = this.me();
-    const procesos = [
+    const procesosDemo = [
       { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '08/2026', fecha: '04/09/2026 14:22', user: 'Administrador', est: 'Completado' },
       { cliente: 'DACKET SA', proc: 'Cruces de liquidación', per: '08/2026', fecha: '04/09/2026 11:05', user: 'Julieta', est: 'Completado con diferencias' },
       { cliente: 'DASYC SRL', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', est: 'Completado' },
@@ -6193,9 +6209,32 @@ class Component extends DCLogic {
       { cliente: 'RODIALE SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '02/09/2026 10:58', user: 'Julieta', est: 'En cola' },
       { cliente: 'DACKET SA', proc: 'Cruce Emitidos vs IVA Ventas', per: '08/2026', fecha: '01/09/2026 16:12', user: 'Julieta', est: 'Completado' },
       { cliente: 'CAZATUR SA', proc: 'Liquidación IVA', per: '07/2026', fecha: '08/08/2026 10:14', user: 'Julieta', est: 'Completado con diferencias' }
-    ].concat(isAdmin ? [] : this.demoUsr().proc).filter(r => isAdmin || r.user === me.short)
-      .map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav(r.proc.indexOf('Cruce') === 0 ? 'cruceResultado' : 'liqResultado') }));
+    ].concat(isAdmin ? [] : this.demoUsr().proc);
     const misClientes = clientes.filter(c => c.users === me.short).map(c => c.rz);
+    const real = !!this._user, PC = this.perCurso();
+    const esMio = (cli, u) => isAdmin || misClientes.indexOf(cli) >= 0 || u === me.short;
+    const numDif = (c) => { const v = Number(String(c.dif).replace(/\./g, '')); return Number.isFinite(v) ? v : 0; };
+    // Liquidaciones y cruces reales (sin las borradas), del más nuevo al más viejo.
+    const liqsR = real ? this.baseRows().filter(r => !(s.ddjjBorradas || {})[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha] && esMio(r.cliente, r.user)) : [];
+    const runsR = real ? (s.cruRuns || []).filter(r => esMio(r.cliente, r.user)) : [];
+    const ultRun = {};
+    runsR.forEach(r => { const k = r.cliente + '|' + r.per; if (!ultRun[k] || this.fechaOrd(r.fecha) > this.fechaOrd(ultRun[k].fecha)) ultRun[k] = r; });
+    const procReal = liqsR.map(r => ({ cliente: r.cliente, proc: 'Liquidación IVA', per: r.per, fecha: r.fechaHora || r.fecha, user: r.user, est: (r.eg || []).some(g => (g.errs || []).length) ? 'Completado con diferencias' : 'Completado', dest: 'liqHistorial' }))
+      .concat(runsR.map(r => ({ cliente: r.cliente, proc: 'Cruces de liquidación', per: r.per, fecha: r.fecha, user: r.user, est: (r.cruces || []).some(c => c.est === 'Con errores') ? 'Con errores' : ((r.cruces || []).some(c => numDif(c) > 0) ? 'Completado con diferencias' : 'Completado'), dest: 'crucesHistorial' })))
+      .sort((a, b) => this.fechaOrd(b.fecha) - this.fechaOrd(a.fecha)).slice(0, 8);
+    const procesos = (real ? procReal : procesosDemo.filter(r => isAdmin || r.user === me.short))
+      .map(r => Object.assign({}, r, { st: E[r.est], ver: this.nav(r.dest || (r.proc.indexOf('Cruce') === 0 ? 'cruceResultado' : 'liqResultado')) }));
+    // Alertas: el último cruce de cada cliente y período que dejó diferencias (la Base APOC, en rojo).
+    const alertasReal = Object.values(ultRun).sort((a, b) => this.fechaOrd(b.fecha) - this.fechaOrd(a.fecha)).map(r => {
+      const cs = (r.cruces || []).filter(c => numDif(c) > 0 || c.est === 'Con errores');
+      if (!cs.length) return null;
+      const apoc = cs.find(c => /APOC/i.test((c.tipo || '') + ' ' + (c.t || '')));
+      const n = cs.reduce((a, c) => a + numDif(c), 0);
+      return {
+        cli: r.cliente, t: apoc ? 'CUITs observados en la Base APOC' : (cs.length === 1 ? 'Diferencias en ' + (cs[0].t || cs[0].tipo || 'un cruce') : cs.length + ' cruces con diferencias'),
+        d: r.cliente + ' · ' + r.per + (n ? ' · ' + n + (n === 1 ? ' registro con diferencia' : ' registros con diferencias') : ''), when: r.fecha, color: apoc ? '#B3261E' : '#B7791F'
+      };
+    }).filter(Boolean).slice(0, 6);
     const cliOpts = (isAdmin ? clientes : clientes.filter(c => c.users === me.short)).map(c => ({ rz: c.rz }));
     const usrNombres = this.CARTERA.map(([u]) => u);
     const alertasTodas = [
@@ -6204,6 +6243,9 @@ class Component extends DCLogic {
       { cli: 'NOVALUX S.A.', t: 'Liquidación con errores de archivo', d: 'NOVALUX S.A. · 08/2026 · formato de IVA Ventas inválido', when: 'ayer 09:12', color: '#B3261E' },
       { cli: 'FIDEICOMISO PAMPA PILAR', t: 'Retenciones sin respaldo en el subdiario', d: 'FIDEICOMISO PAMPA PILAR · 07/2026 · 2 registros', when: '02/09/2026', color: '#2F80B7' }
     ].concat(this.demoUsr().alertas);
+    const alertasVis = real ? alertasReal : alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0);
+    const liqPC = new Set(liqsR.filter(r => r.per === PC).map(r => r.cliente)).size;
+    const cruDifPC = Object.values(ultRun).filter(r => r.per === PC && (r.cruces || []).some(c => numDif(c) > 0 || c.est === 'Con errores')).length;
 
     const usuarios = [
       { nombre: 'Administrador', mail: 'admin@blasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
@@ -6301,7 +6343,13 @@ class Component extends DCLogic {
       toastBd: t ? toastMap[t.kind].bd : '#E3E8EE', toastAccent: t ? toastMap[t.kind].ac : '#2F80B7',
       closeToast: () => this.setState({ toast: null }),
 
-      kpisInicio: isAdmin ? [
+      kpisInicio: real ? [
+        { label: (isAdmin ? '' : 'Mis ') + 'Liquidaciones del período en curso', value: String(liqPC), hint: 'de ' + (isAdmin ? clientes.length + ' clientes' : misClientes.length + ' clientes asignados'), color: '#1B2733' },
+        { label: (isAdmin ? '' : 'Mis ') + 'Cruces con diferencias del período', value: String(cruDifPC), hint: 'requieren revisión', color: '#B7791F' },
+        isAdmin ? { label: 'Clientes activos', value: String(clientes.filter(c => c.est === 'Activo').length), hint: 'de ' + clientes.length + ' en el estudio', color: '#1B2733' }
+          : { label: 'Clientes asignados', value: String(misClientes.length), hint: misClientes.slice(0, 2).join(' · ') + (misClientes.length > 2 ? ' y ' + (misClientes.length - 2) + ' más' : ''), color: '#1B2733' },
+        { label: 'Alertas abiertas', value: String(alertasVis.length), hint: 'de los últimos cruces', color: '#B3261E' }
+      ] : isAdmin ? [
         { label: 'Liquidaciones del período en curso', value: '18', hint: 'de ' + clientes.length + ' clientes', color: '#1B2733' },
         { label: 'Cruces con diferencias pendientes', value: '6', hint: 'requieren revisión', color: '#B7791F' },
         { label: 'Clientes activos', value: String(clientes.length), hint: 'de ' + clientes.length + ' en el estudio', color: '#1B2733' },
@@ -6329,10 +6377,11 @@ class Component extends DCLogic {
       cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
       usrResumen: usuarios.length + ' usuarios · ' + usrNombres.length + ' con clientes asignados',
       meMail: me.mail,
-      inicioScope: 'Período en curso 08/2026 · ' + (((s.venc || {}).pers || {})['08/2026'] ? 'vencimiento de presentación del ' + s.venc.pers['08/2026'][0] + ' al ' + s.venc.pers['08/2026'][4] + ' según terminación de CUIT' : 'sin agenda de vencimientos cargada') + (isAdmin ? '' : ' · Mostrando sólo tus operaciones'),
+      inicioScope: 'Período en curso ' + PC + ' · ' + (((s.venc || {}).pers || {})[PC] ? 'vencimiento de presentación del ' + s.venc.pers[PC][0] + ' al ' + s.venc.pers[PC][4] + ' según terminación de CUIT' : 'sin agenda de vencimientos cargada') + (isAdmin ? '' : ' · Mostrando sólo tus operaciones'),
       procesos, clientes, usuarios,
-      alertas: alertasTodas.filter(a => isAdmin || misClientes.indexOf(a.cli) >= 0),
-      notifs: [
+      alertas: alertasVis, sinAlertas: !alertasVis.length, sinProcesos: !procesos.length,
+      notifN: String(real ? alertasVis.length : 3), notifHay: real ? alertasVis.length > 0 : true,
+      notifs: real ? procesos.slice(0, 5).map((p, i) => ({ t: p.proc + ' · ' + p.st.label, d: p.cliente + ' · ' + p.per + ' · ' + p.user, when: p.fecha, bg: i < 2 ? '#F4F9FD' : '#FFFFFF', dot: p.est === 'Con errores' ? '#B3261E' : (p.est === 'Completado' ? '#2E7D5B' : '#B7791F') })) : [
         { t: 'Cruces finalizados con diferencias', d: 'DACKET SA · 08/2026', when: 'hace 12 min', bg: '#F4F9FD', dot: '#B7791F' },
         { t: 'Liquidación completada', d: 'CAZATUR SA · 08/2026 · saldo a pagar -1.738.389,40', when: 'hace 2 h', bg: '#F4F9FD', dot: '#2E7D5B' },
         { t: 'Error al procesar IVA Ventas', d: 'NOVALUX S.A. · 08/2026', when: 'ayer', bg: '#F4F9FD', dot: '#B3261E' },
@@ -6692,8 +6741,9 @@ class Component extends DCLogic {
     const histTotal = histVis.length;
 
     const dpCart = this.CARTERA.filter(([u]) => histAdmin || u === me.short);
+    const PCd = this.perCurso();
     const dpCli = [].concat(...dpCart.map(([u, cs]) => cs.map(cliente => {
-      const rs = histTodas.filter(r => r.cliente === cliente && r.per === '08/2026');
+      const rs = histTodas.filter(r => r.cliente === cliente && r.per === PCd);
       const liq = rs.filter(r => r.df !== '—' && r.est !== 'Pendiente de liquidar').sort((a, b) => b.seq - a.seq)[0];
       const pend = rs.find(r => r.est === 'Pendiente de liquidar');
       const r = liq || pend;
@@ -7105,7 +7155,7 @@ class Component extends DCLogic {
         { cuit: '30-69551122-4', rz: 'SERVICIOS PILAR SRL', q: '1', i: '110.850,35' }
       ],
       histFilas: histVis,
-      dpKpis, dpUsr, dpCli, dpAdmin: histAdmin,
+      dpKpis, dpUsr, dpCli, dpAdmin: histAdmin, dpPerTxt: PCd,
       dashEmpty: s.dashEmpty, dashFull: !s.dashEmpty,
       dashScope: (this._dash.cli || 'Sin cliente') + (this._dash.desde ? ' · ' + this._dash.desde + ' – ' + this._dash.hasta : '') + ' · ' + (serie.length === 1 ? '1 período liquidado' : serie.length + ' períodos liquidados') + (s.role === 'admin' ? '' : ' · Sólo tus clientes asignados'),
       dashChartsOn: serie.length > 0, dashChartsOff: !serie.length,
@@ -7270,7 +7320,7 @@ class Component extends DCLogic {
         { cliente: 'DASYC SRL', tipo: 'Emitidos vs IVA Ventas', per: '08/2026', fecha: '03/09/2026 17:40', user: 'Administrador', regs: '844', dif: '0', est: 'Completado' },
         { cliente: 'NOVALUX S.A.', tipo: 'Recibidos vs IVA Compras', per: '08/2026', fecha: '03/09/2026 09:12', user: 'Julieta', regs: '—', dif: '—', est: 'Con errores' },
         { cliente: 'FIDEICOMISO PAMPA PILAR', tipo: 'Retenciones vs IVA Ventas / Compras', per: '07/2026', fecha: '02/09/2026 16:31', user: 'Julieta', regs: '112', dif: '2', est: 'Procesando' }
-      ].concat(this.demoUsr().cru).map(r => Object.assign({}, r, {
+      ].concat(this.demoUsr().cru).filter(() => !this._user).map(r => Object.assign({}, r, {
         errs: r.est === 'Con errores'
           ? this.errFile('NOVALUX_MIS_COMPROBANTES_RECIBIDOS_082026.docx', 'Mis Comprobantes Recibidos')
           : (r.est === 'Completado con diferencias' ? this.errsTipo(r.tipo) : [])
@@ -7497,7 +7547,7 @@ class Component extends DCLogic {
         { f: '03/09/2026 09:12', u: 'Julieta', a: 'Liquidación ejecutada', c: 'NOVALUX S.A.', p: '08/2026', r: 'Con errores', ip: '181.44.20.7' },
         { f: '02/09/2026 16:40', u: 'Julieta', a: 'Reporte exportado', c: 'Varios (3)', p: '01/2026–08/2026', r: 'Excel generado', ip: '181.44.20.7' },
         { f: '28/08/2026 10:11', u: 'Administrador', a: 'Cliente creado', c: 'FIDEICOMISO PAMPA PILAR', p: '—', r: 'Alta confirmada', ip: '190.15.44.12' }
-      ]).map(r => Object.assign({}, r, { st: this.EST[r.r] || null, plain: !this.EST[r.r] }))
+      ].filter(() => !this._user)).map(r => Object.assign({}, r, { st: this.EST[r.r] || null, plain: !this.EST[r.r] }))
     };
   }
 }
