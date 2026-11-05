@@ -4380,15 +4380,16 @@ class Component extends DCLogic {
     let tf = this.fold(t).toUpperCase().replace(/\s+/g, ' ').trim();
     const ml = tf.match(/^(.*\S)\s+([ABCMET])$/);
     if (ml && !l && ml[1].length > 2) { tf = ml[1]; l = ml[2]; t = tf; }
-    if (/^NOTA\s*DE\s*CRED|^TICKET-NOTA\s*(DE\s*)?CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR' || t === 'NC#') t = 'NC';
-    else if (/^NOTA\s*DE\s*DEB|^TICKET-NOTA\s*(DE\s*)?DEB/.test(tf) || /^N\s*[\/.]\s*D\.?$/.test(t) || t === 'ND#') t = 'ND';
+    if (/^NOTA\s*DE\s*CRED|^TICKET-NOTA\s*(DE\s*)?CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR' || t === 'NC#' || t === 'NCE') t = 'NC';
+    else if (/^NOTA\s*DE\s*DEB|^TICKET-NOTA\s*(DE\s*)?DEB/.test(tf) || /^N\s*[\/.]\s*D\.?$/.test(t) || t === 'ND#' || t === 'NDE') t = 'ND';
     else if (/^TICKET(-FACTURA)?$/.test(tf)) t = 'TK';
-    else if (/^FACTURA$|^FAC$/.test(tf)) t = 'FC';
-    else if (/^LIQUIDO PRODUCTO/.test(tf)) t = 'LQ';
+    else if (/^FACTURA$|^FAC$|^FCE$/.test(tf) || t === 'FCE' || t === 'FAC') t = 'FC';
+    else if (/^LIQUIDO PRODUCTO|^LIQUIDACION|^LIQ$/.test(tf) || t === 'LIQ') t = t === 'LIQ' || /^LIQUIDACION/.test(tf) ? 'FC' : 'LQ';
+    else if (/^RECIBO|^REC$/.test(tf) || t === 'REC') t = 'FC';
     const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
     if (m && !l) { t = m[1]; l = m[2]; }
-    // FCC / NDC / NCC: comprobantes de crédito electrónica MiPyME en Bejerman (con letra aparte).
-    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC', FCC: 'FC', NDC: 'ND', NCC: 'NC' }[t] || t;
+    // FCC / NDC / NCC (Bejerman) y FCE / NCE / NDE (Catedral MiPyME / exterior): se normalizan al TC de Bejerman.
+    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC', FCC: 'FC', NDC: 'ND', NCC: 'NC', FCE: 'FC', NCE: 'NC', NDE: 'ND', FAC: 'FC', NCR: 'NC', REC: 'FC', LIQ: 'FC' }[t] || t;
     if (!l && ['FC', 'NC', 'ND'].includes(t)) l = 'A';
     return { tc: t, letra: l };
   }
@@ -4805,10 +4806,10 @@ class Component extends DCLogic {
   // Reconoce las columnas por sus nombres habituales y arma el subdiario en el formato de Bejerman, así el resto de la app
   // (liquidación y cruces) no cambia. Junta en un comprobante las filas que vienen separadas por alícuota (Tango).
   SUB_SIN = {
-    fecha: ['fecha', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
-    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'tipodoc', 'comprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
+    fecha: ['fecha', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacontable', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
+    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
     letra: ['letra', 'let', 'letracomprobante'],
-    pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'pventa'],
+    pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'suc', 'pventa'],
     nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'referencia'],
     cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil'],
     nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente'],
