@@ -263,7 +263,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;text-align:right">
 <div style="display:inline-flex;gap:8px">
 <span onClick="{{ r.ver }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Ver</span>
-<span onClick="{{ toastXls }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Excel</span>
 </div>
 </td>
 </tr>
@@ -1947,7 +1946,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }} · Los errores de cada cruce se revisan desde la columna Errores.</div>
 </div>
 <div style="display:flex;gap:9px">
-<button onClick="{{ toastXls }}" title="Exporta a Excel los cruces que se ven en la tabla" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Exportar a Excel</button>
+<button onClick="{{ cruExport }}" title="Exporta a Excel los cruces seleccionados (o todos los de la tabla si no hay ninguno seleccionado)" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">{{ cruExportLabel }}</button>
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
@@ -1965,6 +1964,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="overflow-x:auto">
 <table class="tabla-compacta" style="width:100%;border-collapse:collapse;min-width:820px">
 <thead><tr>
+<th style="width:34px;padding:10px 6px 10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ cruAllSel }}" onChange="{{ cruToggleAll }}" title="Seleccionar todos los cruces de la tabla" style="width:15px;height:15px;cursor:pointer"></th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cliente</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Tipo de cruce</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
@@ -1976,10 +1976,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ cruVacio }}">
-<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ cruVacioTxt }} <sc-if value="{{ cruFActivo }}"><span onClick="{{ cruFLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todos</span></sc-if></td></tr>
+<tr><td colspan="9" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">{{ cruVacioTxt }} <sc-if value="{{ cruFActivo }}"><span onClick="{{ cruFLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Ver todos</span></sc-if></td></tr>
 </sc-if>
 <sc-for list="{{ cruHist }}" as="r" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
+<td style="padding:9px 6px 9px 14px;border-bottom:1px solid #E3E8EE"><input type="checkbox" checked="{{ r.sel }}" onChange="{{ r.toggleSel }}" title="Seleccionar este cruce" style="width:15px;height:15px;cursor:pointer"></td>
 <td style="font:600 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ r.cliente }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.tipo }}</td>
 <td style="font:400 13px 'Open Sans';padding:9px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
@@ -3411,7 +3412,10 @@ class Component extends DCLogic {
 
   NOVALUX_COLS = [
     ['B', 'Venta Neta 21%'], ['C', 'Venta Neta 10.5%'], ['D', 'Venta Neta 27%'], ['E', 'Total Ventas Netas Gravadas'],
+    // Ventas abiertas por tipo de factura (A / B, y T sólo si el cliente las tiene, ej. Cazatur): neto y débito de FC / ND.
+    ['VNA', 'Ventas Netas Fact. A'], ['VNB', 'Ventas Netas Fact. B'], ['VNT', 'Ventas Netas Fact. T'],
     ['F', 'Débito Ventas 21%'], ['G', 'Débito Ventas 10.5%'], ['H', 'Débito Ventas 27%'], ['I', 'Debito T. Gral.'],
+    ['VDA', 'Débito Fact. A'], ['VDB', 'Débito Fact. B'], ['VDT', 'Débito Fact. T'],
     ['J', 'V - Exenta'], ['K', 'V - No gravada'], ['L', 'V - No alcanzada'], ['M', 'V - Exportac.'], ['N', 'V - Impuestos Internos'],
     ['O', 'V - Percep. IIBB'], ['P', 'V - Percep. IVA'], ['Q', 'V - Otras percep.'], ['R', 'V - Regímenes especiales'],
     ['S', 'Subtotal V - Otros NG/NA/Exento'], ['T', 'Neto NC Compras'], ['U', 'Débito NC Compras'], ['V', 'Compras No Gravadas'],
@@ -3435,8 +3439,11 @@ class Component extends DCLogic {
   novaluxXlsx(cliente, rows, extras = []) {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
-    // Columna real de cada clave de NOVALUX_COLS: van seguidas desde la C (A = período, B = secuencia).
-    const pos = Object.fromEntries(this.NOVALUX_COLS.map(([o], i) => [o, i]));
+    // Las columnas de Fact. T sólo van si alguna liquidación tiene ventas clase T (hoy, Cazatur).
+    const conT = rows.some(d => { const L = d.n && d.n.ali && d.n.ali.det && d.n.ali.det.vL; return L && L.T && (L.T.neto || L.T.iva); });
+    const COLS = this.NOVALUX_COLS.filter(([o]) => conT || (o !== 'VNT' && o !== 'VDT'));
+    // Columna real de cada clave de COLS: van seguidas desde la C (A = período, B = secuencia).
+    const pos = Object.fromEntries(COLS.map(([o], i) => [o, i]));
     const C = (orig) => this.colLet(pos[orig] + 3);
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const pk = (r) => r.per.slice(3) + r.per.slice(0, 2) + String(r.seq).padStart(2, '0');
@@ -3452,13 +3459,14 @@ class Component extends DCLogic {
     const lastCol = C('AZ'), first = 3, last = first + data.length - 1, tot = last + 1;
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
-      .concat(this.NOVALUX_COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
+      .concat(COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
     // Fila "Saldo anterior": los saldos del período anterior al primero exportado, recalculados en cadena desde la DJ vigente
     // (con sus compensaciones); si ese período no está en la app, los saldos que se cargaron a mano en el cruce 0.
     const man0 = data[0] && data[0].n && data[0].n.a1 != null ? data[0].n : null;
     const vivas = this.baseRows().filter(r => !(this.state.ddjjBorradas || {})[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
     const prev0 = data[0] ? this.saldosDj(vivas, data[0].cliente || cliente, this.perAnt(data[0].per)) : null;
-    const ant = prev0 ? { s1: prev0.s1, s2: prev0.s2, comp: prev0.comp || 0 } : (man0 ? { s1: man0.a1, s2: man0.a2, comp: 0 } : null);
+    // Si el usuario cargó a mano los saldos a favor anteriores (cruce 0), mandan esos; si no, los de la DJ anterior de la app.
+    const ant = man0 ? { s1: man0.a1, s2: man0.a2, comp: (prev0 && prev0.comp) || 0 } : (prev0 ? { s1: prev0.s1, s2: prev0.s2, comp: prev0.comp || 0 } : null);
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
@@ -3498,6 +3506,11 @@ class Component extends DCLogic {
           AE: z(det.vNc, 'n21'), AF: z(det.vNc, 'n105'), AG: z(det.vNc, 'n27'),
           AH: z(det.vNc, 'i21'), AI: z(det.vNc, 'i105'), AJ: z(det.vNc, 'i27')
         });
+        if (det.vL) {
+          const L = (l, k) => r2((det.vL[l] && det.vL[l][k]) || 0);
+          Object.assign(v, { VNA: L('A', 'neto'), VNB: L('B', 'neto'), VDA: L('A', 'iva'), VDB: L('B', 'iva') });
+          if (conT) Object.assign(v, { VNT: L('T', 'neto'), VDT: L('T', 'iva') });
+        }
       }
       // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
       // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
@@ -3520,7 +3533,7 @@ class Component extends DCLogic {
       };
       const SALDO = { AW: 1, AX: 1, AY: 1 };
       const cs = [cell('A' + r, ST.date, { v: serial(d.per) }), cell('B' + r, ST.seq, { v: d.seq })];
-      this.NOVALUX_COLS.forEach(([o]) => {
+      COLS.forEach(([o]) => {
         const ref = C(o) + r;
         if (f[o]) cs.push(cell(ref, o === 'AO' ? ST.pct : (SALDO[o] ? ST.saldo : ST.money), { f: f[o] }));
         else if (v[o] !== undefined) cs.push(cell(ref, ST.money, { v: v[o] }));
@@ -3530,7 +3543,7 @@ class Component extends DCLogic {
     });
     const tc = [cell('A' + tot, ST.totLabel, { t: 'Total año fiscal' }), cell('B' + tot, ST.totEmpty)];
     const tRatio = `IFERROR((${C('J')}${tot}+${C('K')}${tot})/(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot}),0)`;
-    this.NOVALUX_COLS.forEach(([o]) => {
+    COLS.forEach(([o]) => {
       const L = C(o), ref = L + tot, n = pos[o];
       if (o === 'AO') tc.push(cell(ref, ST.totPct, { f: `1-${tRatio}` }));
       else if (o === 'AW' || o === 'AX') tc.push(cell(ref, ST.totMoney, { f: `${L}${last}` }));
@@ -3547,13 +3560,17 @@ class Component extends DCLogic {
       + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
       + `<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml.join('')}</sheetData>`
       + `</worksheet>`;
+    // Formatos de origen de las hojas de archivos crudos: un estilo por formato (después de los 13 fijos).
+    const fmts = [...new Set([].concat(...extras.map(e => [].concat(...(e.rows || []).map(f => f.filter(c => c && typeof c === 'object' && c.z).map(c => c.z))))))];
+    const escA = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const estiloDe = (z) => { const i = fmts.indexOf(z); return i < 0 ? null : 13 + i; };
     const xf = (num, font, fill, extra) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${extra ? ' applyAlignment="1">' + extra + '</xf>' : '/>'}`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${NS}">`
-      + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00;-&quot;$&quot;#,##0.00;&quot;-&quot;"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;-&quot;"/></numFmts>`
+      + `<numFmts count="${3 + fmts.length}">${fmts.map((z, i) => `<numFmt numFmtId="${170 + i}" formatCode="${escA(z)}"/>`).join('')}<numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00;-&quot;$&quot;#,##0.00;&quot;-&quot;"/><numFmt numFmtId="165" formatCode="mm/yyyy"/><numFmt numFmtId="166" formatCode="[Color10]&quot;$&quot;#,##0.00;[Red]-&quot;$&quot;#,##0.00;&quot;-&quot;"/></numFmts>`
       + `<fonts count="3"><font><sz val="10"/><color rgb="FF000000"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="10"/><color rgb="FF000000"/><name val="Calibri"/></font></fonts>`
       + `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF073763"/><bgColor rgb="FF073763"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9FC5E8"/><bgColor rgb="FF9FC5E8"/></patternFill></fill></fills>`
       + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border></borders>`
-      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13">`
+      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${13 + fmts.length}">`
       + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
       + xf(0, 1, 2, '<alignment horizontal="center" vertical="center" wrapText="1"/>')
       + xf(165, 2, 3, '<alignment horizontal="left"/>')
@@ -3567,9 +3584,10 @@ class Component extends DCLogic {
       + xf(0, 2, 0)
       + xf(0, 1, 2)
       + xf(166, 2, 3)
+      + fmts.map((z, i) => `<xf numFmtId="${170 + i}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`).join('')
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
     // Hojas extra (archivos crudos): sheet2.xml en adelante; rId2 queda para styles.
-    const ex = extras.map((e, i) => ({ n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS) }));
+    const ex = extras.map((e, i) => ({ n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS, estiloDe) }));
     const ovr = (n) => `<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
     const files = [
       ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${ovr(1)}${ex.map(e => ovr(e.n)).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
@@ -3584,11 +3602,34 @@ class Component extends DCLogic {
     return { name, bytes: this.zipStore(files) };
   }
 
-  hojaXml(rows, NS) {
+  // Celdas de una hoja con su formato de origen: números y fechas como { v, z } (z = formato de Excel).
+  celdasConFormato(X, ws) {
+    if (!ws || !ws['!ref']) return [];
+    const rg = X.utils.decode_range(ws['!ref']), out = [];
+    const serial = (d) => (d.getTime() - d.getTimezoneOffset() * 60000 - Date.UTC(1899, 11, 30)) / 864e5;
+    for (let R = rg.s.r; R <= rg.e.r; R++) {
+      const fila = [];
+      for (let C = rg.s.c; C <= rg.e.c; C++) {
+        const c = ws[X.utils.encode_cell({ r: R, c: C })];
+        if (!c || c.v === undefined || c.v === null) { fila.push(''); continue; }
+        if (c.t === 'd' && c.v instanceof Date) fila.push({ v: serial(c.v), z: c.z && !/^general$/i.test(c.z) ? c.z : 'dd/mm/yyyy' });
+        else if (c.t === 'n') fila.push(c.z && !/^general$/i.test(c.z) ? { v: c.v, z: c.z } : c.v);
+        else fila.push(c.v);
+      }
+      out.push(fila);
+    }
+    return out;
+  }
+
+  hojaXml(rows, NS, estiloDe) {
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
     const xr = rows.map((r, i) => '<row r="' + (i + 1) + '">' + r.map((v, j) => {
       if (v === null || v === undefined || v === '') return '';
       const ref = this.colLet(j + 1) + (i + 1);
+      if (v && typeof v === 'object' && typeof v.v === 'number' && isFinite(v.v)) {
+        const st = estiloDe ? estiloDe(v.z) : null;
+        return '<c r="' + ref + '"' + (st != null ? ' s="' + st + '"' : '') + '><v>' + v.v + '</v></c>';
+      }
       if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + '><v>' + v + '</v></c>';
       return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
     }).join('') + '</row>').join('');
@@ -3668,9 +3709,10 @@ class Component extends DCLogic {
         // Cada archivo usado tiene su hoja: si uno no se puede leer como planilla, su hoja lo dice y el Excel se genera igual.
         try {
           const libro = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
-          const wb = X.read(bytes, libro ? { type: 'array', cellDates: true } : { type: 'array', raw: true });
+          const wb = X.read(bytes, libro ? { type: 'array', cellDates: true, cellNF: true } : { type: 'array', raw: true });
           wb.SheetNames.forEach((sn, i) => {
-            const aoa = X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
+            // Planillas: cada celda conserva su formato de origen (miles, decimales, fechas); CSV / texto: tal cual.
+            const aoa = libro ? this.celdasConFormato(X, wb.Sheets[sn]) : X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
             hojas.push({ name: nombre(base + (wb.SheetNames.length > 1 ? ' ' + (i + 1) : '')), rows: aoa });
           });
         } catch (e) {
@@ -4231,6 +4273,33 @@ class Component extends DCLogic {
       this.setState({ toast: { kind: 'ok', t: 'Excel del cruce descargado', d: name } });
     } catch (err) {
       this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel del cruce', d: String(err && err.message || err) } });
+    }
+  }
+
+  // Historial de cruces: Excel con los cruces elegidos (hoja Resumen) y todos sus errores (hoja Errores).
+  async exportarCruces(rows) {
+    if (!rows || !rows.length) return this.setState({ toast: { kind: 'warn', t: 'No hay cruces para exportar', d: 'Cambiá los filtros o seleccioná cruces de la tabla.' } });
+    try {
+      const X = await this.xlsxLib();
+      const num = (v) => ({ t: 'n', v: +String(v ?? '').replace(/\./g, '') || 0, z: '#,##0' });
+      const res = [['Cliente', 'Cruce', 'Período', 'Secuencia', 'Ejecutado', 'Usuario', 'Estado', 'Registros', 'Diferencias', 'Errores']]
+        .concat(rows.map(r => [r.cliente, r.cruceNombre || r.tipo, r.per, this.seqTxt(r.seq || 0), r.fecha, r.user, r.est, num(r.regs), num(r.dif), { t: 'n', v: (r.errs || []).length, z: '#,##0' }]));
+      const errs = [['Cliente', 'Período', 'Cruce', 'Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia']];
+      rows.forEach(r => (r.errs || []).forEach(e => errs.push([r.cliente, r.per, r.cruceNombre || r.tipo, e.k, e.comp, e.ter, e.det, e.imp])));
+      if (errs.length === 1) errs.push(['Sin errores ni diferencias en los cruces exportados.']);
+      const wb = X.utils.book_new();
+      const w1 = X.utils.aoa_to_sheet(res);
+      w1['!cols'] = [{ wch: 30 }, { wch: 44 }, { wch: 10 }, { wch: 22 }, { wch: 17 }, { wch: 14 }, { wch: 26 }, { wch: 11 }, { wch: 12 }, { wch: 9 }];
+      const w2 = X.utils.aoa_to_sheet(errs);
+      w2['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 44 }, { wch: 28 }, { wch: 30 }, { wch: 36 }, { wch: 80 }, { wch: 16 }];
+      X.utils.book_append_sheet(wb, w1, 'Resumen');
+      X.utils.book_append_sheet(wb, w2, 'Errores');
+      const clis = [...new Set(rows.map(r => r.cliente))];
+      const name = (clis.length === 1 ? clis[0] + ' - ' : '') + 'Historial de cruces (' + rows.length + ').xlsx';
+      this.descargar(name, this.xlsxBytes(X, wb));
+      this.setState({ toast: { kind: 'ok', t: 'Excel descargado', d: rows.length + (rows.length === 1 ? ' cruce' : ' cruces') + ' · ' + name } });
+    } catch (err) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
     }
   }
 
@@ -5306,7 +5375,17 @@ class Component extends DCLogic {
     const op = (xs) => xs.filter(x => x.tc !== 'NC'), nc = (xs) => xs.filter(x => x.tc === 'NC');
     // ARCA informa el neto al 0 % dentro de «Exento o No Gravado», no en el neto gravado (caso Andalux 09/2026, BBVA).
     const tri = (xs) => ({ neto: sum(xs, x => (x.v.ngt || 0) - (x.v.n0 || 0)), exn: sum(xs, x => (x.v.exn || 0) + (x.v.n0 || 0)), iva: sum(xs, x => x.v.ivt) });
-    const S = { vOp: tri(op(V)), vNc: tri(nc(V)), cOp: tri(op(C)), cNc: tri(nc(C)) };
+    // Compras, como las agrupa ARCA (caso MEDA 09/2026): los comprobantes B y C (no discriminan IVA) van enteros a
+    // «Operaciones que no generan Crédito Fiscal»; en los A, M y otros (ej. TK = código 57, RG 1415) lo exento,
+    // no gravado y la columna «Compras a exentos, monotributistas y otros» van a «Exento o no gravado».
+    const sinIva = (x) => x.letra === 'B' || x.letra === 'C';
+    const triC = (xs) => ({
+      neto: sum(xs.filter(x => !sinIva(x)), x => (x.v.ngt || 0) - (x.v.n0 || 0)),
+      exn: sum(xs.filter(x => !sinIva(x)), x => (x.v.exn || 0) + (x.v.n0 || 0) + (x.v.mono || 0)),
+      iva: sum(xs, x => x.v.ivt)
+    });
+    const noCF = (xs) => sum(xs.filter(sinIva), x => (x.v.ngt || 0) + (x.v.exn || 0) + (x.v.mono || 0));
+    const S = { vOp: tri(op(V)), vNc: tri(nc(V)), cOp: triC(op(C)), cNc: triC(nc(C)) };
     // Crédito fiscal no computable por prorrateo (misma fórmula que la liquidación): ARCA informa el computable.
     const K = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0', 'exe', 'ngr', 'exp'], tk = (xs) => Object.fromEntries(K.map(k => [k, sum(xs, x => x.v[k])]));
     const prR = this.prorrRatio({ v: tk(op(V)), vNc: tk(nc(V)) }), noComp = r2(prR * r2(S.cOp.iva + S.vNc.iva));
@@ -5325,7 +5404,7 @@ class Component extends DCLogic {
     });
     fila('vExp', '', lib.v.vExp, sum(op(V), x => x.v.exp), 'IVA Ventas · Importe operaciones exportación');
     // ARCA resta las notas de crédito de proveedores exentos / monotributistas (caso Andalux 09/2026).
-    fila('cNo', '', lib.v.cNo, r2(sum(op(C), x => x.v.mono) - sum(nc(C), x => x.v.mono)), 'IVA Compras · Compras a exentos, monotributistas y otros (facturas − NC)');
+    fila('cNo', '', lib.v.cNo, r2(noCF(op(C)) - noCF(nc(C))), 'IVA Compras · comprobantes B y C (facturas − NC)');
     fila('cCom', '', lib.v.cCom, r2(S.cOp.iva - (prR ? r2(prR * S.cOp.iva) : 0)), 'IVA Compras · crédito fiscal de FC / ND' + (prR ? ' − no computable por prorrateo (' + this.pctProrr(prR) + ' computable)' : ''));
     fila('cRes', '', lib.v.cRes, S.cNc.iva, 'IVA Compras · crédito fiscal de NC');
     fila('vAj', '', lib.v.vAj, 0, 'Sin ajustes en el subdiario');
@@ -5591,6 +5670,8 @@ class Component extends DCLogic {
     const tot = (xs) => { const o = { q: xs.length }; K.forEach(k => { const v = r2(xs.reduce((a, x) => a + (x.v[k] || 0), 0)); if (v) o[k] = v; }); return o; };
     const det = {
       v: tot(V.filter(x => x.tc !== 'NC')), vNc: tot(V.filter(x => x.tc === 'NC')), c: tot(C.filter(x => x.tc !== 'NC')), cNc: tot(C.filter(x => x.tc === 'NC')),
+      // Ventas (FC / ND) por tipo de factura, para abrir el papel de trabajo en Fact. A / B / T.
+      vL: ['A', 'B', 'T'].reduce((o, l) => { const xs = V.filter(x => x.tc !== 'NC' && x.letra === l); if (xs.length) o[l] = { q: xs.length, neto: r2(xs.reduce((a, x) => a + (x.v.ngt || 0), 0)), iva: r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0)) }; return o; }, {}),
       perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
     };
     const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27'), det };
@@ -6016,8 +6097,8 @@ class Component extends DCLogic {
         cmp: [['Retenciones (IVA Ventas)', '44.580,00', '42.180,00', '2.400,00'], ['Percepciones (IVA Compras)', '64.164,15', '64.104,15', '60,00'], ['Total', '108.744,15', '106.284,15', '2.460,00']]
       },
       {
-        n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 9, ok: 9, dif: 0, falt: 0,
-        nota: 'Subdiario de origen a confirmar con el estudio: por ahora se buscan en IVA Compras y en IVA Ventas.',
+        n: '5', t: 'Retenciones Aduaneras', tipo: 'Aduaneras vs Mis Percepciones Aduaneras', need: [['aduana', 'Mis Percepciones Aduaneras'], ['compras', 'IVA Compras']], regs: 9, ok: 9, dif: 0, falt: 0,
+        nota: 'Las percepciones aduaneras se buscan sólo en IVA Compras (IVA Ventas no juega en este cruce).',
         h: ['Concepto', 'Mis Percepciones Aduaneras (ARCA)', 'Subdiarios', 'Diferencia'],
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
@@ -7331,19 +7412,28 @@ class Component extends DCLogic {
           const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
           const tab = /Recibidos/.test(r.tipo) ? 'A' : (/Emitidos/.test(r.tipo) ? 'B' : (/Retenciones/.test(r.tipo) ? 'C' : null));
           const verSolo = () => this.setState({ screen: 'cruceResultado', cruceTab: tab, cruceFiltro: 'todos', drawer: false, modal: false, notif: false, cruSolo: { cliente: r.cliente, per: r.per, seq: r.seq || 0, fecha: r.fecha, user: r.user } });
+          const selK = r.cliente + '|' + r.per + '|' + (r.seq || 0) + '|' + cruce + '|' + r.fecha;
           return Object.assign({}, r, this.seqChip(r.seq || 0), {
+            selK, sel: !!(s.cruSel || {})[selK], cruceNombre: cruce,
+            toggleSel: () => this.setState(st => { const m = Object.assign({}, st.cruSel || {}); if (m[selK]) delete m[selK]; else m[selK] = 1; return { cruSel: m }; }),
             tipo: cruce, st: E[r.est], xls: () => this.descargarCruce(r, cruce), hasErr: r.errs.length > 0, noErr: !r.errs.length, nErr: String(r.errs.length), errLabel: 'Ver errores (' + r.errs.length + ')', verErr,
             ver: r.guardado ? (r.errs.length ? verErr : this.showToast('ok', 'Cruce sin errores', cruce + ' · ' + r.cliente + ' ' + r.per + ': no hay errores ni diferencias para revisar.')) : (tab ? verSolo : this.nav('cruceResultado'))
           });
         });
-    const total = cruAdmin ? 318 + savedCru.length : Math.max(todos.length, me.short === 'Julieta' ? 74 + savedCru.length : 0);
+    // Con sesión: la cantidad real de cruces guardados (sin el número de ejemplo del prototipo)
+    const total = this._user ? todos.length : (cruAdmin ? 318 + savedCru.length : Math.max(todos.length, me.short === 'Julieta' ? 74 + savedCru.length : 0));
     const uniq = a => [...new Set(a)];
     const pers = uniq(todos.map(r => r.per)).sort((a, b) => perKey(b).localeCompare(perKey(a)));
     const filas = todos.filter(r => (!f.cli || r.cliente === f.cli) && (!f.tipo || r.tipo === f.tipo) && (!f.est || r.est === f.est)
       && (f.seq === '' || r.seq === f.seq) && (!f.desde || perKey(r.per) >= perKey(f.desde)) && (!f.hasta || perKey(r.per) <= perKey(f.hasta)));
     const activo = Object.keys(f).some(k => f[k] !== '');
     const set = k => (e) => this.setState(st => ({ cruF: Object.assign({}, st.cruF, { [k]: e.target.value }) }));
+    const elegidos = filas.filter(r => r.sel);
     return {
+      cruAllSel: filas.length > 0 && filas.every(r => r.sel),
+      cruToggleAll: () => this.setState(st => { const m = Object.assign({}, st.cruSel || {}); const todosSel = filas.every(r => m[r.selK]); filas.forEach(r => { if (todosSel) delete m[r.selK]; else m[r.selK] = 1; }); return { cruSel: m }; }),
+      cruExportLabel: elegidos.length ? 'Exportar selección (' + elegidos.length + ')' : 'Exportar a Excel',
+      cruExport: () => this.exportarCruces(elegidos.length ? elegidos : filas),
       cruHistLabel: (cruAdmin ? total + ' cruces ejecutados' : 'Cruces de tus clientes · ' + total + ' ejecutados'),
       cruHist: filas, cruCount: String(activo ? filas.length : total), cruShown: String(filas.length),
       cruVacio: !filas.length, cruVacioTxt: activo ? 'No hay cruces con esos filtros.' : 'Todavía no hay cruces registrados.',
