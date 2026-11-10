@@ -4351,7 +4351,7 @@ class Component extends DCLogic {
   // Tabla de equivalencias de comprobantes (Tabla comprobantes 2.0, Kairos / Estudio Blasco): código de ARCA en
   // Mis Comprobantes → tipo y letra como lo registra Bejerman (columna C, el formato principal). Los que no están acá
   // se deducen de la descripción de ARCA (tipoDesc).
-  ARCA_BEJ = '1:FC A|2:ND A|3:NC A|4:FC A|6:FC B|7:ND B|8:NC B|9:FC B|11:FC C|12:ND C|13:NC C|15:FC A|'
+  ARCA_BEJ = '1:FC A|2:ND A|3:NC A|4:FC A|6:FC B|7:ND B|8:NC B|9:FC B|11:FC C|12:ND C|13:NC C|15:FC C|'
     + '201:FC A|202:ND A|203:NC A|206:FC B|207:ND B|208:NC B|211:FC C|212:ND C|213:NC C|19:FC E|20:ND E|21:NC E|'
     + '160:FC T|161:ND T|162:NC T|51:FC M|52:ND M|53:NC M|54:RC M|251:FC M|252:ND M|253:NC M|195:FC E|196:ND E|197:NC E|'
     + '81:TK A|82:TK B|83:TK C|111:TK A|115:TK B|119:TK C|22:FC E|33:LP|60:LQ A|61:LQ B|63:FC A|64:FC B|17:FC A|18:FC B|66:DI';
@@ -5094,7 +5094,8 @@ class Component extends DCLogic {
     const C = {
       cuit: col('cuitagente', 'cuit'), nom: col('denominacion', 'razonsocial'), fecha: col('fecharet', 'fechadere', 'fecha'), op: col('descripcionoperacion', 'operacion'),
       imp: col('importeret', 'importe', 'monto'), comp: col('numerocomprobante', 'nrocomprobante'), cert: col('numerocertificado', 'nrocertificado'),
-      impu: col('descripcionimpuesto', 'impuesto'), cimp: keys.indexOf('impuesto'), reg: col('descripcionregimen', 'regimen')
+      impu: col('descripcionimpuesto', 'impuesto'), cimp: keys.indexOf('impuesto'), reg: col('descripcionregimen', 'regimen'),
+      creg: keys.indexOf('regimen') >= 0 ? keys.indexOf('regimen') : col('codigoregimen'), dcomp: col('descripcioncomprobante')
     };
     if (C.op < 0 && C.reg < 0) throw new Error('Falta la columna "Descripción Operación" de Mis Retenciones: sin ella no se pueden distinguir retenciones de percepciones.');
     const recs = [], otrosImp = new Set();
@@ -5110,7 +5111,8 @@ class Component extends DCLogic {
       const op = this.fold(s('op') + ' ' + (C.op < 0 ? s('reg') : ''));
       const tipo = /percep/.test(op) ? 'per' : (/retenc/.test(op) ? 'ret' : '');
       if (!tipo) { sinOp++; continue; }
-      recs.push({ tipo, cuit: this.cuitTxt(g('cuit')), nom: s('nom'), fecha, imp: Math.round(this.numAr(g('imp')) * 100) / 100, comp: s('comp'), cert: s('cert'), fila: i + 1 });
+      const reg = s('reg'), creg = C.creg >= 0 && C.creg !== C.reg ? s('creg') : '';
+      recs.push({ tipo, cuit: this.cuitTxt(g('cuit')), nom: s('nom'), fecha, imp: Math.round(this.numAr(g('imp')) * 100) / 100, comp: s('comp'), cert: s('cert'), reg: creg && !reg.startsWith(creg) ? creg + ' - ' + reg : reg, dcomp: s('dcomp'), fila: i + 1 });
     }
     otros += sinOp;
     if (!recs.length) {
@@ -5629,6 +5631,131 @@ class Component extends DCLogic {
     };
   }
 
+  // Cruce 4 con el modelo acordado con Agencia Kairos (nov. 2026): una fila por clave, con los importes agrupados.
+  // Percepciones: P|CUIT agente|Tipo|Pto.Vta.|Número (en ARCA, de «Número Comprobante»: últimos 8 dígitos = número, el resto = Pto.Vta.).
+  // Retenciones: R|CUIT agente|Fecha; los números se comparan aparte (coincide / aproximado / distinto).
+  // Las aduaneras (CUIT de la Aduana, régimen de importación o despacho en IVA Compras) van al cruce 5.
+  cruzarRetM(mr, ventas, compras) {
+    const TOL = 1, r2 = (v) => Math.round(v * 100) / 100, dig = (v) => String(v == null ? '' : v).replace(/\D/g, '');
+    const tipoA = (d) => { const t = this.fold(d || ''); return /credito/.test(t) ? 'NC' : (/debito/.test(t) ? 'ND' : 'FC'); };
+    const pvNro = (c) => { const t = dig(c); return t ? [parseInt(t.slice(0, -8) || '0', 10), parseInt(t.slice(-8), 10)] : [0, 0]; };
+    const esAduL = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
+    const esAduA = (a) => a.cuit === this.CUIT_ADUANA || /importac/.test(this.fold(a.reg || ''));
+    const M = new Map(), orden = [];
+    const get = (clave, base) => { if (!M.has(clave)) { M.set(clave, Object.assign({ clave, l: [], a: [] }, base)); orden.push(clave); } return M.get(clave); };
+    let nAdu = 0;
+    if (compras) compras.recs.filter(x => x.v.piva).forEach(x => {
+      if (esAduL(x)) return nAdu++;
+      const g = get(['P', x.cuit, x.tc, x.pv, x.nro].join('|'), { op: 'Percepción', fecha: x.fecha, cuit: x.cuit, nom: x.nom, origen: 'IVA Compras' });
+      g.l.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva) });
+    });
+    if (ventas) ventas.recs.filter(x => x.tc === 'CR').forEach(x => {
+      const g = get(['R', x.cuit, x.fecha].join('|'), { op: 'Retención', fecha: x.fecha, cuit: x.cuit, nom: x.nom, origen: 'IVA Ventas' });
+      g.l.push({ x, imp: r2(Math.abs(x.v.tot)) });
+    });
+    const nClC = orden.filter(k => k[0] === 'P').length, nClV = orden.length - nClC;
+    let sinCtrl = 0;
+    mr.recs.forEach(a => {
+      if (esAduA(a)) return;
+      if (a.tipo === 'ret' ? !ventas : !compras) return sinCtrl++;
+      if (a.tipo === 'ret') return get(['R', a.cuit, a.fecha].join('|'), { op: 'Retención', fecha: a.fecha, cuit: a.cuit, nom: a.nom, origen: '' }).a.push(a);
+      const [pv, nro] = pvNro(a.comp), tc = tipoA(a.dcomp);
+      a.tcI = tc; a.pvI = pv; a.nroI = nro;
+      get(['P', a.cuit, tc, pv, nro].join('|'), { op: 'Percepción', fecha: a.fecha, cuit: a.cuit, nom: a.nom, origen: '' }).a.push(a);
+    });
+    const filas = orden.map(k => M.get(k)).sort((p, q) => (q.l.length ? 1 : 0) - (p.l.length ? 1 : 0));
+    filas.forEach(f => {
+      f.impL = r2(f.l.reduce((s, c) => s + c.imp, 0)); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
+      if (!f.nom) f.nom = (f.a[0] && f.a[0].nom) || '';
+      f.est = !f.a.length ? 'FALTA EN ARCA' : (!f.l.length ? 'FALTA EN LIBRO' : (Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA'));
+      f.obs = '';
+    });
+    // Mismo CUIT y fecha del otro lado: casi siempre es el mismo comprobante informado con otra numeración (ej. MAPFRE, FARMCITY).
+    const cf = (f) => f.cuit + '|' + f.fecha;
+    filas.filter(f => f.op === 'Percepción' && f.est.startsWith('FALTA')).forEach(f => {
+      const otro = filas.find(o => o !== f && o.op === 'Percepción' && o.est.startsWith('FALTA') && o.est !== f.est && cf(o) === cf(f));
+      if (!otro) return;
+      f.obs = f.est === 'FALTA EN ARCA'
+        ? 'Posible coincidencia en ARCA por CUIT+fecha: comp. ' + otro.a.map(a => a.comp).join(', ') + ' — revisar numeración'
+        : 'Posible coincidencia en IVA Compras por CUIT+fecha: ' + otro.l.map(c => c.x.pv + '-' + c.x.nro).join(', ') + ' — revisar numeración';
+    });
+    filas.filter(f => f.op === 'Retención' && f.l.length && f.a.length).forEach(f => {
+      const nl = f.l.map(c => String(c.x.nro)), na = f.a.map(a => String(parseInt(dig(a.cert || a.comp) || '0', 10)));
+      const res = nl.every(n => na.includes(n)) ? 'coincide' : (nl.some(n => na.some(m => n !== '0' && m !== '0' && (m.endsWith(n) || n.endsWith(m)))) ? 'aproximado' : 'distinto');
+      f.obs = 'Número: ' + res + ' (libro ' + nl.join(', ') + ' · ARCA ' + na.join(', ') + ')';
+    });
+    const n = (e) => filas.filter(f => f.est === e).length;
+    return {
+      filas, nClC, nClV, soloA: filas.filter(f => !f.l.length).length, ok: n('OK'), dif: n('DIFERENCIA'), faltA: n('FALTA EN ARCA'), faltL: n('FALTA EN LIBRO'),
+      nRet: mr.nRet, nPer: mr.nPer, otros: mr.otros, nAdu, sinCtrl, sinV: !ventas, sinC: !compras,
+      tot: [r2(filas.reduce((s, f) => s + f.impL, 0)), r2(filas.reduce((s, f) => s + f.impA, 0))]
+    };
+  }
+
+  // Cruce 5 con el modelo acordado: clave = fecha. Libro: despachos o CUIT de la Aduana en IVA Compras; ARCA: Mis Percepciones Aduaneras.
+  cruzarAduM(ad, compras) {
+    const TOL = 1, r2 = (v) => Math.round(v * 100) / 100;
+    const esAdu = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
+    const M = new Map(), get = (fecha) => { if (!M.has(fecha)) M.set(fecha, { clave: fecha, fecha, l: [], a: [] }); return M.get(fecha); };
+    compras.recs.filter(x => x.v.piva && esAdu(x)).forEach(x => get(x.fecha).l.push({ x, imp: r2((x.tc === 'NC' ? -1 : 1) * x.v.piva) }));
+    ad.recs.forEach(a => get(a.fecha).a.push(a));
+    const fk = (f) => f.split('/').reverse().join('');
+    const filas = [...M.values()].sort((p, q) => ((q.l.length ? 1 : 0) - (p.l.length ? 1 : 0)) || (fk(p.fecha) < fk(q.fecha) ? -1 : 1));
+    filas.forEach(f => {
+      f.impL = r2(f.l.reduce((s, c) => s + c.imp, 0)); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
+      f.est = !f.a.length ? 'FALTA EN ARCA' : (!f.l.length ? 'FALTA EN LIBRO' : (Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA'));
+      f.obs = f.l.length > 1 || f.a.length > 1 ? f.l.length + ' en el libro y ' + f.a.length + ' en ARCA ese día: se comparan sumados' : '';
+    });
+    const n = (e) => filas.filter(f => f.est === e).length;
+    return {
+      filas, nFechasL: filas.filter(f => f.l.length).length, soloA: filas.filter(f => !f.l.length).length, ok: n('OK'), dif: n('DIFERENCIA'), faltA: n('FALTA EN ARCA'), faltL: n('FALTA EN LIBRO'),
+      nA: ad.recs.length, otros: ad.otros, tot: [r2(filas.reduce((s, f) => s + f.impL, 0)), r2(filas.reduce((s, f) => s + f.impA, 0))]
+    };
+  }
+
+  // Errores de pantalla de los cruces 4 y 5 armados por clave (una fila por clave que no da OK).
+  clavesErrs(x, compL, fuente) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v);
+    return x.filas.filter(f => f.est !== 'OK').map(f => ({
+      k: f.est === 'DIFERENCIA' ? 'Diferencia de importe' : (f.est === 'FALTA EN ARCA' ? 'Faltante en ' + fuente : 'Faltante en ' + (f.origen || (f.op === 'Retención' ? 'IVA Ventas (CR)' : 'IVA Compras'))),
+      comp: compL(f), ter: (f.nom || 'Sin denominación') + (f.cuit ? ' · ' + this.cuitFmt(f.cuit) : ''),
+      det: 'Libro ' + fm(f.impL) + ' (' + f.l.length + (f.l.length === 1 ? ' registro' : ' registros') + ') · ' + fuente + ' ' + fm(f.impA) + ' (' + f.a.length + (f.a.length === 1 ? ' registro' : ' registros') + ')' + (f.obs ? ' — ' + f.obs : ''),
+      imp: fm(Math.abs(f.dif))
+    }));
+  }
+
+  cruRetMVista(x) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const compL = (f) => f.op + ' ' + (f.op === 'Retención' ? f.fecha : (f.l[0] ? this.compTxt(f.l[0].x) : (f.a[0].tcI + ' ' + f.a[0].pvI + '-' + f.a[0].nroI)));
+    const errs = this.clavesErrs(x, compL, 'Mis Retenciones'), falt = x.faltA + x.faltL;
+    const sumOp = (op, k) => x.filas.filter(f => f.op === op).reduce((s, f) => s + f[k], 0);
+    const fila = (l, op) => [l, fm(sumOp(op, 'impA')), fm(sumOp(op, 'impL')), fm(sumOp(op, 'impA') - sumOp(op, 'impL'))];
+    return {
+      regs: x.filas.length, ok: x.ok, dif: x.dif, falt, errs,
+      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nRet) + ' retenciones y ' + n(x.nPer) + ' percepciones en Mis Retenciones · ' + n(x.nClC) + ' claves en IVA Compras · ' + n(x.nClV) + ' en IVA Ventas · ' + n(x.soloA) + ' solo en ARCA · '
+        + n(x.ok) + ' OK · ' + x.dif + ' con diferencia · ' + x.faltA + ' faltan en ARCA · ' + x.faltL + ' faltan en el libro'
+        + (x.sinV ? ' · IVA Ventas no se cargó: las retenciones no se controlaron' : '') + (x.sinC ? ' · IVA Compras no se cargó: las percepciones no se controlaron' : '')
+        + (x.nAdu ? ' · ' + x.nAdu + (x.nAdu === 1 ? ' percepción aduanera de IVA Compras se controla' : ' percepciones aduaneras de IVA Compras se controlan') + ' en el cruce 5' : '')
+        + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos u operaciones excluidos' : ''),
+      cmp: [
+        x.sinV ? ['Retenciones (IVA Ventas · CR)', fm(sumOp('Retención', 'impA')), 'No cargado', '—'] : fila('Retenciones (IVA Ventas · CR)', 'Retención'),
+        x.sinC ? ['Percepciones (IVA Compras)', fm(sumOp('Percepción', 'impA')), 'No cargado', '—'] : fila('Percepciones (IVA Compras)', 'Percepción')
+      ].concat(x.sinV || x.sinC ? [] : [['Total', fm(x.tot[1]), fm(x.tot[0]), fm(x.tot[1] - x.tot[0])]])
+    };
+  }
+
+  cruAduMVista(x) {
+    const fm = (v) => this.ars(Math.abs(v) < 0.005 ? 0 : v), n = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const errs = this.clavesErrs(x, (f) => 'Percepciones aduaneras del ' + f.fecha, 'Mis Percepciones Aduaneras'), falt = x.faltA + x.faltL;
+    return {
+      regs: x.filas.length, ok: x.ok, dif: x.dif, falt, errs,
+      est: x.dif + falt ? 'Completado con diferencias' : 'Completado',
+      res: n(x.nA) + ' percepciones aduaneras en ARCA · ' + n(x.filas.length) + ' fechas comparadas · ' + n(x.ok) + ' OK · ' + x.dif + ' con diferencia · ' + x.faltA + ' faltan en ARCA · ' + x.faltL + ' faltan en IVA Compras' + (x.otros ? ' · ' + x.otros + ' registros de otros impuestos excluidos' : ''),
+      cmp: [['Fechas', n(x.filas.filter(f => f.a.length).length), n(x.nFechasL), String(x.filas.filter(f => f.a.length).length - x.nFechasL)], ['Importe total', fm(x.tot[1]), fm(x.tot[0]), fm(x.tot[1] - x.tot[0])]]
+    };
+  }
+
   // Prorrateo del crédito fiscal (fórmula acordada con Julieta Díaz, Estudio Blasco, dic. 2025; la misma de la columna AO del papel de trabajo):
   // proporción no computable = (Venta exenta + Venta no gravada) / (Ventas netas gravadas + Exenta + No gravada + Exportaciones − NC de ventas gravadas).
   // Exenta, no gravada y exportaciones van netas de sus notas de crédito. El no alcanzado (recupero de gastos) no entra.
@@ -5876,8 +6003,8 @@ class Component extends DCLogic {
     if (R.emitidos && R.ventas && !R.emitidos.attach) v.emi = this.cruzarComp(R.emitidos, R.ventas, 'igual');
     if (R.recibidos && R.compras) v.rec = this.cruzarComp(R.recibidos, R.compras, 'hasta');
     if (R.compras && base) v.apoc = this.cruzarApoc(R.compras, base);
-    if (R.percep && (R.ventas || R.compras)) v.ret = this.cruzarRet(R.percep, R.ventas, R.compras);
-    if (R.aduana && R.compras) v.adu = this.cruzarAdu(R.aduana, null, R.compras);
+    if (R.percep && (R.ventas || R.compras)) v.ret = this.cruzarRetM(R.percep, R.ventas, R.compras);
+    if (R.aduana && R.compras) v.adu = this.cruzarAduM(R.aduana, R.compras);
     this._crc = { R, base, per, v };
     return v;
   }
@@ -5988,6 +6115,120 @@ class Component extends DCLogic {
     };
   }
 
+  // Hojas del reporte con el modelo de output de Agencia Kairos (nov. 2026): título, criterio, contadores por estado,
+  // bloques de columnas (libro / ARCA / diferencias), fila de TOTALES y una fila por clave. Diferencias = Libro − ARCA.
+  reporteModelo(tipo, x, lblL) {
+    const r2 = (v) => Math.round(v * 100) / 100, sg = (c) => (c && c.tc === 'NC' ? -1 : 1);
+    const sum = (rows, i) => r2(rows.reduce((s, r) => s + (typeof r[i] === 'number' ? r[i] : 0), 0));
+    const totales = (rows, cols, w) => { const t = new Array(w).fill(''); t[0] = 'TOTALES'; cols.forEach(i => { t[i] = sum(rows, i); }); return t; };
+    if (tipo === 'comp') {
+      const emi = lblL === 'IVA Ventas', w = 26;
+      const tipoTxt = (c) => c.tc + (c.letra || '');
+      const orig = (a) => { const m = String(a.moneda || '').match(/^(.*) × ([\d.]+)$/); return m ? [m[1], +m[2]] : ['$', 1]; };
+      const fuera = new Set(x.fueraPer || []);
+      const fila = (n, a, l, est, obs) => {
+        const c = l || a, [mon, tcam] = a ? orig(a) : ['', ''];
+        const L = l ? [sg(l) * l.v.ngt, sg(l) * l.v.ivt, sg(l) * l.v.ot, sg(l) * l.v.ng, sg(l) * l.v.tot] : ['', '', '', '', ''];
+        const A = a ? [mon, tcam, r2(sg(a) * a.v.tot / (tcam || 1)), sg(a) * a.v.ngt, sg(a) * a.v.ivt, sg(a) * a.v.ot, sg(a) * a.v.tot] : ['', '', '', '', '', '', ''];
+        const d = (li, ai) => r2((l ? L[li] : 0) - (a ? A[ai] : 0));
+        return [n, [c.cuit, tipoTxt(c), c.pv, c.nro].join('|'), c.fecha, tipoTxt(c), c.pv, c.nro, c.cuit, (l && l.nom) || (a && a.nom) || '']
+          .concat(L, A, [d(0, 3), d(1, 4), d(2, 5), d(4, 6), est, obs]);
+      };
+      const rows = [];
+      const porL = new Map(x.filas.map(f => [f.l, f]));
+      const libroOrden = x.filas.map(f => f.l).concat(x.faltA).sort((p, q) => p.fila - q.fila);
+      libroOrden.forEach(l => {
+        const f = porL.get(l);
+        if (f) {
+          const tipoDif = f.dif.some(d => d.l === 'Tipo de comprobante');
+          const est = f.est === 'ok' ? 'OK' : (tipoDif ? 'DIF. TIPO' : 'DIFERENCIA');
+          rows.push(fila(rows.length + 1, f.a, l, est, f.dif.map(d => d.l + (d.d === null ? ' (ARCA ' + d.a + ' · libro ' + d.b + ')' : '')).join(' · ')));
+        } else rows.push(fila(rows.length + 1, null, l, 'FALTA EN ARCA', fuera.has(l) ? 'Fuera del período ' + x.perLiq : ''));
+      });
+      x.faltL.forEach(a => rows.push(fila(rows.length + 1, a, null, 'FALTA EN LIBRO', '')));
+      const c = (e) => rows.filter(r => r[24] === e).length;
+      return {
+        cols: [5, 34, 11, 6, 8, 11, 13, 34, 14, 13, 13, 13, 14, 7, 8, 14, 14, 13, 13, 14, 13, 13, 13, 13, 15, 50].map(wch => ({ wch })),
+        aoa: [
+          [(emi ? 'CRUCE 2 — Comprobantes emitidos: IVA Ventas vs ARCA "Mis Comprobantes Emitidos"' : 'CRUCE 3 — Comprobantes recibidos: IVA Compras vs ARCA "Mis Comprobantes Recibidos"')],
+          ['Clave: CUIT ' + (emi ? 'receptor' : 'emisor') + ' | Tipo+Letra | Pto.Vta. | Número. Una fila por clave hallada en cualquiera de los dos orígenes. Solo comprobantes del libro (excluye retenciones y otros registros sin letra). NC con signo negativo; importes de ARCA convertidos a ARS con el tipo de cambio del comprobante.'],
+          ['Comprobantes libro', x.nL, '', 'Solo en ARCA', x.faltL.length, '', 'OK', c('OK'), 'DIFERENCIA', c('DIFERENCIA'), 'FALTA EN ARCA', c('FALTA EN ARCA'), 'FALTA EN LIBRO', c('FALTA EN LIBRO'), 'DIF. TIPO', c('DIF. TIPO')],
+          ['COMPROBANTE', '', '', '', '', '', '', '', lblL.toUpperCase() + ' (ARS)', '', '', '', '', 'ARCA (origen)', '', '', 'ARCA convertido a ARS', '', '', '', 'DIFERENCIAS (Libro - ARCA)'],
+          ['N°', 'Clave de cruce', 'Fecha', 'Tipo', 'Pto. Vta.', 'Nro.', emi ? 'CUIT Receptor' : 'CUIT Emisor', 'Razón Social', 'Neto Gravado', 'IVA', 'Percepciones / Otros', 'Exento / No Grav.', 'Total Comprob.', 'Moneda', 'Tipo Cambio', 'Imp. Total (orig.)', 'Neto Gravado', 'IVA', 'Otros Tributos', 'Imp. Total', 'Neto', 'IVA', 'Percep.', 'Total', 'ESTADO', 'Observación'],
+          totales(rows, [8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23], w)
+        ].concat(rows),
+        headRow: 4, firstData: 5, money: [8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+      };
+    }
+    if (tipo === 'retM') {
+      const w = 20, rows = x.filas.map((f, i) => {
+        const a0 = f.a[0] || {};
+        return [i + 1, f.clave, f.op, f.fecha, f.cuit, f.nom, f.l.length ? f.origen : '', f.l.map(c => this.compTxt(c.x)).join(', '), f.l.length || '', f.l.length ? f.impL : '',
+          a0.reg || '', f.a.map(a => a.cert).filter(Boolean).join(', '), f.a.map(a => a.comp).filter(Boolean).join(', '),
+          f.op === 'Percepción' && f.a.length ? a0.tcI + ' ' + a0.pvI + '-' + a0.nroI : '', f.a.length || '', f.a.length ? f.impA : '', f.dif, f.est, f.obs, ''];
+      });
+      return {
+        cols: [5, 36, 12, 11, 13, 36, 12, 30, 9, 14, 40, 14, 22, 20, 9, 14, 14, 16, 60, 30].map(wch => ({ wch })),
+        aoa: [
+          ['CRUCE 4 — Mis Retenciones: percepciones IVA (IVA Compras) y retenciones IVA (IVA Ventas, TC "CR") vs ARCA'],
+          ['Percepciones: clave P|CUIT agente|Tipo|Pto.Vta.|Número (en ARCA se toma de "Número Comprobante": últimos 8 dígitos = número, el resto = Pto.Vta.). Retenciones: clave R|CUIT|Fecha, con comparación aparte de números. Importes agrupados por clave. Excluye aduaneras (Cruce 5). Tolerancia: $ 1.'],
+          ['Claves IVA Compras', x.nClC, '', 'Claves IVA Ventas', x.nClV, '', 'Solo en ARCA', x.soloA, '', 'OK', x.ok, 'DIFERENCIA', x.dif, 'FALTA EN ARCA', x.faltA, 'FALTA EN LIBRO', x.faltL],
+          ['PERCEPCIÓN / RETENCIÓN', '', '', '', '', '', 'LIBROS IVA (ARS)', '', '', '', 'ARCA — MIS RETENCIONES', '', '', '', '', '', 'DIFERENCIA'],
+          ['N°', 'Clave de cruce', 'Operación', 'Fecha', 'CUIT Agente', 'Razón Social', 'Origen', 'Comprobante libro', 'Cant. reg.', 'Importe libro', 'Régimen', 'N° Certificado', 'N° Comprobante ARCA (original)', 'Comprobante ARCA (interpretado)', 'Cant. reg.', 'Importe ARCA', 'Libro - ARCA', 'ESTADO', 'Observación automática', 'Observación manual'],
+          totales(rows, [9, 15, 16], w)
+        ].concat(rows),
+        headRow: 4, firstData: 5, money: [9, 15, 16]
+      };
+    }
+    if (tipo === 'aduM') {
+      const w = 13, rows = x.filas.map((f, i) => [i + 1, f.clave, f.fecha, f.l.length || '', f.l.map(c => this.compTxt(c.x)).join(', '), f.l.length ? f.impL : '',
+        f.a.length || '', [...new Set(f.a.map(a => a.nom || this.cuitFmt(a.cuit)).filter(Boolean))].join(', '), f.a.map(a => a.ref).filter(Boolean).join(', '), f.a.length ? f.impA : '', f.dif, f.est, f.obs]);
+      return {
+        cols: [5, 12, 11, 9, 30, 15, 9, 30, 30, 15, 15, 16, 50].map(wch => ({ wch })),
+        aoa: [
+          ['CRUCE 5 — Percepciones aduaneras: IVA Compras (despachos) vs ARCA Mis Percepciones Aduaneras' + (rows.length ? '' : ' · Sin percepciones aduaneras en el período (ni en libro ni en ARCA)')],
+          ['Clave: Fecha. Libro: TC de despacho o CUIT del agente aduanero (' + this.cuitFmt(this.CUIT_ADUANA) + '). Importes sumados por fecha. Tolerancia: $ 1.'],
+          ['Fechas IVA Compras', x.nFechasL, '', 'Solo en ARCA', x.soloA, '', 'OK', x.ok, 'DIFERENCIA', x.dif, 'FALTA EN ARCA', x.faltA, 'FALTA EN LIBRO', x.faltL],
+          ['PERCEPCIÓN ADUANERA', '', '', 'IVA COMPRAS (ARS)', '', '', 'ARCA — PERCEPCIONES ADUANERAS', '', '', '', 'DIFERENCIA'],
+          ['N°', 'Clave de cruce', 'Fecha', 'Cant. reg.', 'Comprobante libro', 'Percep. IVA libro', 'Cant. reg.', 'Agente', 'N° Comprobante / Despacho', 'Importe ARCA', 'Libro - ARCA', 'ESTADO', 'Observación'],
+          totales(rows, [5, 9, 10], w)
+        ].concat(rows),
+        headRow: 4, firstData: 5, money: [5, 9, 10]
+      };
+    }
+    if (tipo === 'lib') {
+      // Misma estructura que la Vista Previa del LID: bloques LID / Libros / Diferencia (LID − Libros) por concepto.
+      const by = {}; x.filas.forEach(f => { (by[f.k] = by[f.k] || []).push(f); });
+      const EST = { ok: 'OK', dif: 'DIFERENCIA', falta: 'NO ENCONTRADO' };
+      const est = (fs) => fs.some(f => f.est === 'falta') ? EST.falta : (fs.some(f => f.est === 'dif') ? EST.dif : EST.ok);
+      const v = (f) => (f.falta ? '' : f.dig), d = (f) => (f.falta ? '' : f.dif);
+      const L = {}; this.LIB_CONC.forEach(([k, l]) => { L[k] = l; }); L.tdf = 'Total del Débito Fiscal'; L.tcf = 'Total del Crédito Fiscal';
+      const tri = (k) => { const fs = by[k]; if (!fs) return null; return [L[k], '', v(fs[0]), v(fs[1]), v(fs[2]), fs[0].calc, fs[1].calc, fs[2].calc, d(fs[0]), d(fs[1]), d(fs[2]), est(fs), fs[0].origen]; };
+      const uno = (k) => { const fs = by[k]; if (!fs) return null; const f = fs[0]; return [L[k], '', v(f), '', '', f.calc, '', '', d(f), '', '', est(fs), f.origen]; };
+      const perL = this.perLiq(), mismo = !x.per || x.per === perL;
+      const aoa = [
+        ['CRUCE 6 — Libro IVA Digital (ARCA) vs consolidado de IVA Ventas / IVA Compras'],
+        ['Misma estructura que la Vista Previa del LID. Bloque LID = vista previa cargada; bloque Libros = cálculo sobre IVA Ventas / IVA Compras con los criterios de ARCA. Tolerancia: $ 1.'],
+        ['Período LID: ' + (x.per || 's/d') + '   ·   Período libros: ' + perL, '', mismo ? '' : '⚠ ATENCIÓN: el período del LID no coincide con el de los libros'],
+        ['CONCEPTO', '', 'LIBRO IVA DIGITAL (ARCA)', '', '', 'LIBROS IVA VENTAS / COMPRAS', '', '', 'DIFERENCIA (LID - Libros)', '', '', 'RESULTADO'],
+        [], ['Libro IVA Ventas'],
+        ['Concepto', 'Alícuota IVA', 'Neto Gravado', 'Exento o No Gravado', 'Débito Fiscal', 'Neto Gravado', 'Exento o No Gravado', 'Débito Fiscal', 'Neto Gravado', 'Exento o No Gravado', 'Débito Fiscal', 'ESTADO', 'Criterio libros'],
+        tri('vOp'), tri('vNc'), [],
+        ['Concepto', 'Alícuota IVA', 'Importe', '', '', 'Importe', '', '', 'Importe', '', '', 'ESTADO', 'Criterio libros'],
+        uno('vExp'), uno('vAj'), [], ['Libro IVA Compras'],
+        ['Concepto', 'Alícuota IVA', 'Neto Gravado', 'Exento o No Gravado', 'Crédito Fiscal', 'Neto Gravado', 'Exento o No Gravado', 'Crédito Fiscal', 'Neto Gravado', 'Exento o No Gravado', 'Crédito Fiscal', 'ESTADO', 'Criterio libros'],
+        tri('cOp'), tri('cNc'), [],
+        ['Concepto', 'Alícuota IVA', 'Importe', '', '', 'Importe', '', '', 'Importe', '', '', 'ESTADO', 'Criterio libros'],
+        uno('cNo'), uno('cAj'), [],
+        ['Concepto', 'Alícuota IVA', 'Importe', '', '', 'Importe', '', '', 'Importe', '', '', 'ESTADO', 'Criterio libros'],
+        uno('cCom'), uno('cRes')
+      ];
+      if (by.tdf || by.tcf) aoa.push([], ['Datos para la Declaración Jurada del Impuesto al Valor Agregado'], ['Concepto', 'Alícuota IVA', 'Monto', '', '', 'Monto', '', '', 'Monto', '', '', 'ESTADO', 'Criterio libros'], uno('tdf'), uno('tcf'));
+      return { cols: [44, 10, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60].map(wch => ({ wch })), aoa: aoa.filter(r => r !== null), headRow: 6, firstData: 7, money: [2, 3, 4, 5, 6, 7, 8, 9, 10] };
+    }
+    return null;
+  }
+
   reporteFilas(tipo, x, lblL) {
     // Las notas de crédito se guardan en positivo: en los reportes se exponen restando.
     const sg = (c) => (c && c.tc === 'NC' ? -1 : 1), r2 = (v) => Math.round(v * 100) / 100;
@@ -6041,6 +6282,17 @@ class Component extends DCLogic {
         X.utils.book_append_sheet(wb, ws, 'Resumen');
       }
       bloques.forEach(b => {
+        if (b.aoa) {
+          // Modelo de output: importes con formato numérico y encabezados en negrita.
+          const ws = X.utils.aoa_to_sheet(b.aoa);
+          b.aoa.forEach((row, r) => row.forEach((v, c) => {
+            const cell = ws[X.utils.encode_cell({ r, c })];
+            if (cell && typeof v === 'number') cell.z = r >= b.firstData && b.money.includes(c) ? '#,##0.00' : '0';
+          }));
+          ws['!cols'] = b.cols;
+          ws['!freeze'] = { xSplit: 0, ySplit: b.headRow + 1 };
+          return X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
+        }
         const ws = X.utils.aoa_to_sheet([[b.t], [b.res], []].concat([b.head], b.rows));
         ws['!cols'] = b.head.map((h, i) => ({ wch: i === 5 || i === 4 ? 34 : (i === 0 ? 26 : 16) }));
         X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
@@ -6112,14 +6364,14 @@ class Component extends DCLogic {
     const RV = enReal ? this.cruReal() : {};
     const vista = {
       '1': RV.apoc ? Object.assign(this.cruApocVista(RV.apoc, ap), { blk: ['apoc', RV.apoc, 'IVA Compras', 'Base APOC'] }) : null,
-      '2': RV.emi ? Object.assign(this.cruCompVista(RV.emi, 'IVA Ventas'), { blk: ['comp', RV.emi, 'IVA Ventas', 'Comprobantes Emitidos'] }) : null,
-      '3': RV.rec ? Object.assign(this.cruCompVista(RV.rec, 'IVA Compras'), { blk: ['comp', RV.rec, 'IVA Compras', 'Comprobantes Recibidos'] }) : null,
-      '4': RV.ret ? Object.assign(this.cruRetVista(RV.ret), { blk: ['ret', RV.ret, '', 'Mis Retenciones'] }) : null,
-      '5': RV.adu ? Object.assign(this.cruAduVista(RV.adu), { blk: ['adu', RV.adu, '', 'Percepciones Aduaneras'] }) : null
+      '2': RV.emi ? Object.assign(this.cruCompVista(RV.emi, 'IVA Ventas'), { blk: ['comp', RV.emi, 'IVA Ventas', 'Cruce 2 Emitidos'] }) : null,
+      '3': RV.rec ? Object.assign(this.cruCompVista(RV.rec, 'IVA Compras'), { blk: ['comp', RV.rec, 'IVA Compras', 'Cruce 3 Recibidos'] }) : null,
+      '4': RV.ret ? Object.assign(this.cruRetMVista(RV.ret), { blk: ['retM', RV.ret, '', 'Cruce 4 Retenciones'] }) : null,
+      '5': RV.adu ? Object.assign(this.cruAduMVista(RV.adu), { blk: ['aduM', RV.adu, '', 'Cruce 5 Aduaneras'] }) : null
     };
     if (enReal && R.ivadig && R.ventas && R.compras) {
       const lb = this.cruzarLibro(R.ivadig, R.ventas, R.compras);
-      vista['6'] = Object.assign(this.cruLibVista(lb), { blk: ['lib', lb, '', 'Libro IVA Digital'] });
+      vista['6'] = Object.assign(this.cruLibVista(lb), { blk: ['lib', lb, '', 'Cruce 6 LID'] });
     }
     const demoRep = this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.');
     const reales = [];
@@ -6139,7 +6391,7 @@ class Component extends DCLogic {
       if (apoc) Object.assign(c, { h: ['Comprobante', 'Proveedor', 'Fecha condición / publicación', 'IVA computado'], cmp: apocMal ? c.apocCmp : [] });
       let rep = demoRep;
       if (rv) {
-        const bloque = () => Object.assign({ t: c0.n + ' - ' + c0.t, hoja: rv.blk[3], est, res: rv.res }, this.reporteFilas(rv.blk[0], rv.blk[1], rv.blk[2]));
+        const bloque = () => Object.assign({ t: c0.n + ' - ' + c0.t, hoja: rv.blk[3], est, res: rv.res }, this.reporteModelo(rv.blk[0], rv.blk[1], rv.blk[2]) || this.reporteFilas(rv.blk[0], rv.blk[1], rv.blk[2]));
         reales.push(bloque);
         rep = () => this.descargarReporte([bloque()], cli);
       }
