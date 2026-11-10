@@ -3964,12 +3964,42 @@ class Component extends DCLogic {
     const run = {
       id: String(Date.now()), cliente: cli, per: this.perLiq(), seq, fecha: this.ahora(), user, liq: false,
       cruces: cru.rows.filter(r => r.run || r.isErr).map(r => ({
-        n: r.n, t: r.t, tipo: r.tipo, cruce: r.cruce, est: r.est, real: r.real,
+        n: r.n, t: r.t, tipo: r.tipo, cruce: r.cruce, est: r.est, real: r.real, rep: !!r.blk,
         regs: r.isErr ? '—' : String(r.regs).replace(/\B(?=(\d{3})+(?!\d))/g, '.'), dif: r.isErr ? '—' : String(r.dif),
         errs: r.errs.slice(0, 500).map(e => ({ k: e.k, comp: e.comp, ter: e.ter, det: e.det, imp: e.imp }))
       }))
     };
+    this.reporteSubir(run.id, cru.rows.filter(r => r.blk));
     return this.lsSet('myiva.cruRuns', [run].concat(this.state.cruRuns));
+  }
+
+  // Reporte completo de cada cruce (modelo de Kairos) en Storage, para descargarlo después desde el Historial de cruces.
+  // El historial (tabla cruces) guarda solo la lista de errores; el detalle por clave va como JSON al lado de los archivos crudos.
+  reporteRuta(runId) { return 'reportes/' + this.crudosCarpeta(String(runId)) + '.json'; }
+
+  async reporteSubir(runId, rows) {
+    const sb = this.sb();
+    if (!sb || !this._user || !rows.length) return;
+    try {
+      const bloques = {};
+      rows.forEach(r => { bloques[r.n] = r.blk(); });
+      const blob = new Blob([JSON.stringify({ v: 1, bloques })], { type: 'application/json' });
+      const up = await sb.storage.from('crudos').upload(this.reporteRuta(runId), blob, { upsert: true, contentType: 'application/json' });
+      if (up.error) throw up.error;
+    } catch (e) {
+      this.setState({ toast: { kind: 'warn', t: 'El reporte completo no se guardó en el historial', d: 'Los cruces quedaron registrados, pero el Excel del Historial va a salir con la lista de errores. ' + String(e && e.message || e) } });
+    }
+  }
+
+  async reporteBajar(runId, n) {
+    const sb = this.sb();
+    if (!sb || !runId) return null;
+    try {
+      const dl = await sb.storage.from('crudos').download(this.reporteRuta(runId));
+      if (dl.error || !dl.data) return null;
+      const j = JSON.parse(await dl.data.text());
+      return (j && j.bloques && j.bloques[n]) || null;
+    } catch (e) { return null; }
   }
 
   liqEstado(r) {
@@ -4243,7 +4273,7 @@ class Component extends DCLogic {
     return [{ k: 'Error de archivo', comp: file, ter: cruce, det: (msg ? msg.replace(/\.?$/, '.') + ' ' : 'El archivo no tiene un formato válido. ') + 'El cruce no se ejecutó.', imp: '—' }];
   }
 
-  openErr(title, sub, groups, cli) {
+  openErr(title, sub, groups, cli, src) {
     const nro = (t) => /^Cruce \d/.test(t) ? t : ([[/APOC/, 1], [/Emitidos/, 2], [/Recibidos/, 3], [/Retenciones/, 4], [/Aduaner/, 5], [/IVA Digital/, 6]].find(([re]) => re.test(t)) || [0, 0])[1];
     const rows = [], gs = groups.filter(g => g.errs.length).map(g => { const n = nro(g.cruce); return typeof n === 'number' && n ? Object.assign({}, g, { cruce: 'Cruce ' + n + ' · ' + g.cruce }) : g; });
     gs.forEach(g => g.errs.forEach((e, i) => rows.push(Object.assign({}, e, {
@@ -4252,7 +4282,7 @@ class Component extends DCLogic {
       kb: e.k.indexOf('Diferencia') === 0 ? '#FBF3E3' : '#FBE9E7'
     }))));
     const resumen = gs.length > 1 ? gs.map(g => g.cruce + ' (' + g.errs.length + ')').join(' · ') : '';
-    return () => this.setState({ errView: { title, sub, rows, resumen, cli: cli || sub.split(' · ')[0] } });
+    return () => this.setState({ errView: { title, sub, rows, resumen, cli: cli || sub.split(' · ')[0], src: src || null } });
   }
 
   async descargarCruce(r, cruce) {
@@ -4267,7 +4297,10 @@ class Component extends DCLogic {
       const ws = X.utils.aoa_to_sheet(res.concat([[]], errs));
       ws['!cols'] = [{ wch: 30 }, { wch: 34 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
       const wb = X.utils.book_new();
-      X.utils.book_append_sheet(wb, ws, 'Cruce');
+      // Con el reporte completo guardado: primero la hoja del modelo (una fila por clave), después el resumen y los errores.
+      const b = r.rep ? await this.bloqueDe({ runId: r.runId, n: r.n }) : null;
+      if (b) X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
+      X.utils.book_append_sheet(wb, ws, b ? 'Resumen y errores' : 'Cruce');
       const name = r.cliente + ' - ' + cruce.replace(/[\/\\:*?"<>|·]+/g, '-').replace(/\s+/g, ' ') + ' ' + r.per.replace('/', '-') + '.xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
       this.setState({ toast: { kind: 'ok', t: 'Excel del cruce descargado', d: name } });
@@ -4311,6 +4344,8 @@ class Component extends DCLogic {
       const ws = X.utils.aoa_to_sheet([[v.title], [v.sub], [], head].concat(v.rows.map(e => [e.cruce, e.k, e.comp, e.ter, e.det, e.imp])));
       ws['!cols'] = [{ wch: 34 }, { wch: 30 }, { wch: 30 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
       const wb = X.utils.book_new();
+      const b = await this.bloqueDe(v.src);
+      if (b) X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
       X.utils.book_append_sheet(wb, ws, 'Errores');
       const name = (cli || 'Cruces') + ' - Reporte de errores.xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
@@ -6271,6 +6306,25 @@ class Component extends DCLogic {
     return { head: ['Resultado', 'Comprobante', 'Fecha ARCA', 'Fecha ' + lblL, 'CUIT', 'Denominación', 'Concepto', 'ARCA', lblL, 'Diferencia'], rows };
   }
 
+  // Hoja de un cruce con el modelo de output: importes con formato numérico.
+  hojaModelo(X, b) {
+    const ws = X.utils.aoa_to_sheet(b.aoa);
+    b.aoa.forEach((row, r) => row.forEach((v, c) => {
+      const cell = ws[X.utils.encode_cell({ r, c })];
+      if (cell && typeof v === 'number') cell.z = r >= b.firstData && b.money.includes(c) ? '#,##0.00' : '0';
+    }));
+    ws['!cols'] = b.cols;
+    ws['!freeze'] = { xSplit: 0, ySplit: b.headRow + 1 };
+    return ws;
+  }
+
+  // Bloque con el reporte completo: el de la pantalla de cruces (función) o el guardado en Storage (historial).
+  async bloqueDe(src) {
+    if (!src) return null;
+    const b = src.blk ? src.blk() : await this.reporteBajar(src.runId, src.n);
+    return b && b.aoa ? b : null;
+  }
+
   descargarReporte(bloques, cli) {
     const X = typeof window !== 'undefined' && window.XLSX;
     if (!X || !bloques.length) return this.setState({ toast: { kind: 'warn', t: 'No hay cruces reales para exportar', d: 'Cargá los archivos reales y procesá los cruces para descargar el reporte de diferencias.' } });
@@ -6282,17 +6336,7 @@ class Component extends DCLogic {
         X.utils.book_append_sheet(wb, ws, 'Resumen');
       }
       bloques.forEach(b => {
-        if (b.aoa) {
-          // Modelo de output: importes con formato numérico y encabezados en negrita.
-          const ws = X.utils.aoa_to_sheet(b.aoa);
-          b.aoa.forEach((row, r) => row.forEach((v, c) => {
-            const cell = ws[X.utils.encode_cell({ r, c })];
-            if (cell && typeof v === 'number') cell.z = r >= b.firstData && b.money.includes(c) ? '#,##0.00' : '0';
-          }));
-          ws['!cols'] = b.cols;
-          ws['!freeze'] = { xSplit: 0, ySplit: b.headRow + 1 };
-          return X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
-        }
+        if (b.aoa) return X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
         const ws = X.utils.aoa_to_sheet([[b.t], [b.res], []].concat([b.head], b.rows));
         ws['!cols'] = b.head.map((h, i) => ({ wch: i === 5 || i === 4 ? 34 : (i === 0 ? 26 : 16) }));
         X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
@@ -6389,19 +6433,20 @@ class Component extends DCLogic {
       // Base APOC: si está ok sólo queda el estado en verde; si hay error, se listan los comprobantes observados.
       const apoc = c0.n === '1' && run && !isErr, apocMal = apoc && c.apocCmp.length > 0;
       if (apoc) Object.assign(c, { h: ['Comprobante', 'Proveedor', 'Fecha condición / publicación', 'IVA computado'], cmp: apocMal ? c.apocCmp : [] });
-      let rep = demoRep;
+      let rep = demoRep, blk = null;
       if (rv) {
         const bloque = () => Object.assign({ t: c0.n + ' - ' + c0.t, hoja: rv.blk[3], est, res: rv.res }, this.reporteModelo(rv.blk[0], rv.blk[1], rv.blk[2]) || this.reporteFilas(rv.blk[0], rv.blk[1], rv.blk[2]));
         reales.push(bloque);
         rep = () => this.descargarReporte([bloque()], cli);
+        blk = bloque;
       }
       return {
         n: c.n, t: c.t, tipo: c.tipo, run, isErr, st: E[est], est, real: !!rv,
         regs: run ? c.regs : 0, dif: run ? c.dif + c.falt : 0, falt: run ? c.falt : 0,
-        hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep,
+        hasDif: run && (rv ? (rv.blk[0] !== 'apoc' || rv.dif > 0) : c.dif + c.falt > 0), rep, blk,
         errs, hasErr: errs.length > 0, errLabel: (c0.alerta && run && !rv ? 'Ver proveedores observados (' : 'Ver errores (') + errs.length + ')',
         cruce: 'Cruce ' + c.n + ' · ' + c.t,
-        verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · ' + this.perLiq(), [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }]),
+        verErr: this.openErr('Errores · Cruce ' + c.n + ' · ' + c.t, cli + ' · ' + this.perLiq(), [{ cruce: 'Cruce ' + c.n + ' · ' + c.t, errs }], null, blk ? { blk } : null),
         hasCmp: run && c.cmp.length > 0, hasNota: !!nota && !(apoc && !apocMal), nota,
         verApoc: () => this.setState({ apocVer: { sub: cli + ' · ' + this.perLiq(), filas: c.apocDet || [] } }),
         h: { a: c.h[0], b: c.h[1], c: c.h[2], d: c.h[3] },
@@ -7566,7 +7611,7 @@ class Component extends DCLogic {
     const NUM = { 'IVA Compras vs Base APOC': 1, 'Emitidos vs IVA Ventas': 2, 'Recibidos vs IVA Compras': 3, 'Retenciones vs IVA Ventas / Compras': 4, 'Retenciones y percepciones vs Mis Retenciones': 4, 'Aduaneras vs Mis Percepciones Aduaneras': 5, 'IVA Digital vs IVA Compras + Ventas': 6, 'Libro IVA Digital vs IVA Ventas + Compras': 7 };
     const savedCru = [].concat(...s.cruRuns.map(run => run.cruces.map(c => ({
       cliente: run.cliente, tipo: c.tipo, n: c.n, per: run.per, seq: run.seq, fecha: run.fecha, user: run.user,
-      regs: c.regs, dif: c.dif, est: c.est, errs: c.errs, guardado: true
+      regs: c.regs, dif: c.dif, est: c.est, errs: c.errs, guardado: true, runId: run.id, rep: !!c.rep
     }))));
     const STB = {
       ok: { label: 'Completado', bg: '#E8F3EE', fg: '#2E7D5B', bd: '#C7E3D6' },
@@ -7662,7 +7707,7 @@ class Component extends DCLogic {
         .filter(r => cruAdmin || misClis.includes(r.cliente) || r.user === me.short)
         .map(r => {
           const n = r.n || NUM[r.tipo], cruce = (n ? 'Cruce ' + n + ' · ' : '') + r.tipo, sub = r.cliente + ' · ' + r.per + ' · ' + r.fecha + ' · ' + r.user;
-          const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente);
+          const verErr = this.openErr('Errores · ' + cruce, sub, [{ cruce, errs: r.errs }], r.cliente, r.rep ? { runId: r.runId, n: r.n } : null);
           const tab = /Recibidos/.test(r.tipo) ? 'A' : (/Emitidos/.test(r.tipo) ? 'B' : (/Retenciones/.test(r.tipo) ? 'C' : null));
           const verSolo = () => this.setState({ screen: 'cruceResultado', cruceTab: tab, cruceFiltro: 'todos', drawer: false, modal: false, notif: false, cruSolo: { cliente: r.cliente, per: r.per, seq: r.seq || 0, fecha: r.fecha, user: r.user } });
           const selK = r.cliente + '|' + r.per + '|' + (r.seq || 0) + '|' + cruce + '|' + r.fecha;
