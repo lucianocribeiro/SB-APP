@@ -5704,7 +5704,7 @@ class Component extends DCLogic {
     filas.forEach(f => {
       f.impL = r2(f.l.reduce((s, c) => s + c.imp, 0)); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
       f.est = !f.a.length ? 'FALTA EN ARCA' : (!f.l.length ? 'FALTA EN LIBRO' : (Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA'));
-      f.obs = f.l.length > 1 || f.a.length > 1 ? f.l.length + ' en el libro y ' + f.a.length + ' en ARCA ese día: se comparan sumados' : '';
+      f.obs = f.l.length && f.a.length && (f.l.length > 1 || f.a.length > 1) ? f.l.length + ' en el libro y ' + f.a.length + ' en ARCA ese día: se comparan sumados' : (f.l.length > 1 || f.a.length > 1 ? (f.l.length || f.a.length) + ' registros ese día' : '');
     });
     const n = (e) => filas.filter(f => f.est === e).length;
     return {
@@ -6164,7 +6164,7 @@ class Component extends DCLogic {
       const w = 20, rows = x.filas.map((f, i) => {
         const a0 = f.a[0] || {};
         return [i + 1, f.clave, f.op, f.fecha, f.cuit, f.nom, f.l.length ? f.origen : '', f.l.map(c => this.compTxt(c.x)).join(', '), f.l.length || '', f.l.length ? f.impL : '',
-          a0.reg || '', f.a.map(a => a.cert).filter(Boolean).join(', '), f.a.map(a => a.comp).filter(Boolean).join(', '),
+          a0.reg || '', [...new Set(f.a.map(a => a.cert).filter(Boolean))].join(', '), [...new Set(f.a.map(a => a.comp).filter(Boolean))].join(', '),
           f.op === 'Percepción' && f.a.length ? a0.tcI + ' ' + a0.pvI + '-' + a0.nroI : '', f.a.length || '', f.a.length ? f.impA : '', f.dif, f.est, f.obs, ''];
       });
       return {
