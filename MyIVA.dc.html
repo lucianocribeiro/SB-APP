@@ -4424,7 +4424,7 @@ class Component extends DCLogic {
     const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
     if (m && !l) { t = m[1]; l = m[2]; }
     // FCC / NDC / NCC (Bejerman) y FCE / NCE / NDE (Catedral MiPyME / exterior): se normalizan al TC de Bejerman.
-    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC', FCC: 'FC', NDC: 'ND', NCC: 'NC', FCE: 'FC', NCE: 'NC', NDE: 'ND', FAC: 'FC', NCR: 'NC', REC: 'FC', LIQ: 'FC' }[t] || t;
+    t = { FT: 'FC', FE: 'FC', CF: 'FC', CT: 'NC', FCC: 'FC', NDC: 'ND', NCC: 'NC', FCE: 'FC', NCE: 'NC', NDE: 'ND', FAC: 'FC', NCR: 'NC', REC: 'FC', LIQ: 'FC', FSP: 'FC' }[t] || t;   // FSP: factura de servicios públicos (Catedral)
     if (!l && ['FC', 'NC', 'ND'].includes(t)) l = 'A';
     return { tc: t, letra: l };
   }
@@ -4490,7 +4490,9 @@ class Component extends DCLogic {
   leerHoja(bytes, X, todas) {
     let wb;
     try {
-      const bin = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
+      // Binario: .xlsx (PK), .xls moderno (OLE) y Excel 2.0 / 3.0 / 4.0 (BIFF2-4, como los que exporta Catedral).
+      const biffViejo = bytes[0] === 0x09 && [0x00, 0x02, 0x04].includes(bytes[1]);
+      const bin = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF) || biffViejo;
       let txt = null;
       if (!bin) {
         try { txt = new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch (e) { txt = new TextDecoder('latin1').decode(bytes); }
@@ -4841,28 +4843,28 @@ class Component extends DCLogic {
   // Reconoce las columnas por sus nombres habituales y arma el subdiario en el formato de Bejerman, así el resto de la app
   // (liquidación y cruces) no cambia. Junta en un comprobante las filas que vienen separadas por alícuota (Tango).
   SUB_SIN = {
-    fecha: ['fecha', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacontable', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
-    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
+    fecha: ['fecha', 'fechaoperacion', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacontable', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
+    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'codigo', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
     letra: ['letra', 'let', 'letracomprobante'],
     pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'suc', 'pventa'],
     nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'referencia'],
-    cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil'],
+    cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil', 'n', 'no'],
     nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente'],
     cond: ['cativa', 'condiva', 'condicioniva', 'categoriaiva', 'sitiva', 'condicionfrentealiva', 'categoria'],
     porc: ['porciva', 'alicuota', 'aliciva', 'alicuotaiva', 'tasaiva', 'porcentajeiva', 'tasa', 'porc'],
-    exe: ['impexento', 'importeexento', 'exento', 'montoexento', 'exentas'],
-    ngr: ['impnogravado', 'importenogravado', 'nogravado', 'nogravadas', 'montonogravado'],
+    exe: ['subtotalexentos', 'impexento', 'importeexento', 'exento', 'montoexento', 'exentas'],
+    ngr: ['subtotalnogravados', 'impnogravado', 'importenogravado', 'nogravado', 'nogravadas', 'montonogravado'],
     nal: ['importenoalcanzado', 'noalcanzado', 'impnoalcanzado'],
     exp: ['importeoperacionesexportacion', 'exportacion', 'impexportacion', 'exportaciones'],
     mono: ['comprasaexentosmonotributistasyotros', 'monotributo', 'comprasmonotributo'],
-    neto: ['impgravad', 'impneto', 'netogravado', 'impnetogravado', 'importegravado', 'importeneto', 'neto', 'gravado', 'baseimponible', 'netogravadototal'],
-    iva: ['iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
+    neto: ['subtotalneto', 'impgravad', 'impneto', 'netogravado', 'impnetogravado', 'importegravado', 'importeneto', 'neto', 'gravado', 'baseimponible', 'netogravadototal'],
+    iva: ['subtotaliva', 'iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
     iin: ['importeimpuestosinternos', 'impuestosinternos', 'impint', 'impinternos'],
     piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos'],
-    piva: ['percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva'],
-    potr: ['otraspercepciones', 'otrosimp', 'otrosimpuestos', 'otrostributos', 'otrasperc'],
-    oreg: ['otrosregimenesespeciales', 'regimenesespeciales'],
-    tot: ['totalcomprobante', 'importe', 'imptotal', 'importetotal', 'total', 'montototal']
+    piva: ['subtotalpercepciones', 'percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva'],
+    potr: ['otraspercepciones', 'otrosimp', 'otrostributos', 'otrasperc'],
+    oreg: ['otrosregimenesespeciales', 'regimenesespeciales', 'otrosimpuestos'],   // Catedral: "Otros Impuestos", como en su conversor
+    tot: ['totalcomprobante', 'totaldelcomprobante', 'importe', 'imptotal', 'importetotal', 'total', 'montototal']
   };
 
   convertirSubdiario(aoa, k) {
@@ -4879,6 +4881,8 @@ class Component extends DCLogic {
     if (keys.includes('tc') && keys.includes('letra') && keys.includes('totalcomprobante')) return null;
     const col = (f) => { for (const n of SIN[f]) { const i = keys.indexOf(n); if (i >= 0) return i; } return -1; };
     const C = {}; Object.keys(SIN).forEach(f => { C[f] = col(f); });
+    // Catedral: "Iva" es la condición frente al IVA (RI, MON, EX, CF) y el importe viene en "Subtotal Iva".
+    if (keys.includes('subtotaliva') && keys.includes('iva')) { C.iva = keys.indexOf('subtotaliva'); if (C.cond < 0) C.cond = keys.indexOf('iva'); }
     const AC = {}; ALIS.forEach(([a]) => { AC['n' + a] = keys.indexOf('neto' + a); AC['i' + a] = keys.indexOf('iva' + a); });
     const porAli = Object.values(AC).some(i => i >= 0);
     if (C.tot < 0 && C.neto < 0 && C.iva < 0 && !porAli) return null;
