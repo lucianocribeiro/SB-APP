@@ -4963,11 +4963,57 @@ class Component extends DCLogic {
     return out;
   }
 
+  // ===== SAP (reporte "Libro IVA Compras / Ventas" exportado a Excel) =====
+  // Viene sin títulos arriba: los datos arrancan en la primera fila y los títulos quedan al pie, corridos una columna
+  // ("Neto Total", "Exento Total", "21.00%"… "Total"). Cada fila trae un solo neto y el IVA separado por alícuota:
+  // el neto de cada alícuota sale de su IVA. Se arma una tabla con títulos estándar y la lee convertirSubdiario.
+  convertirSAP(aoa, k) {
+    const txt = (v) => (v == null ? '' : String(v).trim()), num = (v) => this.numAr(v), r2 = (v) => Math.round(v * 100) / 100;
+    const esComp = (v) => /^[A-Z]\s*\d{1,5}\s*-\s*\d{1,8}$/.test(txt(v).toUpperCase());
+    const datos = aoa.filter(r => r && this.fechaTxt(r[0]) && /^[A-Z]{1,4}\d?$/.test(txt(r[1]).toUpperCase()) && esComp(r[2]));
+    if (!datos.length) return null;
+    // Títulos al pie: ubican cada importe. Si no están, se usa el orden estándar del reporte.
+    const TIT = [['neto', /^neto total$/], ['exe', /^exento total$/], ['i21', /^21[.,]00 ?%$/], ['i27', /^27[.,]00 ?%$/], ['i105', /^10[.,]50 ?%$/],
+      ['i5', /^5[.,](00|25) ?%$/], ['i25', /^2[.,]50 ?%$/], ['nod', /^no\.? ?d\.?$/], ['piva', /^percep\.? iva$/], ['piibb', /^percep\.? i\.?b\.?$/],
+      ['pgan', /^percep\.? iigg$/], ['potr', /^ot\.? ?percep\.?$/], ['tot', /^total$/]];
+    const fila = aoa.find(r => r && r.some(c => /^neto total$/i.test(txt(c))) && r.some(c => /^total$/i.test(txt(c))));
+    let pos = null;
+    if (fila) {
+      const tp = {};
+      TIT.forEach(([key, re]) => { const i = fila.findIndex(c => re.test(this.fold(txt(c)))); if (i >= 0) tp[key] = i; });
+      // Corrimiento entre títulos y datos: el que hace que el total coincida con la suma de las partes.
+      const cuadra = (off) => datos.filter(r => {
+        const g = (key) => (tp[key] === undefined ? 0 : num(r[tp[key] + off]));
+        return Math.abs(g('tot') - TIT.slice(0, -1).reduce((a, [key]) => a + g(key), 0)) <= 1;
+      }).length;
+      const off = [1, 0, 2, -1].reduce((b, o) => (cuadra(o) > cuadra(b) ? o : b), 1);
+      if (tp.tot !== undefined && cuadra(off) >= datos.length * 0.8) { pos = {}; Object.keys(tp).forEach(key => { pos[key] = tp[key] + off; }); }
+    }
+    if (!pos) pos = { neto: 6, exe: 7, i21: 8, i27: 9, i105: 10, i5: 11, i25: 12, nod: 13, piva: 14, piibb: 15, pgan: 16, potr: 17, tot: 18 };
+    const g = (r, key) => (pos[key] === undefined ? 0 : num(r[pos[key]]));
+    const RATES = [['21', 0.21, 'i21'], ['27', 0.27, 'i27'], ['105', 0.105, 'i105'], ['5', 0.05, 'i5'], ['25', 0.025, 'i25']];
+    const head = ['Fecha', 'Tipo', 'Número', 'Razón social', 'Condición IVA', 'CUIT', 'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 27%', 'IVA 27%', 'Neto 0%',
+      'Neto 5%', 'IVA 5%', 'Neto 2.5%', 'IVA 2.5%', 'Importe Exento', 'Importe no gravado', 'Percepciones IVA', 'Percepciones IIBB', 'Otras Percepciones', 'Total'];
+    const out = [head];
+    datos.forEach(r => {
+      const A = { n21: 0, i21: 0, n105: 0, i105: 0, n27: 0, i27: 0, n0: 0, n5: 0, i5: 0, n25: 0, i25: 0 };
+      const ivas = RATES.map(([a, t, key]) => [a, t, g(r, key)]).filter(x => x[2]);
+      const main = ivas.slice().sort((x, y) => Math.abs(y[2]) - Math.abs(x[2]))[0];
+      let resto = g(r, 'neto');
+      ivas.filter(x => x !== main).forEach(([a, t, v]) => { const n = r2(v / t); A['n' + a] = n; A['i' + a] = v; resto -= n; });
+      if (main) { A['n' + main[0]] = r2(resto) || r2(main[2] / main[1]); A['i' + main[0]] = main[2]; }
+      else if (r2(resto)) A.n0 = r2(resto);
+      out.push([r[0], txt(r[1]), txt(r[2]), txt(r[3]), txt(r[4]), txt(r[5]), A.n21, A.i21, A.n105, A.i105, A.n27, A.i27, A.n0, A.n5, A.i5, A.n25, A.i25,
+        g(r, 'exe'), g(r, 'nod'), g(r, 'piva'), g(r, 'piibb'), r2(g(r, 'pgan') + g(r, 'potr')), g(r, 'tot')]);
+    });
+    return this.convertirSubdiario(out, k);
+  }
+
   parseComprobantes(k, name, bytes, X) {
     const LBL = this.UP_LBL;
     const aoa0 = this.leerHoja(bytes, X);
     // Subdiarios de Tango, SAP, Catedral, Lanes…: se pasan al formato Bejerman antes de leerlos.
-    const aoa = ((k === 'ventas' || k === 'compras') && this.convertirSubdiario(aoa0, k)) || aoa0;
+    const aoa = ((k === 'ventas' || k === 'compras') && (this.convertirSubdiario(aoa0, k) || this.convertirSAP(aoa0, k))) || aoa0;
     const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
