@@ -3476,6 +3476,7 @@ class Component extends DCLogic {
       else r2cells.push(cell(L + '2', ST.dataEmpty));
     }
     rowsXml.push(`<row r="2">${r2cells.join('')}</row>`);
+    const nz = new Set();   // columnas con algún importe distinto de cero (las demás salen ocultas)
     data.forEach((d, i) => {
       const r = first + i, p = r - 1, df = num(d.df), cf = num(d.cf), rp = num(d.rp);
       // Columnas por alícuota y de NC: salen del detalle guardado en la liquidación (det, ver liqCalc). Las NC se guardan en positivo:
@@ -3532,6 +3533,7 @@ class Component extends DCLogic {
         AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
       };
       const SALDO = { AW: 1, AX: 1, AY: 1 };
+      Object.keys(v).forEach(o => { if (r2(v[o] || 0)) nz.add(o); });
       const cs = [cell('A' + r, ST.date, { v: serial(d.per) }), cell('B' + r, ST.seq, { v: d.seq })];
       COLS.forEach(([o]) => {
         const ref = C(o) + r;
@@ -3554,7 +3556,12 @@ class Component extends DCLogic {
 
     const yrs = [...new Set(data.map(d => d.per.slice(3)))].sort();
     const hoja = yrs.length > 1 ? yrs[0] + '-' + yrs[yrs.length - 1].slice(2) : yrs[0];
-    const cols = `<cols><col min="1" max="1" width="11" customWidth="1"/><col min="2" max="2" width="11" customWidth="1"/><col min="3" max="${this.colNum(lastCol)}" width="15.5" customWidth="1"/></cols>`;
+    // Columnas en cero en todas las liquidaciones: se descargan ocultas (siguen ahí; las fórmulas y los totales no cambian).
+    // Las calculadas siguen a la columna de la que salen; los totales, el prorrateo y los saldos siempre se ven.
+    const DEP = { AP: ['AA'], AQ: ['AB'], AR: ['AC'], AT: ['J', 'K'] }, SIEMPRE = ['AM', 'AN', 'AO', 'AS', 'AW', 'AX', 'AY'];
+    const oculta = (o) => !SIEMPRE.includes(o) && !(o === 'AZ' && ant && ant.comp) && !(DEP[o] || [o]).some(x => nz.has(x));
+    const cols = `<cols><col min="1" max="1" width="11" customWidth="1"/><col min="2" max="2" width="11" customWidth="1"/>`
+      + COLS.map(([o]) => { const n = pos[o] + 3; return `<col min="${n}" max="${n}" width="15.5" customWidth="1"${data.length && oculta(o) ? ' hidden="1"' : ''}/>`; }).join('') + `</cols>`;
     const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', RNS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
     const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${tot}"/>`
       + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
@@ -3767,8 +3774,87 @@ class Component extends DCLogic {
         .replace(/<sz val="[\d.]+"\/>/g, '<sz val="10"/>').replace(/<name val="[^"]+"\/>/g, '<name val="Calibri"/>');
       e.content = new TextEncoder().encode(xml);
       e.size = e.content.length;
+      try { this.pintarXlsx(X, z, wb); } catch (err) { console.warn('Formato del Excel', err); }   // si falla, sale sin colores
       return new Uint8Array(X.CFB.write(z, { fileType: 'zip', type: 'array' }));
     } catch (err) { return out; }
+  }
+
+  // Colores y paneles fijos que SheetJS no escribe: cada hoja puede traer ws['!pinta'] = [[fila0, col0, fila1, col1, estilo]…]
+  // (0-based, inclusive) y ws['!fijar'] = { x, y }. Se agregan fuentes, rellenos y estilos a styles.xml conservando el formato
+  // de número que ya tenía cada celda, y se crean las celdas vacías que hay que pintar (grupos, fila de TOTALES).
+  pintarXlsx(X, z, wb) {
+    const leer = (e) => new TextDecoder().decode(e.content instanceof Uint8Array ? e.content : new Uint8Array(e.content));
+    const poner = (e, t) => { e.content = new TextEncoder().encode(t); e.size = e.content.length; };
+    const hojas = wb.SheetNames.map((n, i) => [wb.Sheets[n], X.CFB.find(z, '/xl/worksheets/sheet' + (i + 1) + '.xml')]).filter(([ws, e]) => e && (ws['!pinta'] || ws['!fijar']));
+    if (!hojas.length) return;
+    const se = X.CFB.find(z, '/xl/styles.xml');
+    let st = leer(se);
+    const bloque = (tag) => st.match(new RegExp('<' + tag + ' count="(\\d+)">([\\s\\S]*?)</' + tag + '>'));
+    const agregar = (tag, items) => {
+      const m = bloque(tag), n = +m[1];
+      st = st.replace(m[0], '<' + tag + ' count="' + (n + items.length) + '">' + m[2] + items.join('') + '</' + tag + '>');
+      return n;
+    };
+    const F = (b, color, sz) => '<font>' + (b ? '<b/>' : '') + '<sz val="' + (sz || 10) + '"/><color rgb="FF' + color + '"/><name val="Calibri"/></font>';
+    const f0 = agregar('fonts', [F(1, '000000'), F(1, 'FFFFFF'), F(1, '1F3864'), F(0, '595959'), F(0, '808080'), F(1, '000000', 12)]);
+    const FONT = { b: f0, bw: f0 + 1, bn: f0 + 2, g5: f0 + 3, g8: f0 + 4, t: f0 + 5 };
+    const colores = ['1F3864', '073763', 'FFF2CC', 'DDEBF7', 'E2EFDA', 'FCE4D6', 'E7E6E6', 'D9D9D9'];
+    const l0 = agregar('fills', colores.map(c => '<fill><patternFill patternType="solid"><fgColor rgb="FF' + c + '"/><bgColor indexed="64"/></patternFill></fill>'));
+    const FILL = (c) => l0 + colores.indexOf(c);
+    const b0 = agregar('borders', ['<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>']);
+    const centro = '<alignment horizontal="center" vertical="center" wrapText="1"/>';
+    const DEF = (k) => k === 'grp' ? [FONT.bw, FILL('1F3864'), centro] : k === 'nav' ? [FONT.bw, FILL('073763'), centro]
+      : k.slice(0, 2) === 'h-' ? [FONT.b, FILL(k.slice(2)), centro] : k === 'tot' ? [FONT.b, FILL('E7E6E6'), '']
+        : k === 'tit' ? [FONT.t, 0, ''] : k === 'sub' ? [FONT.g5, 0, ''] : k === 'kpi' ? [FONT.bn, 0, ''] : k === 'gris' ? [FONT.g8, 0, ''] : [FONT.b, 0, ''];
+    const xfs = (bloque('cellXfs')[2].match(/<xf [^>]*?(\/>|>[\s\S]*?<\/xf>)/g) || []).map(x => +((x.match(/numFmtId="(\d+)"/) || [])[1] || 0));
+    const nuevos = [], idx = {};
+    const estilo = (numFmt, k) => {
+      const key = numFmt + '|' + k;
+      if (idx[key] === undefined) {
+        const [font, fill, al] = DEF(k), borde = fill && k !== 'tot' ? b0 : 0;
+        idx[key] = xfs.length + nuevos.length;
+        nuevos.push('<xf numFmtId="' + numFmt + '" fontId="' + font + '" fillId="' + fill + '" borderId="' + borde + '" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"'
+          + (al ? ' applyAlignment="1">' + al + '</xf>' : '/>'));
+      }
+      return idx[key];
+    };
+    hojas.forEach(([ws, e]) => {
+      let xml = leer(e);
+      const pinta = {};
+      (ws['!pinta'] || []).forEach(([r0, c0, r1, c1, k]) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) pinta[(r + 1) + ':' + (c + 1)] = k; });
+      const m = xml.match(/<sheetData>([\s\S]*?)<\/sheetData>|<sheetData\/>/);
+      if (m && Object.keys(pinta).length) {
+        const filas = new Map();
+        (m[1] || '').replace(/<row r="(\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g, (_, r, at, cs) => {
+          const celdas = new Map();
+          (cs || '').replace(/<c r="([A-Z]+)(\d+)"([^>]*?)(\/>|>[\s\S]*?<\/c>)/g, (x, L, rr, a, resto) => { celdas.set(this.colNum(L), [L, a, resto]); return ''; });
+          filas.set(+r, [at, celdas]);
+          return '';
+        });
+        Object.keys(pinta).forEach(rc => {
+          const [r, c] = rc.split(':').map(Number);
+          if (!filas.has(r)) filas.set(r, ['', new Map()]);
+          const celdas = filas.get(r)[1], cel = celdas.get(c) || [this.colLet(c), '', '/>'];
+          const s = (cel[1].match(/ s="(\d+)"/) || [])[1];
+          cel[1] = cel[1].replace(/ s="\d+"/, '') + ' s="' + estilo(s !== undefined ? xfs[+s] || 0 : 0, pinta[rc]) + '"';
+          celdas.set(c, cel);
+        });
+        const sd = [...filas.keys()].sort((a, b) => a - b).map(r => {
+          const [at, celdas] = filas.get(r);
+          return '<row r="' + r + '"' + at + '>' + [...celdas.keys()].sort((a, b) => a - b).map(c => { const [L, a, resto] = celdas.get(c); return '<c r="' + L + r + '"' + a + resto; }).join('') + '</row>';
+        }).join('');
+        xml = xml.replace(m[0], () => '<sheetData>' + sd + '</sheetData>');
+      }
+      const fj = ws['!fijar'];
+      if (fj && (fj.x || fj.y)) {
+        const tl = this.colLet((fj.x || 0) + 1) + ((fj.y || 0) + 1), act = fj.x && fj.y ? 'bottomRight' : (fj.y ? 'bottomLeft' : 'topRight');
+        const pane = '<pane' + (fj.x ? ' xSplit="' + fj.x + '"' : '') + (fj.y ? ' ySplit="' + fj.y + '"' : '') + ' topLeftCell="' + tl + '" activePane="' + act + '" state="frozen"/><selection pane="' + act + '" activeCell="' + tl + '" sqref="' + tl + '"/>';
+        xml = xml.replace(/<sheetView ([^>]*?)\/>/, '<sheetView $1>' + pane + '</sheetView>');
+      }
+      poner(e, xml);
+    });
+    if (nuevos.length) agregar('cellXfs', nuevos);
+    poner(se, st);
   }
 
   descargar(name, bytes) {
@@ -4296,6 +4382,8 @@ class Component extends DCLogic {
       const errs = r.errs.length ? [head].concat(r.errs.map(e => [e.k, e.comp, e.ter, e.det, e.imp])) : [['Sin errores ni diferencias.']];
       const ws = X.utils.aoa_to_sheet(res.concat([[]], errs));
       ws['!cols'] = [{ wch: 30 }, { wch: 34 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
+      ws['!pinta'] = [[0, 0, res.length - 1, 0, 'lbl']];
+      if (r.errs.length) this.pintarTitulos(ws, res.length + 1, head.length);
       const wb = X.utils.book_new();
       // Con el reporte completo guardado: primero la hoja del modelo (una fila por clave), después el resumen y los errores.
       const b = r.rep ? await this.bloqueDe({ runId: r.runId, n: r.n }) : null;
@@ -4325,6 +4413,10 @@ class Component extends DCLogic {
       w1['!cols'] = [{ wch: 30 }, { wch: 44 }, { wch: 10 }, { wch: 22 }, { wch: 17 }, { wch: 14 }, { wch: 26 }, { wch: 11 }, { wch: 12 }, { wch: 9 }];
       const w2 = X.utils.aoa_to_sheet(errs);
       w2['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 44 }, { wch: 28 }, { wch: 30 }, { wch: 36 }, { wch: 80 }, { wch: 16 }];
+      this.pintarTitulos(w1, 0, res[0].length);
+      this.pintarTitulos(w2, 0, errs[0].length);
+      w1['!autofilter'] = { ref: 'A1:' + this.colLet(res[0].length) + res.length };
+      if (errs[1].length > 1) w2['!autofilter'] = { ref: 'A1:' + this.colLet(errs[0].length) + errs.length };
       X.utils.book_append_sheet(wb, w1, 'Resumen');
       X.utils.book_append_sheet(wb, w2, 'Errores');
       const clis = [...new Set(rows.map(r => r.cliente))];
@@ -4343,6 +4435,8 @@ class Component extends DCLogic {
       const head = ['Cruce', 'Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia'];
       const ws = X.utils.aoa_to_sheet([[v.title], [v.sub], [], head].concat(v.rows.map(e => [e.cruce, e.k, e.comp, e.ter, e.det, e.imp])));
       ws['!cols'] = [{ wch: 34 }, { wch: 30 }, { wch: 30 }, { wch: 40 }, { wch: 90 }, { wch: 16 }];
+      ws['!pinta'] = [[0, 0, 0, 0, 'tit'], [1, 0, 1, 0, 'sub']];
+      this.pintarTitulos(ws, 3, head.length);
       const wb = X.utils.book_new();
       const b = await this.bloqueDe(v.src);
       if (b) X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
@@ -4905,6 +4999,7 @@ class Component extends DCLogic {
       // Tipos de Tango y otros: NC1 / ND2 / FA1… → NC / ND / FC.
       const tf = tipoTxt.toUpperCase().replace(/\s+/g, ' ');
       if (/^(NC|ND|FC|FA|FAC)\d+$/.test(tf)) tipoTxt = { NC: 'NC', ND: 'ND', FC: 'FC', FA: 'FC', FAC: 'FC' }[tf.replace(/\d+$/, '')];
+      else if (letra && /^(NC|ND|FC)[A-CM]$/.test(tf) && tf.slice(-1) === letra) tipoTxt = tf.slice(0, 2);   // NDB, NCA… con la letra repetida (Tango)
       let t = this.tipoLibro(tipoTxt, letra);
       // Despachos de importación (Aduana): letra I o número de despacho.
       if (letra === 'I' || /DESPACHO|IMPORTACION/.test(this.fold(tipoTxt).toUpperCase())) t = { tc: 'DI', letra: '' };
@@ -4920,7 +5015,7 @@ class Component extends DCLogic {
       let rate = C.porc >= 0 && g('porc') !== null && g('porc') !== '' ? num(String(g('porc')).replace('%', '')) : null;
       if (rate !== null && rate > 0 && rate < 1) rate = r2(rate * 100);
       G.neto += neto;
-      if (rate === null) { if (iva) G.ivaSin += iva; }
+      if (rate === null || (rate === 0 && iva)) { if (iva) { G.ivaSin += iva; rate = null; } }   // alícuota 0 con IVA: se deduce del importe
       else if (rate > 0 && !STD.includes(rate)) G.piva += iva;            // 3 %, 1,5 %…: percepción de IVA (Tango)
       else if (rate > 0) G.iva[rate] = (G.iva[rate] || 0) + iva;
       if (Math.abs(neto) > Math.abs(G.mainN)) { G.mainN = neto; G.mainR = rate; }
@@ -4963,6 +5058,52 @@ class Component extends DCLogic {
     return out;
   }
 
+  // ===== Lanes (tablas exportadas de su base: fecha, ncomp, razonsoci, neto21, impuesto2_… / iifglfein, leftformu, iifformul…) =====
+  // Compras: un neto y un IVA por alícuota, sin tipo de comprobante (el signo dice si es nota de crédito) y el número con el punto
+  // de venta adelante (2500104273063 → 25001-04273063). Ventas: una fila por comprobante con su alícuota y el tipo en letras
+  // ("FACTURA A", "TICKET-NOTA CREDITO B"…). Se arma una tabla con títulos estándar y la lee convertirSubdiario.
+  convertirLanes(aoa, k) {
+    let hi = -1, keys = [];
+    for (let i = 0; i < Math.min(aoa.length, 10); i++) {
+      const ks = (aoa[i] || []).map(h => this.hkey(h));
+      if (ks.includes('razonsoci') && (ks.includes('ncomp') || ks.includes('iifformul'))) { hi = i; keys = ks; break; }
+    }
+    if (hi < 0) return null;
+    const c = (n) => keys.indexOf(n), txt = (v) => (v == null ? '' : String(v).trim()), num = (v) => this.numAr(v);
+    const head = ['Fecha', 'Tipo', 'Letra', 'Pto. Vta.', 'Número', 'Razón social', 'Condición IVA', 'CUIT', 'Neto 21', 'IVA 21', 'Neto 10.5', 'IVA 10.5', 'Neto 27', 'IVA 27',
+      'Neto 0', 'Neto 2.5', 'IVA 2.5', 'Neto 5', 'IVA 5', 'Importe exento', 'Importe no gravado', 'Exportación', 'Percepciones IVA', 'Percepciones IIBB',
+      'Otras percepciones', 'Otros regímenes especiales', 'Compras monotributo', 'Total'];
+    const out = [head];
+    const pvNro = (v) => { const d = txt(v).replace(/\D/g, ''); return [+(d.slice(0, -8) || 0), +(d.slice(-8) || 0)]; };
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [], g = (n) => (c(n) >= 0 ? num(r[c(n)]) : 0);
+      if (k === 'compras') {
+        if (!this.fechaTxt(r[c('fecha')])) continue;
+        const resp = txt(r[c('tiporesp')]).toUpperCase(), [pv, nro] = pvNro(r[c('ncomp')]), tot = g('total');
+        // RI → A; monotributo / exento → C; exterior (Aduana) → despacho de importación.
+        const letra = resp === 'RI' ? 'A' : (/^(RMON|MON|SE|EX)$/.test(resp) ? 'C' : (resp === 'EXP' ? 'I' : ''));
+        const cond = { RI: 'RI', RMON: 'MT', MON: 'MT', SE: 'EX', EX: 'EX' }[resp] || '';
+        out.push([r[c('fecha')], tot < 0 ? 'NC' : 'FC', letra, pv, nro, txt(r[c('razonsoci')]), cond, txt(r[c('cuit')]),
+          g('neto21'), g('impuesto2'), g('neto105'), g('impuesto12'), g('neto27'), g('impuesto22'), g('neto19') + g('neto95') + g('impuesto1_') + g('impuesto9'),
+          g('neto25'), g('impuesto23'), g('neto5'), g('impuesto5'), 0, g('impnoim') + g('varios'), 0, g('percepi'), g('percep'), 0, 0, g('otros'), tot]);   // "otros": compras a exentos y monotributistas, como en el conversor
+      } else {
+        if (!this.fechaTxt(r[c('iifglfein')])) continue;
+        const tf = this.fold(txt(r[c('leftformu')])).toUpperCase(), [pv, nro] = pvNro(r[c('iifformul')]);
+        const tipo = /CREDITO|DEVOLUCION/.test(tf) ? 'NC' : (/DEBITO/.test(tf) ? 'ND' : 'FC');
+        const m = tf.match(/\s([A-EM])$/), letra = m ? m[1] : 'B';   // tickets sin letra: consumidor final
+        const ali = num(r[c('alic')]), neto = g('neto'), iva = g('ivainsc') + g('ivanoins'), A = { 21: [0, 0], 10.5: [0, 0], 27: [0, 0], 2.5: [0, 0], 5: [0, 0] };
+        let n0 = 0;
+        if (A[ali]) A[ali] = [neto, iva]; else n0 = neto;
+        // "otros": en la factura E es la exportación; en el resto, otros regímenes.
+        const exp = letra === 'E' ? g('otros') : 0, oreg = letra === 'E' ? 0 : g('otros');
+        out.push([r[c('iifglfein')], tipo, letra, pv, nro, txt(r[c('razonsoci')]), txt(r[c('tiporesp')]), txt(r[c('cuit')]),
+          A[21][0], A[21][1], A[10.5][0], A[10.5][1], A[27][0], A[27][1], n0, A[2.5][0], A[2.5][1], A[5][0], A[5][1], 0, 0, exp,
+          g('percepiv'), g('percepib'), 0, oreg, 0, g('total')]);
+      }
+    }
+    return out.length > 1 ? this.convertirSubdiario(out, k) : null;
+  }
+
   // ===== SAP (reporte "Libro IVA Compras / Ventas" exportado a Excel) =====
   // Viene sin títulos arriba: los datos arrancan en la primera fila y los títulos quedan al pie, corridos una columna
   // ("Neto Total", "Exento Total", "21.00%"… "Total"). Cada fila trae un solo neto y el IVA separado por alícuota:
@@ -4972,28 +5113,60 @@ class Component extends DCLogic {
     const esComp = (v) => /^[A-Z]\s*\d{1,5}\s*-\s*\d{1,8}$/.test(txt(v).toUpperCase());
     const datos = aoa.filter(r => r && this.fechaTxt(r[0]) && /^[A-Z]{1,4}\d?$/.test(txt(r[1]).toUpperCase()) && esComp(r[2]));
     if (!datos.length) return null;
-    // Títulos al pie: ubican cada importe. Si no están, se usa el orden estándar del reporte.
-    const TIT = [['neto', /^neto total$/], ['exe', /^exento total$/], ['i21', /^21[.,]00 ?%$/], ['i27', /^27[.,]00 ?%$/], ['i105', /^10[.,]50 ?%$/],
-      ['i5', /^5[.,](00|25) ?%$/], ['i25', /^2[.,]50 ?%$/], ['nod', /^no\.? ?d\.?$/], ['piva', /^percep\.? iva$/], ['piibb', /^percep\.? i\.?b\.?$/],
-      ['pgan', /^percep\.? iigg$/], ['potr', /^ot\.? ?percep\.?$/], ['tot', /^total$/]];
-    const fila = aoa.find(r => r && r.some(c => /^neto total$/i.test(txt(c))) && r.some(c => /^total$/i.test(txt(c))));
+    // Títulos: al pie en Libro IVA Compras ("Neto Total", "21.00%"…) o arriba en Libro IVA Ventas ("Importe Neto", "IVA 21"…).
+    // Los datos vienen corridos respecto de los títulos (y a veces con columnas vacías en el medio), así que cada título se
+    // ubica por orden entre las columnas con importes y, si el reporte trae la fila "TOTAL GRAL", por la suma de su columna.
+    const TIT = [['neto', /^(neto total|importe neto)$/], ['exe', /^(exento total|neto exento)$/], ['i21', /^(21[.,]00 ?%|iva 21)$/], ['i27', /^(27[.,]00 ?%|iva 27)$/],
+      ['i105', /^(10[.,]50 ?%|iva 10[.,]5)$/], ['i5', /^(5[.,](00|25) ?%|iva 5)$/], ['i25', /^(2[.,]50 ?%|iva 2[.,]5)$/], ['nod', /^no\.? ?d\.?$/], ['piva', /^percep\.? iva$/],
+      ['piibb', /^percep\.? (i\.?b\.?|iibb)$/], ['pgan', /^percep\.? iigg$/], ['potr', /^ot\.? ?percep\.?$/], ['exp', /^exp(ortacion)?$/], ['tot', /^total$/]];
+    const cuadra = (P) => datos.filter(r => {
+      const g = (key) => (P[key] === undefined ? 0 : num(r[P[key]]));
+      return Math.abs(g('tot') - TIT.slice(0, -1).reduce((a, [key]) => a + g(key), 0)) <= 1;
+    }).length;
+    // CUIT: primera columna después del comprobante que tiene CUITs (en Ventas viene más a la derecha que su título).
+    let cc = 5;
+    for (let c = 3; c < 12; c++) if (datos.filter(r => /^\d{2}-?\d{8}-?\d$/.test(txt(r[c]))).length >= datos.length * 0.5) { cc = c; break; }
+    const fila = aoa.find(r => r && r.some(c => /^(neto total|importe neto)$/i.test(txt(c))) && r.some(c => /^total$/i.test(txt(c))));
     let pos = null;
     if (fila) {
-      const tp = {};
-      TIT.forEach(([key, re]) => { const i = fila.findIndex(c => re.test(this.fold(txt(c)))); if (i >= 0) tp[key] = i; });
-      // Corrimiento entre títulos y datos: el que hace que el total coincida con la suma de las partes.
-      const cuadra = (off) => datos.filter(r => {
-        const g = (key) => (tp[key] === undefined ? 0 : num(r[tp[key] + off]));
-        return Math.abs(g('tot') - TIT.slice(0, -1).reduce((a, [key]) => a + g(key), 0)) <= 1;
-      }).length;
-      const off = [1, 0, 2, -1].reduce((b, o) => (cuadra(o) > cuadra(b) ? o : b), 1);
-      if (tp.tot !== undefined && cuadra(off) >= datos.length * 0.8) { pos = {}; Object.keys(tp).forEach(key => { pos[key] = tp[key] + off; }); }
+      const tp = [];
+      TIT.forEach(([key, re]) => { const i = fila.findIndex(c => re.test(this.fold(txt(c)))); if (i >= 0) tp.push([key, i]); });
+      tp.sort((a, b) => a[1] - b[1]);
+      // Columnas con importes a la derecha del CUIT (las que en todas las filas están vacías no cuentan).
+      const ancho = Math.max(...datos.map(r => r.length));
+      const cols = [];
+      for (let c = cc + 1; c < ancho; c++) if (datos.some(r => typeof r[c] === 'number' || /^-?[\d.,]+$/.test(txt(r[c])))) cols.push(c);
+      if (tp.length && cols.length >= tp.length) {
+        const P = {}; tp.forEach(([key], i) => { P[key] = cols[i]; });
+        if (cols.length > tp.length) P.tot = cols[cols.length - 1];   // el total es la última columna con importes
+        // Fila "TOTAL GRAL" del pie: cada título con total distinto de cero va a la columna cuyos datos suman eso.
+        const iG = fila.findIndex(c => /^total gral\.?$/i.test(txt(c)));
+        if (iG >= 0) {
+          const suma = (c) => r2(datos.reduce((a, r) => a + num(r[c]), 0));
+          tp.forEach(([key], i) => {
+            const t = num(fila[iG + 1 + i]);
+            if (!t || key === 'tot') return;
+            const c = cols.find(x => Math.abs(suma(x) - t) <= 1);
+            if (c === undefined || P[key] === c) return;
+            const otro = Object.keys(P).find(x => P[x] === c);
+            if (otro) P[otro] = P[key];
+            P[key] = c;
+          });
+        }
+        if (cuadra(P) >= datos.length * 0.8) pos = P;
+      }
+      if (!pos) {
+        // Corrimiento fijo entre títulos y datos: el que hace que el total coincida con la suma de las partes.
+        const conOff = (off) => { const P = {}; tp.forEach(([key, i]) => { P[key] = i + off; }); return P; };
+        const off = [1, 0, 2, -1].reduce((b, o) => (cuadra(conOff(o)) > cuadra(conOff(b)) ? o : b), 1);
+        if (tp.some(([key]) => key === 'tot') && cuadra(conOff(off)) >= datos.length * 0.8) pos = conOff(off);
+      }
     }
     if (!pos) pos = { neto: 6, exe: 7, i21: 8, i27: 9, i105: 10, i5: 11, i25: 12, nod: 13, piva: 14, piibb: 15, pgan: 16, potr: 17, tot: 18 };
     const g = (r, key) => (pos[key] === undefined ? 0 : num(r[pos[key]]));
     const RATES = [['21', 0.21, 'i21'], ['27', 0.27, 'i27'], ['105', 0.105, 'i105'], ['5', 0.05, 'i5'], ['25', 0.025, 'i25']];
     const head = ['Fecha', 'Tipo', 'Número', 'Razón social', 'Condición IVA', 'CUIT', 'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 27%', 'IVA 27%', 'Neto 0%',
-      'Neto 5%', 'IVA 5%', 'Neto 2.5%', 'IVA 2.5%', 'Importe Exento', 'Importe no gravado', 'Percepciones IVA', 'Percepciones IIBB', 'Otras Percepciones', 'Total'];
+      'Neto 5%', 'IVA 5%', 'Neto 2.5%', 'IVA 2.5%', 'Importe Exento', 'Importe no gravado', 'Exportación', 'Percepciones IVA', 'Percepciones IIBB', 'Otras Percepciones', 'Total'];
     const out = [head];
     datos.forEach(r => {
       const A = { n21: 0, i21: 0, n105: 0, i105: 0, n27: 0, i27: 0, n0: 0, n5: 0, i5: 0, n25: 0, i25: 0 };
@@ -5003,8 +5176,8 @@ class Component extends DCLogic {
       ivas.filter(x => x !== main).forEach(([a, t, v]) => { const n = r2(v / t); A['n' + a] = n; A['i' + a] = v; resto -= n; });
       if (main) { A['n' + main[0]] = r2(resto) || r2(main[2] / main[1]); A['i' + main[0]] = main[2]; }
       else if (r2(resto)) A.n0 = r2(resto);
-      out.push([r[0], txt(r[1]), txt(r[2]), txt(r[3]), txt(r[4]), txt(r[5]), A.n21, A.i21, A.n105, A.i105, A.n27, A.i27, A.n0, A.n5, A.i5, A.n25, A.i25,
-        g(r, 'exe'), g(r, 'nod'), g(r, 'piva'), g(r, 'piibb'), r2(g(r, 'pgan') + g(r, 'potr')), g(r, 'tot')]);
+      out.push([r[0], txt(r[1]), txt(r[2]), txt(r[3]), cc > 4 ? txt(r[4]) : '', txt(r[cc]), A.n21, A.i21, A.n105, A.i105, A.n27, A.i27, A.n0, A.n5, A.i5, A.n25, A.i25,
+        g(r, 'exe'), g(r, 'nod'), g(r, 'exp'), g(r, 'piva'), g(r, 'piibb'), r2(g(r, 'pgan') + g(r, 'potr')), g(r, 'tot')]);
     });
     return this.convertirSubdiario(out, k);
   }
@@ -5013,7 +5186,7 @@ class Component extends DCLogic {
     const LBL = this.UP_LBL;
     const aoa0 = this.leerHoja(bytes, X);
     // Subdiarios de Tango, SAP, Catedral, Lanes…: se pasan al formato Bejerman antes de leerlos.
-    const aoa = ((k === 'ventas' || k === 'compras') && (this.convertirSubdiario(aoa0, k) || this.convertirSAP(aoa0, k))) || aoa0;
+    const aoa = ((k === 'ventas' || k === 'compras') && (this.convertirLanes(aoa0, k) || this.convertirSubdiario(aoa0, k) || this.convertirSAP(aoa0, k))) || aoa0;
     const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
@@ -6310,7 +6483,7 @@ class Component extends DCLogic {
         uno('cCom'), uno('cRes')
       ];
       if (by.tdf || by.tcf) aoa.push([], ['Datos para la Declaración Jurada del Impuesto al Valor Agregado'], ['Concepto', 'Alícuota IVA', 'Monto', '', '', 'Monto', '', '', 'Monto', '', '', 'ESTADO', 'Criterio libros'], uno('tdf'), uno('tcf'));
-      return { cols: [44, 10, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60].map(wch => ({ wch })), aoa: aoa.filter(r => r !== null), headRow: 6, firstData: 7, money: [2, 3, 4, 5, 6, 7, 8, 9, 10] };
+      return { cols: [44, 10, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60].map(wch => ({ wch })), aoa: aoa.filter(r => r !== null), headRow: 6, grupo: 3, firstData: 7, money: [2, 3, 4, 5, 6, 7, 8, 9, 10] };
     }
     return null;
   }
@@ -6368,9 +6541,49 @@ class Component extends DCLogic {
       if (m) Object.assign(cell, { t: 'n', v: Math.round((Date.UTC(+m[3], +m[2] - 1, +m[1]) - Date.UTC(1899, 11, 30)) / 864e5), z: 'dd/mm/yyyy' }), delete cell.w;
     }));
     ws['!cols'] = b.cols;
-    ws['!freeze'] = { xSplit: 0, ySplit: b.headRow + 1 };
+    // Colores del modelo de Kairos (los aplica xlsxBytes): título, grupos en azul marino, títulos de columna por bloque
+    // (comprobante amarillo, libro celeste, ARCA verde, diferencias salmón), fila de TOTALES gris, filtros y paneles fijos.
+    const A = b.aoa, H = b.headRow, G = b.grupo != null ? b.grupo : H - 1, P = [], w = Math.max(...A.map(r => r.length));
+    const lleno = (v) => v !== '' && v != null, conTot = !!(A[H + 1] && A[H + 1][0] === 'TOTALES');
+    P.push([0, 0, 0, 0, 'tit'], [1, 0, 1, 0, 'sub']);
+    if (conTot && A[2]) A[2].forEach((v, c) => { if (lleno(v)) P.push([2, c, 2, c, typeof v === 'number' ? 'kpi' : 'lbl']); });
+    const ini = (A[G] || []).map((v, c) => (lleno(v) ? c : -1)).filter(c => c >= 0), merges = [];
+    const esObs = (c) => /^observaci/i.test(String((A[H] || [])[c] || ''));
+    let ult = w - 1;
+    while (ult > 0 && esObs(ult)) ult--;
+    const color = (c) => {
+      if (esObs(c)) return 'FFF2CC';
+      const gi = ini.filter(x => x <= c).length - 1, t = gi >= 0 ? String(A[G][ini[gi]]).toUpperCase() : '';
+      if (gi <= 0 || c > ult) return 'FFF2CC';
+      return /DIFERENCIA/.test(t) ? 'FCE4D6' : (/ARCA/.test(t) ? 'E2EFDA' : 'DDEBF7');
+    };
+    ini.forEach((c, i) => {
+      const fin = i < ini.length - 1 ? ini[i + 1] - 1 : Math.max(c, ult);
+      P.push([G, c, G, fin, 'grp']);
+      if (fin > c) merges.push({ s: { r: G, c }, e: { r: G, c: fin } });
+    });
+    // Filas de títulos de columna: la principal y, en el Cruce 6, cada fila "Concepto".
+    A.forEach((r, i) => {
+      if (!(i === H || (i > H && r && r[0] === 'Concepto'))) return;
+      for (let c = 0; c < r.length; c++) if (lleno(r[c])) P.push([i, c, i, c, 'h-' + color(c)]);
+    });
+    if (!conTot) A.forEach((r, i) => { if (i > G && r && r.length === 1 && lleno(r[0])) P.push([i, 0, i, 0, 'lbl']); });   // "Libro IVA Ventas"…
+    if (conTot) {
+      P.push([H + 1, 0, H + 1, w - 1, 'tot']);
+      if (A.length > H + 2) P.push([H + 2, 0, A.length - 1, 0, 'gris']);
+      ws['!autofilter'] = { ref: 'A' + (H + 1) + ':' + this.colLet(w) + Math.max(A.length, H + 2) };
+    }
+    if (merges.length) ws['!merges'] = (ws['!merges'] || []).concat(merges);
+    ws['!rows'] = [];
+    ws['!rows'][0] = { hpt: 17.25 };
+    ws['!rows'][H] = { hpt: 30 };
+    ws['!pinta'] = P;
+    ws['!fijar'] = { x: 0, y: conTot ? H + 2 : H + 1 };
     return ws;
   }
+
+  // Fila de títulos en azul (como el Excel del historial de liquidaciones): para las hojas de resumen y errores.
+  pintarTitulos(ws, fila, n) { ws['!pinta'] = (ws['!pinta'] || []).concat([[fila, 0, fila, n - 1, 'nav']]); ws['!fijar'] = { x: 0, y: fila + 1 }; return ws; }
 
   // Bloque con el reporte completo: el de la pantalla de cruces (función) o el guardado en Storage (historial).
   async bloqueDe(src) {
