@@ -754,8 +754,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 
 <sc-if value="{{ stepIs.p2 }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px">
-<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 2 — Carga de archivos</div>
+<div style="font:600 13.5px 'Open Sans';color:#1B2733">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }}</div>
 </div>
 <div style="display:flex;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 13px;background:#F4F9FD;border:1px solid #CFE2F0;border-radius:6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80B7" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
@@ -852,7 +853,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px">
 <div style="font:600 15.5px 'Open Sans'">Paso 3 — Cruces</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }} · {{ upCountLabel }}</div>
+<div style="font:600 13.5px 'Open Sans';color:#1B2733">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }} · {{ upCountLabel }}</div>
 </div>
 
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin:0 0 10px">Cruces del período</div>
@@ -974,7 +975,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:1000px">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:6px">
 <div style="font:600 15.5px 'Open Sans'">Paso 4 — Vista previa de la liquidación</div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }}</div>
+<div style="font:600 13.5px 'Open Sans';color:#1B2733">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }}</div>
 </div>
 <div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B">Así va a quedar la liquidación con los archivos cargados. Todavía no se guardó: revisala y, si hace falta, cargá ajustes antes de procesarla.</div>
 
