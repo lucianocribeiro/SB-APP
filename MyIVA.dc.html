@@ -3462,13 +3462,13 @@ class Component extends DCLogic {
     const rowsXml = [];
     rowsXml.push(`<row r="1" ht="48" customHeight="1">` + [cell('A1', ST.head, { t: 'Periodo' }), cell('B1', ST.head, { t: 'Secuencia' })]
       .concat(COLS.map(([o, h]) => cell(C(o) + '1', ST.head, { t: h }))).join('') + `</row>`);
-    // Fila "Saldo anterior": los saldos del período anterior al primero exportado, recalculados en cadena desde la DJ vigente
-    // (con sus compensaciones); si ese período no está en la app, los saldos que se cargaron a mano en el cruce 0.
-    const man0 = data[0] && data[0].n && data[0].n.a1 != null ? data[0].n : null;
+    // Fila "Saldo anterior": los saldos del período anterior al primero exportado.
+    // Prioridad: a1/a2 guardados al liquidar → DJ previa en la app → nada.
     const vivas = this.baseRows().filter(r => !(this.state.ddjjBorradas || {})[r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha]);
     const prev0 = data[0] ? this.saldosDj(vivas, data[0].cliente || cliente, this.perAnt(data[0].per)) : null;
-    // Si el usuario cargó a mano los saldos a favor anteriores (cruce 0), mandan esos; si no, los de la DJ anterior de la app.
-    const ant = man0 ? { s1: man0.a1, s2: man0.a2, comp: (prev0 && prev0.comp) || 0 } : (prev0 ? { s1: prev0.s1, s2: prev0.s2, comp: prev0.comp || 0 } : null);
+    const man0 = data[0] && data[0].n && data[0].n.a1 != null ? data[0].n : null;
+    const ant = man0 ? { s1: man0.a1, s2: man0.a2, comp: (prev0 && prev0.comp) || 0 }
+      : (prev0 ? { s1: prev0.s1, s2: prev0.s2, comp: prev0.comp || 0 } : null);
     const r2cells = [cell('A2', ST.head, { t: 'Saldo anterior' })];
     for (let n = 2; n <= this.colNum(lastCol); n++) {
       const L = this.colLet(n);
@@ -4238,8 +4238,14 @@ class Component extends DCLogic {
   }
 
   baseRows() {
-    const reales = [], vistos = new Set(), k = (r) => r.cliente + '|' + r.per + '|' + r.seq;
-    (this.state.liqsDb || []).forEach(r => { if (!vistos.has(k(r))) { vistos.add(k(r)); reales.push(r); } });
+    const reales = [], vistos = new Map(), k = (r) => r.cliente + '|' + r.per + '|' + r.seq;
+    const bor = this.state.ddjjBorradas || {};
+    // Si hay varias filas del mismo cliente/período/secuencia, preferir la vigente (no borrada).
+    (this.state.liqsDb || []).forEach(r => {
+      const key = k(r), i = vistos.get(key);
+      if (i === undefined) { vistos.set(key, reales.length); reales.push(r); return; }
+      if (bor[reales[i].id] && !bor[r.id]) reales[i] = r;
+    });
     return this._user ? reales : reales.concat(this.demoRows().filter(r => !vistos.has(k(r))));
   }
 
@@ -4270,13 +4276,19 @@ class Component extends DCLogic {
     const dj = seq === undefined ? djs.sort((a, b) => b.seq - a.seq)[0] : djs.find(r => r.seq === seq);
     if (!dj) return null;
     const prev = this.saldosDj(rows, cliente, this.perAnt(per), undefined, (prof || 0) + 1);
+    const comp = this.compSum(cliente, per, dj.seq);
+    // Los saldos guardados al liquidar ya incluyen el arrastre del período anterior (DJ previa o carga manual).
+    // El ojito, el historial y el Excel del resultado deben mostrar esos, no un recálculo del mes solo.
+    if (dj.n && Number.isFinite(dj.n.s1) && Number.isFinite(dj.n.s2)) {
+      return { dj, s1: r2(dj.n.s1), s2: r2(dj.n.s2), comp, prev };
+    }
     const man = !prev && dj.n && dj.n.a1 != null ? dj.n : null;   // saldos del período anterior ingresados a mano
     const p1 = prev ? prev.s1 : (man ? man.a1 : 0), p2 = prev ? r2(prev.s2 - prev.comp) : (man ? man.a2 : 0);
     const df = num(dj.df), rp = num(dj.rp);
     const cf = r2(num(dj.cf) - this.cfNoComp({ cf: num(dj.cf), ali: dj.n && dj.n.ali }));   // crédito fiscal computable
     const s1 = r2(p1 < 0 ? cf - df : cf - df + p1);
     const s2 = r2(p2 < 0 ? (s1 < 0 ? s1 + rp : rp) : (s1 < 0 ? p2 + s1 + rp : rp + p2));
-    return { dj, s1, s2, comp: this.compSum(cliente, per, dj.seq), prev };
+    return { dj, s1, s2, comp, prev };
   }
 
   arrastre(cli) {
@@ -7650,7 +7662,8 @@ class Component extends DCLogic {
         const fila = {
           id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
           df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
-          n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali }, arr.manual ? { a1: arr.manual.a1, a2: arr.manual.a2 } : {})
+          // a1/a2 = saldos a favor del período anterior usados en esta liquidación (manual o de la DJ previa).
+          n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali, a1: arr.manual ? arr.manual.a1 : arr.tec, a2: arr.manual ? arr.manual.a2 : arr.lib })
         };
         this.setState({ liqConfirm: false, step: 5, proc: 'run', liqRes: null, liqErrTxt: '' });
         (async () => {
