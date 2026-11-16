@@ -6039,7 +6039,9 @@ class Component extends DCLogic {
   pctProrr(r) { return ((1 - r) * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 5 }) + ' %'; }
 
   // Sin subdiario de IVA Ventas (LHS y similares): se liquida con Mis Comprobantes Emitidos de ARCA.
-  // Compras LHS: del mes, menos AFL anticipadas, más AFL tomadas en el mes siguiente.
+  // Compras LHS: del mes, menos AFL anticipadas, más AFL tomadas en el mes siguiente (sólo si el cliente es LHS).
+  esLhs(cli) { return /lhs/i.test(cli || this.liqCli()); }
+
   liqSub(k, R) {
     R = R || this.state.real || {};
     if (k === 'ventas') {
@@ -6049,6 +6051,10 @@ class Component extends DCLogic {
     }
     if (k === 'compras') {
       const base = R.compras && R.compras.recs ? R.compras.recs : [];
+      const hayAfl = (R.aflMenos && R.aflMenos.recs) || (R.aflMas && R.aflMas.recs);
+      if (!this.esLhs() || !hayAfl) {
+        return R.compras && R.compras.recs ? R.compras : { recs: [] };
+      }
       const key = (x) => [x.tc, x.letra, x.pv, x.nro, x.cuit].join('|');
       let recs = base.slice(), quitados = 0;
       if (R.aflMenos && R.aflMenos.recs) {
@@ -7159,11 +7165,12 @@ class Component extends DCLogic {
         bd: z ? '#E3E8EE' : '#C7E3D6'
       };
     });
-    const upDef = [
+    const cliUp = this.liqCli(), esLhs = /lhs/i.test(cliUp);
+    const upDefAll = [
       ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6 · si no hay, se liquida con Mis Comprobantes Emitidos', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
-      ['aflMenos', 'Compras AFL a restar (anticipadas)', '.xls / .xlsx', 'Opcional · LHS: se restan de IVA Compras al liquidar', 'iva0826 en 0926 AFL.xls', 'Compras del mes anterior tomadas anticipadas', 'El archivo debe ser el Excel de compras AFL a restar (mismo formato que el subdiario de compras).'],
-      ['aflMas', 'Compras AFL a sumar (diferidas)', '.xls / .xlsx', 'Opcional · LHS: se suman a IVA Compras al liquidar', 'iva0926 en 1026 AFL.xls', 'Compras del mes tomadas en el mes siguiente', 'El archivo debe ser el Excel de compras AFL a sumar (mismo formato que el subdiario de compras).'],
+      ['aflMenos', 'Compras AFL a restar (anticipadas)', '.xls / .xlsx', 'Sólo LHS · se restan de IVA Compras al liquidar', 'iva0826 en 0926 AFL.xls', 'Compras del mes anterior tomadas anticipadas', 'El archivo debe ser el Excel de compras AFL a restar (mismo formato que el subdiario de compras).'],
+      ['aflMas', 'Compras AFL a sumar (diferidas)', '.xls / .xlsx', 'Sólo LHS · se suman a IVA Compras al liquidar', 'iva0926 en 1026 AFL.xls', 'Compras del mes tomadas en el mes siguiente', 'El archivo debe ser el Excel de compras AFL a sumar (mismo formato que el subdiario de compras).'],
       ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2 · también sirve para liquidar si no hay IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
       ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
       ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4 · se pueden subir varios archivos', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
@@ -7171,6 +7178,8 @@ class Component extends DCLogic {
       ['ivadig', 'Libro IVA Digital (vista previa)', '.pdf / .jpg / .png', 'Opcional · cruce 6', 'CAZATUR_LIBRO_IVA_DIGITAL_082026.pdf', '120 KB · 1 página', 'El archivo debe ser la vista previa del Libro IVA Digital en PDF o en imagen (JPG, PNG).'],
       ['respaldo', 'Respaldo de la liquidación (opcional)', '.xls / .xlsx', 'No se usa en ningún cálculo: queda guardado con la liquidación y sale en su Excel', 'Papel de trabajo.xlsx', 'Formato libre', 'El respaldo tiene que ser un Excel (.xls / .xlsx).']
     ];
+    // AFL es particular de LHS: en SIOMAA y el resto no se muestran esos casilleros.
+    const upDef = upDefAll.filter(([k]) => esLhs || (k !== 'aflMenos' && k !== 'aflMas'));
     const upState = (k) => k === 'compras' ? s.dz : (s.up[k] || 'empty');
     const setUp = (k, v) => () => {
       if (k === 'compras') this.setState({ dz: v });
@@ -7676,7 +7685,19 @@ class Component extends DCLogic {
         })();
       },
       liqCli: cli, liqPer: perL, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
-      liqCliSet: (e) => this.setState({ liqCliSel: e.target.value, seqElegida: null }),
+      liqCliSet: (e) => {
+        const v = e.target.value;
+        this.setState(st => {
+          // Al salir de LHS se limpian los AFL para que no queden colgados en otro cliente (SIOMAA, etc.).
+          if (/lhs/i.test(v) || !(st.real && (st.real.aflMenos || st.real.aflMas))) return { liqCliSel: v, seqElegida: null };
+          return {
+            liqCliSel: v, seqElegida: null,
+            real: Object.assign({}, st.real, { aflMenos: null, aflMas: null }),
+            up: Object.assign({}, st.up, { aflMenos: 'empty', aflMas: 'empty' }),
+            upErr: Object.assign({}, st.upErr, { aflMenos: null, aflMas: null })
+          };
+        });
+      },
       ...this.periodoPicker(s),
       seqHead: cli + ' · ' + perL + ' ' + (liqDone.length ? 'ya tiene ' + (liqDone.length === 1 ? '1 secuencia liquidada' : liqDone.length + ' secuencias liquidadas') : 'no tiene secuencias liquidadas'),
       seqPrevTxt: this.seqTxt(s.liqSaved ? s.liqSeqN : seqLast), seqUltTxt: this.seqTxt(seqLast),
