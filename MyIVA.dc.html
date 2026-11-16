@@ -2690,7 +2690,7 @@ class Component extends DCLogic {
     comps: this.compsInit(), compBusy: false, compPdfErr: null,
     compCli: '', compPer: '', compMonto: '', compPdf: null,
     apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)), vencAnio: null, vencAniosExtra: [],
-    up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' },
+    up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' },
     real: {}, upErr: {}, upBusy: {},
     asign: {}, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' }, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}), cliFicha: this.lsGet('myiva.cliFicha', {}), fichaCli: null, ncEdit: null, ncGuardando: false,
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
@@ -3177,7 +3177,7 @@ class Component extends DCLogic {
   liqVacia() {
     return {
       step: 1, proc: 'run', dz: 'empty', real: {}, upErr: {}, upBusy: {}, cruSaved: false, liqErrTxt: '', liqAj: {},
-      up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' }
+      up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' }
     };
   }
   tset(k, v) { return () => this.setState({ [k]: v }); }
@@ -3675,7 +3675,7 @@ class Component extends DCLogic {
     };
     const celda = (v) => v instanceof Date ? this.fechaDe(v.toISOString(), false) : v;
     // Mismo orden que la pantalla de carga; lo que no esté en la lista va al final.
-    const ORDEN = ['ventas', 'compras', 'emitidos', 'recibidos', 'percep', 'aduana', 'ivadig', 'respaldo'];
+    const ORDEN = ['ventas', 'compras', 'aflMenos', 'aflMas', 'emitidos', 'recibidos', 'percep', 'aduana', 'ivadig', 'respaldo'];
     const pos = (n) => { const i = ORDEN.indexOf(n.split('__')[0]); return i < 0 ? ORDEN.length : i; };
     // Dentro de un mismo tipo, en el orden en que se subieron: "x.xlsx" antes que "x_2.xlsx".
     const nro = (n) => { const m = n.match(/^(.*?)(?:_(\d+))?(\.[a-z0-9]+)?$/); return [m[1] + (m[3] || ''), Number(m[2] || 1)]; };
@@ -4458,9 +4458,9 @@ class Component extends DCLogic {
 
   esComp(tc) { return this.TC_COMP.includes(tc) || this.TC_DESPACHO.includes(tc); }
 
-  PARSEABLES = ['ventas', 'compras', 'emitidos', 'recibidos'];
+  PARSEABLES = ['ventas', 'compras', 'aflMenos', 'aflMas', 'emitidos', 'recibidos'];
 
-  UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'Libro IVA Digital', respaldo: 'Respaldo de la liquidación' };
+  UP_LBL = { ventas: 'IVA Ventas', compras: 'IVA Compras', aflMenos: 'Compras AFL a restar', aflMas: 'Compras AFL a sumar', emitidos: 'Mis Comprobantes Emitidos', recibidos: 'Mis Comprobantes Recibidos', percep: 'Mis Retenciones', aduana: 'Mis Percepciones Aduaneras', ivadig: 'Libro IVA Digital', respaldo: 'Respaldo de la liquidación' };
 
   compTipos() {
     if (this._compT) return this._compT;
@@ -4876,7 +4876,7 @@ class Component extends DCLogic {
       ? this.setState({ toast: { kind: 'err', t: 'Revisá los ajustes', d: malos.map(([, l]) => l).join(', ') + ': el importe no es válido.' } })
       : this.setState({ liqConfirm: true });
     if (s.step !== 4) return { ajCampos, pvProcesar, pvKpis: [], pvSaldos: [], pvCalc: [], pvVentas: [], pvCompras: [], pvRet: [] };
-    const R = s.real || {}, sub = (k) => (R[k] && R[k].recs ? R[k] : { recs: [] });
+    const R = s.real || {}, sub = (k) => this.liqSub(k, R);
     const base = this.liqCalc(sub('ventas'), sub('compras'), arr), aj = this.liqAjVals(), pv = this.liqAjustar(base, aj, arr);
     const sd = (label, v) => v < 0 ? { label, value: m(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' } : { label, value: m(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const mas = (v, t) => (v ? (v > 0 ? ' + ' : ' − ') + t + ' ' + m(Math.abs(v)) : '');
@@ -4941,10 +4941,10 @@ class Component extends DCLogic {
     tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'codigo', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
     letra: ['letra', 'let', 'letracomprobante'],
     pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'suc', 'pventa'],
-    nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'referencia'],
+    nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'comproban', 'referencia'],
     cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil', 'n', 'no'],
-    nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente'],
-    cond: ['cativa', 'condiva', 'condicioniva', 'categoriaiva', 'sitiva', 'condicionfrentealiva', 'categoria'],
+    nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente', 'detalle'],
+    cond: ['cativa', 'condiva', 'condicioniva', 'categoriaiva', 'sitiva', 'condicionfrentealiva', 'categoria', 'condicion'],
     porc: ['porciva', 'alicuota', 'aliciva', 'alicuotaiva', 'tasaiva', 'porcentajeiva', 'tasa', 'porc'],
     exe: ['subtotalexentos', 'impexento', 'importeexento', 'exento', 'montoexento', 'exentas'],
     ngr: ['subtotalnogravados', 'impnogravado', 'importenogravado', 'nogravado', 'nogravadas', 'montonogravado'],
@@ -4954,7 +4954,7 @@ class Component extends DCLogic {
     neto: ['subtotalneto', 'impgravad', 'impneto', 'netogravado', 'impnetogravado', 'importegravado', 'importeneto', 'neto', 'gravado', 'baseimponible', 'netogravadototal'],
     iva: ['subtotaliva', 'iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
     iin: ['importeimpuestosinternos', 'impuestosinternos', 'impint', 'impinternos'],
-    piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos'],
+    piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos', 'percepcion'],
     piva: ['subtotalpercepciones', 'percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva'],
     potr: ['otraspercepciones', 'otrosimp', 'otrostributos', 'otrasperc'],
     oreg: ['otrosregimenesespeciales', 'regimenesespeciales', 'otrosimpuestos'],   // Catedral: "Otros Impuestos", como en su conversor
@@ -4989,16 +4989,18 @@ class Component extends DCLogic {
       const fecha = this.fechaTxt(g('fecha'));
       if (!fecha) continue;   // totales y filas vacías
       // Número: "A0000300016739" (Tango: letra + punto de venta + número), "0003-00016739", "A-0003-00016739"…
+      // LHS / AFL: "FC-A-000300000054" / "FP-A-001000000026" (tipo-letra-pv+nro en una sola columna "comproban").
       let letra = txt(g('letra')).toUpperCase(), pv = num(g('pv')), nro = 0, tipoTxt = txt(g('tipo'));
       const nt = txt(g('nro')).toUpperCase();
-      let m = nt.match(/^([A-Z])\s*-?\s*(\d{1,5})\s*-?\s*(\d{1,8})$/) || nt.match(/^([A-Z])(\d{5})(\d{8})$/);
-      if (m) { if (!letra) letra = m[1]; if (!pv) pv = +m[2]; nro = +m[3]; }
+      let m = nt.match(/^(FC|NC|ND|FA|FAC|FP|TK|RC|FCE|NCE|NDE)\s*-?\s*([A-Z])\s*-?\s*(\d{4,5})(\d{8})$/);
+      if (m) { if (!tipoTxt) tipoTxt = m[1]; if (!letra) letra = m[2]; if (!pv) pv = +m[3]; nro = +m[4]; }
+      else if ((m = nt.match(/^([A-Z])\s*-?\s*(\d{1,5})\s*-?\s*(\d{1,8})$/) || nt.match(/^([A-Z])(\d{5})(\d{8})$/))) { if (!letra) letra = m[1]; if (!pv) pv = +m[2]; nro = +m[3]; }
       else if ((m = nt.match(/^(\d{1,5})\s*-\s*(\d{1,8})$/))) { if (!pv) pv = +m[1]; nro = +m[2]; }
       else if (/^[A-Z]/.test(nt) && !letra) { letra = nt[0]; nro = +(nt.replace(/\D/g, '').slice(-8) || 0); }
       else nro = +(nt.replace(/\D/g, '').slice(-8) || 0);
-      // Tipos de Tango y otros: NC1 / ND2 / FA1… → NC / ND / FC.
+      // Tipos de Tango y otros: NC1 / ND2 / FA1… → NC / ND / FC. FP (LHS) se toma como FC.
       const tf = tipoTxt.toUpperCase().replace(/\s+/g, ' ');
-      if (/^(NC|ND|FC|FA|FAC)\d+$/.test(tf)) tipoTxt = { NC: 'NC', ND: 'ND', FC: 'FC', FA: 'FC', FAC: 'FC' }[tf.replace(/\d+$/, '')];
+      if (/^(NC|ND|FC|FA|FAC|FP|FCE|NCE|NDE)\d*$/.test(tf) || /^(FC|NC|ND|FA|FAC|FP|FCE|NCE|NDE)$/.test(tf)) tipoTxt = { NC: 'NC', ND: 'ND', FC: 'FC', FA: 'FC', FAC: 'FC', FP: 'FC', FCE: 'FC', NCE: 'NC', NDE: 'ND' }[tf.replace(/\d+$/, '')] || tipoTxt;
       else if (letra && /^(NC|ND|FC)[A-CM]$/.test(tf) && tf.slice(-1) === letra) tipoTxt = tf.slice(0, 2);   // NDB, NCA… con la letra repetida (Tango)
       let t = this.tipoLibro(tipoTxt, letra);
       // Despachos de importación (Aduana): letra I o número de despacho.
@@ -5183,10 +5185,10 @@ class Component extends DCLogic {
   }
 
   parseComprobantes(k, name, bytes, X) {
-    const LBL = this.UP_LBL;
+    const LBL = this.UP_LBL, kLib = (k === 'aflMenos' || k === 'aflMas') ? 'compras' : k;
     const aoa0 = this.leerHoja(bytes, X);
-    // Subdiarios de Tango, SAP, Catedral, Lanes…: se pasan al formato Bejerman antes de leerlos.
-    const aoa = ((k === 'ventas' || k === 'compras') && (this.convertirLanes(aoa0, k) || this.convertirSubdiario(aoa0, k) || this.convertirSAP(aoa0, k))) || aoa0;
+    // Subdiarios de Tango, SAP, Catedral, Lanes, LHS…: se pasan al formato Bejerman antes de leerlos.
+    const aoa = ((kLib === 'ventas' || kLib === 'compras') && (this.convertirLanes(aoa0, kLib) || this.convertirSubdiario(aoa0, kLib) || this.convertirSAP(aoa0, kLib))) || aoa0;
     const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
@@ -5200,7 +5202,7 @@ class Component extends DCLogic {
     if (has('tc') && has('letra') && has('totalcomprobante')) kind = has('comprasaexentosmonotributistasyotros') ? 'compras' : (has('importeoperacionesexportacion') ? 'ventas' : (/compra/.test(titulo) ? 'compras' : (/venta/.test(titulo) ? 'ventas' : null)));
     else if (has('puntodeventa') && (has('imptotal') || has('importetotal'))) kind = (has('nrodocemisor') || /recibid/.test(titulo)) ? 'recibidos' : ((has('nrodocreceptor') || /emitid/.test(titulo)) ? 'emitidos' : null);
     if (!kind) throw new Error('Las columnas no corresponden a un subdiario de IVA Ventas / Compras ni a Mis Comprobantes de ARCA.');
-    if (kind !== k) throw new Error('El archivo parece ser ' + LBL[kind] + '. Cargalo en el casillero "' + LBL[kind] + '".');
+    if (kind !== kLib) throw new Error('El archivo parece ser ' + LBL[kind] + '. Cargalo en el casillero "' + LBL[kind] + '".');
     const col = (...ns) => { for (const n of ns) { const i = keys.indexOf(n); if (i >= 0) return i; } return -1; };
     const libro = kind === 'ventas' || kind === 'compras';
     const C = {}, def = libro ? {
@@ -6036,6 +6038,38 @@ class Component extends DCLogic {
 
   pctProrr(r) { return ((1 - r) * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 5 }) + ' %'; }
 
+  // Sin subdiario de IVA Ventas (LHS y similares): se liquida con Mis Comprobantes Emitidos de ARCA.
+  // Compras LHS: del mes, menos AFL anticipadas, más AFL tomadas en el mes siguiente.
+  liqSub(k, R) {
+    R = R || this.state.real || {};
+    if (k === 'ventas') {
+      if (R.ventas && R.ventas.recs) return R.ventas;
+      if (R.emitidos && R.emitidos.recs && !R.emitidos.attach) return Object.assign({}, R.emitidos, { kind: 'ventas', desde: 'emitidos' });
+      return { recs: [] };
+    }
+    if (k === 'compras') {
+      const base = R.compras && R.compras.recs ? R.compras.recs : [];
+      const key = (x) => [x.tc, x.letra, x.pv, x.nro, x.cuit].join('|');
+      let recs = base.slice(), quitados = 0;
+      if (R.aflMenos && R.aflMenos.recs) {
+        const quitar = new Set(R.aflMenos.recs.map(key));
+        const n0 = recs.length;
+        recs = recs.filter(x => !quitar.has(key(x)));
+        quitados = n0 - recs.length;
+      }
+      const sumados = (R.aflMas && R.aflMas.recs) ? R.aflMas.recs : [];
+      if (sumados.length) recs = recs.concat(sumados);
+      if (!base.length && !sumados.length) return { recs: [] };
+      return {
+        recs, kind: 'compras', desde: 'afl',
+        name: [R.compras && R.compras.name, quitados ? '−' + quitados + ' AFL anticipadas' : '', sumados.length ? '+' + sumados.length + ' AFL diferidas' : ''].filter(Boolean).join(' · '),
+        quitados, sumados: sumados.length
+      };
+    }
+    if (R[k] && R[k].recs) return R[k];
+    return { recs: [] };
+  }
+
   liqCalc(ventas, compras, arr) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
@@ -6190,7 +6224,7 @@ class Component extends DCLogic {
       data.size = kb;
       Object.defineProperty(data, 'file', { value: f, enumerable: false });
       this.setState(st => {
-        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
+        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
         const base = Object.assign({}, st, reset);
         return Object.assign(reset, setKind(base, 'loaded'), {
           real: Object.assign({}, st.real, { [k]: data }),
@@ -6231,7 +6265,7 @@ class Component extends DCLogic {
       Object.defineProperty(data, 'partes', { value: partes, enumerable: false });
       Object.defineProperty(data, 'files', { value: partes.map(p => p.file), enumerable: false });
       this.setState(st => {
-        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
+        const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
         return Object.assign(reset, {
           up: Object.assign({}, reset.up, { [k]: 'loaded' }),
           real: Object.assign({}, st.real, { [k]: data }),
@@ -7100,13 +7134,15 @@ class Component extends DCLogic {
     const stepDef = [[1, 'Cliente y período'], [2, 'Carga de archivos'], [3, 'Cruces'], [4, 'Vista previa'], [5, 'Procesamiento']];
     const cru = this.cruRun();
     const perL = this.perLiq(), arr = this.arrastre(this.liqCli()), prevPagar = arr.pagar;
-    const RL = s.real || {};
-    const fpV = RL.ventas && RL.ventas.recs ? this.fueraPeriodo(RL.ventas, 'igual') : [];
-    const fpC = RL.compras && RL.compras.recs ? this.fueraPeriodo(RL.compras, 'hasta') : [];
+    const RL = s.real || {}, subLiq = (k) => this.liqSub(k, RL);
+    const ventasLiq = subLiq('ventas'), comprasLiq = subLiq('compras');
+    const fpV = ventasLiq.recs.length ? this.fueraPeriodo(ventasLiq, 'igual') : [];
+    const fpC = comprasLiq.recs.length ? this.fueraPeriodo(comprasLiq, 'hasta') : [];
     const fpCant = (n) => n + (n === 1 ? ' comprobante' : ' comprobantes');
     const vEst = this.vencEstado(perL, this.cuitCli(this.liqCli()));
-    const sinSub = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !(RL[k] && RL[k].recs)).map(([, l]) => l);
-    const fpTxt = [fpV.length ? 'IVA Ventas tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
+    const usaEmitidos = !!(ventasLiq.desde === 'emitidos');
+    const sinSub = [['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']].filter(([k]) => !(subLiq(k).recs || []).length).map(([, l]) => l);
+    const fpTxt = [fpV.length ? (usaEmitidos ? 'Mis Comprobantes Emitidos' : 'IVA Ventas') + ' tiene ' + fpCant(fpV.length) + ' de otro período' : '', fpC.length ? 'IVA Compras tiene ' + fpCant(fpC.length) + (fpC.length === 1 ? ' posterior' : ' posteriores') + ' al período' : ''].filter(Boolean).join(' e ');
     const fpEj = fpV.concat(fpC).slice(0, 3).map(x => this.compTxt(x) + ' del ' + x.fecha).join(', ');
     const sinArr = arr.sinDj ? 'Ingresado a mano · ' + (arr.pagar ? 'sin saldo a favor' : 'se traslada a ' + perL) : '';
     const prevSaldos = [
@@ -7124,9 +7160,11 @@ class Component extends DCLogic {
       };
     });
     const upDef = [
-      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
+      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6 · si no hay, se liquida con Mis Comprobantes Emitidos', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
-      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
+      ['aflMenos', 'Compras AFL a restar (anticipadas)', '.xls / .xlsx', 'Opcional · LHS: se restan de IVA Compras al liquidar', 'iva0826 en 0926 AFL.xls', 'Compras del mes anterior tomadas anticipadas', 'El archivo debe ser el Excel de compras AFL a restar (mismo formato que el subdiario de compras).'],
+      ['aflMas', 'Compras AFL a sumar (diferidas)', '.xls / .xlsx', 'Opcional · LHS: se suman a IVA Compras al liquidar', 'iva0926 en 1026 AFL.xls', 'Compras del mes tomadas en el mes siguiente', 'El archivo debe ser el Excel de compras AFL a sumar (mismo formato que el subdiario de compras).'],
+      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2 · también sirve para liquidar si no hay IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
       ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
       ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4 · se pueden subir varios archivos', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
       ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional · cruce 5', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
@@ -7557,17 +7595,20 @@ class Component extends DCLogic {
       cruRep: cru.reales.length ? () => this.descargarReporte(cru.reales.map(f => f()), cli) : this.showToast('ok', 'Reporte de diferencias descargado', 'Se generó el Excel con el detalle de diferencias y faltantes.'),
       cruInc: cru.inc, cruIncCount: cru.inc.length > 0,
       cruIncLabel: cru.inc.length === 1 ? '1 incidencia encontrada' : cru.inc.length + ' incidencias encontradas',
-      liqConfirm: s.liqConfirm, liqSinSub: !!sinSub.length,
+      liqConfirm: s.liqConfirm, liqSinSub: !!sinSub.length || usaEmitidos,
       liqVencida: !!(vEst && vEst.vencida),
       liqVencidaTxt: vEst && vEst.vencida ? 'El vencimiento de ' + perL + ' para ' + cli + ' fue el ' + vEst.f + ' (hace ' + -vEst.dias + (vEst.dias === -1 ? ' día' : ' días') + '): la declaración jurada se presenta fuera de término.' : '',
-      liqSinSubTxt: sinSub.length === 2 ? 'No se cargaron IVA Ventas ni IVA Compras: débito fiscal, crédito fiscal y retenciones y percepciones se liquidan en 0.' : (sinSub.length ? 'No se cargó ' + sinSub[0] + ': sus importes se liquidan en 0.' : ''),
+      liqSinSubTxt: usaEmitidos && !sinSub.length ? 'No hay subdiario de IVA Ventas: el débito fiscal se liquida con Mis Comprobantes Emitidos de ARCA (' + ventasLiq.recs.length + ' comprobantes).'
+        : (sinSub.length === 2 ? 'No se cargaron IVA Ventas ni IVA Compras: débito fiscal, crédito fiscal y retenciones y percepciones se liquidan en 0.'
+          : (sinSub.length === 1 && sinSub[0] === 'IVA Ventas' && RL.emitidos && RL.emitidos.recs ? 'No se cargó IVA Ventas: se usa Mis Comprobantes Emitidos. Falta IVA Compras: su crédito fiscal se liquida en 0.'
+            : (sinSub.length ? 'No se cargó ' + sinSub[0] + ': sus importes se liquidan en 0.' : ''))),
       liqFueraPer: !!fpTxt, liqFueraPerTxt: fpTxt ? 'No se va a poder liquidar ' + perL + ': ' + fpTxt + '. Corregí los subdiarios antes de procesar.' : '',
       openLiqConfirm: () => this.setState({ liqConfirm: true }),
       ...this.pvVals(arr),
       liqConfirmOk: () => {
         if (seqPisa || seqSel === null) return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Esa secuencia está cerrada', d: 'Una DDJJ cerrada no se puede sobrescribir. Para rectificar ' + cli + ' · ' + perL + ', generá la secuencia siguiente.' } });
         const pisadas = seqPisaBorr ? seqFilas : [];
-        const R = this.state.real || {}, sub = k => R[k] && R[k].recs ? R[k] : { recs: [] };
+        const R = this.state.real || {}, sub = k => this.liqSub(k, R);
         const fin = (proc) => setTimeout(() => { if (this.state.step === 5 && this.state.proc === 'run') this.setState({ proc }); }, 1400);
         if (fpTxt) {
           this.setState({
@@ -7577,8 +7618,9 @@ class Component extends DCLogic {
           return fin('error');
         }
         const ahora = this.ahora();
-        // Sin IVA Ventas / IVA Compras se liquida con sus importes en 0.
+        // Sin IVA Ventas se usa Mis Comprobantes Emitidos (LHS). Sin IVA Compras, crédito fiscal en 0.
         const res = Object.assign(this.liqAjustar(this.liqCalc(sub('ventas'), sub('compras'), arr), this.liqAjVals(), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        if (sub('ventas').desde === 'emitidos') res.ali.ventasDe = 'emitidos';
         // Se guarda si se liquidó en término o vencida (va junto a las alícuotas de la liquidación).
         res.ali.ivadig = R.ivadig && R.ivadig.name ? R.ivadig.name : null;
         const ve = this.vencEstado(perL, this.cuitCli(cli), res.fecha);
