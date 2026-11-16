@@ -1072,8 +1072,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 
 <sc-if value="{{ stepIs.p5 }}">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:20px;max-width:760px">
-<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:8px">
 <div style="font:600 15.5px 'Open Sans'">Paso 5 — Procesamiento</div>
+<div style="font:600 13.5px 'Open Sans';color:#1B2733">{{ liqCli }} · {{ liqPer }} · {{ seqCurTxt }}</div>
 </div>
 <sc-if value="{{ procIs.run }}">
 <div style="padding:34px 4px;display:flex;flex-direction:column;align-items:center;gap:16px">
@@ -3595,7 +3596,10 @@ class Component extends DCLogic {
       + fmts.map((z, i) => `<xf numFmtId="${170 + i}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`).join('')
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
     // Hojas extra (archivos crudos): sheet2.xml en adelante; rId2 queda para styles.
-    const ex = extras.map((e, i) => ({ n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS, estiloDe) }));
+    const ex = extras.map((e, i) => {
+      const misComp = /\bEmitidos\b|\bRecibidos\b/i.test(e.name);
+      return { n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS, estiloDe, misComp ? ['A1:AD1'] : null) };
+    });
     const ovr = (n) => `<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
     const files = [
       ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${ovr(1)}${ex.map(e => ovr(e.n)).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
@@ -3629,7 +3633,7 @@ class Component extends DCLogic {
     return out;
   }
 
-  hojaXml(rows, NS, estiloDe) {
+  hojaXml(rows, NS, estiloDe, merges) {
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
     const xr = rows.map((r, i) => '<row r="' + (i + 1) + '">' + r.map((v, j) => {
       if (v === null || v === undefined || v === '') return '';
@@ -3641,7 +3645,11 @@ class Component extends DCLogic {
       if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + '><v>' + v + '</v></c>';
       return '<c r="' + ref + '"' + (i === 0 ? ' s="1"' : '') + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
     }).join('') + '</row>').join('');
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="' + NS + '"><sheetData>' + xr + '</sheetData></worksheet>';
+    // Emitidos / Recibidos: el título de Mis Comprobantes (A1) se combina y centra hasta AD, como en el export de ARCA.
+    const mergeXml = merges && merges.length
+      ? '<mergeCells count="' + merges.length + '">' + merges.map(m => '<mergeCell ref="' + m + '"/>').join('') + '</mergeCells>'
+      : '';
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="' + NS + '"><sheetData>' + xr + '</sheetData>' + mergeXml + '</worksheet>';
   }
 
   // Archivos crudos de cada liquidación: bucket "crudos" de Storage, carpeta por liquidación.
