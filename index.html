@@ -3382,7 +3382,8 @@ class Component extends DCLogic {
     ['Candelaria', ['CLAMACO S.A.', 'BOVENCO S.A.', 'FASECO S.A.', 'VMP SA', 'CREARFULL SAS', 'REINA MARIA DEL PLATA I. Y C. S.C.A.', 'WAHREN SA', 'INVERCOSUD S.A.', 'ADVITA SA', 'KOI SRL', 'MEDA Y CIA SCA']],
     ['Ivanna', ['INVOINET SAU', 'AFARTE', 'INVOTRADE SA', 'GLOBAL DUNNING S.A.', 'FINVOI CAPITAL SA', 'ANDALUX SA', 'SIOMAA S.A.', 'SANTA CLARA DE ZAVALIA SRL', 'FABIALVA SRL', 'ZAGAR SRL']],
     ['Julieta', ['IDEA 2 SA', 'NOVALUX S.A.', 'FIDEICOMISO PAMPA PILAR', 'DASYC SRL', 'DACKET SA', 'CAZATUR SA', 'RODIALE SA']],
-    ['Rubén', ['GLOBAL MARKETING BUREAU S.A.', 'BCBT S.A.U.', 'BBI SA', 'MEDICAL LOGISTIC S.A.', 'BLASCO_SERGIO', 'NALAPO SA']]
+    ['Rubén', ['GLOBAL MARKETING BUREAU S.A.', 'BCBT S.A.U.', 'BBI SA', 'MEDICAL LOGISTIC S.A.', 'BLASCO_SERGIO', 'NALAPO SA']],
+    ['Victoria', []]
   ];
 
   CARTERA = (() => {
@@ -3514,7 +3515,16 @@ class Component extends DCLogic {
     };
   }
 
-  MAILS = { 'Julieta': 'julietad@blasco.com.ar' };
+  MAILS = {
+    'Julieta': 'julietad@blasco.com.ar',
+    'Victoria': 'victoria@blasco.com.ar',
+    'Agustín': 'agustin@blasco.com.ar',
+    'Candelaria': 'candelaria@blasco.com.ar',
+    'Ivanna': 'ivanna@blasco.com.ar',
+    'Rubén': 'ruben@blasco.com.ar',
+    'Administrador': 'admin.myiva@blasco.com.ar',
+    'UsuarioDemo': 'usuario.myiva@blasco.com.ar'
+  };
 
   invVacio() { return { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }; }
 

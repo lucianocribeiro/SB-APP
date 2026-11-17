@@ -1,6 +1,18 @@
 -- MyIVA · seguridad producción (Kairos)
--- Supabase → SQL Editor → Run. Después: Authentication → Providers → Email → desactivar "Confirm email"
--- (o confirmar a mano los usuarios de prueba) y Auth → Multi-Factor → habilitar TOTP.
+-- Supabase → SQL Editor → Run completo.
+-- Después: Authentication → Multi-Factor → habilitar TOTP.
+--
+-- Credenciales que crea/activa este script:
+--   Admin      admin.myiva@blasco.com.ar     / MyIVA-Admin-2026!
+--   Demo       usuario.myiva@blasco.com.ar  / MyIVA-User-2026!
+--   Julieta    julietad@blasco.com.ar       / MyIVA-Julieta-2026!
+--   Victoria   victoria@blasco.com.ar       / MyIVA-Victoria-2026!
+--   Agustín    agustin@blasco.com.ar        / MyIVA-Agustin-2026!
+--   Candelaria candelaria@blasco.com.ar     / MyIVA-Candelaria-2026!
+--   Ivanna     ivanna@blasco.com.ar         / MyIVA-Ivanna-2026!
+--   Rubén      ruben@blasco.com.ar          / MyIVA-Ruben-2026!
+
+create extension if not exists pgcrypto with schema extensions;
 
 -- 1) Cerrar modo pruebas (anon ya no lee/escribe todo)
 do $$
@@ -45,7 +57,6 @@ end $$;
 -- 4) Flag de cambio de contraseña obligatorio en perfiles
 alter table public.perfiles add column if not exists debe_cambiar_pw boolean not null default false;
 
--- El usuario autenticado puede limpiar su propio flag (no puede tocar rol/nombre por acá).
 create or replace function public.marcar_pw_ok() returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -54,25 +65,78 @@ end $$;
 revoke all on function public.marcar_pw_ok() from public;
 grant execute on function public.marcar_pw_ok() to authenticated;
 
--- 5) Confirmar usuarios de acceso (si ya existen por signUp)
-update auth.users
-set email_confirmed_at = coalesce(email_confirmed_at, now()),
-    raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || '{"must_change_pw":true}'::jsonb
-where email in ('admin.myiva@blasco.com.ar', 'usuario.myiva@blasco.com.ar');
+-- 5) Alta / confirmación de usuarios del estudio
+create or replace function public.asegurar_usuario(
+  p_email text,
+  p_password text,
+  p_nombre text,
+  p_rol text default 'empleado'
+) returns uuid
+language plpgsql security definer set search_path = public, auth, extensions as $$
+declare
+  uid uuid;
+  meta jsonb;
+begin
+  meta := jsonb_build_object('nombre', p_nombre, 'rol', p_rol, 'must_change_pw', true);
 
-update public.perfiles set
-  nombre = case email
-    when 'admin.myiva@blasco.com.ar' then 'Administrador'
-    when 'usuario.myiva@blasco.com.ar' then 'UsuarioDemo'
-    else nombre end,
-  rol = case email
-    when 'admin.myiva@blasco.com.ar' then 'admin'
-    else coalesce(rol, 'empleado') end,
-  activo = true,
-  debe_cambiar_pw = true
-where email in ('admin.myiva@blasco.com.ar', 'usuario.myiva@blasco.com.ar');
+  select id into uid from auth.users where lower(email) = lower(p_email);
+  if uid is null then
+    uid := gen_random_uuid();
+    insert into auth.users (
+      instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+      confirmation_token, email_change, email_change_token_new, recovery_token
+    ) values (
+      '00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated',
+      lower(p_email), crypt(p_password, gen_salt('bf')), now(),
+      '{"provider":"email","providers":["email"]}'::jsonb, meta, now(), now(),
+      '', '', '', ''
+    );
+    insert into auth.identities (
+      id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+    ) values (
+      gen_random_uuid(), uid,
+      jsonb_build_object('sub', uid::text, 'email', lower(p_email), 'email_verified', true),
+      'email', uid::text, now(), now(), now()
+    );
+  else
+    update auth.users set
+      email_confirmed_at = coalesce(email_confirmed_at, now()),
+      encrypted_password = crypt(p_password, gen_salt('bf')),
+      raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || meta,
+      updated_at = now()
+    where id = uid;
+    if not exists (select 1 from auth.identities where user_id = uid and provider = 'email') then
+      insert into auth.identities (
+        id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+      ) values (
+        gen_random_uuid(), uid,
+        jsonb_build_object('sub', uid::text, 'email', lower(p_email), 'email_verified', true),
+        'email', uid::text, now(), now(), now()
+      );
+    end if;
+  end if;
 
--- Asignar algunos clientes al usuario demo (si existen)
-update public.clientes set usuario = 'UsuarioDemo'
-where nombre in ('CAZATUR SA', 'DACKET SA', 'SIOMAA S.A.')
-  and (usuario is null or usuario in ('Julieta', 'Ivanna', 'UsuarioDemo'));
+  insert into public.perfiles (id, email, nombre, rol, activo, debe_cambiar_pw)
+  values (uid, lower(p_email), p_nombre, p_rol, true, true)
+  on conflict (id) do update set
+    email = excluded.email,
+    nombre = excluded.nombre,
+    rol = excluded.rol,
+    activo = true,
+    debe_cambiar_pw = true;
+
+  return uid;
+end $$;
+
+select public.asegurar_usuario('admin.myiva@blasco.com.ar', 'MyIVA-Admin-2026!', 'Administrador', 'admin');
+select public.asegurar_usuario('usuario.myiva@blasco.com.ar', 'MyIVA-User-2026!', 'UsuarioDemo', 'empleado');
+select public.asegurar_usuario('julietad@blasco.com.ar', 'MyIVA-Julieta-2026!', 'Julieta', 'empleado');
+select public.asegurar_usuario('victoria@blasco.com.ar', 'MyIVA-Victoria-2026!', 'Victoria', 'empleado');
+select public.asegurar_usuario('agustin@blasco.com.ar', 'MyIVA-Agustin-2026!', 'Agustín', 'empleado');
+select public.asegurar_usuario('candelaria@blasco.com.ar', 'MyIVA-Candelaria-2026!', 'Candelaria', 'empleado');
+select public.asegurar_usuario('ivanna@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
+select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
+
+-- Victoria entra a la cartera del estudio (sin clientes aún; se asignan en Clientes por usuario)
+-- Los demás ya tienen clientes en public.clientes según schema.sql / CARTERA_DEF.
