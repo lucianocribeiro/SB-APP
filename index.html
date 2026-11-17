@@ -3425,6 +3425,8 @@ class Component extends DCLogic {
     ['AA', 'IVA CF 21%'], ['AB', 'IVA CF 10.5%'], ['AC', 'IVA CF 27%'], ['AD', 'Total Crédito'],
     ['AE', 'NC Ventas Neto 21%'], ['AF', 'NC Ventas Neto 10.5%'], ['AG', 'NC Ventas Neto 27%'],
     ['AH', 'CF NC Ventas 21%'], ['AI', 'CF NC Ventas 10.5%'], ['AJ', 'CF NC Ventas 27%'],
+    // CFT: IVA de Facturas letra T (FTT) del IVA Ventas, tomado también como crédito fiscal (se compensa con VDT).
+    ['CFT', 'CF Fact. T'],
     // AJD / AJC: ajustes manuales del paso 4 (Vista previa), justo antes del total al que suman.
     ['AK', 'Percepciones'], ['AL', 'Retenciones'], ['AJD', 'Ajuste al Débito Fiscal'], ['AM', 'Total Débito Fiscal'], ['AJC', 'Ajuste al Crédito Fiscal'], ['AN', 'Total Crédito Fiscal'],
     ['AO', 'Alícuota Prorrateo'], ['AP', 'CF Computable 21%'], ['AQ', 'CF Computable 10.5%'], ['AR', 'CF Computable 27%'],
@@ -3442,8 +3444,10 @@ class Component extends DCLogic {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
     // Las columnas de Fact. T sólo van si alguna liquidación tiene ventas clase T (hoy, Cazatur).
+    // CFT (crédito) sólo si la liquidación guardó cfT — las viejas tenían el débito (VDT) pero no el crédito.
     const conT = rows.some(d => { const L = d.n && d.n.ali && d.n.ali.det && d.n.ali.det.vL; return L && L.T && (L.T.neto || L.T.iva); });
-    const COLS = this.NOVALUX_COLS.filter(([o]) => conT || (o !== 'VNT' && o !== 'VDT'));
+    const conCfT = rows.some(d => d.n && d.n.ali && d.n.ali.det && d.n.ali.det.cfT);
+    const COLS = this.NOVALUX_COLS.filter(([o]) => (conT || (o !== 'VNT' && o !== 'VDT')) && (conCfT || o !== 'CFT'));
     // Columna real de cada clave de COLS: van seguidas desde la C (A = período, B = secuencia).
     const pos = Object.fromEntries(COLS.map(([o], i) => [o, i]));
     const C = (orig) => this.colLet(pos[orig] + 3);
@@ -3483,7 +3487,7 @@ class Component extends DCLogic {
       const r = first + i, p = r - 1, df = num(d.df), cf = num(d.cf), rp = num(d.rp);
       // Columnas por alícuota y de NC: salen del detalle guardado en la liquidación (det, ver liqCalc). Las NC se guardan en positivo:
       // las NC de Compras suman al débito (T/U) y las de Ventas al crédito (AE-AJ), como en liqCalc. Así, por fila:
-      // I = F + G + H + U y AD = AA + AB + AC + AH + AI + AJ (salvo IVA al 5 % / 2,5 %, que no tiene columna propia).
+      // I = F + G + H + U y AD = AA + AB + AC + AH + AI + AJ + CFT (salvo IVA al 5 % / 2,5 %, que no tiene columna propia).
       // Las liquidaciones viejas sin det dejan esas columnas vacías: no se inventan importes; los totales I / AD / AM / AN se mantienen.
       const det = d.n && d.n.ali && d.n.ali.det;
       const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
@@ -3513,7 +3517,8 @@ class Component extends DCLogic {
           const L = (l, k) => r2((det.vL[l] && det.vL[l][k]) || 0);
           Object.assign(v, { VNA: L('A', 'neto'), VNB: L('B', 'neto'), VDA: L('A', 'iva'), VDB: L('B', 'iva') });
           if (conT) Object.assign(v, { VNT: L('T', 'neto'), VDT: L('T', 'iva') });
-        }
+          if (conCfT) v.CFT = r2(det.cfT || 0);
+        } else if (conCfT && det.cfT) v.CFT = r2(det.cfT);
       }
       // Percepciones (IVA Compras) y retenciones (CR de IVA Ventas) por separado, como se guardaron en la liquidación.
       // Las liquidaciones viejas sin ese detalle dejan las dos columnas vacías: el total sigue en "Total Retenciones y Percepciones".
@@ -3525,11 +3530,14 @@ class Component extends DCLogic {
       const retPer = sep ? `(${C('AV')}${r}+${C('AVP')}${r})` : `(${rp})`;
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
+      // El CF de Fact. T se compensa 1 a 1 con el débito: no entra al prorrateo (queda 100 % computable).
+      const adProrr = conCfT ? `(${C('AD')}${r}-${C('CFT')}${r})` : `${C('AD')}${r}`;
       const f = {
         AM: `${C('I')}${r}+${C('AJD')}${r}`, AN: `${C('AD')}${r}+${C('AJC')}${r}`,
         AO: `1-${ratio}`,
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
-        AS: `(1-${ratio})*${C('AD')}${r}`, AT: `${ratio}*${C('AD')}${r}`,
+        AS: conCfT ? `(1-${ratio})*${adProrr}+${C('CFT')}${r}` : `(1-${ratio})*${C('AD')}${r}`,
+        AT: `${ratio}*${adProrr}`,
         AW: `IF(${C('AW')}${p}>0,${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r}+${C('AW')}${p},${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r})`,
         AX: `IF(${axAnt}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${retPer},${retPer}),IF(${C('AW')}${r}<0,${axAnt}+${C('AW')}${r}+${retPer},${retPer}+${axAnt}))`,
         AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
@@ -4869,11 +4877,19 @@ class Component extends DCLogic {
     const ngt = ALI.reduce((a, [, n]) => a + z(o[n]), 0), ivt = ALI.reduce((a, [, , i]) => a + (i ? z(o[i]) : 0), 0);
     rows.push(filaRes('Subtotal gravado', m(ngt), m(ivt), 1));
     if (nc.q) rows.push(filaRes('Más: ' + lNc + ' (' + nc.q + ')', m(ALI.reduce((a, [, n]) => a + z(nc[n]), 0)), m(ALI.reduce((a, [, , i]) => a + (i ? z(nc[i]) : 0), 0)), 0));
+    // Facturas letra T (FTT) del IVA Ventas: el IVA ya está en el débito; también suma al crédito fiscal y se compensa.
+    // Sólo se muestra si la liquidación guardó cfT (las viejas sin ese campo no lo tenían en el total).
+    if (k === 'c' && det.cfT) {
+      const t = det.vL && det.vL.T;
+      rows.push(filaRes('Más: Facturas letra T (IVA Ventas · FTT)' + (t && t.q ? ' (' + t.q + ')' : ''), t ? m(t.neto) : '—', m(det.cfT), 0));
+    }
     if (aj) rows.push(filaRes((k === 'v' ? 'Ajuste al Débito Fiscal' : 'Ajuste al Crédito Fiscal') + ' (ingresado a mano)', '', m(aj), 0));
     rows.push(filaRes(lTotal, '', m(total), 1));
     const pr = k === 'c' ? this.prorrRatio(det) : 0;
     if (pr) {
-      const noC = Math.round(pr * (total - (aj || 0)) * 100) / 100;
+      // El CF de Fact. T no prorratea (queda 100 % computable).
+      const cfT = det.cfT != null ? (+det.cfT || 0) : 0;
+      const noC = Math.round(pr * (total - (aj || 0) - cfT) * 100) / 100;
       rows.push(filaRes('Menos: crédito fiscal no computable por prorrateo (' + (pr * 100).toLocaleString('es-AR', { maximumFractionDigits: 5 }) + ' % de ventas exentas y no gravadas)', '', m(-noC), 0));
       rows.push(filaRes('Crédito fiscal computable (prorrateo ' + this.pctProrr(pr) + ')', '', m(total - noC), 1));
     }
@@ -4938,7 +4954,8 @@ class Component extends DCLogic {
       pvSaldos: [sd('Saldo 1° párrafo (técnico)', pv.s1), sd('Saldo 2° párrafo (libre disponibilidad)', pv.s2)],
       pvCalc: [
         'Débito fiscal = ' + m(base.df) + mas(aj.df, 'ajuste') + ' = ' + m(pv.df),
-        'Crédito fiscal = ' + m(base.cf) + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
+        'Crédito fiscal = ' + m(base.cf - (det.cfT || 0)) + (det.cfT ? ' + CF Fact. T ' + m(det.cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
+        ...(det.cfT ? ['Facturas letra T (FTT): el IVA se toma como débito y como crédito fiscal a la vez, compensándose (no prorratea).'] : []),
         ...(pv.cfNoComp ? ['Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas) = ' + this.pctProrr(this.prorrRatio(det))
           + ' · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)] : []),
         'Retenciones y percepciones = retenciones ' + m(base.ret) + mas(aj.ret, 'ajuste') + ' + percepciones ' + m(base.perc) + mas(aj.perc, 'ajuste') + ' = ' + m(pv.rp),
@@ -6078,12 +6095,15 @@ class Component extends DCLogic {
     return num > 0 && den > 0 ? Math.min(1, num / den) : 0;
   }
 
-  // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica al crédito sin los ajustes manuales.
+  // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica al crédito sin los ajustes manuales
+  // ni el CF de Facturas letra T (ese IVA se compensa 1 a 1 con el débito y queda 100 % computable).
   // Se calcula del detalle guardado, así también corrige las liquidaciones ya procesadas sin volver a cargarlas.
   cfNoComp(o) {
     const ali = o && o.ali, r = this.prorrRatio(ali && ali.det);
     if (!r) return 0;
-    return Math.round(r * ((+o.cf || 0) - ((ali.aj || {}).cf || 0)) * 100) / 100;
+    // Sólo se resta cfT si la liquidación lo guardó (ya está dentro de cf); las viejas sin cfT no lo restan.
+    const cfT = ali && ali.det && ali.det.cfT != null ? (+ali.det.cfT || 0) : 0;
+    return Math.round(r * ((+o.cf || 0) - ((ali.aj || {}).cf || 0) - cfT) * 100) / 100;
   }
 
   pctProrr(r) { return ((1 - r) * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 5 }) + ' %'; }
@@ -6132,7 +6152,10 @@ class Component extends DCLogic {
     // La liquidación suma el IVA de todo lo que no es retención/percepción (igual que antes); el filtro por tabla de comprobantes es sólo para los cruces.
     const noRet = (x) => !this.TC_EXCL.includes(x.tc), V = ventas.recs.filter(noRet), C = compras.recs.filter(noRet);
     const df = r2(iva(V.filter(x => x.tc !== 'NC')) + iva(C.filter(x => x.tc === 'NC')));
-    const cf = r2(iva(C.filter(x => x.tc !== 'NC')) + iva(V.filter(x => x.tc === 'NC')));
+    // Facturas letra T (FTT): el IVA ya entra como débito; también se toma como crédito fiscal y se compensa.
+    const factT = V.filter(x => x.tc !== 'NC' && x.letra === 'T');
+    const cfT = iva(factT);
+    const cf = r2(iva(C.filter(x => x.tc !== 'NC')) + iva(V.filter(x => x.tc === 'NC')) + cfT);
     // Sólo IVA: columna "Percepciones IVA" de IVA Compras (no IIBB, otras percepciones ni otros regímenes)
     // + constancias de retención (CR) de IVA Ventas del período liquidado, como en el workflow de n8n.
     const per = this.perLiq();
@@ -6148,10 +6171,10 @@ class Component extends DCLogic {
       v: tot(V.filter(x => x.tc !== 'NC')), vNc: tot(V.filter(x => x.tc === 'NC')), c: tot(C.filter(x => x.tc !== 'NC')), cNc: tot(C.filter(x => x.tc === 'NC')),
       // Ventas (FC / ND) por tipo de factura, para abrir el papel de trabajo en Fact. A / B / T.
       vL: ['A', 'B', 'T'].reduce((o, l) => { const xs = V.filter(x => x.tc !== 'NC' && x.letra === l); if (xs.length) o[l] = { q: xs.length, neto: r2(xs.reduce((a, x) => a + (x.v.ngt || 0), 0)), iva: r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0)) }; return o; }, {}),
-      perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
+      cfT, perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
     };
     const ali = { a21: aliV('i21'), a105: aliV('i105'), a27: aliV('i27'), det };
-    // Saldo técnico con el crédito fiscal computable (prorrateo por ventas exentas / no gravadas).
+    // Saldo técnico con el crédito fiscal computable (prorrateo por ventas exentas / no gravadas; el CF Fact. T no prorratea).
     const cfNoComp = this.cfNoComp({ cf, ali });
     const s1 = r2(cf - cfNoComp - df + arr.tec);
     const s2 = r2(s1 < 0 ? arr.lib + s1 + rp : rp + arr.lib);
