@@ -3695,14 +3695,21 @@ class Component extends DCLogic {
     if (!sb || !this._user) return;
     const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && (R[k].file || R[k].files));
     const malos = [], rutas = new Set();
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
     for (const [k, f] of [].concat(...ks.map(k => (R[k].files || [R[k].file]).map(f => [k, f])))) {
       // Dos archivos con el mismo nombre (por ejemplo, dos "MisRetenciones.xlsx") no se pisan: el segundo lleva _2.
       const limpio = this.fold(f.name).replace(/[^a-z0-9.]+/g, '_'), punto = limpio.lastIndexOf('.');
       let ruta = dir + '/' + k + '__' + limpio;
       for (let i = 2; rutas.has(ruta); i++) ruta = dir + '/' + k + '__' + (punto > 0 ? limpio.slice(0, punto) + '_' + i + limpio.slice(punto) : limpio + '_' + i);
       rutas.add(ruta);
-      const up = await sb.storage.from('crudos').upload(ruta, f, { upsert: true, contentType: f.type || 'application/octet-stream' }).catch(e => ({ error: e }));
-      if (up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
+      // Reintentos ante "Failed to fetch" / cortes de red al subir a Storage.
+      let up = null;
+      for (let intento = 1; intento <= 3; intento++) {
+        up = await sb.storage.from('crudos').upload(ruta, f, { upsert: true, contentType: f.type || 'application/octet-stream' }).catch(e => ({ error: e }));
+        if (!up.error) break;
+        if (intento < 3) await wait(400 * intento);
+      }
+      if (up && up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
     }
     if (malos.length) this.setState({ toast: { kind: 'err', t: 'No se pudieron guardar algunos archivos crudos', d: malos.join(' · ') + '. La liquidación quedó guardada, pero esos archivos no van a salir en el Excel exportable.' } });
   }
@@ -5365,9 +5372,12 @@ class Component extends DCLogic {
     const used = new Set();
     const idx = (fn) => { const m = new Map(); L.forEach((x, i) => { const k = fn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(i); }); return m; };
     const take = (m, k) => { const q = m.get(k) || []; const i = q.find(j => !used.has(j)); if (i === undefined) return -1; used.add(i); return i; };
-    const k1 = (x) => [x.cuit, x.tc, x.letra, x.pv, x.nro].join('|');
-    const k2 = (x) => [x.cuit, x.pv, x.nro].join('|');
-    const k3 = (x) => [x.cuit, x.fecha, Math.round(x.v.tot)].join('|');
+    // Exportación (letra E): en Mis Comprobantes Emitidos el CUIT receptor suele venir vacío y en el libro a veces no.
+    // La clave se arma sin CUIT (Tipo+Letra|Pto.Vta.|Número); los importes se siguen controlando después.
+    const esExp = (x) => x.letra === 'E';
+    const k1 = (x) => esExp(x) ? [x.tc, x.letra, x.pv, x.nro].join('|') : [x.cuit, x.tc, x.letra, x.pv, x.nro].join('|');
+    const k2 = (x) => esExp(x) ? ['E', x.pv, x.nro].join('|') : [x.cuit, x.pv, x.nro].join('|');
+    const k3 = (x) => esExp(x) ? ['E', x.fecha, Math.round(x.v.tot)].join('|') : [x.cuit, x.fecha, Math.round(x.v.tot)].join('|');
     const m1 = idx(k1), m2 = idx(k2), m3 = idx(k3);
     const pares = [], resto1 = [], resto2 = [], faltL = [];
     A.forEach(a => { const i = take(m1, k1(a)); if (i >= 0) pares.push([a, L[i], 1]); else resto1.push(a); });
@@ -6504,7 +6514,9 @@ class Component extends DCLogic {
         const L = l ? [sg(l) * l.v.ngt, sg(l) * l.v.ivt, sg(l) * l.v.ot, sg(l) * r2((l.v.ng || 0) + (l.v.mono || 0)), sg(l) * l.v.tot] : ['', '', '', '', ''];
         const A = a ? [mon, tcam, r2(sg(a) * a.v.tot / (tcam || 1)), sg(a) * a.v.ngt, sg(a) * a.v.ivt, sg(a) * a.v.ot, sg(a) * a.v.tot] : ['', '', '', '', '', '', ''];
         const d = (li, ai) => r2((l ? L[li] : 0) - (a ? A[ai] : 0));
-        return [n, [c.cuit, tipoTxt(c), c.pv, c.nro].join('|'), c.fecha, tipoTxt(c), c.pv, c.nro, c.cuit, (l && l.nom) || (a && a.nom) || '']
+        // Exportación (E): la clave de cruce no lleva CUIT (en ARCA suele venir vacío).
+        const clave = c.letra === 'E' ? [tipoTxt(c), c.pv, c.nro].join('|') : [c.cuit, tipoTxt(c), c.pv, c.nro].join('|');
+        return [n, clave, c.fecha, tipoTxt(c), c.pv, c.nro, c.cuit, (l && l.nom) || (a && a.nom) || '']
           .concat(L, A, [d(0, 3), d(1, 4), d(2, 5), d(4, 6), est, obs]);
       };
       const rows = [];
@@ -6524,7 +6536,7 @@ class Component extends DCLogic {
         cols: [5, 34, 11, 6, 8, 11, 13, 34, 14, 13, 13, 13, 14, 7, 8, 14, 14, 13, 13, 14, 13, 13, 13, 13, 15, 50].map(wch => ({ wch })),
         aoa: [
           [(emi ? 'CRUCE 2 — Comprobantes emitidos: IVA Ventas vs ARCA "Mis Comprobantes Emitidos"' : 'CRUCE 3 — Comprobantes recibidos: IVA Compras vs ARCA "Mis Comprobantes Recibidos"')],
-          ['Clave: CUIT ' + (emi ? 'receptor' : 'emisor') + ' | Tipo+Letra | Pto.Vta. | Número. Una fila por clave hallada en cualquiera de los dos orígenes. Solo comprobantes del libro (excluye retenciones y otros registros sin letra). NC con signo negativo; importes de ARCA convertidos a ARS con el tipo de cambio del comprobante.'],
+          ['Clave: CUIT ' + (emi ? 'receptor' : 'emisor') + ' | Tipo+Letra | Pto.Vta. | Número. En exportación (letra E) la clave es sólo Tipo+Letra | Pto.Vta. | Número (sin CUIT: en Mis Comprobantes Emitidos suele venir vacío). Una fila por clave. Solo comprobantes del libro (excluye retenciones y otros sin letra). NC con signo negativo; importes de ARCA convertidos a ARS con el tipo de cambio del comprobante.'],
           ['Comprobantes libro', x.nL, '', 'Solo en ARCA', x.faltL.length, '', 'OK', c('OK'), 'DIFERENCIA', c('DIFERENCIA'), 'FALTA EN ARCA', c('FALTA EN ARCA'), 'FALTA EN LIBRO', c('FALTA EN LIBRO'), 'DIF. TIPO', c('DIF. TIPO')],
           ['COMPROBANTE', '', '', '', '', '', '', '', lblL.toUpperCase() + ' (ARS)', '', '', '', '', 'ARCA (origen)', '', '', 'ARCA convertido a ARS', '', '', '', 'DIFERENCIAS (Libro - ARCA)'],
           ['N°', 'Clave de cruce', 'Fecha', 'Tipo', 'Pto. Vta.', 'Nro.', emi ? 'CUIT Receptor' : 'CUIT Emisor', 'Razón Social', 'Neto Gravado', 'IVA', 'Percepciones / Otros', 'Exento / No Grav.', 'Total Comprob.', 'Moneda', 'Tipo Cambio', 'Imp. Total (orig.)', 'Neto Gravado', 'IVA', 'Otros Tributos', 'Imp. Total', 'Neto', 'IVA', 'Percep.', 'Total', 'ESTADO', 'Observación'],
