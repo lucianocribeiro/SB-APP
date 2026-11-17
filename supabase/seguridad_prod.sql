@@ -145,5 +145,37 @@ select public.asegurar_usuario('candelaria@blasco.com.ar', 'MyIVA-Candelaria-202
 select public.asegurar_usuario('ivanna@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
 select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
 
+-- 6) Admin puede resetear la contraseña de otro usuario desde la app
+create or replace function public.admin_set_password(
+  p_email text,
+  p_password text,
+  p_forzar boolean default true
+) returns boolean
+language plpgsql security definer set search_path = public, auth, extensions as $$
+declare uid uuid;
+begin
+  if not public.es_admin() then
+    raise exception 'Sólo un administrador puede cambiar contraseñas de otros usuarios';
+  end if;
+  if p_password is null or length(p_password) < 8 then
+    raise exception 'La contraseña tiene que tener al menos 8 caracteres';
+  end if;
+  select id into uid from auth.users where lower(email) = lower(p_email);
+  if uid is null then
+    raise exception 'No hay usuario con el mail %', p_email;
+  end if;
+  update auth.users set
+    encrypted_password = crypt(p_password, gen_salt('bf')),
+    email_confirmed_at = coalesce(email_confirmed_at, now()),
+    raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
+      || jsonb_build_object('must_change_pw', coalesce(p_forzar, true)),
+    updated_at = now()
+  where id = uid;
+  update public.perfiles set debe_cambiar_pw = coalesce(p_forzar, true) where id = uid;
+  return true;
+end $$;
+revoke all on function public.admin_set_password(text, text, boolean) from public;
+grant execute on function public.admin_set_password(text, text, boolean) to authenticated;
+
 -- Victoria entra a la cartera del estudio (sin clientes aún; se asignan en Clientes por usuario)
 -- Los demás ya tienen clientes en public.clientes según schema.sql / CARTERA_DEF.

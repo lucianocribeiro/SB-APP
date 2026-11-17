@@ -530,7 +530,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ u.st.bg }};color:{{ u.st.fg }};border:1px solid {{ u.st.bd }}">{{ u.st.label }}</span></td>
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
 <div style="display:inline-flex;gap:8px">
-<span style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Editar</span>
+<span onClick="{{ u.pw }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Contraseña</span>
 <span onClick="{{ openConfirm }}" style="font:600 12.5px 'Open Sans';color:#B3261E;cursor:pointer">Suspender</span>
 </div>
 </td>
@@ -2323,6 +2323,33 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ pwAdminOn }}">
+<div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:60"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:94vw;background:#fff;border-radius:6px;z-index:61;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:16px 20px;border-bottom:1px solid #E3E8EE;font:600 17px 'Open Sans'">Cambiar contraseña</div>
+<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="font:400 13.5px/1.45 'Open Sans';color:#5A6B7B">Usuario: <span style="font:600 13.5px 'Open Sans';color:#1B2733">{{ pwAdminNombre }}</span> · {{ pwAdminMail }}</div>
+<div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Nueva contraseña</div>
+<input type="password" autocomplete="new-password" value="{{ pwAdminNue }}" onChange="{{ pwAdminNueSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+</div>
+<div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Repetir</div>
+<input type="password" autocomplete="new-password" value="{{ pwAdminRep }}" onChange="{{ pwAdminRepSet }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+</div>
+<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+<input type="checkbox" checked="{{ pwAdminForzar }}" onChange="{{ pwAdminForzarSet }}" style="accent-color:#14395C;width:15px;height:15px;margin-top:2px">
+<span style="font:400 13px/1.45 'Open Sans';color:#1B2733">Obligar a cambiarla en el próximo ingreso</span>
+</label>
+<sc-if value="{{ pwAdminErrOn }}"><div style="padding:9px 11px;background:#FDF5F4;border:1px solid #F3CFCB;border-radius:6px;font:400 12.5px/1.45 'Open Sans';color:#B3261E">{{ pwAdminErr }}</div></sc-if>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ closeAll }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<button onClick="{{ pwAdminGuardar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer;opacity:{{ pwAdminOp }}" style-hover="background:#0E2A45">{{ pwAdminBtn }}</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ modal }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:60"></div>
 <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;max-width:94vw;background:#fff;border-radius:6px;z-index:61;box-shadow:0 8px 28px rgba(27,39,51,.2)">
@@ -2686,6 +2713,7 @@ class Component extends DCLogic {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginPwVer: false, loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
     mfaPaso: '', mfaCode: '', mfaSecret: '', mfaFactorId: '', mfaChallengeId: '', debeCambiarPw: false,
+    pwAdmin: null,
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
@@ -2999,6 +3027,36 @@ class Component extends DCLogic {
     return this.setState({
       screen: 'login', loginErr: true,
       loginErrTxt: 'El acceso rápido está desactivado. Ingresá con tu mail y contraseña.'
+    });
+  }
+
+  abrirPwAdmin(u) {
+    if (this.state.role !== 'admin') return;
+    this.setState({
+      pwAdmin: { mail: u.mail, nombre: u.nombre, nue: '', rep: '', forzar: true, busy: false, err: '' },
+      modal: false, confirm: false
+    });
+  }
+
+  async guardarPwAdmin() {
+    const sb = this.sb(), s = this.state, a = s.pwAdmin;
+    if (!sb || !this._user || s.role !== 'admin' || !a) return;
+    if (a.busy) return;
+    if (!a.nue || a.nue.length < 8) return this.setState({ pwAdmin: Object.assign({}, a, { err: 'La contraseña tiene que tener al menos 8 caracteres.' }) });
+    if (a.nue !== a.rep) return this.setState({ pwAdmin: Object.assign({}, a, { err: 'Las contraseñas no coinciden.' }) });
+    this.setState({ pwAdmin: Object.assign({}, a, { busy: true, err: '' }) });
+    const { data, error } = await sb.rpc('admin_set_password', { p_email: a.mail, p_password: a.nue, p_forzar: !!a.forzar });
+    if (error) {
+      const m = String(error.message || error);
+      const tip = /admin_set_password|function .* does not exist/i.test(m)
+        ? 'Falta correr en Supabase el SQL de admin_set_password (te lo paso abajo / en seguridad_prod.sql).'
+        : m;
+      return this.setState({ pwAdmin: Object.assign({}, a, { busy: false, err: tip }) });
+    }
+    this.setState({
+      pwAdmin: null,
+      audExtra: [{ f: this.ahora(), u: this.me().short, a: 'Contraseña restablecida', c: '—', p: '—', r: a.nombre + ' · ' + a.mail, ip: '—' }].concat(s.audExtra),
+      toast: { kind: 'ok', t: 'Contraseña actualizada', d: a.nombre + (a.forzar ? ' deberá cambiarla en el próximo ingreso.' : ' ya puede ingresar con la clave nueva.') }
     });
   }
 
@@ -7192,14 +7250,18 @@ class Component extends DCLogic {
     const cruDifPC = Object.values(ultRun).filter(r => r.per === PC && (r.cruces || []).some(c => numDif(c) > 0 || c.est === 'Con errores')).length;
 
     const usuarios = [
-      { nombre: 'Administrador', mail: 'admin@blasco.com.ar', rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
+      { nombre: 'Administrador', mail: this.mailDe('Administrador'), rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
     ].concat((this._perfiles || []).filter(p => p.rol === 'admin' && p.activo && p.nombre !== 'Administrador').map(p => ({
       nombre: p.nombre, mail: p.email, rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '—', est: 'Activo'
     })), this.CARTERA.map(([u, cs]) => ({
       nombre: u, mail: this.mailDe(u), rol: 'Usuario',
       clientes: cs.length + ' clientes · ' + cs.slice(0, 2).join(', ') + (cs.length > 2 ? ' y ' + (cs.length - 2) + ' más' : ''),
       acceso: u === 'Julieta' ? '04/09/2026 11:02' : '—', est: 'Activo'
-    }))).map(u => Object.assign({}, u, { st: E[u.est], rb: E[u.rol] }));
+    }))).map(u => Object.assign({}, u, {
+      st: E[u.est], rb: E[u.rol],
+      pw: () => this.abrirPwAdmin(u)
+    }));
+    const pa = s.pwAdmin;
 
     const cliTabsDef = [['resumen', 'Resumen'], ['liquidaciones', 'Liquidaciones'], ['cruces', 'Cruces'], ['config', 'Configuración']];
     const cliTab = {};
@@ -7266,9 +7328,17 @@ class Component extends DCLogic {
       nc: s.nc,
       ncSet: ['rz', 'cuit', 'ini', 'mails', 'sis'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
-      openModal: () => this.setState({ modal: true, inv: this.invVacio() }),
+      openModal: () => this.setState({ modal: true, inv: this.invVacio(), pwAdmin: null }),
       openConfirm: () => this.setState({ confirm: true }),
-      closeAll: () => this.setState({ ivdVer: null, drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null, apocVer: null }),
+      closeAll: () => this.setState({ ivdVer: null, drawer: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, errView: null, ddjjDel: null, liqCierre: null, apocVer: null, pwAdmin: null }),
+      pwAdminOn: !!pa, pwAdminNombre: pa ? pa.nombre : '', pwAdminMail: pa ? pa.mail : '',
+      pwAdminNue: pa ? pa.nue : '', pwAdminRep: pa ? pa.rep : '', pwAdminForzar: pa ? !!pa.forzar : true,
+      pwAdminNueSet: (e) => this.setState(st => ({ pwAdmin: Object.assign({}, st.pwAdmin, { nue: e.target.value, err: '' }) })),
+      pwAdminRepSet: (e) => this.setState(st => ({ pwAdmin: Object.assign({}, st.pwAdmin, { rep: e.target.value, err: '' }) })),
+      pwAdminForzarSet: (e) => this.setState(st => ({ pwAdmin: Object.assign({}, st.pwAdmin, { forzar: !!e.target.checked }) })),
+      pwAdminErrOn: !!(pa && pa.err), pwAdminErr: pa ? pa.err : '',
+      pwAdminBtn: pa && pa.busy ? 'Guardando…' : 'Guardar contraseña', pwAdminOp: pa && pa.busy ? .6 : 1,
+      pwAdminGuardar: () => this.guardarPwAdmin(),
       apocVerOn: !!s.apocVer, apocVerSub: s.apocVer ? s.apocVer.sub : '', apocVerFilas: s.apocVer ? s.apocVer.filas : [],
       apocVerBase: (() => { const a = s.apoc || {}; return 'Base APOC cargada: ' + (a.origen || '—') + ' · ' + String(a.total || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' CUITs' + (a.gen ? ' · listado de ARCA del ' + a.gen : '') + (a.fecha ? ' · subida el ' + a.fecha : ''); })(),
       errOpen: !!s.errView, errTitle: s.errView ? s.errView.title : '', errSub: s.errView ? s.errView.sub : '',
