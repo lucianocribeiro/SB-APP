@@ -2883,46 +2883,12 @@ class Component extends DCLogic {
     }
   }
 
+  // Login sólo con mail y contraseña (sin 2FA / Google Authenticator).
   async entrarTrasAuth(user) {
-    const sb = this.sb();
     try {
-      const aal = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-      const cur = aal.data && aal.data.currentLevel, next = aal.data && aal.data.nextLevel;
-      if (next === 'aal2' && cur !== 'aal2') {
-        const factors = await sb.auth.mfa.listFactors();
-        const totp = ((factors.data && factors.data.totp) || []).find(f => f.status === 'verified');
-        if (totp) {
-          const ch = await sb.auth.mfa.challenge({ factorId: totp.id });
-          if (ch.error) throw ch.error;
-          this._user = user;
-          return this.setState({
-            loginBusy: false, mfaPaso: 'verify', mfaFactorId: totp.id, mfaChallengeId: ch.data.id, mfaCode: '',
-            mfaSecret: '', loginErr: false, loginOk: ''
-          });
-        }
-      }
-      const { data: perfil } = await sb.from('perfiles').select('rol').eq('id', user.id).maybeSingle();
-      if (perfil && this.esPoderAdmin(perfil.rol)) {
-        const factors = await sb.auth.mfa.listFactors();
-        const hay = ((factors.data && factors.data.totp) || []).some(f => f.status === 'verified');
-        if (!hay) {
-          const en = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'MyIVA' });
-          if (!en.error && en.data) {
-            this._user = user;
-            return this.setState({
-              loginBusy: false, mfaPaso: 'enroll', mfaFactorId: en.data.id, mfaChallengeId: '',
-              mfaSecret: (en.data.totp && en.data.totp.secret) || '', mfaCode: '', loginErr: false,
-              loginOk: 'Activá Google Authenticator con el secret y el código de 6 dígitos.'
-            });
-          }
-        }
-      }
       await this.entrar(user);
     } catch (e) {
-      // Si MFA no está habilitado en el proyecto, seguimos al login normal.
-      const m = String(e && e.message || e);
-      if (/mfa|factor|totp|not enabled|disabled/i.test(m)) return this.entrar(user);
-      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo completar el ingreso: ' + m });
+      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo completar el ingreso: ' + String(e && e.message || e) });
     }
   }
 
