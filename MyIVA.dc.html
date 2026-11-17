@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -96,24 +96,32 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;justify-content:flex-end">
 <span onClick="{{ olvidePw }}" style="font:400 13px 'Open Sans';color:#2F80B7;cursor:pointer" style-hover="color:#14395C">Olvidé mi contraseña</span>
 </div>
-<button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer;opacity:{{ loginBtnOp }}" style-hover="background:#0E2A45;border-color:#0E2A45">{{ loginBtn }}</button>
-</div>
-<div style="margin-top:24px;padding-top:18px;border-top:1px solid #E3E8EE">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Acceso rápido por rol</div>
-<div style="font:400 12px/1.4 'Open Sans';color:#9AA9B7;margin-top:5px">Ingresá directamente como cada perfil del estudio.</div>
-<div onClick="{{ accesoAdmin }}" style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 11px;border:1px solid #14395C;border-radius:6px;cursor:pointer;background:#F4F9FD" style-hover="background:#E6EDF4">
-<div style="width:30px;height:30px;flex:none;border-radius:6px;background:#14395C;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11.5px 'Open Sans'">AD</div>
-<div style="flex:1;min-width:0"><div style="font:600 13px 'Open Sans';color:#14395C">Administrador</div><div style="font:400 11.5px 'Open Sans';color:#5A6B7B">Todos los clientes · configuración y auditoría</div></div>
-<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-<sc-for list="{{ accesoUsrs }}" as="u" hint-placeholder-count="5">
-<div onClick="{{ u.go }}" title="{{ u.mail }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #E3E8EE;border-radius:6px;cursor:pointer;background:#fff" style-hover="border-color:#14395C;background:#F4F9FD">
-<div style="width:28px;height:28px;flex:none;border-radius:6px;background:#E6EDF4;color:#14395C;display:flex;align-items:center;justify-content:center;font:600 11px 'Open Sans'">{{ u.ini }}</div>
-<div style="min-width:0"><div style="font:600 12.5px 'Open Sans';color:#1B2733">{{ u.nombre }}</div><div style="font:400 11px 'Open Sans';color:#5A6B7B">Usuario · {{ u.cant }}</div></div>
+<sc-if value="{{ captchaHay }}">
+<div style="margin-top:4px;padding:12px;border:1px solid #E3E8EE;border-radius:6px;background:#F8FAFC">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Verificación anti-bot</div>
+<div style="font:400 13px/1.45 'Open Sans';color:#1B2733;margin-top:8px">{{ captchaPregunta }}</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
+<sc-for list="{{ captchaTiles }}" as="t" hint-placeholder-count="4">
+<div onClick="{{ t.pick }}" title="Opción {{ t.n }}" style="aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid {{ t.bd }};background:{{ t.bg }};display:flex;align-items:center;justify-content:center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="{{ t.fill }}">{{ t.svg }}</svg>
 </div>
 </sc-for>
 </div>
+</div>
+</sc-if>
+<sc-if value="{{ mfaHay }}">
+<div style="margin-top:8px;padding:12px;border:1px solid #CFE2F0;border-radius:6px;background:#F4F9FD">
+<div style="font:600 13px 'Open Sans';color:#14395C">{{ mfaTitulo }}</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-top:6px">{{ mfaTxt }}</div>
+<sc-if value="{{ mfaQrHay }}"><div style="margin-top:10px;font:600 12px 'Open Sans';color:#1B2733;word-break:break-all">Secret: {{ mfaSecret }}</div></sc-if>
+<div style="margin-top:10px">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;margin-bottom:7px">Código de 6 dígitos</div>
+<input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" value="{{ mfaCode }}" onChange="{{ mfaCodeSet }}" onKeyDown="{{ mfaKey }}" placeholder="000000" style="width:100%;padding:10px 12px;border:1px solid #E3E8EE;border-radius:6px;font:400 14px 'Open Sans';letter-spacing:.12em">
+</div>
+<button onClick="{{ mfaOk }}" style="width:100%;margin-top:10px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer">{{ mfaBtn }}</button>
+</div>
+</sc-if>
+<button onClick="{{ doLogin }}" style="width:100%;margin-top:4px;padding:11px 16px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 14px 'Open Sans';cursor:pointer;opacity:{{ loginBtnOp }};display:{{ loginBtnDisp }}" style-hover="background:#0E2A45;border-color:#0E2A45">{{ loginBtn }}</button>
 </div>
 </div>
 </div>
@@ -2201,6 +2209,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div>
 <div style="font:600 22px/1.2 'Open Sans'">Mi perfil</div>
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">Datos de la cuenta, contraseña y preferencias de notificación.</div>
+<sc-if value="{{ debeCambiarPw }}"><div style="margin-top:10px;padding:10px 12px;border:1px solid #F0E0BC;border-radius:6px;background:#FBF3E3;font:400 13px/1.45 'Open Sans';color:#8F5F14">Primer ingreso: elegí una contraseña nueva (mínimo 8 caracteres) para continuar.</div></sc-if>
 </div>
 <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start">
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:18px 20px">
@@ -2238,7 +2247,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE;gap:10px">
-<button onClick="{{ go.inicio }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button>
+<sc-if value="{{ puedeCancelarPw }}"><button onClick="{{ go.inicio }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Cancelar</button></sc-if>
 <button onClick="{{ cambiarPw }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Guardar</button>
 </div>
 </div>
@@ -2679,6 +2688,7 @@ class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
+    captchaOk: false, captchaSeed: 0, mfaPaso: '', mfaCode: '', mfaSecret: '', mfaFactorId: '', mfaChallengeId: '', debeCambiarPw: false,
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
@@ -2752,11 +2762,15 @@ class Component extends DCLogic {
     if (p.rolInicial === 'Usuario' || p.rolInicial === 'Empleado') st.role = 'empleado';
     if (p.sidebarColapsado) st.collapsed = true;
     if (Object.keys(st).length) this.setState(st);
+    this.captchaNuevo();
     const sb = this.sb();
     if (!sb || this._authIni) return;
     // Al volver a la ventana se releen los datos de la base: así se ve lo que hicieron otras PCs.
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') this.refrescar().catch(() => { });
+      if (document.visibilityState === 'visible') {
+        this.tocarActividad();
+        this.refrescar().catch(() => { });
+      }
     });
     this._authIni = true;
     sb.auth.getSession()
@@ -2776,28 +2790,167 @@ class Component extends DCLogic {
     return this._sb;
   }
 
+  captchaNuevo() {
+    const colores = [
+      { n: 'azul', bg: '#14395C', fill: '#E6EDF4' },
+      { n: 'verde', bg: '#2E7D5B', fill: '#E8F3EE' },
+      { n: 'ámbar', bg: '#B7791F', fill: '#FBF3E3' },
+      { n: 'rojo', bg: '#B3261E', fill: '#FBE9E7' }
+    ];
+    const formas = [
+      { n: 'círculo', svg: '<circle cx="12" cy="12" r="7"></circle>' },
+      { n: 'cuadrado', svg: '<rect x="5" y="5" width="14" height="14" rx="1"></rect>' },
+      { n: 'triángulo', svg: '<path d="M12 4l8 15H4z"></path>' },
+      { n: 'rombo', svg: '<path d="M12 3l8 9-8 9-8-9z"></path>' }
+    ];
+    const pool = [];
+    colores.forEach(c => formas.forEach(f => pool.push({ color: c, forma: f })));
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    const tiles = pool.slice(0, 4);
+    const ok = tiles[Math.floor(Math.random() * tiles.length)];
+    this._captcha = { tiles, ok: ok.color.n + '|' + ok.forma.n };
+    this.setState({ captchaOk: false, captchaSeed: (this.state.captchaSeed || 0) + 1 });
+  }
+
+  captchaElegir(tile) {
+    const ok = this._captcha && this._captcha.ok === (tile.color.n + '|' + tile.forma.n);
+    if (ok) return this.setState({ captchaOk: true, loginErr: false, loginErrTxt: '' });
+    this.captchaNuevo();
+    this.setState({ captchaOk: false, loginErr: true, loginErrTxt: 'Verificación incorrecta. Elegí la forma pedida.' });
+  }
+
+  IDLE_MS = 10 * 60 * 1000;
+
+  tocarActividad() {
+    this._ultimaAct = Date.now();
+  }
+
+  armarIdle() {
+    if (typeof window === 'undefined' || this._idleArmado) return;
+    this._idleArmado = true;
+    this._ultimaAct = Date.now();
+    const bump = () => this.tocarActividad();
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(ev => {
+      window.addEventListener(ev, bump, { passive: true });
+    });
+    this._idleTimer = setInterval(() => {
+      if (!this._user || this.state.screen === 'login') return;
+      if (Date.now() - (this._ultimaAct || 0) >= this.IDLE_MS) this.salirPorInactividad();
+    }, 15000);
+  }
+
+  cortarIdle() {
+    if (this._idleTimer) { clearInterval(this._idleTimer); this._idleTimer = null; }
+  }
+
+  async salirPorInactividad() {
+    if (this._idleSaliendo) return;
+    this._idleSaliendo = true;
+    const sb = this.sb();
+    try { if (sb) await sb.auth.signOut(); } catch (e) { }
+    this._user = null;
+    this.cortarIdle();
+    this.setState({
+      screen: 'login', loginBusy: false, sesionChk: false, mfaPaso: '', mfaCode: '', debeCambiarPw: false,
+      loginErr: true, loginErrTxt: 'Se cerró la sesión por 10 minutos de inactividad.', loginOk: '', loginPw: '', captchaOk: false
+    });
+    this.captchaNuevo();
+    this._idleSaliendo = false;
+  }
+
   async login() {
     const sb = this.sb(), s = this.state;
     if (!sb) {
       if (typeof window === 'undefined') return this.setState({ screen: 'inicio' });
       return this.setState({ loginErr: true, loginErrTxt: 'No se pudo conectar con el servidor. Revisá tu conexión y recargá la página.' });
     }
-    if (s.loginBusy || s.sesionChk) return;
+    if (s.loginBusy || s.sesionChk || s.mfaPaso) return;
     const email = s.loginMail.trim().toLowerCase();
     if (!email || !s.loginPw) return this.setState({ loginErr: true, loginErrTxt: 'Ingresá tu mail y tu contraseña.', loginOk: '' });
+    if (!s.captchaOk) return this.setState({ loginErr: true, loginErrTxt: 'Completá la verificación anti-bot antes de ingresar.', loginOk: '' });
     this.setState({ loginBusy: true, loginErr: false, loginOk: '' });
     try {
       const { data, error } = await sb.auth.signInWithPassword({ email, password: s.loginPw });
       if (error) {
         const m = String(error.message || '');
+        this.captchaNuevo();
         return this.setState({
-          loginBusy: false, loginErr: true,
-          loginErrTxt: /invalid/i.test(m) ? 'Mail o contraseña incorrectos.' : (/confirm/i.test(m) ? 'Tu mail todavía no está confirmado. Pedile al administrador que lo confirme.' : 'No se pudo ingresar: ' + m)
+          loginBusy: false, loginErr: true, captchaOk: false,
+          loginErrTxt: /invalid/i.test(m) ? 'Mail o contraseña incorrectos.' : (/confirm/i.test(m) ? 'Tu mail todavía no está confirmado. Pedile al administrador que lo confirme (o corré supabase/seguridad_prod.sql).' : 'No se pudo ingresar: ' + m)
         });
       }
-      await this.entrar(data.user);
+      await this.entrarTrasAuth(data.user);
     } catch (e) {
-      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo conectar con el servidor: ' + String(e && e.message || e) });
+      this.captchaNuevo();
+      this.setState({ loginBusy: false, loginErr: true, captchaOk: false, loginErrTxt: 'No se pudo conectar con el servidor: ' + String(e && e.message || e) });
+    }
+  }
+
+  async entrarTrasAuth(user) {
+    const sb = this.sb();
+    try {
+      const aal = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      const cur = aal.data && aal.data.currentLevel, next = aal.data && aal.data.nextLevel;
+      if (next === 'aal2' && cur !== 'aal2') {
+        const factors = await sb.auth.mfa.listFactors();
+        const totp = ((factors.data && factors.data.totp) || []).find(f => f.status === 'verified');
+        if (totp) {
+          const ch = await sb.auth.mfa.challenge({ factorId: totp.id });
+          if (ch.error) throw ch.error;
+          this._user = user;
+          return this.setState({
+            loginBusy: false, mfaPaso: 'verify', mfaFactorId: totp.id, mfaChallengeId: ch.data.id, mfaCode: '',
+            mfaSecret: '', loginErr: false, loginOk: ''
+          });
+        }
+      }
+      const { data: perfil } = await sb.from('perfiles').select('rol').eq('id', user.id).maybeSingle();
+      if (perfil && perfil.rol === 'admin') {
+        const factors = await sb.auth.mfa.listFactors();
+        const hay = ((factors.data && factors.data.totp) || []).some(f => f.status === 'verified');
+        if (!hay) {
+          const en = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'MyIVA' });
+          if (!en.error && en.data) {
+            this._user = user;
+            return this.setState({
+              loginBusy: false, mfaPaso: 'enroll', mfaFactorId: en.data.id, mfaChallengeId: '',
+              mfaSecret: (en.data.totp && en.data.totp.secret) || '', mfaCode: '', loginErr: false,
+              loginOk: 'Activá Google Authenticator con el secret y el código de 6 dígitos.'
+            });
+          }
+        }
+      }
+      await this.entrar(user);
+    } catch (e) {
+      // Si MFA no está habilitado en el proyecto, seguimos al login normal.
+      const m = String(e && e.message || e);
+      if (/mfa|factor|totp|not enabled|disabled/i.test(m)) return this.entrar(user);
+      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo completar el ingreso: ' + m });
+    }
+  }
+
+  async mfaConfirmar() {
+    const sb = this.sb(), s = this.state, code = String(s.mfaCode || '').replace(/\s+/g, '');
+    if (!sb || !this._user) return;
+    if (!/^\d{6}$/.test(code)) return this.setState({ loginErr: true, loginErrTxt: 'Ingresá el código de 6 dígitos de la app Authenticator.' });
+    this.setState({ loginBusy: true, loginErr: false });
+    try {
+      let challengeId = s.mfaChallengeId;
+      if (s.mfaPaso === 'enroll' || !challengeId) {
+        const ch = await sb.auth.mfa.challenge({ factorId: s.mfaFactorId });
+        if (ch.error) throw ch.error;
+        challengeId = ch.data.id;
+      }
+      const { error } = await sb.auth.mfa.verify({ factorId: s.mfaFactorId, challengeId, code });
+      if (error) return this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'Código incorrecto o vencido. Probá de nuevo.' });
+      const paso = s.mfaPaso;
+      this.setState({ mfaPaso: '', mfaCode: '', mfaSecret: '', mfaFactorId: '', mfaChallengeId: '' });
+      if (paso === 'enroll') {
+        await sb.auth.updateUser({ data: Object.assign({}, this._user.user_metadata || {}, { mfa_ok: true }) });
+      }
+      await this.entrar(this._user);
+    } catch (e) {
+      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo verificar el 2FA: ' + String(e && e.message || e) });
     }
   }
 
@@ -2812,8 +2965,9 @@ class Component extends DCLogic {
   }
 
   async salir() {
+    this.cortarIdle();
     const sb = this.sb();
-    if (!sb || !this._user) return this.setState({ screen: 'login', notif: false });
+    if (!sb || !this._user) return this.setState({ screen: 'login', notif: false, mfaPaso: '', debeCambiarPw: false });
     try { await sb.auth.signOut(); } catch (e) { }
     location.replace(location.pathname);
   }
@@ -2822,16 +2976,25 @@ class Component extends DCLogic {
     const sb = this.sb(), s = this.state, err = (t, d) => this.setState({ toast: { kind: 'err', t, d } });
     if (!sb || !this._user) return this.setState({ toast: { kind: 'ok', t: 'Perfil guardado', d: 'Los cambios quedaron guardados.' } });
     if (this._user.rapido) return err('Entraste por acceso rápido', 'Para cambiar la contraseña ingresá con tu mail y contraseña.');
-    if (s.pwNue.length < 6) return err('Contraseña muy corta', 'La contraseña nueva tiene que tener al menos 6 caracteres.');
+    if (s.pwNue.length < 8) return err('Contraseña muy corta', 'La contraseña nueva tiene que tener al menos 8 caracteres.');
     if (s.pwNue !== s.pwRep) return err('Las contraseñas no coinciden', 'Escribí la misma contraseña nueva en "Nueva" y en "Repetir".');
-    if (!s.pwRecup) {
+    if (!s.pwRecup && !s.debeCambiarPw) {
       if (!s.pwAct) return err('Falta la contraseña actual', 'Escribí tu contraseña actual para poder cambiarla.');
       const r = await sb.auth.signInWithPassword({ email: this._user.email, password: s.pwAct });
       if (r.error) return err('La contraseña actual no es correcta', 'Revisala y volvé a intentar.');
     }
-    const { error } = await sb.auth.updateUser({ password: s.pwNue });
+    const { error } = await sb.auth.updateUser({
+      password: s.pwNue,
+      data: Object.assign({}, this._user.user_metadata || {}, { must_change_pw: false })
+    });
     if (error) return err('No se pudo cambiar la contraseña', error.message);
-    this.setState({ pwAct: '', pwNue: '', pwRep: '', pwRecup: false, toast: { kind: 'ok', t: 'Contraseña actualizada', d: 'La próxima vez ingresá con la contraseña nueva.' } });
+    try { await sb.rpc('marcar_pw_ok'); } catch (e) { }
+    try { await sb.from('perfiles').update({ debe_cambiar_pw: false }).eq('id', this._user.id); } catch (e) { }
+    this.setState({
+      pwAct: '', pwNue: '', pwRep: '', pwRecup: false, debeCambiarPw: false,
+      screen: 'inicio',
+      toast: { kind: 'ok', t: 'Contraseña actualizada', d: 'La próxima vez ingresá con la contraseña nueva.' }
+    });
   }
 
   async entrar(user) {
@@ -2847,14 +3010,22 @@ class Component extends DCLogic {
         });
       }
       this._user = user;
+      const meta = user.user_metadata || {};
+      const debe = !!(perfil.debe_cambiar_pw || meta.must_change_pw);
       const datos = await this.cargarDatos(perfil), recup = this._recup;
       this._recup = false;
       if (recup) history.replaceState(null, '', location.pathname);
+      this.armarIdle();
+      this.tocarActividad();
       this.setState(Object.assign(datos, {
         perfil, role: perfil.rol === 'admin' ? 'admin' : 'empleado', usr: perfil.nombre, acceso: user.last_sign_in_at || null,
-        screen: recup ? 'perfil' : 'inicio', pwRecup: recup, sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '',
-        toast: recup ? { kind: 'info', t: 'Elegí tu contraseña nueva', d: 'Escribila en "Nueva" y en "Repetir", y tocá Guardar.' } : null
+        screen: (recup || debe) ? 'perfil' : 'inicio', pwRecup: recup, debeCambiarPw: debe,
+        sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '', mfaPaso: '', captchaOk: false,
+        toast: (recup || debe)
+          ? { kind: 'info', t: debe && !recup ? 'Cambiá tu contraseña' : 'Elegí tu contraseña nueva', d: 'Escribila en "Nueva" y en "Repetir", y tocá Guardar. Es obligatorio en el primer ingreso.' }
+          : null
       }));
+      this.captchaNuevo();
     } catch (e) {
       this._user = null;
       this._sync = null;
@@ -2862,17 +3033,12 @@ class Component extends DCLogic {
     }
   }
 
-  async entrarRapido(role, usr) {
-    const sb = this.sb(), base = { role, usr, perfil: null, screen: 'inicio', loginErr: false };
-    if (!sb) return this.setState(base);
-    this._user = { id: null, email: null, rapido: true };
-    try {
-      this.setState(Object.assign(await this.cargarDatos({ rol: role }), base));
-    } catch (e) {
-      this._user = null;
-      this._sync = null;
-      this.setState(Object.assign(base, { toast: { kind: 'err', t: 'No se pudieron cargar los datos de Supabase', d: String(e && e.message || e) } }));
-    }
+  async entrarRapido() {
+    this.captchaNuevo();
+    return this.setState({
+      screen: 'login', loginErr: true, captchaOk: false,
+      loginErrTxt: 'El acceso rápido está desactivado. Ingresá con tu mail y contraseña.'
+    });
   }
 
   async cargarDatos(perfil) {
@@ -2902,6 +3068,12 @@ class Component extends DCLogic {
         m.get(c.usuario).push(c.nombre);
       });
       cart = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+      // Empleado: sólo su cartera (defensa en cliente; RLS en DB es la fuente de verdad).
+      if (perfil.rol !== 'admin') {
+        const mio = cart.find(([u]) => u === perfil.nombre) || [perfil.nombre, []];
+        cart = [mio];
+        pend = [];
+      }
       this.CARTERA = this.lsSet('myiva.cartera', cart);
       clientes.filter(c => c.cuit).forEach(c => { cliFiscal[c.nombre] = Object.assign({ cond: '—', per: '—' }, cliFiscal[c.nombre], { cuit: c.cuit }); });
       this.lsSet('myiva.cliFiscal', cliFiscal);
@@ -2910,16 +3082,23 @@ class Component extends DCLogic {
     }
     Object.assign(z, { cart: clientes.length ? cart : null, pend, mapa: clientes.length ? this.cartMapa(cart, pend) : {} });
 
-    const lq = this.liqsDeDb(liqs);
+    const misCli = perfil.rol === 'admin' ? null : new Set((cart.find(([u]) => u === perfil.nombre) || [perfil.nombre, []])[1]);
+    const enCartera = (cli) => !misCli || misCli.has(cli);
+
+    const lq = this.liqsDeDb(liqs.filter(r => enCartera(r.cliente)));
     Object.assign(z, lq.z);
     const { liqsDb, liqEst: le, ddjjBorradas: bo } = lq.st;
 
-    const cruRuns = this.runsDeDb(cruces);
+    const cruRuns = this.runsDeDb(cruces.filter(r => enCartera(r.cliente)));
     z.cruRuns = cruRuns;
 
-    const compsN = this.guardarComps(comps.map(c => this.compDeDb(c)));
+    const compsN = this.guardarComps(comps.filter(c => enCartera(c.cliente)).map(c => this.compDeDb(c)));
 
-    const ddjjPdf = this.pdfsDeDb(pdfs);
+    const ddjjPdf = this.pdfsDeDb(pdfs.filter(p => {
+      const id = String(p.liquidacion_id || p.id || '');
+      const cli = id.split('|')[0];
+      return !cli || enCartera(cli);
+    }));
     z.pdf = ddjjPdf;
 
     const audExtra = aud.map(a => ({ f: this.fechaDe(a.fecha), u: a.usuario || '—', a: a.accion, c: a.cliente || '—', p: a.periodo || '—', r: a.resultado || '', ip: a.ip || '—' }));
@@ -3166,6 +3345,10 @@ class Component extends DCLogic {
 
   nav(key) {
     return () => {
+      if (this.state.debeCambiarPw && key !== 'perfil') {
+        return this.setState({ toast: { kind: 'warn', t: 'Cambiá tu contraseña', d: 'Es obligatorio en el primer ingreso antes de usar la app.' } });
+      }
+      this.tocarActividad();
       this.setState(st => Object.assign({ screen: key, drawer: false, menuMovil: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null },
         key === 'liqNueva' && st.step === 5 && st.proc === 'done' ? this.liqVacia() : {},
         key === 'liqNueva' && (st.step === 1 || st.step === 5) ? { seqElegida: null } : {}));
@@ -3381,9 +3564,15 @@ class Component extends DCLogic {
         const alta = lib.createClient(sb.supabaseUrl, sb.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'myiva.alta' } });
         const pw = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, '0')).join('');
         const volver = location.origin + location.pathname + '?recuperar=1';
-        const { data, error } = await alta.auth.signUp({ email: mail, password: pw, options: { data: { nombre, rol: inv.rol }, emailRedirectTo: volver } });
+        const { data, error } = await alta.auth.signUp({
+          email: mail, password: pw,
+          options: { data: { nombre, rol: inv.rol, must_change_pw: true }, emailRedirectTo: volver }
+        });
         if (error) return err('No se pudo crear el usuario: ' + error.message);
         if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) return err('El mail ' + mail + ' ya tiene usuario en MyIVA.');
+        if (data.user) {
+          try { await sb.from('perfiles').update({ debe_cambiar_pw: true, nombre, rol: esAdmin ? 'admin' : 'empleado' }).eq('id', data.user.id); } catch (e) { }
+        }
         if (data.session) {
           const r = await sb.auth.resetPasswordForEmail(mail, { redirectTo: volver });
           if (r.error) mailTxt = 'No se pudo enviar el mail para elegir contraseña (' + r.error.message + '): desde el login puede usar "Olvidé mi contraseña".';
@@ -3393,7 +3582,7 @@ class Component extends DCLogic {
       }
     }
 
-    this._perfiles = perfiles.concat([{ email: mail, nombre, rol: esAdmin ? 'admin' : 'empleado', activo: true }]);
+    this._perfiles = perfiles.concat([{ email: mail, nombre, rol: esAdmin ? 'admin' : 'empleado', activo: true, debe_cambiar_pw: true }]);
     if (!esAdmin) {
       const pares = [].concat(...this.CARTERA.map(([u, cc]) => cc.map(c => [u, c]))).filter(([, c]) => !cs.includes(c)).concat(cs.map(c => [nombre, c]));
       this.guardarCartera(pares, nombre + ' creado con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes'), this.CARTERA.map(([u]) => u).concat([nombre]));
@@ -4633,16 +4822,16 @@ class Component extends DCLogic {
   xlsxLib() {
     if (typeof window !== 'undefined' && window.XLSX) return Promise.resolve(window.XLSX);
     if (this._xlsxP) return this._xlsxP;
-    const urls = ['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js', 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'];
-    const load = (i) => new Promise((ok, ko) => {
+    // CDN pin + SRI (jsDelivr; sheetjs.com a veces responde 403).
+    const url = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    const integrity = 'sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw';
+    this._xlsxP = new Promise((ok, ko) => {
       const sc = document.createElement('script');
-      sc.src = urls[i];
-      sc.async = true;
+      sc.src = url; sc.async = true; sc.crossOrigin = 'anonymous'; sc.integrity = integrity;
       sc.onload = () => (window.XLSX ? ok(window.XLSX) : ko(new Error('XLSX')));
-      sc.onerror = () => { sc.remove(); if (i + 1 < urls.length) load(i + 1).then(ok, ko); else ko(new Error('No se pudo cargar el lector de Excel. Revisá la conexión a internet y volvé a intentar.')); };
+      sc.onerror = () => { sc.remove(); this._xlsxP = null; ko(new Error('No se pudo cargar el lector de Excel. Revisá la conexión a internet y volvé a intentar.')); };
       document.head.appendChild(sc);
     });
-    this._xlsxP = load(0).catch(e => { this._xlsxP = null; throw e; });
     return this._xlsxP;
   }
 
@@ -7061,8 +7250,32 @@ class Component extends DCLogic {
       loginKey: (e) => { if (e.key === 'Enter') this.login(); },
       loginErrTxt: s.loginErrTxt || 'Mail o contraseña incorrectos.', loginOkHay: !!s.loginOk, loginOkTxt: s.loginOk,
       loginBtn: s.sesionChk ? 'Verificando sesión…' : (s.loginBusy ? 'Ingresando…' : 'Ingresar'), loginBtnOp: s.sesionChk || s.loginBusy ? '.7' : '1',
+      loginBtnDisp: s.mfaPaso ? 'none' : 'block',
+      captchaHay: !s.mfaPaso && !s.sesionChk, captchaPregunta: (() => {
+        const c = this._captcha; if (!c || !c.ok) return 'Tocá la forma pedida.';
+        const [col, forma] = c.ok.split('|');
+        return 'Tocá el ' + forma + ' ' + col + '.';
+      })(),
+      captchaTiles: (() => {
+        const c = this._captcha; if (!c) return [];
+        return c.tiles.map((t, i) => ({
+          n: i + 1, bg: t.color.bg, fill: t.color.fill, svg: t.forma.svg,
+          bd: s.captchaOk && (t.color.n + '|' + t.forma.n) === c.ok ? '#2E7D5B' : '#E3E8EE',
+          pick: () => this.captchaElegir(t)
+        }));
+      })(),
+      mfaHay: !!s.mfaPaso, mfaQrHay: s.mfaPaso === 'enroll' && !!s.mfaSecret,
+      mfaTitulo: s.mfaPaso === 'enroll' ? 'Activá el 2FA (Google Authenticator)' : 'Segundo factor',
+      mfaTxt: s.mfaPaso === 'enroll'
+        ? 'Agregá una cuenta en Authenticator con el secret de abajo y escribí el código de 6 dígitos.'
+        : 'Abrí Google Authenticator e ingresá el código de 6 dígitos.',
+      mfaSecret: s.mfaSecret || '', mfaCode: s.mfaCode || '',
+      mfaCodeSet: (e) => this.setState({ mfaCode: e.target.value, loginErr: false }),
+      mfaKey: (e) => { if (e.key === 'Enter') this.mfaConfirmar(); },
+      mfaOk: () => this.mfaConfirmar(), mfaBtn: s.loginBusy ? 'Verificando…' : 'Confirmar código',
+      debeCambiarPw: !!s.debeCambiarPw, puedeCancelarPw: !s.debeCambiarPw && !s.pwRecup,
       rolToggle: !this.sb(), meAcceso: s.acceso ? 'último acceso ' + this.fechaDe(s.acceso) : 'último acceso 04/09/2026 14:20',
-      pwAct: s.pwAct, pwNue: s.pwNue, pwRep: s.pwRep, pwRecup: s.pwRecup,
+      pwAct: s.pwAct, pwNue: s.pwNue, pwRep: s.pwRep, pwRecup: s.pwRecup || s.debeCambiarPw,
       pwActSet: (e) => this.setState({ pwAct: e.target.value }), pwNueSet: (e) => this.setState({ pwNue: e.target.value }), pwRepSet: (e) => this.setState({ pwRep: e.target.value }),
       cambiarPw: () => this.cambiarPw(),
       sbWide: !s.collapsed, sbMini: s.collapsed,
@@ -7144,11 +7357,8 @@ class Component extends DCLogic {
         { label: 'Clientes asignados', value: String(misClientes.length), hint: misClientes.slice(0, 2).join(' · ') + (misClientes.length > 2 ? ' y ' + (misClientes.length - 2) + ' más' : ''), color: '#1B2733' },
         { label: 'Alertas abiertas', value: String(alertasTodas.filter(a => misClientes.indexOf(a.cli) >= 0).length), hint: 'de mis clientes', color: '#B3261E' }
       ],
-      accesoAdmin: () => this.entrarRapido('admin', s.usr),
-      accesoUsrs: this.CARTERA.map(([u, cs]) => ({
-        nombre: u, ini: this.fold(u).slice(0, 2).toUpperCase(), cant: cs.length + ' clientes', mail: this.mailDe(u),
-        go: () => this.entrarRapido('empleado', u)
-      })),
+      accesoAdmin: () => this.entrarRapido(),
+      accesoUsrs: [],
       cerrarSesion: () => this.salir(),
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',

@@ -8,8 +8,10 @@ create table if not exists public.perfiles (
   nombre  text not null,                       -- nombre corto que muestra la app: Julieta, Rubén...
   rol     text not null default 'empleado' check (rol in ('admin', 'empleado')),
   activo  boolean not null default true,
+  debe_cambiar_pw boolean not null default true, -- primer ingreso: forzar cambio de contraseña
   creado  timestamptz not null default now()
 );
+alter table public.perfiles add column if not exists debe_cambiar_pw boolean not null default false;
 
 create or replace function public.es_admin() returns boolean
 language sql stable security definer set search_path = public as $$
@@ -177,6 +179,8 @@ begin
   foreach t in array array['liquidaciones', 'cruces', 'compensaciones', 'ddjj_pdf'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "equipo" on public.%I', t);
+    execute format('drop policy if exists "cartera" on public.%I', t);
+    -- Por defecto abierto al equipo; seguridad_prod.sql lo restringe a cartera.
     execute format('create policy "equipo" on public.%I for all to authenticated using (true) with check (true)', t);
   end loop;
 end $$;
