@@ -3549,7 +3549,8 @@ class Component extends DCLogic {
     'Candelaria': 'candelaria@blasco.com.ar',
     'Ivanna': 'ivanna@blasco.com.ar',
     'Rubén': 'ruben@blasco.com.ar',
-    'Administrador': 'admin.myiva@blasco.com.ar',
+    'Daniela': 'daniela@blasco.com.ar',
+    'Administrador': 'daniela@blasco.com.ar',
     'Sistemas': 'sistemas.myiva@blasco.com.ar',
     'UsuarioDemo': 'usuario.myiva@blasco.com.ar'
   };
@@ -7271,8 +7272,8 @@ class Component extends DCLogic {
     const cruDifPC = Object.values(ultRun).filter(r => r.per === PC && (r.cruces || []).some(c => numDif(c) > 0 || c.est === 'Con errores')).length;
 
     const usuarios = [
-      { nombre: 'Administrador', mail: this.mailDe('Administrador'), rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
-    ].concat((this._perfiles || []).filter(p => this.esPoderAdmin(p.rol) && p.activo && p.nombre !== 'Administrador').map(p => ({
+      { nombre: 'Daniela', mail: this.mailDe('Daniela'), rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
+    ].concat((this._perfiles || []).filter(p => this.esPoderAdmin(p.rol) && p.activo && p.nombre !== 'Administrador' && p.nombre !== 'Daniela').map(p => ({
       nombre: p.nombre, mail: p.email, rol: this.rolNombre(p.rol), clientes: 'Todos (' + clientes.length + ')', acceso: '—', est: 'Activo'
     })), this.CARTERA.map(([u, cs]) => ({
       nombre: u, mail: this.mailDe(u), rol: 'Usuario',
