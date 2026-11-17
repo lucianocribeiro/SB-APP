@@ -3,7 +3,7 @@
 -- Después: Authentication → Multi-Factor → habilitar TOTP.
 --
 -- Credenciales que crea/activa este script:
---   Daniela    daniela@blasco.com.ar        / MyIVA-Daniela-2026!   (Administradora)
+--   Daniela    danielac@blasco.com.ar       / MyIVA-Daniela-2026!   (Administradora)
 --   Demo       usuario.myiva@blasco.com.ar  / MyIVA-User-2026!
 --   Julieta    julietad@blasco.com.ar       / MyIVA-Julieta-2026!
 --   Agustín    agustin@blasco.com.ar        / MyIVA-Agustin-2026!
@@ -137,7 +137,7 @@ begin
   return uid;
 end $$;
 
-select public.asegurar_usuario('daniela@blasco.com.ar', 'MyIVA-Daniela-2026!', 'Daniela', 'admin');
+select public.asegurar_usuario('danielac@blasco.com.ar', 'MyIVA-Daniela-2026!', 'Daniela', 'admin');
 select public.asegurar_usuario('admin.myiva@blasco.com.ar', 'MyIVA-Admin-2026!', 'Administrador', 'admin');
 select public.asegurar_usuario('usuario.myiva@blasco.com.ar', 'MyIVA-User-2026!', 'UsuarioDemo', 'empleado');
 select public.asegurar_usuario('julietad@blasco.com.ar', 'MyIVA-Julieta-2026!', 'Julieta', 'empleado');
@@ -147,15 +147,15 @@ select public.asegurar_usuario('ivanna@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Iv
 select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
 select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', 'MyIVA-Sistemas-2026!', 'Sistemas', 'sistemas');
 update public.perfiles set debe_cambiar_pw = false, activo = true where lower(email) in (
-  'daniela@blasco.com.ar', 'sistemas.myiva@blasco.com.ar'
+  'danielac@blasco.com.ar', 'sistemas.myiva@blasco.com.ar'
 );
 update public.perfiles set activo = false
-where lower(email) in ('admin.myiva@blasco.com.ar', 'victoria@blasco.com.ar')
+where lower(email) in ('admin.myiva@blasco.com.ar', 'victoria@blasco.com.ar', 'daniela@blasco.com.ar')
    or lower(nombre) = 'victoria';
 update auth.users
 set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
   || jsonb_build_object('must_change_pw', false, 'nombre', 'Daniela', 'rol', 'admin')
-where lower(email) = 'daniela@blasco.com.ar';
+where lower(email) = 'danielac@blasco.com.ar';
 update auth.users
 set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
   || jsonb_build_object('must_change_pw', false, 'nombre', 'Sistemas', 'rol', 'sistemas')
