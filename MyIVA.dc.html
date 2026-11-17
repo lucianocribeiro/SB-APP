@@ -6941,9 +6941,21 @@ class Component extends DCLogic {
     const owner = {};
     this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
     const fiscal = this.FISCAL_DEMO;
+    // Último período = la liquidación más reciente del cliente (no el valor fijo de cliFiscal / demo, que quedaba trabado).
+    const pkPer = (per) => String(per || '').slice(3) + String(per || '').slice(0, 2);
+    const idLiq = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    const ultPerCli = {};
+    this.baseRows().forEach(r => {
+      if ((s.ddjjBorradas || {})[idLiq(r)] || r.df === '—') return;
+      const prev = ultPerCli[r.cliente];
+      if (!prev || pkPer(r.per) > pkPer(prev.per) || (pkPer(r.per) === pkPer(prev.per) && r.seq > prev.seq)) ultPerCli[r.cliente] = r;
+    });
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
       const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
-      return { rz, cuit: f.cuit, cond: f.cond, per: f.per, users: owner[rz], est: 'Activo', st: E['Activo'],
+      const ult = ultPerCli[rz];
+      // Con sesión real: período de la última liquidación (o —). En demo sin login se deja el de FISCAL_DEMO.
+      const per = ult ? ult.per : (this._user ? '—' : (f.per || '—'));
+      return { rz, cuit: f.cuit, cond: f.cond, per, users: owner[rz], est: 'Activo', st: E['Activo'],
         sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
         abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
     });
