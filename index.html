@@ -5959,13 +5959,14 @@ class Component extends DCLogic {
   }
 
   // Cruce 4 con el modelo acordado con Agencia Kairos (nov. 2026): una fila por clave, con los importes agrupados.
-  // Percepciones: P|CUIT agente|Tipo|Pto.Vta.|Número (en ARCA, de «Número Comprobante»: últimos 8 dígitos = número, el resto = Pto.Vta.).
-  // Retenciones: R|CUIT agente|Fecha; los números se comparan aparte (coincide / aproximado / distinto).
+  // Percepciones: P|CUIT agente|Tipo|Pto.Vta.|Número (en Mis Retenciones, «Número Comprobante»: primeros 4 dígitos = Pto.Vta., el resto = nro. de emisión).
+  // Ej.: 0840000000810695 → P|…|FC|840|810695. Retenciones: R|CUIT agente|Fecha; los números se comparan aparte.
   // Las aduaneras (CUIT de la Aduana, régimen de importación o despacho en IVA Compras) van al cruce 5.
   cruzarRetM(mr, ventas, compras) {
     const TOL = 1, r2 = (v) => Math.round(v * 100) / 100, dig = (v) => String(v == null ? '' : v).replace(/\D/g, '');
     const tipoA = (d) => { const t = this.fold(d || ''); return /credito/.test(t) ? 'NC' : (/debito/.test(t) ? 'ND' : 'FC'); };
-    const pvNro = (c) => { const t = dig(c); return t ? [parseInt(t.slice(0, -8) || '0', 10), parseInt(t.slice(-8), 10)] : [0, 0]; };
+    // Mis Retenciones: primeros 4 dígitos = Pto.Vta., todos los siguientes = número de emisión (se quitan ceros a la izquierda).
+    const pvNro = (c) => { const t = dig(c); if (!t) return [0, 0]; return t.length > 4 ? [parseInt(t.slice(0, 4), 10), parseInt(t.slice(4) || '0', 10)] : [0, parseInt(t, 10)]; };
     const esAduL = (x) => x.cuit === this.CUIT_ADUANA || this.TC_DESPACHO.includes(x.tc);
     const esAduA = (a) => a.cuit === this.CUIT_ADUANA || /importac/.test(this.fold(a.reg || ''));
     const M = new Map(), orden = [];
@@ -6543,7 +6544,7 @@ class Component extends DCLogic {
         cols: [5, 36, 12, 11, 13, 36, 12, 30, 9, 14, 40, 14, 22, 20, 9, 14, 14, 16, 60, 30].map(wch => ({ wch })),
         aoa: [
           ['CRUCE 4 — Mis Retenciones: percepciones IVA (IVA Compras) y retenciones IVA (IVA Ventas, TC "CR") vs ARCA'],
-          ['Percepciones: clave P|CUIT agente|Tipo|Pto.Vta.|Número (en ARCA se toma de "Número Comprobante": últimos 8 dígitos = número, el resto = Pto.Vta.). Retenciones: clave R|CUIT|Fecha, con comparación aparte de números. Importes agrupados por clave. Excluye aduaneras (Cruce 5). Tolerancia: $ 1.'],
+          ['Percepciones: clave P|CUIT agente|Tipo|Pto.Vta.|Número (en Mis Retenciones, "Número Comprobante": primeros 4 dígitos = Pto.Vta., el resto = nro. de emisión; ej. 0840000000810695 → FC|840|810695). Retenciones: clave R|CUIT|Fecha, con comparación aparte de números. Importes agrupados por clave. Excluye aduaneras (Cruce 5). Tolerancia: $ 1.'],
           ['Claves IVA Compras', x.nClC, '', 'Claves IVA Ventas', x.nClV, '', 'Solo en ARCA', x.soloA, '', 'OK', x.ok, 'DIFERENCIA', x.dif, 'FALTA EN ARCA', x.faltA, 'FALTA EN LIBRO', x.faltL],
           ['PERCEPCIÓN / RETENCIÓN', '', '', '', '', '', 'LIBROS IVA (ARS)', '', '', '', 'ARCA — MIS RETENCIONES', '', '', '', '', '', 'DIFERENCIA'],
           ['N°', 'Clave de cruce', 'Operación', 'Fecha', 'CUIT Agente', 'Razón Social', 'Origen', 'Comprobante libro', 'Cant. reg.', 'Importe libro', 'Régimen', 'N° Certificado', 'N° Comprobante ARCA (original)', 'Comprobante ARCA (interpretado)', 'Cant. reg.', 'Importe ARCA', 'Libro - ARCA', 'ESTADO', 'Observación automática', 'Observación manual'],
