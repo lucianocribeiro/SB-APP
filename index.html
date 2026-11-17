@@ -2367,9 +2367,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Perfil</div>
-<div style="display:flex;gap:10px">
-<sc-for list="{{ invRoles }}" as="r" hint-placeholder-count="2">
-<div onClick="{{ r.go }}" style="flex:1;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid {{ r.bd }};border-radius:6px;background:{{ r.bg }};cursor:pointer">
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<sc-for list="{{ invRoles }}" as="r" hint-placeholder-count="3">
+<div onClick="{{ r.go }}" style="flex:1;min-width:160px;display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid {{ r.bd }};border-radius:6px;background:{{ r.bg }};cursor:pointer">
 <span style="width:14px;height:14px;flex:none;margin-top:2px;border-radius:50%;border:{{ r.dot }};box-sizing:border-box"></span>
 <span><span style="font:600 13px 'Open Sans';display:block">{{ r.label }}</span><span style="font:400 12px/1.4 'Open Sans';color:#5A6B7B">{{ r.d }}</span></span>
 </div>
@@ -2748,8 +2748,14 @@ class Component extends DCLogic {
     'Invitación pendiente': { label: 'Invitación pendiente', bg: '#FBF3E3', fg: '#8F5F14', bd: '#F0E0BC' },
     'Suspendido': { label: 'Suspendido', bg: '#FBE9E7', fg: '#B3261E', bd: '#F3CFCB' },
     'Administrador': { label: 'Administrador', bg: '#E6EDF4', fg: '#14395C', bd: '#CBD9E6' },
+    'Sistemas': { label: 'Sistemas', bg: '#E8F0F8', fg: '#14395C', bd: '#B8CDE0' },
     'Usuario': { label: 'Usuario', bg: '#EEF1F4', fg: '#5A6B7B', bd: '#DDE3E9' }
   };
+
+  // admin y sistemas (Agencia Kairos): mismo poder en UI; el rol real queda en perfiles.rol
+  esPoderAdmin(rol) { return rol === 'admin' || rol === 'sistemas'; }
+  rolUi(rol) { return this.esPoderAdmin(rol) ? 'admin' : 'empleado'; }
+  rolNombre(rol) { return rol === 'sistemas' ? 'Sistemas' : (rol === 'admin' ? 'Administrador' : 'Usuario'); }
 
   ICON = {
     home: 'M3 11l9-7.5 9 7.5M5.5 10v10h13V10M10 20v-6h4v6',
@@ -2896,7 +2902,7 @@ class Component extends DCLogic {
         }
       }
       const { data: perfil } = await sb.from('perfiles').select('rol').eq('id', user.id).maybeSingle();
-      if (perfil && perfil.rol === 'admin') {
+      if (perfil && this.esPoderAdmin(perfil.rol)) {
         const factors = await sb.auth.mfa.listFactors();
         const hay = ((factors.data && factors.data.totp) || []).some(f => f.status === 'verified');
         if (!hay) {
@@ -3009,7 +3015,7 @@ class Component extends DCLogic {
       this.armarIdle();
       this.tocarActividad();
       this.setState(Object.assign(datos, {
-        perfil, role: perfil.rol === 'admin' ? 'admin' : 'empleado', usr: perfil.nombre, acceso: user.last_sign_in_at || null,
+        perfil, role: this.rolUi(perfil.rol), usr: perfil.nombre, acceso: user.last_sign_in_at || null,
         screen: (recup || debe) ? 'perfil' : 'inicio', pwRecup: recup, debeCambiarPw: debe,
         sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '', mfaPaso: '',
         toast: (recup || debe)
@@ -3069,7 +3075,7 @@ class Component extends DCLogic {
       this.todas('cruces', 'fecha'),
       q(sb.from('compensaciones').select('*').order('fecha', { ascending: false })),
       q(sb.from('ddjj_pdf').select('*')),
-      perfil.rol === 'admin' ? q(sb.from('auditoria').select('*').order('fecha', { ascending: false }).limit(300)) : [],
+      this.esPoderAdmin(perfil.rol) ? q(sb.from('auditoria').select('*').order('fecha', { ascending: false }).limit(300)) : [],
       q(sb.from('config').select('*'))
     ]);
     this._perfiles = perfiles;
@@ -3088,7 +3094,7 @@ class Component extends DCLogic {
       });
       cart = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
       // Empleado: sólo su cartera (defensa en cliente; RLS en DB es la fuente de verdad).
-      if (perfil.rol !== 'admin') {
+      if (!this.esPoderAdmin(perfil.rol)) {
         const mio = cart.find(([u]) => u === perfil.nombre) || [perfil.nombre, []];
         cart = [mio];
         pend = [];
@@ -3101,7 +3107,7 @@ class Component extends DCLogic {
     }
     Object.assign(z, { cart: clientes.length ? cart : null, pend, mapa: clientes.length ? this.cartMapa(cart, pend) : {} });
 
-    const misCli = perfil.rol === 'admin' ? null : new Set((cart.find(([u]) => u === perfil.nombre) || [perfil.nombre, []])[1]);
+    const misCli = this.esPoderAdmin(perfil.rol) ? null : new Set((cart.find(([u]) => u === perfil.nombre) || [perfil.nombre, []])[1]);
     const enCartera = (cli) => !misCli || misCli.has(cli);
 
     const lq = this.liqsDeDb(liqs.filter(r => enCartera(r.cliente)));
@@ -3557,9 +3563,13 @@ class Component extends DCLogic {
     const todos = [...new Set(Object.keys(dueno).concat(s.cartPend || []))].sort((a, b) => a.localeCompare(b, 'es'));
     const sel = todos.filter(c => inv.cs[c]), reasig = sel.filter(c => dueno[c]).length;
     return {
-      invNombre: inv.nombre, invMail: inv.mail, invErr: inv.err, invErrOn: !!inv.err, invEsUsr: inv.rol !== 'admin',
+      invNombre: inv.nombre, invMail: inv.mail, invErr: inv.err, invErrOn: !!inv.err, invEsUsr: !this.esPoderAdmin(inv.rol),
       invNombreSet: (e) => this.invSet('nombre', e.target.value), invMailSet: (e) => this.invSet('mail', e.target.value),
-      invRoles: [['empleado', 'Usuario', 'Liquida y cruza sus clientes asignados.'], ['admin', 'Administrador', 'Acceso total, incluida configuración.']].map(([k, label, d]) => {
+      invRoles: [
+        ['empleado', 'Usuario', 'Liquida y cruza sus clientes asignados.'],
+        ['admin', 'Administrador', 'Acceso total, incluida configuración.'],
+        ['sistemas', 'Sistemas', 'Agencia Kairos · mismo poder que Administrador.']
+      ].map(([k, label, d]) => {
         const on = inv.rol === k;
         return { label, d, go: () => this.invSet('rol', k), bd: on ? '#2F80B7' : '#E3E8EE', bg: on ? '#F4F9FD' : '#FFFFFF', dot: on ? '4px solid #14395C' : '1px solid #9AA9B7' };
       }),
@@ -3578,13 +3588,15 @@ class Component extends DCLogic {
     const s = this.state, inv = s.inv || this.invVacio();
     const err = (t) => this.setState(st => ({ inv: Object.assign({}, st.inv, { err: t, busy: false }) }));
     if (inv.busy) return;
-    const nombre = inv.nombre.trim().replace(/\s+/g, ' '), mail = inv.mail.trim().toLowerCase(), esAdmin = inv.rol === 'admin';
+    const nombre = inv.nombre.trim().replace(/\s+/g, ' '), mail = inv.mail.trim().toLowerCase();
+    const rol = inv.rol === 'sistemas' ? 'sistemas' : (inv.rol === 'admin' ? 'admin' : 'empleado');
+    const poder = this.esPoderAdmin(rol);
     if (!nombre) return err('Escribí el nombre del usuario.');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return err('Escribí un mail válido.');
     const perfiles = this._perfiles || [];
     if (['administrador'].concat(this.CARTERA.map(([u]) => this.fold(u)), perfiles.map(p => this.fold(p.nombre))).includes(this.fold(nombre))) return err('Ya hay un usuario llamado ' + nombre + '. Elegí otro nombre.');
     if (perfiles.some(p => p.email === mail)) return err('Ya hay un usuario con el mail ' + mail + '.');
-    const cs = esAdmin ? [] : Object.keys(inv.cs).filter(c => inv.cs[c]);
+    const cs = poder ? [] : Object.keys(inv.cs).filter(c => inv.cs[c]);
     this.setState(st => ({ inv: Object.assign({}, st.inv, { busy: true, err: '' }) }));
 
     const sb = this.sb(), lib = typeof window !== 'undefined' && window.supabase;
@@ -3597,12 +3609,12 @@ class Component extends DCLogic {
         const volver = location.origin + location.pathname + '?recuperar=1';
         const { data, error } = await alta.auth.signUp({
           email: mail, password: pw,
-          options: { data: { nombre, rol: inv.rol, must_change_pw: true }, emailRedirectTo: volver }
+          options: { data: { nombre, rol, must_change_pw: true }, emailRedirectTo: volver }
         });
         if (error) return err('No se pudo crear el usuario: ' + error.message);
         if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) return err('El mail ' + mail + ' ya tiene usuario en MyIVA.');
         if (data.user) {
-          try { await sb.from('perfiles').update({ debe_cambiar_pw: true, nombre, rol: esAdmin ? 'admin' : 'empleado' }).eq('id', data.user.id); } catch (e) { }
+          try { await sb.from('perfiles').update({ debe_cambiar_pw: true, nombre, rol }).eq('id', data.user.id); } catch (e) { }
         }
         if (data.session) {
           const r = await sb.auth.resetPasswordForEmail(mail, { redirectTo: volver });
@@ -3613,16 +3625,17 @@ class Component extends DCLogic {
       }
     }
 
-    this._perfiles = perfiles.concat([{ email: mail, nombre, rol: esAdmin ? 'admin' : 'empleado', activo: true, debe_cambiar_pw: true }]);
-    if (!esAdmin) {
+    this._perfiles = perfiles.concat([{ email: mail, nombre, rol, activo: true, debe_cambiar_pw: true }]);
+    if (!poder) {
       const pares = [].concat(...this.CARTERA.map(([u, cc]) => cc.map(c => [u, c]))).filter(([, c]) => !cs.includes(c)).concat(cs.map(c => [nombre, c]));
       this.guardarCartera(pares, nombre + ' creado con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes'), this.CARTERA.map(([u]) => u).concat([nombre]));
       this.guardarPend(s.cartPend.filter(c => !cs.includes(c)));
     }
+    const rolTxt = this.rolNombre(rol);
     this.setState(st => ({
       modal: false, inv: this.invVacio(),
-      audExtra: esAdmin ? [{ f: this.ahora(), u: this.me().short, a: nombre + ' creado como administrador', c: '—', p: '—', r: mail, ip: '—' }].concat(st.audExtra) : st.audExtra,
-      toast: { kind: 'ok', t: 'Usuario creado: ' + nombre, d: (esAdmin ? 'Perfil Administrador. ' : 'Perfil Usuario con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes') + ' en Clientes por usuario. ') + mailTxt }
+      audExtra: poder ? [{ f: this.ahora(), u: this.me().short, a: nombre + ' creado como ' + rolTxt.toLowerCase(), c: '—', p: '—', r: mail, ip: '—' }].concat(st.audExtra) : st.audExtra,
+      toast: { kind: 'ok', t: 'Usuario creado: ' + nombre, d: (poder ? 'Perfil ' + rolTxt + '. ' : 'Perfil Usuario con ' + (cs.length === 1 ? '1 cliente' : cs.length + ' clientes') + ' en Clientes por usuario. ') + mailTxt }
     }));
   }
 
@@ -7258,8 +7271,8 @@ class Component extends DCLogic {
 
     const usuarios = [
       { nombre: 'Administrador', mail: this.mailDe('Administrador'), rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '04/09/2026 14:20', est: 'Activo' }
-    ].concat((this._perfiles || []).filter(p => p.rol === 'admin' && p.activo && p.nombre !== 'Administrador').map(p => ({
-      nombre: p.nombre, mail: p.email, rol: 'Administrador', clientes: 'Todos (' + clientes.length + ')', acceso: '—', est: 'Activo'
+    ].concat((this._perfiles || []).filter(p => this.esPoderAdmin(p.rol) && p.activo && p.nombre !== 'Administrador').map(p => ({
+      nombre: p.nombre, mail: p.email, rol: this.rolNombre(p.rol), clientes: 'Todos (' + clientes.length + ')', acceso: '—', est: 'Activo'
     })), this.CARTERA.map(([u, cs]) => ({
       nombre: u, mail: this.mailDe(u), rol: 'Usuario',
       clientes: cs.length + ' clientes · ' + cs.slice(0, 2).join(', ') + (cs.length > 2 ? ' y ' + (cs.length - 2) + ' más' : ''),
@@ -7313,7 +7326,7 @@ class Component extends DCLogic {
       toggleSb: () => this.setState(st2 => ({ collapsed: !st2.collapsed })),
       nav: this.navModel(), navMini: this.navMiniModel(),
       crumbA: crumb[0], crumbB: crumb[1],
-      rolLabel: s.role === 'admin' ? 'Administrador' : 'Usuario',
+      rolLabel: this.rolNombre((s.perfil && s.perfil.rol) || s.role),
       meIni: this.me().ini, meShort: this.me().short, meFull: this.me().full,
       rolAdminBg: s.role === 'admin' ? '#14395C' : '#FFFFFF',
       rolAdminFg: s.role === 'admin' ? '#FFFFFF' : '#5A6B7B',
