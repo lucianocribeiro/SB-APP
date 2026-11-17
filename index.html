@@ -3895,7 +3895,13 @@ class Component extends DCLogic {
     const dir = this.crudosCarpeta(id), ks = Object.keys(R).filter(k => R[k] && (R[k].file || R[k].files));
     const malos = [], rutas = new Set();
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    // Si el cruce usó Mis Comprobantes / Retenciones pero el File ya no está, avisar: si no, el papel sale sin esas solapas.
+    ['emitidos', 'recibidos', 'percep', 'aduana'].forEach(k => {
+      const x = R[k];
+      if (x && (x.recs || x.partes) && !(x.file || x.files)) malos.push((this.UP_LBL[k] || k) + ': el archivo no quedó en memoria para guardarlo');
+    });
     for (const [k, f] of [].concat(...ks.map(k => (R[k].files || [R[k].file]).map(f => [k, f])))) {
+      if (!f) { malos.push((this.UP_LBL[k] || k) + ': archivo vacío'); continue; }
       // Dos archivos con el mismo nombre (por ejemplo, dos "MisRetenciones.xlsx") no se pisan: el segundo lleva _2.
       const limpio = this.fold(f.name).replace(/[^a-z0-9.]+/g, '_'), punto = limpio.lastIndexOf('.');
       let ruta = dir + '/' + k + '__' + limpio;
@@ -5486,11 +5492,19 @@ class Component extends DCLogic {
       exp: ['importeoperacionesexportacion'], exe: ['importeexento'], nal: ['importenoalcanzado'], ngr: ['importenogravado'], mono: ['comprasaexentosmonotributistasyotros'],
       iin: ['importeimpuestosinternos'], piibb: ['percepcionesiibb'], piva: ['percepcionesiva'], potr: ['otraspercepciones'], oreg: ['otrosregimenesespeciales'], tot: ['totalcomprobante']
     } : {
+      // Mis Comprobantes ARCA: el export "compacto" usa Neto Gravado IVA 21%; el de empresas con mayor
+      // caudal (consulta CSV) usa "Imp. Neto Gravado IVA 21%" / "Imp. Neto Gravado Total".
       fecha: ['fecha', 'fechadeemision'], tipo: ['tipo', 'tipodecomprobante'], pv: ['puntodeventa'], nro: ['numerodesde', 'numero'],
       cuit: kind === 'recibidos' ? ['nrodocemisor'] : ['nrodocreceptor'], nom: kind === 'recibidos' ? ['denominacionemisor'] : ['denominacionreceptor'],
       cam: ['tipocambio', 'tipodecambio'], mon: ['moneda'],
-      n21: ['netograviva21'], i21: ['iva21'], n105: ['netograviva105'], i105: ['iva105'], n27: ['netograviva27'], i27: ['iva27'], n5: ['netograviva5'], i5: ['iva5'], n25: ['netograviva25'], i25: ['iva25'], n0: ['netograviva0'],
-      ngt: ['netogravadototal', 'impnetogravado', 'netogravado'], ivt: ['totaliva', 'iva'], nng: ['netonogravado', 'impnetonogravado'], exe: ['opexentas', 'impopexentas'], ot: ['otrostributos'], tot: ['imptotal', 'importetotal']
+      n21: ['impnetogravadoiva21', 'netogravadoiva21', 'netograviva21'], i21: ['iva21'],
+      n105: ['impnetogravadoiva105', 'netogravadoiva105', 'netograviva105'], i105: ['iva105'],
+      n27: ['impnetogravadoiva27', 'netogravadoiva27', 'netograviva27'], i27: ['iva27'],
+      n5: ['impnetogravadoiva5', 'netogravadoiva5', 'netograviva5'], i5: ['iva5'],
+      n25: ['impnetogravadoiva25', 'netogravadoiva25', 'netograviva25'], i25: ['iva25'],
+      n0: ['impnetogravadoiva0', 'netogravadoiva0', 'netograviva0'],
+      ngt: ['impnetogravadototal', 'netogravadototal', 'impnetogravado', 'netogravado'], ivt: ['totaliva', 'iva'],
+      nng: ['impnetonogravado', 'netonogravado'], exe: ['impopexentas', 'opexentas'], ot: ['otrostributos'], tot: ['imptotal', 'importetotal']
     };
     Object.keys(def).forEach(f => { C[f] = col(...def[f]); });
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -5529,6 +5543,13 @@ class Component extends DCLogic {
         v.ng = (n('nng') + n('exe')) * f;
         v.ot = n('ot') * f;
         v.tot = n('tot') * f;
+        // Si el CSV trae columnas por alícuota pero el total vino vacío, se arma desde las alícuotas.
+        if (hasAli) {
+          const ngSum = v.n21 + v.n105 + v.n27 + v.n5 + v.n25 + v.n0;
+          const ivSum = v.i21 + v.i105 + v.i27 + v.i5 + v.i25;
+          if (!v.ngt && ngSum) v.ngt = r2(ngSum);
+          if (!v.ivt && ivSum) v.ivt = r2(ivSum);
+        }
       }
       if (libro) {
         v.ngt = v.n21 + v.n105 + v.n27 + v.n5 + v.n25 + v.n0;
@@ -6514,7 +6535,8 @@ class Component extends DCLogic {
         data = { kind: k, name: f.name, attach: true };
       }
       data.size = kb;
-      Object.defineProperty(data, 'file', { value: f, enumerable: false });
+      // enumerable: el File tiene que sobrevivir Object.assign / clones hasta crudosSubir (papel de trabajo).
+      Object.defineProperty(data, 'file', { value: f, enumerable: true, configurable: true, writable: true });
       this.setState(st => {
         const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
         const base = Object.assign({}, st, reset);
@@ -6549,13 +6571,13 @@ class Component extends DCLogic {
         if (partes.some(p => p.name === f.name && p.bytes === f.size)) continue;
         const p = this.parseRetenciones(f.name, new Uint8Array(await f.arrayBuffer()), X);
         p.bytes = f.size;
-        Object.defineProperty(p, 'file', { value: f, enumerable: false });
+        Object.defineProperty(p, 'file', { value: f, enumerable: true, configurable: true, writable: true });
         partes.push(p);
       }
       const data = this.juntarRetenciones(partes);
       data.size = peso(partes.reduce((a, p) => a + p.bytes, 0));
-      Object.defineProperty(data, 'partes', { value: partes, enumerable: false });
-      Object.defineProperty(data, 'files', { value: partes.map(p => p.file), enumerable: false });
+      Object.defineProperty(data, 'partes', { value: partes, enumerable: true, configurable: true, writable: true });
+      Object.defineProperty(data, 'files', { value: partes.map(p => p.file), enumerable: true, configurable: true, writable: true });
       this.setState(st => {
         const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
         return Object.assign(reset, {
@@ -7695,7 +7717,7 @@ class Component extends DCLogic {
     });
     const curRow = (s.liqSaved
       ? [Object.assign({ cliente: s.liqCliN, per: s.liqRes ? s.liqRes.per : '08/2026', seq: s.liqSeqN, fecha: '03/10/2026', user: me.short, df: '4.182.905,60', cf: '2.444.516,20', rp: '106.284,15', est: 'Completado', eg: s.liqEg || [] },
-        s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp), n: { df: s.liqRes.df, cf: s.liqRes.cf, rp: s.liqRes.rp, s1: s.liqRes.s1, s2: s.liqRes.s2, regs: s.liqRes.regs, ali: s.liqRes.ali } } : {})]
+        s.liqRes ? { fecha: s.liqRes.fecha, df: this.ars(s.liqRes.df), cf: this.ars(s.liqRes.cf), rp: this.ars(s.liqRes.rp), n: { df: s.liqRes.df, cf: s.liqRes.cf, rp: s.liqRes.rp, s1: s.liqRes.s1, s2: s.liqRes.s2, regs: s.liqRes.regs, ali: s.liqRes.ali, a1: s.liqRes.a1, a2: s.liqRes.a2 } } : {})]
       : []).concat(pendRows);
     const histTodas = curRow.concat(baseRows.filter(r => !(curRow.length && r.cliente === curRow[0].cliente && r.per === curRow[0].per && r.seq === curRow[0].seq && s.liqSaved))).filter(r => !del[rid(r)]);
     const misClis = histAdmin ? null : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
@@ -7965,11 +7987,14 @@ class Component extends DCLogic {
         if ((this.state.liqsDb || []).some(r => r.id === cli + '|' + perL + '|' + seqSel + '|' + res.fecha)) res.fecha = ahora + ':' + String(new Date().getSeconds()).padStart(2, '0');
         const id = cli + '|' + perL + '|' + seqSel + '|' + res.fecha, ult = this.state.cruRuns.find(r => r.cliente === cli && r.per === perL && !r.liq);
         const eg = ult ? this.runGrupos(ult) : cru.errGroups;
+        // a1/a2 = saldos a favor del período anterior usados en esta liquidación (manual o de la DJ previa).
+        // Van también en res para que el Excel del historial (curRow) no pierda el saldo cargado a mano.
+        const a1 = arr.manual ? arr.manual.a1 : arr.tec, a2 = arr.manual ? arr.manual.a2 : arr.lib;
+        res.a1 = a1; res.a2 = a2;
         const fila = {
           id, cliente: cli, per: perL, seq: seqSel, fecha: res.fecha, fechaHora: res.fechaHora, user: me.short,
           df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg,
-          // a1/a2 = saldos a favor del período anterior usados en esta liquidación (manual o de la DJ previa).
-          n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali, a1: arr.manual ? arr.manual.a1 : arr.tec, a2: arr.manual ? arr.manual.a2 : arr.lib })
+          n: Object.assign({ df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali, a1, a2 })
         };
         this.setState({ liqConfirm: false, step: 5, proc: 'run', liqRes: null, liqErrTxt: '' });
         (async () => {
@@ -7991,7 +8016,8 @@ class Component extends DCLogic {
               this.refrescar().catch(() => { });
               return fin('error');
             }
-            this.crudosSubir(id, R);
+            // Esperar la subida: si Mis Comprobantes / Retenciones fallan, el papel de trabajo sale incompleto.
+            await this.crudosSubir(id, R);
           }
           this.setState(st => {
             const le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
