@@ -3633,6 +3633,33 @@ class Component extends DCLogic {
     return out;
   }
 
+  // Mis Retenciones (ARCA): la columna "Importe Ret./Perc." suele venir como texto (triángulo verde en Excel).
+  // En el papel de trabajo se vuelve a número con 2 decimales, para poder sumar y filtrar.
+  numerarImporteRet(aoa) {
+    if (!aoa || !aoa.length) return aoa;
+    let hi = -1, col = -1;
+    for (let i = 0; i < Math.min(aoa.length, 40); i++) {
+      const ks = (aoa[i] || []).map(x => this.hkey(x && typeof x === 'object' && 'v' in x ? x.v : x));
+      const j = ks.findIndex(x => x.startsWith('importeret') || x === 'importeretperc' || (x.startsWith('importe') && /ret|perc/.test(x)));
+      if (j >= 0) { hi = i; col = j; break; }
+      const j2 = ks.findIndex(x => x.startsWith('importe') || x.startsWith('monto'));
+      if (j2 >= 0 && ks.some(x => x.startsWith('cuitagente') || x === 'cuit')) { hi = i; col = j2; break; }
+    }
+    if (col < 0) return aoa;
+    const Z = '#,##0.00';
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const fila = aoa[i];
+      if (!fila || fila[col] === '' || fila[col] == null) continue;
+      const raw = fila[col], txt = raw && typeof raw === 'object' && 'v' in raw ? raw.v : raw;
+      if (typeof txt === 'number' && isFinite(txt)) { fila[col] = { v: txt, z: (raw && raw.z) || Z }; continue; }
+      const t = String(txt == null ? '' : txt).replace(/[$\s]/g, '').trim();
+      if (!t || !/^-?\d/.test(t)) continue;
+      const n = this.numAr(t);
+      if (isFinite(n)) fila[col] = { v: Math.round(n * 100) / 100, z: Z };
+    }
+    return aoa;
+  }
+
   hojaXml(rows, NS, estiloDe, merges) {
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
     const xr = rows.map((r, i) => '<row r="' + (i + 1) + '">' + r.map((v, j) => {
@@ -3728,7 +3755,9 @@ class Component extends DCLogic {
           const wb = X.read(bytes, libro ? { type: 'array', cellDates: true, cellNF: true } : { type: 'array', raw: true });
           wb.SheetNames.forEach((sn, i) => {
             // Planillas: cada celda conserva su formato de origen (miles, decimales, fechas); CSV / texto: tal cual.
-            const aoa = libro ? this.celdasConFormato(X, wb.Sheets[sn]) : X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
+            let aoa = libro ? this.celdasConFormato(X, wb.Sheets[sn]) : X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }).map(fila => fila.map(celda));
+            // Mis Retenciones: "Importe Ret./Perc." de ARCA suele venir como texto → número en el papel de trabajo.
+            if (k === 'percep') aoa = this.numerarImporteRet(aoa);
             hojas.push({ name: nombre(base + (wb.SheetNames.length > 1 ? ' ' + (i + 1) : '')), rows: aoa });
           });
         } catch (e) {
