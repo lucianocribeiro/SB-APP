@@ -3169,8 +3169,10 @@ class Component extends DCLogic {
       if (r.saldo_ant1 != null) Object.assign(n, { a1: Number(r.saldo_ant1), a2: Number(r.saldo_ant2 || 0) });
       if (r.alicuotas && r.alicuotas.a21 !== undefined) n.ali = r.alicuotas;
       reales.push({
-        id: r.id, cliente: r.cliente, per: r.periodo, seq: r.secuencia, fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
-        user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp), est: 'Completado', eg: r.errores || [], n
+        id: r.id, cliente: r.cliente, per: r.periodo, seq: Number(r.secuencia) || 0,
+        fecha: r.id.split('|')[3] || this.fechaDe(r.procesada, false), fechaHora: this.fechaDe(r.procesada),
+        user: r.usuario || '—', df: this.ars(n.df), cf: this.ars(n.cf), rp: this.ars(n.rp),
+        est: 'Completado', estado: r.estado === 'Cerrada' ? 'Cerrada' : 'Borrador', eg: r.errores || [], n
       });
     });
     return { z: { liqsDb: reales, liqEst, bor }, st: { liqsDb: reales, liqEst, ddjjBorradas: bor } };
@@ -4361,7 +4363,9 @@ class Component extends DCLogic {
 
   liqEstado(r) {
     if (r.est === 'Pendiente de liquidar') return null;
-    const k = r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    const k = r.id || (r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha);
+    if (this.state.liqEst[k] === 'Cerrada') return 'Cerrada';
+    if (r.estado === 'Cerrada' || r.estado === 'Borrador') return r.estado;
     return this.state.liqEst[k] || (r.per === '07/2026' ? 'Cerrada' : 'Borrador');
   }
 
@@ -5928,7 +5932,8 @@ class Component extends DCLogic {
   cruzarLibro(lib, ventas, compras) {
     const r2 = (x) => Math.round(x * 100) / 100, TOL = 1;
     const noRet = (x) => !this.TC_EXCL.includes(x.tc);
-    const V = ventas.recs.filter(noRet), C = compras.recs.filter(noRet);
+    // Sin subdiario de ventas o compras: se asume vacío (0). El cruce 6 igual corre con el Libro IVA Digital.
+    const V = ((ventas && ventas.recs) || []).filter(noRet), C = ((compras && compras.recs) || []).filter(noRet);
     const sum = (xs, f) => r2(xs.reduce((a, x) => a + (f(x) || 0), 0));
     const op = (xs) => xs.filter(x => x.tc !== 'NC'), nc = (xs) => xs.filter(x => x.tc === 'NC');
     // ARCA informa el neto al 0 % dentro de «Exento o No Gravado», no en el neto gravado (caso Andalux 09/2026, BBVA).
@@ -7011,7 +7016,8 @@ class Component extends DCLogic {
         cmp: [['Retenciones aduaneras', '18.420,00', '18.420,00', '0,00']]
       },
       {
-        n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'Libro IVA Digital (vista previa)'], ['ventas', 'IVA Ventas'], ['compras', 'IVA Compras']], regs: 16, ok: 16, dif: 0, falt: 0,
+        n: '6', t: 'Libro IVA Digital', tipo: 'IVA Digital vs IVA Compras + Ventas', need: [['ivadig', 'Libro IVA Digital (vista previa)'], ['subdiario', 'IVA Compras o IVA Ventas']], regs: 16, ok: 16, dif: 0, falt: 0,
+        nota: 'Si no hay IVA Ventas o IVA Compras, ese lado se toma en 0 y el cruce corre igual.',
         h: ['Concepto', 'Libro IVA Digital', 'IVA Ventas / IVA Compras', 'Diferencia'],
         cmp: [['Operaciones de Ventas · Débito fiscal', '4.182.905,60', '4.182.905,60', '0,00'], ['Operaciones de Compras · Crédito fiscal', '2.444.516,20', '2.444.516,20', '0,00']]
       }
@@ -7024,7 +7030,8 @@ class Component extends DCLogic {
       '4': RV.ret ? Object.assign(this.cruRetMVista(RV.ret), { blk: ['retM', RV.ret, '', 'Cruce 4 Retenciones'] }) : null,
       '5': RV.adu ? Object.assign(this.cruAduMVista(RV.adu), { blk: ['aduM', RV.adu, '', 'Cruce 5 Aduaneras'] }) : null
     };
-    if (enReal && R.ivadig && R.ventas && R.compras) {
+    // Cruce 6: alcanza con Libro IVA Digital + al menos un subdiario; el que falte se asume 0.
+    if (enReal && R.ivadig && (R.ventas || R.compras)) {
       const lb = this.cruzarLibro(R.ivadig, R.ventas, R.compras);
       vista['6'] = Object.assign(this.cruLibVista(lb), { blk: ['lib', lb, '', 'Cruce 6 LID'] });
     }
@@ -7674,18 +7681,19 @@ class Component extends DCLogic {
     const cli = this.liqCli(), savedAqui = s.liqSaved && s.liqCliN === cli && !!s.liqRes && s.liqRes.per === perL;
     const delPer = baseRows.filter(r => r.cliente === cli && r.per === perL && r.df !== '—');
     const hasHist = delPer.length > 0;
-    const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && r.seq === s.liqSeqN));
+    const hechas = delPer.filter(r => !del[rid(r)] && !(savedAqui && Number(r.seq) === Number(s.liqSeqN)));
     const fechaN = s.liqRes ? s.liqRes.fecha : '03/10/2026', fechaHoraN = s.liqRes ? s.liqRes.fechaHora : '03/10/2026 17:40';
-    const nueva = savedAqui && !del[cli + '|' + perL + '|' + s.liqSeqN + '|' + fechaN] ? [s.liqSeqN] : [];
-    const liqDone = [...new Set(hechas.map(r => r.seq).concat(nueva))].sort((a, b) => a - b);
+    const nueva = savedAqui && !del[cli + '|' + perL + '|' + s.liqSeqN + '|' + fechaN] ? [Number(s.liqSeqN)] : [];
+    const liqDone = [...new Set(hechas.map(r => Number(r.seq) || 0).concat(nueva.map(Number)))].sort((a, b) => a - b);
     const seqLast = liqDone.length ? Math.max(...liqDone) : -1;
-    const ultFecha = nueva.length && seqLast === s.liqSeqN ? fechaHoraN : ((hechas.find(r => r.seq === seqLast) || {}).fecha || '');
+    const ultFecha = nueva.length && seqLast === s.liqSeqN ? fechaHoraN : ((hechas.find(r => Number(r.seq) === seqLast) || {}).fecha || '');
     const seqSug = seqLast < this.SEQ_MAX ? seqLast + 1 : null;
     const seqSel = s.seqElegida ?? seqSug;
-    // La secuencia elegida ya existe: si está cerrada no se toca; si es un borrador, se pregunta y se sobrescribe.
-    const seqExiste = seqSel !== null && liqDone.includes(seqSel);
-    const seqFilas = seqExiste ? hechas.filter(r => r.seq === seqSel) : [];
-    const seqPisaBorr = seqExiste && seqFilas.length > 0 && seqFilas.every(r => this.liqEstado(r) !== 'Cerrada');
+    // Secuencia elegida: cerrada = no se toca; borrador = se puede sobrescribir con confirmación.
+    // Se mira delPer (no sólo hechas) para no marcar "cerrada" por filas vacías / tipos de seq.
+    const seqFilas = seqSel === null ? [] : delPer.filter(r => Number(r.seq) === Number(seqSel) && !del[rid(r)]);
+    const seqExiste = seqSel !== null && seqFilas.length > 0;
+    const seqPisaBorr = seqExiste && seqFilas.every(r => this.liqEstado(r) !== 'Cerrada');
     const seqPisa = seqExiste && !seqPisaBorr;
     const seqSaltea = seqSel !== null && seqSug !== null && seqSel > seqSug;
     const histAdmin = s.role === 'admin', me = this.me();
@@ -8055,20 +8063,28 @@ class Component extends DCLogic {
       seqSalteaTxt: seqSaltea ? 'Elegiste la Secuencia ' + seqSel + ': ' + (seqSel - seqSug === 1 ? 'la Secuencia ' + seqSug + ' queda' : 'las secuencias ' + seqSug + ' a ' + (seqSel - 1) + ' quedan') + ' sin liquidar.' : '',
       seqUsarSug: () => this.setState({ seqElegida: null }),
       seqTrack: Array.from({ length: this.SEQ_MAX + 1 }, (_, n) => {
-        const done = liqDone.includes(n), on = n === seqSel, sug = n === seqSug;
-        const pal = on ? (done ? ['#8F5F14', '#8F5F14', '#FFFFFF', 'rgba(255,255,255,.85)'] : ['#14395C', '#14395C', '#FFFFFF', 'rgba(255,255,255,.8)'])
-          : (done ? ['#E8F3EE', '#C7E3D6', '#2E7D5B', '#2E7D5B'] : (sug ? ['#F4F9FD', '#14395C', '#14395C', '#14395C'] : ['#FFFFFF', '#E3E8EE', '#9AA9B7', '#9AA9B7']));
+        const filasN = delPer.filter(r => Number(r.seq) === n && !del[rid(r)]);
+        const done = filasN.length > 0 || liqDone.includes(n), on = n === seqSel, sug = n === seqSug;
+        const borrN = done && filasN.length > 0 && filasN.every(r => this.liqEstado(r) !== 'Cerrada');
+        const cerrN = done && filasN.length > 0 && !borrN;
+        const pal = on
+          ? (cerrN ? ['#8F5F14', '#8F5F14', '#FFFFFF', 'rgba(255,255,255,.85)'] : (borrN ? ['#B7791F', '#B7791F', '#FFFFFF', 'rgba(255,255,255,.85)'] : ['#14395C', '#14395C', '#FFFFFF', 'rgba(255,255,255,.8)']))
+          : (cerrN ? ['#E8F3EE', '#C7E3D6', '#2E7D5B', '#2E7D5B'] : (borrN ? ['#FBF3E3', '#F0E0BC', '#8F5F14', '#8F5F14'] : (sug ? ['#F4F9FD', '#14395C', '#14395C', '#14395C'] : ['#FFFFFF', '#E3E8EE', '#9AA9B7', '#9AA9B7'])));
         return {
           n: String(n), tipo: n === 0 ? 'Original' : 'Rectif.',
-          tag: on ? (done ? 'Bloqueada' : (sug ? 'Sugerida' : 'A generar')) : (done ? 'Liquidada' : (sug ? 'Sugerida' : 'Disponible')),
+          tag: on
+            ? (cerrN ? 'Bloqueada' : (borrN ? 'Borrador' : (sug ? 'Sugerida' : 'A generar')))
+            : (cerrN ? 'Cerrada' : (borrN ? 'Borrador' : (sug ? 'Sugerida' : 'Disponible'))),
           bg: pal[0], bd: pal[1], fg: pal[2], sub: pal[3], bs: sug && !on ? 'dashed' : 'solid',
-          hint: done ? 'Ya liquidada: para reliquidarla, eliminala primero en Historial de liquidaciones' : (sug ? 'Secuencia sugerida' : 'Elegir esta secuencia'),
+          hint: cerrN ? 'Cerrada: no se puede sobrescribir. Elegí la secuencia siguiente para rectificar'
+            : (borrN ? 'Borrador: si la elegís, se puede sobrescribir con confirmación'
+              : (sug ? 'Secuencia sugerida' : 'Elegir esta secuencia')),
           pick: () => this.setState({ seqElegida: n })
         };
       }),
       step1Next: () => seqSel === null
         ? this.setState({ toast: { kind: 'err', t: 'No hay secuencias disponibles', d: 'El período ya tiene 9 rectificativas. Para reliquidar, eliminá primero la secuencia en Historial de liquidaciones.' } })
-        : (seqPisa ? this.setState({ toast: { kind: 'err', t: 'Esa secuencia ya está liquidada', d: this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + '. Para reliquidarla, primero eliminala en Historial de liquidaciones.' } })
+        : (seqPisa ? this.setState({ toast: { kind: 'err', t: 'Esa secuencia está cerrada', d: this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' está cerrada. Para rectificar, elegí la secuencia siguiente (o abrí el borrador si todavía no la cerraron).' } })
           : this.setState({ step: 2 })),
       seqPrevFecha: s.liqSaved ? fechaHoraN : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
