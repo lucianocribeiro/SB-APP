@@ -40,11 +40,11 @@ language sql stable security definer set search_path = public as $$
     );
 $$;
 
--- 3) Liquidaciones / cruces / compensaciones / ddjj: admin todo; empleado sólo su cartera
+-- 3) Liquidaciones / cruces / compensaciones: admin todo; empleado sólo su cartera
 do $$
 declare t text;
 begin
-  foreach t in array array['liquidaciones', 'cruces', 'compensaciones', 'ddjj_pdf'] loop
+  foreach t in array array['liquidaciones', 'cruces', 'compensaciones'] loop
     execute format('drop policy if exists "equipo" on public.%I', t);
     execute format('drop policy if exists "cartera" on public.%I', t);
     execute format(
@@ -53,6 +53,13 @@ begin
     );
   end loop;
 end $$;
+
+-- ddjj_pdf no tiene columna cliente: el cliente va en liquidacion_id (cliente|per|seq|fecha)
+drop policy if exists "equipo" on public.ddjj_pdf;
+drop policy if exists "cartera" on public.ddjj_pdf;
+create policy "cartera" on public.ddjj_pdf for all to authenticated
+  using (public.cliente_mio(split_part(liquidacion_id, '|', 1)))
+  with check (public.cliente_mio(split_part(liquidacion_id, '|', 1)));
 
 -- 4) Flag de cambio de contraseña obligatorio en perfiles
 alter table public.perfiles add column if not exists debe_cambiar_pw boolean not null default false;
