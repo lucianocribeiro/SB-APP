@@ -6,16 +6,22 @@ create table if not exists public.perfiles (
   id      uuid primary key references auth.users(id) on delete cascade,
   email   text not null unique,
   nombre  text not null,                       -- nombre corto que muestra la app: Julieta, Rubén...
-  rol     text not null default 'empleado' check (rol in ('admin', 'empleado')),
+  rol     text not null default 'empleado' check (rol in ('admin', 'empleado', 'sistemas')),
   activo  boolean not null default true,
   debe_cambiar_pw boolean not null default true, -- primer ingreso: forzar cambio de contraseña
   creado  timestamptz not null default now()
 );
 alter table public.perfiles add column if not exists debe_cambiar_pw boolean not null default false;
+alter table public.perfiles drop constraint if exists perfiles_rol_check;
+alter table public.perfiles add constraint perfiles_rol_check check (rol in ('admin', 'empleado', 'sistemas'));
 
+-- admin y sistemas: mismo poder (RLS, contraseñas, cartera total)
 create or replace function public.es_admin() returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.perfiles where id = auth.uid() and rol = 'admin' and activo);
+  select exists (
+    select 1 from public.perfiles
+    where id = auth.uid() and activo and rol in ('admin', 'sistemas')
+  );
 $$;
 
 create or replace function public.nuevo_usuario() returns trigger
@@ -24,7 +30,11 @@ begin
   insert into public.perfiles (id, email, nombre, rol)
   values (new.id, new.email,
           coalesce(nullif(new.raw_user_meta_data->>'nombre', ''), split_part(new.email, '@', 1)),
-          case when new.raw_user_meta_data->>'rol' = 'admin' then 'admin' else 'empleado' end)
+          case
+            when new.raw_user_meta_data->>'rol' in ('admin', 'sistemas')
+              then new.raw_user_meta_data->>'rol'
+            else 'empleado'
+          end)
   on conflict (id) do nothing;
   return new;
 end $$;
