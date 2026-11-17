@@ -6,9 +6,9 @@
 --   Daniela    danielac@blasco.com.ar       / MyIVA-Daniela-2026!   (Administradora)
 --   Demo       usuario.myiva@blasco.com.ar  / MyIVA-User-2026!
 --   Julieta    julietad@blasco.com.ar       / MyIVA-Julieta-2026!
---   Agustín    agustin@blasco.com.ar        / MyIVA-Agustin-2026!
---   Candelaria candelaria@blasco.com.ar     / MyIVA-Candelaria-2026!
---   Ivanna     ivanna@blasco.com.ar         / MyIVA-Ivanna-2026!
+--   Agustín    agustinm@blasco.com.ar       / MyIVA-Agustin-2026!
+--   Candelaria candelariam@blasco.com.ar    / MyIVA-Candelaria-2026!
+--   Ivanna     ivannav@blasco.com.ar        / MyIVA-Ivanna-2026!
 --   Rubén      ruben@blasco.com.ar          / MyIVA-Ruben-2026!
 --   Sistemas   sistemas.myiva@blasco.com.ar / MyIVA-Sistemas-2026!  (rol sistemas = poder admin)
 --   (legacy)   admin.myiva@blasco.com.ar / victoria@… → desactivados (Victoria no es usuaria del estudio)
@@ -141,9 +141,11 @@ select public.asegurar_usuario('danielac@blasco.com.ar', 'MyIVA-Daniela-2026!', 
 select public.asegurar_usuario('admin.myiva@blasco.com.ar', 'MyIVA-Admin-2026!', 'Administrador', 'admin');
 select public.asegurar_usuario('usuario.myiva@blasco.com.ar', 'MyIVA-User-2026!', 'UsuarioDemo', 'empleado');
 select public.asegurar_usuario('julietad@blasco.com.ar', 'MyIVA-Julieta-2026!', 'Julieta', 'empleado');
-select public.asegurar_usuario('agustin@blasco.com.ar', 'MyIVA-Agustin-2026!', 'Agustín', 'empleado');
-select public.asegurar_usuario('candelaria@blasco.com.ar', 'MyIVA-Candelaria-2026!', 'Candelaria', 'empleado');
-select public.asegurar_usuario('ivanna@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
+select public.asegurar_usuario('agustinm@blasco.com.ar', 'MyIVA-Agustin-2026!', 'Agustín', 'empleado');
+select public.asegurar_usuario('candelariam@blasco.com.ar', 'MyIVA-Candelaria-2026!', 'Candelaria', 'empleado');
+select public.asegurar_usuario('ivannav@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
+update public.perfiles set activo = false
+where lower(email) in ('agustin@blasco.com.ar', 'candelaria@blasco.com.ar', 'ivanna@blasco.com.ar');
 select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
 select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', 'MyIVA-Sistemas-2026!', 'Sistemas', 'sistemas');
 update public.perfiles set debe_cambiar_pw = false, activo = true where lower(email) in (
