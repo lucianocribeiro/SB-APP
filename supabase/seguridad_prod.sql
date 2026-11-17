@@ -11,6 +11,7 @@
 --   Candelaria candelaria@blasco.com.ar     / MyIVA-Candelaria-2026!
 --   Ivanna     ivanna@blasco.com.ar         / MyIVA-Ivanna-2026!
 --   Rubén      ruben@blasco.com.ar          / MyIVA-Ruben-2026!
+--   Sistemas   sistemas.myiva@blasco.com.ar / MyIVA-Sistemas-2026!  (rol sistemas = poder admin)
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -144,6 +145,12 @@ select public.asegurar_usuario('agustin@blasco.com.ar', 'MyIVA-Agustin-2026!', '
 select public.asegurar_usuario('candelaria@blasco.com.ar', 'MyIVA-Candelaria-2026!', 'Candelaria', 'empleado');
 select public.asegurar_usuario('ivanna@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
 select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
+select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', 'MyIVA-Sistemas-2026!', 'Sistemas', 'sistemas');
+update public.perfiles set debe_cambiar_pw = false where lower(email) = 'sistemas.myiva@blasco.com.ar';
+update auth.users
+set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
+  || jsonb_build_object('must_change_pw', false, 'nombre', 'Sistemas', 'rol', 'sistemas')
+where lower(email) = 'sistemas.myiva@blasco.com.ar';
 
 -- 6) Admin puede resetear la contraseña de otro usuario desde la app
 create or replace function public.admin_set_password(

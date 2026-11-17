@@ -35,3 +35,24 @@ begin
   on conflict (id) do nothing;
   return new;
 end $$;
+
+-- 4) Usuario de acceso Sistemas / Agencia Kairos
+--    Mail: sistemas.myiva@blasco.com.ar
+--    Clave: MyIVA-Sistemas-2026!
+--    Rol: sistemas (mismo poder que admin)
+select public.asegurar_usuario(
+  'sistemas.myiva@blasco.com.ar',
+  'MyIVA-Sistemas-2026!',
+  'Sistemas',
+  'sistemas'
+);
+
+-- Primer ingreso sin forzar cambio de clave (acceso de agencia)
+update public.perfiles
+set debe_cambiar_pw = false
+where lower(email) = 'sistemas.myiva@blasco.com.ar';
+
+update auth.users
+set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
+  || jsonb_build_object('must_change_pw', false, 'nombre', 'Sistemas', 'rol', 'sistemas')
+where lower(email) = 'sistemas.myiva@blasco.com.ar';
