@@ -96,19 +96,6 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;align-items:center;justify-content:flex-end">
 <span onClick="{{ olvidePw }}" style="font:400 13px 'Open Sans';color:#2F80B7;cursor:pointer" style-hover="color:#14395C">Olvidé mi contraseña</span>
 </div>
-<sc-if value="{{ captchaHay }}">
-<div style="margin-top:4px;padding:12px;border:1px solid #E3E8EE;border-radius:6px;background:#F8FAFC">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B">Verificación anti-bot</div>
-<div style="font:400 13px/1.45 'Open Sans';color:#1B2733;margin-top:8px">{{ captchaPregunta }}</div>
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
-<sc-for list="{{ captchaTiles }}" as="t" hint-placeholder-count="4">
-<div onClick="{{ t.pick }}" title="Opción {{ t.n }}" style="aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid {{ t.bd }};background:{{ t.bg }};display:flex;align-items:center;justify-content:center">
-<svg width="28" height="28" viewBox="0 0 24 24" fill="{{ t.fill }}">{{ t.svg }}</svg>
-</div>
-</sc-for>
-</div>
-</div>
-</sc-if>
 <sc-if value="{{ mfaHay }}">
 <div style="margin-top:8px;padding:12px;border:1px solid #CFE2F0;border-radius:6px;background:#F4F9FD">
 <div style="font:600 13px 'Open Sans';color:#14395C">{{ mfaTitulo }}</div>
@@ -2688,7 +2675,7 @@ class Component extends DCLogic {
   state = {
     screen: 'login', role: 'admin', usr: 'Julieta', collapsed: false, loginErr: false,
     loginMail: '', loginPw: '', loginErrTxt: '', loginOk: '', loginBusy: false, sesionChk: !!this.sb(), perfil: null, acceso: null,
-    captchaOk: false, captchaSeed: 0, mfaPaso: '', mfaCode: '', mfaSecret: '', mfaFactorId: '', mfaChallengeId: '', debeCambiarPw: false,
+    mfaPaso: '', mfaCode: '', mfaSecret: '', mfaFactorId: '', mfaChallengeId: '', debeCambiarPw: false,
     histF: { cli: '', desde: '', hasta: '', usr: '' }, pwAct: '', pwNue: '', pwRep: '', pwRecup: false, liqsDb: this.lsGet('myiva.liqs', []),
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
@@ -2762,7 +2749,6 @@ class Component extends DCLogic {
     if (p.rolInicial === 'Usuario' || p.rolInicial === 'Empleado') st.role = 'empleado';
     if (p.sidebarColapsado) st.collapsed = true;
     if (Object.keys(st).length) this.setState(st);
-    this.captchaNuevo();
     const sb = this.sb();
     if (!sb || this._authIni) return;
     // Al volver a la ventana se releen los datos de la base: así se ve lo que hicieron otras PCs.
@@ -2788,35 +2774,6 @@ class Component extends DCLogic {
       ? (w.__myivaSb = lib.createClient('https://ilazlcianywbzyisinlh.supabase.co', 'sb_publishable_yyAyE8SIYpaSAgmkZZGbPg_X4tioOxX'))
       : null);
     return this._sb;
-  }
-
-  captchaNuevo() {
-    const colores = [
-      { n: 'azul', bg: '#14395C', fill: '#E6EDF4' },
-      { n: 'verde', bg: '#2E7D5B', fill: '#E8F3EE' },
-      { n: 'ámbar', bg: '#B7791F', fill: '#FBF3E3' },
-      { n: 'rojo', bg: '#B3261E', fill: '#FBE9E7' }
-    ];
-    const formas = [
-      { n: 'círculo', svg: '<circle cx="12" cy="12" r="7"></circle>' },
-      { n: 'cuadrado', svg: '<rect x="5" y="5" width="14" height="14" rx="1"></rect>' },
-      { n: 'triángulo', svg: '<path d="M12 4l8 15H4z"></path>' },
-      { n: 'rombo', svg: '<path d="M12 3l8 9-8 9-8-9z"></path>' }
-    ];
-    const pool = [];
-    colores.forEach(c => formas.forEach(f => pool.push({ color: c, forma: f })));
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-    const tiles = pool.slice(0, 4);
-    const ok = tiles[Math.floor(Math.random() * tiles.length)];
-    this._captcha = { tiles, ok: ok.color.n + '|' + ok.forma.n };
-    this.setState({ captchaOk: false, captchaSeed: (this.state.captchaSeed || 0) + 1 });
-  }
-
-  captchaElegir(tile) {
-    const ok = this._captcha && this._captcha.ok === (tile.color.n + '|' + tile.forma.n);
-    if (ok) return this.setState({ captchaOk: true, loginErr: false, loginErrTxt: '' });
-    this.captchaNuevo();
-    this.setState({ captchaOk: false, loginErr: true, loginErrTxt: 'Verificación incorrecta. Elegí la forma pedida.' });
   }
 
   IDLE_MS = 10 * 60 * 1000;
@@ -2852,9 +2809,8 @@ class Component extends DCLogic {
     this.cortarIdle();
     this.setState({
       screen: 'login', loginBusy: false, sesionChk: false, mfaPaso: '', mfaCode: '', debeCambiarPw: false,
-      loginErr: true, loginErrTxt: 'Se cerró la sesión por 10 minutos de inactividad.', loginOk: '', loginPw: '', captchaOk: false
+      loginErr: true, loginErrTxt: 'Se cerró la sesión por 10 minutos de inactividad.', loginOk: '', loginPw: ''
     });
-    this.captchaNuevo();
     this._idleSaliendo = false;
   }
 
@@ -2867,22 +2823,19 @@ class Component extends DCLogic {
     if (s.loginBusy || s.sesionChk || s.mfaPaso) return;
     const email = s.loginMail.trim().toLowerCase();
     if (!email || !s.loginPw) return this.setState({ loginErr: true, loginErrTxt: 'Ingresá tu mail y tu contraseña.', loginOk: '' });
-    if (!s.captchaOk) return this.setState({ loginErr: true, loginErrTxt: 'Completá la verificación anti-bot antes de ingresar.', loginOk: '' });
     this.setState({ loginBusy: true, loginErr: false, loginOk: '' });
     try {
       const { data, error } = await sb.auth.signInWithPassword({ email, password: s.loginPw });
       if (error) {
         const m = String(error.message || '');
-        this.captchaNuevo();
         return this.setState({
-          loginBusy: false, loginErr: true, captchaOk: false,
+          loginBusy: false, loginErr: true,
           loginErrTxt: /invalid/i.test(m) ? 'Mail o contraseña incorrectos.' : (/confirm/i.test(m) ? 'Tu mail todavía no está confirmado. Pedile al administrador que lo confirme (o corré supabase/seguridad_prod.sql).' : 'No se pudo ingresar: ' + m)
         });
       }
       await this.entrarTrasAuth(data.user);
     } catch (e) {
-      this.captchaNuevo();
-      this.setState({ loginBusy: false, loginErr: true, captchaOk: false, loginErrTxt: 'No se pudo conectar con el servidor: ' + String(e && e.message || e) });
+      this.setState({ loginBusy: false, loginErr: true, loginErrTxt: 'No se pudo conectar con el servidor: ' + String(e && e.message || e) });
     }
   }
 
@@ -3020,12 +2973,11 @@ class Component extends DCLogic {
       this.setState(Object.assign(datos, {
         perfil, role: perfil.rol === 'admin' ? 'admin' : 'empleado', usr: perfil.nombre, acceso: user.last_sign_in_at || null,
         screen: (recup || debe) ? 'perfil' : 'inicio', pwRecup: recup, debeCambiarPw: debe,
-        sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '', mfaPaso: '', captchaOk: false,
+        sesionChk: false, loginBusy: false, loginErr: false, loginPw: '', loginOk: '', mfaPaso: '',
         toast: (recup || debe)
           ? { kind: 'info', t: debe && !recup ? 'Cambiá tu contraseña' : 'Elegí tu contraseña nueva', d: 'Escribila en "Nueva" y en "Repetir", y tocá Guardar. Es obligatorio en el primer ingreso.' }
           : null
       }));
-      this.captchaNuevo();
     } catch (e) {
       this._user = null;
       this._sync = null;
@@ -3034,9 +2986,8 @@ class Component extends DCLogic {
   }
 
   async entrarRapido() {
-    this.captchaNuevo();
     return this.setState({
-      screen: 'login', loginErr: true, captchaOk: false,
+      screen: 'login', loginErr: true,
       loginErrTxt: 'El acceso rápido está desactivado. Ingresá con tu mail y contraseña.'
     });
   }
@@ -7261,19 +7212,6 @@ class Component extends DCLogic {
       loginErrTxt: s.loginErrTxt || 'Mail o contraseña incorrectos.', loginOkHay: !!s.loginOk, loginOkTxt: s.loginOk,
       loginBtn: s.sesionChk ? 'Verificando sesión…' : (s.loginBusy ? 'Ingresando…' : 'Ingresar'), loginBtnOp: s.sesionChk || s.loginBusy ? '.7' : '1',
       loginBtnDisp: s.mfaPaso ? 'none' : 'block',
-      captchaHay: !s.mfaPaso && !s.sesionChk, captchaPregunta: (() => {
-        const c = this._captcha; if (!c || !c.ok) return 'Tocá la forma pedida.';
-        const [col, forma] = c.ok.split('|');
-        return 'Tocá el ' + forma + ' ' + col + '.';
-      })(),
-      captchaTiles: (() => {
-        const c = this._captcha; if (!c) return [];
-        return c.tiles.map((t, i) => ({
-          n: i + 1, bg: t.color.bg, fill: t.color.fill, svg: t.forma.svg,
-          bd: s.captchaOk && (t.color.n + '|' + t.forma.n) === c.ok ? '#2E7D5B' : '#E3E8EE',
-          pick: () => this.captchaElegir(t)
-        }));
-      })(),
       mfaHay: !!s.mfaPaso, mfaQrHay: s.mfaPaso === 'enroll' && !!s.mfaSecret,
       mfaTitulo: s.mfaPaso === 'enroll' ? 'Activá el 2FA (Google Authenticator)' : 'Segundo factor',
       mfaTxt: s.mfaPaso === 'enroll'
