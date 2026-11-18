@@ -6482,13 +6482,26 @@ class Component extends DCLogic {
     // Mismo CUIT+fecha e mismo importe (al centavo): se concilian solas aunque la numeración difiera (verdes del estudio).
     const cf = (f) => f.cuit + '|' + f.fecha;
     const usados = new Set();
+    const refrescar = (f) => {
+      f.impL = r2(f.l.reduce((s, c) => s + c.imp, 0)); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
+      f.est = !f.a.length ? 'FALTA EN ARCA' : (!f.l.length ? 'FALTA EN LIBRO' : (Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA'));
+    };
+    const unir = (base, otrasL, otrasA, obs) => {
+      otrasL.forEach(f => { base.l = base.l.concat(f.l); usados.add(f); });
+      otrasA.forEach(f => { base.a = base.a.concat(f.a); usados.add(f); });
+      refrescar(base); base.obs = obs;
+    };
     filas.filter(f => f.op === 'Percepción' && f.est === 'FALTA EN ARCA').forEach(f => {
       const otro = filas.find(o => !usados.has(o) && o !== f && o.op === 'Percepción' && o.est === 'FALTA EN LIBRO' && cf(o) === cf(f) && Math.abs(r2(f.impL - o.impA)) <= TOL);
       if (!otro) return;
-      usados.add(otro);
-      f.a = f.a.concat(otro.a); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
-      f.est = Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA';
-      f.obs = 'Conciliado automáticamente (CUIT+fecha+importe; numeración distinta en ARCA: ' + otro.a.map(a => a.comp).join(', ') + ')';
+      unir(f, [], [otro], 'Conciliado automáticamente (CUIT+fecha+importe; numeración distinta en ARCA: ' + otro.a.map(a => a.comp).join(', ') + ')');
+    });
+    // Mismo CUIT + mismo importe sin exigir fecha (única pareja): cubre ARCA con numeración corta (Farmcity 2176) o fecha corrida.
+    filas.filter(f => f.op === 'Percepción' && f.est === 'FALTA EN ARCA' && !usados.has(f)).forEach(f => {
+      const cands = filas.filter(o => !usados.has(o) && o !== f && o.op === 'Percepción' && o.est === 'FALTA EN LIBRO' && o.cuit === f.cuit && Math.abs(r2(f.impL - o.impA)) <= TOL);
+      if (cands.length !== 1) return;
+      const otro = cands[0];
+      unir(f, [], [otro], 'Conciliado automáticamente (CUIT+importe; fecha/numeración distinta en ARCA: ' + otro.a.map(a => a.comp).join(', ') + ')');
     });
     // Varios del mismo CUIT+fecha cuyo total libro = total ARCA (ej. 2 FC del libro ↔ 1 renglón en Mis Retenciones).
     const porCf = new Map();
@@ -6509,12 +6522,47 @@ class Component extends DCLogic {
         });
         return;
       }
-      const base = L[0];
-      L.slice(1).forEach(f => { base.l = base.l.concat(f.l); usados.add(f); });
-      A.forEach(f => { base.a = base.a.concat(f.a); usados.add(f); });
-      base.impL = r2(base.l.reduce((s, c) => s + c.imp, 0)); base.impA = r2(base.a.reduce((s, a) => s + a.imp, 0)); base.dif = r2(base.impL - base.impA);
-      base.est = 'OK';
-      base.obs = 'Conciliado automáticamente (CUIT+fecha; importes agrupados ' + L.length + ' en libro y ' + A.length + ' en ARCA; numeración distinta)';
+      unir(L[0], L.slice(1), A, 'Conciliado automáticamente (CUIT+fecha; importes agrupados ' + L.length + ' en libro y ' + A.length + ' en ARCA; numeración distinta)');
+    });
+    // Mismo CUIT (sin fecha): bancarias / ICBC — cruza lo que coincide y deja la diferencia residual.
+    // 1) pares al centavo; 2) si el total cierra → OK; 3) si al sacar un par libro/ARCA el resto cierra → ese par queda DIFERENCIA.
+    const porCuit = new Map();
+    filas.filter(f => f.op === 'Percepción' && f.est.startsWith('FALTA') && !usados.has(f)).forEach(f => {
+      if (!porCuit.has(f.cuit)) porCuit.set(f.cuit, { L: [], A: [] });
+      (f.est === 'FALTA EN ARCA' ? porCuit.get(f.cuit).L : porCuit.get(f.cuit).A).push(f);
+    });
+    porCuit.forEach(({ L, A }) => {
+      if (!L.length || !A.length) return;
+      // Pares exactos de importe (fechas distintas, típico de banco).
+      L.slice().forEach(f => {
+        if (usados.has(f) || f.est !== 'FALTA EN ARCA') return;
+        const otro = A.find(o => !usados.has(o) && o.est === 'FALTA EN LIBRO' && Math.abs(r2(f.impL - o.impA)) <= TOL);
+        if (!otro) return;
+        unir(f, [], [otro], 'Conciliado automáticamente (CUIT+importe; percepción bancaria/agente con distinta fecha o numeración)');
+      });
+      const L2 = L.filter(f => !usados.has(f) && f.est === 'FALTA EN ARCA');
+      const A2 = A.filter(f => !usados.has(f) && f.est === 'FALTA EN LIBRO');
+      if (!L2.length || !A2.length) return;
+      const sumL = r2(L2.reduce((s, f) => s + f.impL, 0)), sumA = r2(A2.reduce((s, f) => s + f.impA, 0));
+      if (Math.abs(sumL - sumA) <= TOL) {
+        unir(L2[0], L2.slice(1), A2, 'Conciliado automáticamente (CUIT; importes agrupados ' + L2.length + ' en libro y ' + A2.length + ' en ARCA; fechas distintas)');
+        return;
+      }
+      // Buscar un renglón de cada lado cuya exclusión hace que el resto cierre (ej. ICBC 78 vs 76,41; el resto celeste OK).
+      let best = null;
+      L2.forEach(fl => {
+        A2.forEach(fa => {
+          const sL = r2(sumL - fl.impL), sA = r2(sumA - fa.impA);
+          if (Math.abs(sL - sA) > TOL) return;
+          const score = Math.abs(r2(fl.impL - fa.impA));
+          if (!best || score < best.score) best = { fl, fa, score };
+        });
+      });
+      if (!best) return;
+      const restoL = L2.filter(f => f !== best.fl), restoA = A2.filter(f => f !== best.fa);
+      if (restoL.length) unir(restoL[0], restoL.slice(1), restoA, 'Conciliado automáticamente (CUIT; grupo que cierra; se dejó aparte la diferencia residual)');
+      else restoA.forEach(f => usados.add(f));
+      unir(best.fl, [], [best.fa], 'Diferencia residual por CUIT tras conciliar el resto (libro ' + best.fl.impL + ' vs ARCA ' + best.fa.impA + ')');
     });
     filas = filas.filter(f => !usados.has(f));
     filas.filter(f => f.op === 'Retención' && f.l.length && f.a.length).forEach(f => {
