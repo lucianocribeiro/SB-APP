@@ -5027,7 +5027,7 @@ class Component extends DCLogic {
     'NOVALUX S.A.': { cuit: '30-71559900-4', cond: 'Responsable Inscripto', per: '08/2026' },
     'FIDEICOMISO PAMPA PILAR': { cuit: '30-71802233-1', cond: 'Responsable Inscripto', per: '07/2026' },
     'RODIALE SA': { cuit: '33-70445566-3', cond: 'Exento', per: '07/2026' },
-    'IDEA 2 SA': { cuit: '30-69334455-7', cond: 'Responsable Inscripto', per: '05/2026' }
+    'IDEA 2 SA': { cuit: '30-71206211-4', cond: 'Responsable Inscripto', per: '10/2026' }
   };
 
   cuitCli(rz) { const f = (this.state.cliFiscal || {})[rz] || this.FISCAL_DEMO[rz]; return f && f.cuit && f.cuit !== '—' ? f.cuit : ''; }
@@ -5341,6 +5341,211 @@ class Component extends DCLogic {
     return out;
   }
 
+  // ===== IDEA 2 SA (Estudio Blasco): IVA COMPRAS / IVA VENTAS Excel casero =====
+  // Comprobante en una sola columna ("FC A 0006-00002771"); alícuota y IVA en columnas separadas;
+  // filas "NO GRAVADO" / "P. IIBB …" sin fecha se suman al comprobante anterior.
+  convertirIdeaEstudio(aoa, k) {
+    if (!aoa || !aoa.length) return null;
+    const hk = (h) => this.hkey(h), r2 = (v) => Math.round(v * 100) / 100, num = (v) => this.numAr(v), txt = (v) => (v == null ? '' : String(v).trim());
+    let hi = -1, keys = [], raw = [];
+    for (let i = 0; i < Math.min(aoa.length, 8); i++) {
+      const row = aoa[i] || [], ks = row.map(hk);
+      if (ks.includes('fecha') && ks.some(x => x === 'comprobante' || x.startsWith('comprobante')) && ks.some(x => x.startsWith('netograv') || x === 'netogravado')) {
+        hi = i; keys = ks; raw = row; break;
+      }
+    }
+    if (hi < 0) return null;
+    // "% IVA" y "IVA" colapsan al mismo hkey: se toman por posición en el encabezado crudo.
+    const colK = (n) => keys.indexOf(n);
+    const cFecha = colK('fecha'), cComp = keys.findIndex(x => x === 'comprobante' || x.startsWith('comprobante'));
+    const cNom = keys.findIndex(x => x.startsWith('razonsocial') || x === 'cliente' || x.startsWith('denominacion'));
+    const cCuit = keys.findIndex(x => x === 'cuit' || x.startsWith('cuit'));
+    const cNeto = keys.findIndex(x => x.startsWith('netograv'));
+    const cTot = keys.findIndex(x => x === 'total' || x.startsWith('total'));
+    const cPerc = keys.findIndex(x => x === 'perc' || x.startsWith('percepcion') || x === 'percep');
+    const cReg = keys.findIndex(x => x.startsWith('regespecial') || x === 'regimenesespeciales');
+    const cMono = keys.findIndex(x => x.startsWith('mono'));
+    let cPorc = -1, cIva = -1;
+    for (let j = 0; j < raw.length; j++) {
+      const t = txt(raw[j]).toUpperCase().replace(/\s+/g, ' ');
+      if (!t) continue;
+      if (/%\s*IVA|IVA\s*%/.test(t) || t === '% IVA') cPorc = j;
+      else if (/^IVA$/.test(t) && cPorc < 0) cPorc = j;           // compras: "IVA" = alícuota
+      else if (/^IVA$/.test(t) && cPorc >= 0 && cIva < 0) cIva = j; // ventas: segunda "IVA" = importe
+    }
+    // Compras IDEA: después de la col. "IVA" (alícuota) viene el importe sin título.
+    if (cPorc >= 0 && cIva < 0 && k === 'compras') cIva = cPorc + 1;
+    if (cFecha < 0 || cComp < 0 || cNeto < 0) return null;
+    const parseComp = (s) => {
+      const t = txt(s).toUpperCase().replace(/\s+/g, ' ');
+      let m = t.match(/^(TKFC|TKNC|TKND|FC|NC|ND|FA|FAC|FP|FCE|NCE|NDE|LLP|RC)\s*([A-Z])\s+(\d{1,5})\s*-\s*(\d{1,8})$/);
+      if (m) return { tipo: m[1], letra: m[2], pv: +m[3], nro: +m[4] };
+      m = t.match(/^(TKFC|TKNC|TKND|FC|NC|ND|FA|FAC|FP|LLP)\s*([A-Z])\s+(\d{4,5})(\d{8})$/);
+      if (m) return { tipo: m[1], letra: m[2], pv: +m[3], nro: +m[4] };
+      return null;
+    };
+    const mapTipo = (tipo) => {
+      const x = String(tipo || '').toUpperCase();
+      if (/^NC|TKNC|NCE/.test(x)) return 'NC';
+      if (/^ND|TKND|NDE/.test(x)) return 'ND';
+      return 'FC';   // FC, FA, FP, TKFC, LLP (gift card), FCE…
+    };
+    const STD = [21, 10.5, 27, 5, 2.5, 0];
+    const head = ['Fecha', 'TC', 'Letra', 'Pto. Vta.', 'Nro. Desde', 'Nro. Hasta', 'Razón Social', 'CUIT',
+      'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 27%', 'IVA 27%', 'Neto 0%', 'IVA 0%', 'Neto 2.5%', 'IVA 2.5%', 'Neto 5%', 'IVA 5%']
+      .concat(k === 'ventas'
+        ? ['Importe operaciones exportación', 'Importe Exento', 'Importe No Alcanzado', 'Importe no gravado']
+        : ['Importe Exento', 'Importe No Alcanzado', 'Importe no gravado', 'Compras a exentos, monotributistas y otros'])
+      .concat(['Importe Impuestos Internos', 'Percepciones IIBB', 'Percepciones IVA', 'Otras Percepciones', 'Otros regímenes especiales', 'Total Comprobante']);
+    const out = [head];
+    let cur = null;
+    const flush = () => {
+      if (!cur) return;
+      const A = { n21: 0, i21: 0, n105: 0, i105: 0, n27: 0, i27: 0, n0: 0, i0: 0, n25: 0, i25: 0, n5: 0, i5: 0 };
+      const ak = (r) => String(r).replace('.', '');
+      Object.keys(cur.iva).forEach(r => {
+        const rate = +r, iva = cur.iva[r], neto = cur.netoAli[r] != null ? cur.netoAli[r] : (rate ? r2(iva / (rate / 100)) : 0);
+        if (STD.includes(rate)) { A['n' + ak(rate)] += neto; A['i' + ak(rate)] += iva; }
+        else cur.piva += iva;
+      });
+      // Neto gravado sin alícuota explícita: al 0 % o a la alícuota principal.
+      if (cur.netoLibre) {
+        const rates = Object.keys(cur.iva).map(Number).filter(r => STD.includes(r) && r > 0);
+        const main = rates.length === 1 ? rates[0] : (rates.includes(21) ? 21 : (rates[0] || 0));
+        if (main) A['n' + ak(main)] += cur.netoLibre;
+        else A.n0 += cur.netoLibre;
+      }
+      if (cur.letra === 'E') { cur.exp += A.n0 + cur.ngr; A.n0 = 0; cur.ngr = 0; }
+      if (k === 'compras' && cur.letra === 'C' && !Object.keys(A).some(x => x[0] === 'i' && A[x])) {
+        cur.mono += A.n21 + A.n105 + A.n27 + A.n5 + A.n25 + A.n0 + cur.ngr; cur.ngr = 0;
+        Object.keys(A).forEach(x => { A[x] = 0; });
+      }
+      const tot = cur.tot || (Object.values(A).reduce((a, b) => a + b, 0) + cur.exe + cur.ngr + cur.nal + cur.exp + cur.mono + cur.piibb + cur.piva + cur.oreg);
+      out.push([cur.fecha, cur.tc, cur.letra, cur.pv, cur.nro, '', cur.nom, cur.cuit,
+        r2(A.n21), r2(A.i21), r2(A.n105), r2(A.i105), r2(A.n27), r2(A.i27), r2(A.n0), r2(A.i0), r2(A.n25), r2(A.i25), r2(A.n5), r2(A.i5)]
+        .concat(k === 'ventas' ? [r2(cur.exp), r2(cur.exe), r2(cur.nal), r2(cur.ngr)] : [r2(cur.exe), r2(cur.nal), r2(cur.ngr), r2(cur.mono)])
+        .concat([0, r2(cur.piibb), r2(cur.piva), 0, r2(cur.oreg), r2(tot)]));
+      cur = null;
+    };
+    for (let i = hi + 1; i < aoa.length; i++) {
+      const r = aoa[i] || [];
+      if (!r.some(x => x !== null && x !== '')) continue;
+      const fecha = this.fechaTxt(r[cFecha]);
+      const comp = parseComp(r[cComp]);
+      const nomCel = cNom >= 0 ? txt(r[cNom]) : '';
+      const regCel = cReg >= 0 ? txt(r[cReg]) : '';
+      // Continuación: NO GRAVADO / mono / percepción IIBB del comprobante anterior.
+      if (!fecha || !comp) {
+        if (!cur) continue;
+        if (/NO\s*GRAV|EXENT|NO\s*ALCANZ/i.test(nomCel) || /NO\s*GRAV/i.test(txt(r[cComp]))) {
+          const v = cMono >= 0 && num(r[cMono]) ? num(r[cMono]) : (cNeto >= 0 ? num(r[cNeto]) : 0);
+          cur.ngr += Math.abs(v);
+        } else if (/IIBB|ING\.?\s*BRUT/i.test(regCel) || /IIBB|ING\.?\s*BRUT/i.test(nomCel)) {
+          cur.piibb += Math.abs(cPerc >= 0 ? num(r[cPerc]) : (cNeto >= 0 ? num(r[cNeto]) : 0));
+        } else if (cMono >= 0 && num(r[cMono])) {
+          cur.mono += Math.abs(num(r[cMono]));
+        }
+        continue;
+      }
+      flush();
+      let rate = cPorc >= 0 ? num(String(r[cPorc] == null ? '' : r[cPorc]).replace('%', '')) : null;
+      if (rate !== null && rate > 0 && rate < 1) rate = r2(rate * 100);
+      const iva = cIva >= 0 ? num(r[cIva]) : 0;
+      const neto = num(r[cNeto]);
+      const mono = cMono >= 0 ? num(r[cMono]) : 0;
+      cur = {
+        fecha, tc: mapTipo(comp.tipo), letra: comp.letra, pv: comp.pv, nro: comp.nro,
+        nom: nomCel.replace(/\s*NO\s*GRAVADO\s*$/i, '').trim(), cuit: this.cuitTxt(cCuit >= 0 ? r[cCuit] : ''),
+        iva: {}, netoAli: {}, netoLibre: 0, ngr: 0, exe: 0, nal: 0, exp: 0, mono: Math.abs(mono),
+        piibb: 0, piva: 0, oreg: cReg >= 0 && num(r[cReg]) ? Math.abs(num(r[cReg])) : 0,
+        tot: cTot >= 0 ? num(r[cTot]) : 0
+      };
+      if (/NO\s*GRAVADO/i.test(nomCel) && !neto && mono) { cur.ngr += Math.abs(mono); cur.mono = 0; }
+      if (rate != null && rate >= 0) {
+        cur.iva[rate] = (cur.iva[rate] || 0) + iva;
+        if (neto) cur.netoAli[rate] = (cur.netoAli[rate] || 0) + neto;
+      } else if (neto) cur.netoLibre += neto;
+      else if (iva) cur.iva[21] = (cur.iva[21] || 0) + iva;
+    }
+    flush();
+    if (out.length < 2) return null;
+    out.convertido = { filas: out.length - 1, origen: 'idea2' };
+    return out;
+  }
+
+  // ===== IDEA 2 SA: subdiario de ventas locales (una hoja por sucursal: CÓRDOBA, MALABIA, TIENDA ONLINE…) =====
+  // Encabezado "SUBDIARIO IVA VENTAS"; columnas TIPO | letra | NÚMERO | FECHA | MONTO | IVA 21% | TOTAL (tickets TKFC B…).
+  convertirIdeaLocales(hojas) {
+    if (!hojas || !hojas.length) return null;
+    const hk = (h) => this.hkey(h), r2 = (v) => Math.round(v * 100) / 100, num = (v) => this.numAr(v), txt = (v) => (v == null ? '' : String(v).trim());
+    const esLocales = hojas.some(h => {
+      const t = ((h[0] || []).join(' ') + ' ' + (h[1] || []).join(' ') + ' ' + (h[2] || []).join(' ')).toUpperCase();
+      return /SUBDIARIO\s+IVA\s+VENTAS/.test(t) && /SUCURSAL|MONTO\s*NO\s*GRAVADO|IVA\s*21/.test(t);
+    });
+    if (!esLocales) return null;
+    const head = ['Fecha', 'TC', 'Letra', 'Pto. Vta.', 'Nro. Desde', 'Nro. Hasta', 'Razón Social', 'CUIT',
+      'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 27%', 'IVA 27%', 'Neto 0%', 'IVA 0%', 'Neto 2.5%', 'IVA 2.5%', 'Neto 5%', 'IVA 5%',
+      'Importe operaciones exportación', 'Importe Exento', 'Importe No Alcanzado', 'Importe no gravado',
+      'Importe Impuestos Internos', 'Percepciones IIBB', 'Percepciones IVA', 'Otras Percepciones', 'Otros regímenes especiales', 'Total Comprobante'];
+    const out = [head];
+    const mapTipo = (tipo) => {
+      const x = String(tipo || '').toUpperCase();
+      if (/NC|TKNC|NCE/.test(x)) return 'NC';
+      if (/ND|TKND|NDE/.test(x)) return 'ND';
+      return 'FC';
+    };
+    hojas.forEach(h => {
+      let hi = -1, keys = [];
+      for (let i = 0; i < Math.min(h.length, 8); i++) {
+        const ks = (h[i] || []).map(hk);
+        if (ks.includes('fecha') && (ks.includes('numero') || ks.includes('tipo')) && (ks.includes('monto') || ks.includes('total') || ks.includes('iva21'))) {
+          hi = i; keys = ks; break;
+        }
+      }
+      if (hi < 0) return;
+      const c = (n) => keys.indexOf(n);
+      const cTipo = c('tipo');
+      // Si la col. 1 (B) no tiene encabezado, es la letra (A/B/C).
+      const cLet = (h[hi][1] == null || txt(h[hi][1]) === '') ? 1 : (keys.indexOf('letra') >= 0 ? keys.indexOf('letra') : -1);
+      const cNro = c('numero'), cCli = c('cliente'), cFecha = c('fecha'), cId = keys.findIndex(x => x.startsWith('identificador'));
+      const cDoc = cId >= 0 && cId + 1 < (h[hi] || []).length && !(h[hi][cId + 1]) ? cId + 1 : -1;
+      const cMonto = c('monto'), cNgr = keys.findIndex(x => x.startsWith('montonogravado') || x === 'nogravado');
+      const c105 = c('iva105'), c21 = c('iva21'), c27 = c('iva27'), cPerc = keys.findIndex(x => x.startsWith('percepcion'));
+      const cTot = c('total');
+      for (let i = hi + 1; i < h.length; i++) {
+        const r = h[i] || [];
+        const fecha = this.fechaTxt(r[cFecha]);
+        if (!fecha) continue;
+        const tipo = cTipo >= 0 ? txt(r[cTipo]) : 'FC';
+        const letra = (cLet >= 0 ? txt(r[cLet]) : '').toUpperCase() || 'B';
+        const nroTxt = cNro >= 0 ? txt(r[cNro]) : '';
+        let pv = 0, nro = 0, m = nroTxt.match(/^(\d{1,5})\s*-\s*(\d{1,8})$/);
+        if (m) { pv = +m[1]; nro = +m[2]; }
+        else { const d = nroTxt.replace(/\D/g, ''); nro = +(d.slice(-8) || 0); pv = +(d.slice(0, -8) || 0); }
+        const i21 = c21 >= 0 ? num(r[c21]) : 0, i105 = c105 >= 0 ? num(r[c105]) : 0, i27 = c27 >= 0 ? num(r[c27]) : 0;
+        const monto = cMonto >= 0 ? num(r[cMonto]) : 0, ngr = cNgr >= 0 ? num(r[cNgr]) : 0;
+        const perc = cPerc >= 0 ? num(r[cPerc]) : 0, tot = cTot >= 0 ? num(r[cTot]) : 0;
+        // El "MONTO" es neto gravado; se reparte según qué IVA vino cargado.
+        let n21 = 0, n105 = 0, n27 = 0, n0 = 0;
+        if (i21 && !i105 && !i27) n21 = monto;
+        else if (i105 && !i21 && !i27) n105 = monto;
+        else if (i27 && !i21 && !i105) n27 = monto;
+        else if (i21 || i105 || i27) {
+          const s = i21 + i105 + i27;
+          n21 = s ? r2(monto * i21 / s) : 0; n105 = s ? r2(monto * i105 / s) : 0; n27 = s ? r2(monto * i27 / s) : 0;
+        } else n0 = monto;
+        const doc = cDoc >= 0 ? txt(r[cDoc]) : '';
+        const cuit = doc.replace(/\D/g, '').length >= 8 ? this.cuitTxt(doc) : '';
+        out.push([fecha, mapTipo(tipo), letra, pv, nro, '', cCli >= 0 ? txt(r[cCli]) : '', cuit,
+          r2(n21), r2(i21), r2(n105), r2(i105), r2(n27), r2(i27), r2(n0), 0, 0, 0, 0, 0,
+          0, 0, 0, r2(ngr), 0, 0, r2(perc), 0, 0, r2(tot || (monto + ngr + i21 + i105 + i27 + perc))]);
+      }
+    });
+    if (out.length < 2) return null;
+    out.convertido = { filas: out.length - 1, origen: 'idea2-locales' };
+    return out;
+  }
+
   // ===== Lanes (tablas exportadas de su base: fecha, ncomp, razonsoci, neto21, impuesto2_… / iifglfein, leftformu, iifformul…) =====
   // Compras: un neto y un IVA por alícuota, sin tipo de comprobante (el signo dice si es nota de crédito) y el número con el punto
   // de venta adelante (2500104273063 → 25001-04273063). Ventas: una fila por comprobante con su alícuota y el tipo en letras
@@ -5467,9 +5672,17 @@ class Component extends DCLogic {
 
   parseComprobantes(k, name, bytes, X) {
     const LBL = this.UP_LBL, kLib = (k === 'aflMenos' || k === 'aflMas') ? 'compras' : k;
-    const aoa0 = this.leerHoja(bytes, X);
-    // Subdiarios de Tango, SAP, Catedral, Lanes, LHS…: se pasan al formato Bejerman antes de leerlos.
-    const aoa = ((kLib === 'ventas' || kLib === 'compras') && (this.convertirLanes(aoa0, kLib) || this.convertirSubdiario(aoa0, kLib) || this.convertirSAP(aoa0, kLib))) || aoa0;
+    // Se leen todas las hojas: IDEA 2 (ventas locales) trae una sucursal por hoja.
+    const hojas = this.leerHoja(bytes, X, true);
+    let aoa0 = (hojas && hojas[0]) || [];
+    if (kLib === 'ventas') {
+      const loc = this.convertirIdeaLocales(hojas);
+      if (loc) aoa0 = loc;
+    }
+    // Subdiarios de Tango, SAP, Catedral, Lanes, LHS, IDEA 2…: se pasan al formato Bejerman antes de leerlos.
+    const aoa = ((kLib === 'ventas' || kLib === 'compras') && (
+      this.convertirIdeaEstudio(aoa0, kLib) || this.convertirLanes(aoa0, kLib) || this.convertirSubdiario(aoa0, kLib) || this.convertirSAP(aoa0, kLib)
+    )) || aoa0;
     const hk = (h) => this.hkey(h);
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 15); i++) {
@@ -6508,11 +6721,33 @@ class Component extends DCLogic {
     };
   }
 
+  // Junta dos cargas parseadas del mismo tipo (p. ej. IVA Ventas B2B + subdiario de locales de IDEA 2).
+  juntarLibros(previo, nuevo, k) {
+    const partes = (previo && previo.partes ? previo.partes.slice() : (previo ? [previo] : [])).concat([nuevo]);
+    const recs = [].concat(...partes.map(p => p.recs || []));
+    const excl = partes.reduce((a, p) => a + (p.excl || 0), 0);
+    const omit = partes.reduce((a, p) => a + (p.omit || 0), 0);
+    const data = {
+      kind: k, name: partes.map(p => p.name).filter(Boolean).join(' + '),
+      recs, per: nuevo.per || (previo && previo.per) || '', omit, excl, vacio: !recs.length,
+      nArch: partes.length, propio: nuevo.propio || (previo && previo.propio) || ''
+    };
+    Object.defineProperty(data, 'partes', { value: partes, enumerable: true, configurable: true, writable: true });
+    Object.defineProperty(data, 'files', { value: partes.map(p => p.file).filter(Boolean), enumerable: true, configurable: true, writable: true });
+    return data;
+  }
+
   async cargarArchivo(k, e, sumar) {
     const fs = e && e.target && e.target.files ? [...e.target.files] : [];
     if (e && e.target) e.target.value = '';
     if (!fs.length) return;
     if (k === 'percep') return this.cargarRetenciones(fs, sumar);
+    // Varios IVA Ventas / Compras a la vez (IDEA 2: B2B + locales): el primero reemplaza o arranca; el resto se suma.
+    if ((k === 'ventas' || k === 'compras') && fs.length > 1) {
+      await this.cargarArchivo(k, { target: { files: [fs[0]], value: '' } }, sumar);
+      for (let i = 1; i < fs.length; i++) await this.cargarArchivo(k, { target: { files: [fs[i]], value: '' } }, true);
+      return;
+    }
     const f = fs[0];
     const parse = this.PARSEABLES.includes(k);
     const kb = f.size >= 1048576 ? (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB';
@@ -6537,6 +6772,12 @@ class Component extends DCLogic {
       data.size = kb;
       // enumerable: el File tiene que sobrevivir Object.assign / clones hasta crudosSubir (papel de trabajo).
       Object.defineProperty(data, 'file', { value: f, enumerable: true, configurable: true, writable: true });
+      // IDEA 2 y similares: se pueden sumar varios IVA Ventas (B2B + locales) o IVA Compras.
+      if (sumar && (k === 'ventas' || k === 'compras') && this.state.real && this.state.real[k] && this.state.real[k].recs) {
+        data = this.juntarLibros(this.state.real[k], data, k);
+        const bytes = (data.files || []).reduce((a, x) => a + (x && x.size || 0), 0);
+        data.size = bytes >= 1048576 ? (bytes / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+      }
       this.setState(st => {
         const reset = primero(st) ? { dz: 'empty', up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' } } : { up: st.up };
         const base = Object.assign({}, st, reset);
@@ -6549,7 +6790,7 @@ class Component extends DCLogic {
       });
     } catch (err) {
       this.setState(st => Object.assign(setKind(st, 'error'), {
-        real: Object.assign({}, st.real, { [k]: null }),
+        real: Object.assign({}, st.real, sumar && st.real && st.real[k] ? {} : { [k]: null }),
         upErr: Object.assign({}, st.upErr, { [k]: { file: f.name, msg: String(err && err.message || err) } }),
         upBusy: Object.assign({}, st.upBusy, { [k]: null })
       }));
@@ -7515,8 +7756,8 @@ class Component extends DCLogic {
     });
     const cliUp = this.liqCli(), esLhs = /lhs/i.test(cliUp);
     const upDefAll = [
-      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6 · si no hay, se liquida con Mis Comprobantes Emitidos', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
-      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
+      ['ventas', 'IVA Ventas', '.xls / .xlsx', 'Opcional · cruces 2, 4, 5 y 6 · si no hay, se liquida con Mis Comprobantes Emitidos · se pueden sumar varios (p. ej. IDEA 2: B2B + locales)', 'CAZATUR_IVA_VENTAS_082026.xlsx', '1,4 MB · 2.117 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Ventas.'],
+      ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6 · se pueden sumar varios archivos', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
       ['aflMenos', 'Compras AFL a restar (anticipadas)', '.xls / .xlsx', 'Sólo LHS · se restan de IVA Compras al liquidar', 'iva0826 en 0926 AFL.xls', 'Compras del mes anterior tomadas anticipadas', 'El archivo debe ser el Excel de compras AFL a restar (mismo formato que el subdiario de compras).'],
       ['aflMas', 'Compras AFL a sumar (diferidas)', '.xls / .xlsx', 'Sólo LHS · se suman a IVA Compras al liquidar', 'iva0926 en 1026 AFL.xls', 'Compras del mes tomadas en el mes siguiente', 'El archivo debe ser el Excel de compras AFL a sumar (mismo formato que el subdiario de compras).'],
       ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2 · también sirve para liquidar si no hay IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
@@ -7542,7 +7783,8 @@ class Component extends DCLogic {
         : k === 'percep' ? (rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + rf.nRet + ' retenciones y ' + rf.nPer + ' percepciones de IVA' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '') + (rf.dups ? ' · ' + rf.dups + (rf.dups === 1 ? ' registro repetido entre archivos no se contó' : ' registros repetidos entre archivos no se contaron') : '')
         : k === 'aduana' ? rf.recs.length + ' percepciones' + fueraTxt(k, rf) + (rf.otros ? ' · ' + rf.otros + ' de otros impuestos excluidos' : '')
         : rf.vacio ? 'sin comprobantes: se toma como 0'
-        : (rf.recs.length - (rf.excl || 0)) + ' comprobantes' + fueraTxt(k, rf) + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : ''));
+        : ((rf.nArch > 1 ? rf.nArch + ' archivos · ' : '') + (rf.recs.length - (rf.excl || 0)) + ' comprobantes' + fueraTxt(k, rf) + (rf.excl ? ' · ' + rf.excl + (rf.excl === 1 ? ' registro que no es comprobante' : ' registros que no son comprobantes') + ' (retenciones y otros) no se cuentan' : '')));
+      const puedeSumar = k === 'percep' || k === 'ventas' || k === 'compras';
       return {
         n: String(i + 1), label, ext, hint, file: busy || (rf ? rf.name : file), meta: rf ? rmeta : meta, errMsg: ue ? ue.msg : errMsg,
         errFile: ue ? ue.file : file.replace(/\.(xlsx|pdf)$/, m => m === '.pdf' ? '.jpg' : '.docx'),
@@ -7553,8 +7795,8 @@ class Component extends DCLogic {
         bg: kind === 'error' ? '#FDF5F4' : (kind === 'drag' ? '#F4F9FD' : '#FFFFFF'),
         pick: (e) => this.cargarArchivo(k, e),
         add: (e) => this.cargarArchivo(k, e, true),
-        multi: k === 'percep', single: k !== 'percep',
-        emptyTxt: k === 'percep' ? 'Arrastrá uno o más archivos o hacé clic para buscarlos' : 'Arrastrá el archivo o hacé clic para buscarlo',
+        multi: puedeSumar, single: !puedeSumar,
+        emptyTxt: puedeSumar ? 'Arrastrá uno o más archivos o hacé clic para buscarlos' : 'Arrastrá el archivo o hacé clic para buscarlo',
         load: setUp(k, 'loaded'),
         clear: () => this.setState(st => Object.assign(k === 'compras' ? { dz: 'empty' } : { up: Object.assign({}, st.up, { [k]: 'empty' }) }, {
           real: Object.assign({}, st.real, { [k]: null }), upErr: Object.assign({}, st.upErr, { [k]: null }), cruSaved: false
