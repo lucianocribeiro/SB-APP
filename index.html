@@ -2416,6 +2416,24 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 
+<sc-if value="{{ idleAviso }}">
+<div style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:90"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:430px;max-width:94vw;background:#fff;border-radius:6px;z-index:91;box-shadow:0 8px 28px rgba(27,39,51,.2)">
+<div style="padding:18px 20px;display:flex;gap:13px">
+<div style="width:34px;height:34px;flex:none;border-radius:6px;background:#EAF2F8;display:flex;align-items:center;justify-content:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#14395C" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+</div>
+<div>
+<div style="font:600 16px 'Open Sans'">¿Seguís ahí?</div>
+<div style="font:400 13px/1.5 'Open Sans';color:#5A6B7B;margin-top:6px">Por inactividad la sesión se va a cerrar. Si seguís trabajando (por ejemplo en una liquidación), confirmá y la dejamos abierta.</div>
+</div>
+</div>
+<div style="padding:14px 20px;border-top:1px solid #E3E8EE;display:flex;gap:10px;justify-content:flex-end">
+<button onClick="{{ seguirAhi }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Sí, sigo acá</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ ddjjDelOpen }}">
 <div onClick="{{ closeAll }}" style="position:fixed;inset:0;background:rgba(27,39,51,.42);z-index:70"></div>
 <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:470px;max-width:94vw;background:#fff;border-radius:6px;z-index:71;box-shadow:0 8px 28px rgba(27,39,51,.2)">
@@ -2719,7 +2737,7 @@ class Component extends DCLogic {
     step: 1, dz: 'empty', proc: 'run', liqRes: null, liqErrTxt: '', liqResVer: false, liqAj: {}, ivdVer: null,
     liqTab: 'ventas', cliTab: 'resumen', cruceTab: 'A', cruceFiltro: 'todos',
     dashEmpty: false, indSel: null, cfgTab: 'params',
-    drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, notif: false, toast: null,
+    drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, idleAviso: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
     cliF: { q: '', est: '', per: '', usr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
@@ -2822,6 +2840,7 @@ class Component extends DCLogic {
   }
 
   IDLE_MS = 10 * 60 * 1000;
+  IDLE_AVISO_MS = 60 * 1000;   // tiempo para responder «¿Seguís ahí?» antes de cerrar
 
   tocarActividad() {
     this._ultimaAct = Date.now();
@@ -2837,12 +2856,30 @@ class Component extends DCLogic {
     });
     this._idleTimer = setInterval(() => {
       if (!this._user || this.state.screen === 'login') return;
-      if (Date.now() - (this._ultimaAct || 0) >= this.IDLE_MS) this.salirPorInactividad();
+      // Aviso en pantalla: no se cierra la liquidación ni la sesión hasta que expire el plazo o el usuario ignore.
+      if (this.state.idleAviso) {
+        if (Date.now() - (this._idleAvisoDesde || 0) >= this.IDLE_AVISO_MS) this.salirPorInactividad();
+        return;
+      }
+      if (Date.now() - (this._ultimaAct || 0) >= this.IDLE_MS) this.preguntarSiSigue();
     }, 15000);
   }
 
   cortarIdle() {
     if (this._idleTimer) { clearInterval(this._idleTimer); this._idleTimer = null; }
+  }
+
+  preguntarSiSigue() {
+    if (this._idleSaliendo || this.state.idleAviso) return;
+    this._idleAvisoDesde = Date.now();
+    this.setState({ idleAviso: true });
+  }
+
+  // El usuario confirma que sigue: se renueva la actividad y se deja la liquidación / pantalla como estaba.
+  seguirAhi() {
+    this.tocarActividad();
+    this._idleAvisoDesde = 0;
+    this.setState({ idleAviso: false });
   }
 
   async salirPorInactividad() {
@@ -2851,9 +2888,10 @@ class Component extends DCLogic {
     const sb = this.sb();
     try { if (sb) await sb.auth.signOut(); } catch (e) { }
     this._user = null;
+    this._idleAvisoDesde = 0;
     this.cortarIdle();
     this.setState({
-      screen: 'login', loginBusy: false, sesionChk: false, mfaPaso: '', mfaCode: '', debeCambiarPw: false,
+      screen: 'login', loginBusy: false, sesionChk: false, mfaPaso: '', mfaCode: '', debeCambiarPw: false, idleAviso: false,
       loginErr: true, loginErrTxt: 'Se cerró la sesión por 10 minutos de inactividad.', loginOk: '', loginPw: ''
     });
     this._idleSaliendo = false;
@@ -7678,6 +7716,7 @@ class Component extends DCLogic {
       goPerfil: this.nav('perfil'),
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
+      idleAviso: !!s.idleAviso, seguirAhi: () => this.seguirAhi(),
       openDrawer: () => this.setState({ drawer: true, asign: {}, ncEdit: null, nc: { rz: '', cuit: '', ini: '01/01', mails: '', sis: 'Bejerman' } }),
       ncTitulo: s.ncEdit ? 'Editar ficha' : 'Nuevo cliente',
       ncSub: s.ncEdit ? 'Cambiá los datos de ' + s.ncEdit + '. Si cambiás la razón social, se actualiza en todo el historial.' : 'Completá los datos para habilitar liquidaciones.',
