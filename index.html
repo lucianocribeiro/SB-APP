@@ -4782,12 +4782,13 @@ class Component extends DCLogic {
     let tf = this.fold(t).toUpperCase().replace(/\s+/g, ' ').trim();
     const ml = tf.match(/^(.*\S)\s+([ABCMET])$/);
     if (ml && !l && ml[1].length > 2) { tf = ml[1]; l = ml[2]; t = tf; }
-    if (/^NOTA\s*DE\s*CRED|^TICKET-NOTA\s*(DE\s*)?CRED/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR' || t === 'NC#' || t === 'NCE') t = 'NC';
+    if (/^NOTA\s*DE\s*CRED|^TICKET-NOTA\s*(DE\s*)?CRED|^DEVOLUCION/.test(tf) || /^N\s*[\/.]\s*C\.?$/.test(t) || t === 'NCR' || t === 'NC#' || t === 'NCE') t = 'NC';
     else if (/^NOTA\s*DE\s*DEB|^TICKET-NOTA\s*(DE\s*)?DEB/.test(tf) || /^N\s*[\/.]\s*D\.?$/.test(t) || t === 'ND#' || t === 'NDE') t = 'ND';
     else if (/^TICKET(-FACTURA)?$/.test(tf)) t = 'TK';
-    else if (/^FACTURA$|^FAC$|^FCE$/.test(tf) || t === 'FCE' || t === 'FAC') t = 'FC';
+    else if (/FACTURA/.test(tf) || /^FAC$|^FCE$/.test(tf) || t === 'FCE' || t === 'FAC') t = 'FC';   // también REMITO-FACTURA A (Lanes)
     else if (/^LIQUIDO PRODUCTO|^LIQUIDACION|^LIQ$/.test(tf) || t === 'LIQ') t = t === 'LIQ' || /^LIQUIDACION/.test(tf) ? 'FC' : 'LQ';
     else if (/^RECIBO|^REC$/.test(tf) || t === 'REC') t = 'FC';
+    else if (/^DESPACHO/.test(tf)) t = 'DI';
     const m = t.match(/^([A-Z]{2})\s*([ABCMET])$/);
     if (m && !l) { t = m[1]; l = m[2]; }
     // FCC / NDC / NCC (Bejerman) y FCE / NCE / NDE (Catedral MiPyME / exterior): se normalizan al TC de Bejerman.
@@ -5220,25 +5221,27 @@ class Component extends DCLogic {
   // (liquidación y cruces) no cambia. Junta en un comprobante las filas que vienen separadas por alícuota (Tango).
   SUB_SIN = {
     fecha: ['fecha', 'fechaoperacion', 'fechaemi', 'fechaemision', 'fechadeemision', 'fechacontable', 'fechacomprobante', 'fechacomp', 'fechcomp', 'fechadoc', 'fechadocumento', 'fecdoc', 'fecemision', 'fec'],
-    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'codigo', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte'],
+    // Lanes (export tip_cbte): el texto útil está en "formulario" ("FACTURA A", "TICKET-NOTA CREDITO B"…).
+    tipo: ['tc', 'tcomp', 'tipo', 'tipocomprobante', 'tipodecomprobante', 'tipocomp', 'codigo', 'tipodoc', 'comprobante', 'codigo', 'cod', 'codcomprobante', 'clasedoc', 'clasedocumento', 'tipodocumento', 'cpte', 'tipocpte', 'formulario'],
     letra: ['letra', 'let', 'letracomprobante'],
     pv: ['ptovta', 'puntodeventa', 'pv', 'ptoventa', 'puntoventa', 'sucursal', 'suc', 'pventa'],
-    nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'comproban', 'referencia'],
-    cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocumento', 'documento', 'nif', 'cuitcuil', 'n', 'no'],
+    nro: ['nrodesde', 'ncomp', 'nrocomprobante', 'numerocomprobante', 'nrocomp', 'nrocbte', 'numero', 'nro', 'nrocpte', 'comprobantenro', 'comproban', 'referencia'],
+    cuit: ['cuit', 'identiftri', 'cuitproveedor', 'cuitcliente', 'nrodoc', 'nrodocv', 'nrodocumento', 'documento', 'nif', 'cuitcuil', 'n', 'no'],
     nom: ['razonsocial', 'razonsoc', 'nomprove', 'nombre', 'proveedor', 'cliente', 'denominacion', 'nomcli', 'nombreproveedor', 'nombrecliente', 'detalle'],
     cond: ['cativa', 'condiva', 'condicioniva', 'categoriaiva', 'sitiva', 'condicionfrentealiva', 'categoria', 'condicion'],
     porc: ['porciva', 'alicuota', 'aliciva', 'alicuotaiva', 'tasaiva', 'porcentajeiva', 'tasa', 'porc'],
     exe: ['subtotalexentos', 'impexento', 'importeexento', 'exento', 'montoexento', 'exentas'],
-    ngr: ['subtotalnogravados', 'impnogravado', 'importenogravado', 'nogravado', 'nogravadas', 'montonogravado'],
+    ngr: ['subtotalnogravados', 'impnogravado', 'importenogravado', 'nogravado', 'nograv', 'nogravadas', 'montonogravado'],
     nal: ['importenoalcanzado', 'noalcanzado', 'impnoalcanzado'],
     exp: ['importeoperacionesexportacion', 'exportacion', 'impexportacion', 'exportaciones'],
     mono: ['comprasaexentosmonotributistasyotros', 'monotributo', 'comprasmonotributo'],
     neto: ['subtotalneto', 'impgravad', 'impneto', 'netogravado', 'impnetogravado', 'importegravado', 'importeneto', 'neto', 'gravado', 'baseimponible', 'netogravadototal'],
-    iva: ['subtotaliva', 'iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
+    // Lanes compras: "imp_liq" es el IVA de la alícuota de esa fila; "iva" a veces trae el total del comprobante.
+    iva: ['subtotaliva', 'impliq', 'iva', 'impiva', 'importeiva', 'montoiva', 'totaliva'],
     iin: ['importeimpuestosinternos', 'impuestosinternos', 'impint', 'impinternos'],
-    piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos', 'percepcion'],
-    piva: ['subtotalpercepciones', 'percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva'],
-    potr: ['otraspercepciones', 'otrosimp', 'otrostributos', 'otrasperc'],
+    piibb: ['percepcionesiibb', 'ingbru', 'periibb', 'perciibb', 'percepcioniibb', 'iibb', 'percib', 'percingbrutos', 'percepcion'],
+    piva: ['subtotalpercepciones', 'percepcionesiva', 'periva', 'percepcioniva', 'percepiva', 'perciva', 'percinac'],
+    potr: ['otraspercepciones', 'otrosimp', 'otrostributos', 'otrostrib', 'otrasperc'],
     oreg: ['otrosregimenesespeciales', 'regimenesespeciales', 'otrosimpuestos'],   // Catedral: "Otros Impuestos", como en su conversor
     tot: ['totalcomprobante', 'totaldelcomprobante', 'importe', 'imptotal', 'importetotal', 'total', 'montototal']
   };
@@ -5259,6 +5262,9 @@ class Component extends DCLogic {
     const C = {}; Object.keys(SIN).forEach(f => { C[f] = col(f); });
     // Catedral: "Iva" es la condición frente al IVA (RI, MON, EX, CF) y el importe viene en "Subtotal Iva".
     if (keys.includes('subtotaliva') && keys.includes('iva')) { C.iva = keys.indexOf('subtotaliva'); if (C.cond < 0) C.cond = keys.indexOf('iva'); }
+    // Lanes (tip_cbte): el tipo legible está en "formulario"; el IVA por alícuota en "imp_liq".
+    if (keys.includes('formulario') && keys.includes('tipcbte')) C.tipo = keys.indexOf('formulario');
+    if (keys.includes('impliq')) C.iva = keys.indexOf('impliq');
     const AC = {}; ALIS.forEach(([a]) => { AC['n' + a] = keys.indexOf('neto' + a); AC['i' + a] = keys.indexOf('iva' + a); });
     const porAli = Object.values(AC).some(i => i >= 0);
     if (C.tot < 0 && C.neto < 0 && C.iva < 0 && !porAli) return null;
@@ -5294,6 +5300,8 @@ class Component extends DCLogic {
         neto: 0, iva: {}, ivaSin: 0, piva: 0, exe: 0, ngr: 0, nal: 0, exp: 0, mono: 0, iin: 0, piibb: 0, potr: 0, oreg: 0, tot: 0, ali: {}, mainR: null, mainN: 0 });
       ['exe', 'ngr', 'nal', 'exp', 'mono', 'iin', 'piibb', 'potr', 'oreg', 'tot'].forEach(f => { G[f] += num(g(f)); });
       G.piva += num(g('piva'));
+      // Lanes: perc_muni / perc_n_cat se suman a otras percepciones (no tienen columna propia en Bejerman).
+      ['percmuni', 'percncat'].forEach(h => { const j = keys.indexOf(h); if (j >= 0 && j !== C.potr) G.potr += num(r[j]); });
       if (porAli) ALIS.forEach(([a]) => { G.ali['n' + a] = (G.ali['n' + a] || 0) + (AC['n' + a] >= 0 ? num(r[AC['n' + a]]) : 0); G.ali['i' + a] = (G.ali['i' + a] || 0) + (AC['i' + a] >= 0 ? num(r[AC['i' + a]]) : 0); });
       const neto = num(g('neto')), iva = num(g('iva'));
       let rate = C.porc >= 0 && g('porc') !== null && g('porc') !== '' ? num(String(g('porc')).replace('%', '')) : null;
@@ -5547,10 +5555,12 @@ class Component extends DCLogic {
     return out;
   }
 
-  // ===== Lanes (tablas exportadas de su base: fecha, ncomp, razonsoci, neto21, impuesto2_… / iifglfein, leftformu, iifformul…) =====
-  // Compras: un neto y un IVA por alícuota, sin tipo de comprobante (el signo dice si es nota de crédito) y el número con el punto
-  // de venta adelante (2500104273063 → 25001-04273063). Ventas: una fila por comprobante con su alícuota y el tipo en letras
-  // ("FACTURA A", "TICKET-NOTA CREDITO B"…). Se arma una tabla con títulos estándar y la lee convertirSubdiario.
+  // ===== Lanes =====
+  // 1) Tablas viejas: fecha, ncomp, razonsoci, neto21… / iifglfein, leftformu, iifformul…
+  // 2) Export nuevo (Lanes SAU): tip_cbte, formulario, pto_vta, nro_cbte, neto, alicuota, iva/imp_liq…
+  //    Ese formato lo toma convertirSubdiario (alias de columnas); acá sólo queda el layout viejo.
+  // Compras viejas: un neto y un IVA por alícuota, sin tipo (el signo dice NC) y el nro con PV adelante.
+  // Ventas viejas: una fila por comprobante con alícuota y tipo en letras ("FACTURA A"…).
   convertirLanes(aoa, k) {
     let hi = -1, keys = [];
     for (let i = 0; i < Math.min(aoa.length, 10); i++) {
