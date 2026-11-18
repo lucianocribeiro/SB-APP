@@ -6438,22 +6438,75 @@ class Component extends DCLogic {
       a.tcI = tc; a.pvI = pv; a.nroI = nro;
       get(['P', a.cuit, tc, pv, nro].join('|'), { op: 'Percepción', fecha: a.fecha, cuit: a.cuit, nom: a.nom, origen: '' }).a.push(a);
     });
-    const filas = orden.map(k => M.get(k)).sort((p, q) => (q.l.length ? 1 : 0) - (p.l.length ? 1 : 0));
+    // Además de la clave P|CUIT|TC|PV|Nro, se intenta enganchar ARCA al libro si el «Número Comprobante»
+    // trae PV+Nro pegados (0000205600115533 ↔ FC A 02056-00115533) u otras variantes de padding.
+    mr.recs.filter(a => a.tipo === 'per' && !esAduA(a) && compras).forEach(a => {
+      if (a._enganchado) return;
+      const d = dig(a.comp); if (!d) return;
+      for (const k of orden) {
+        if (k[0] !== 'P' || !k.startsWith('P|' + a.cuit + '|')) continue;
+        const g = M.get(k); if (!g || !g.l.length || g.a.some(x => x === a)) continue;
+        const p = k.split('|'), pv = p[3], nro = p[4];
+        const cands = [
+          String(pv).padStart(4, '0') + String(nro).padStart(8, '0'),
+          String(pv).padStart(5, '0') + String(nro).padStart(8, '0'),
+          String(pv) + String(nro).padStart(8, '0'),
+          String(pv) + String(nro)
+        ];
+        if (!cands.some(c => d === c || d.endsWith(c) || parseInt(d, 10) === parseInt(c, 10))) continue;
+        // Sacarlo de la clave mal interpretada (PV=0, nro entero) si ya estaba.
+        const mal = ['P', a.cuit, a.tcI || tipoA(a.dcomp), a.pvI, a.nroI].join('|');
+        if (M.has(mal) && mal !== k) {
+          const g0 = M.get(mal); g0.a = g0.a.filter(x => x !== a);
+        }
+        g.a.push(a); a._enganchado = 1; break;
+      }
+    });
+    let filas = orden.map(k => M.get(k)).filter(f => f.l.length || f.a.length).sort((p, q) => (q.l.length ? 1 : 0) - (p.l.length ? 1 : 0));
     filas.forEach(f => {
       f.impL = r2(f.l.reduce((s, c) => s + c.imp, 0)); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
       if (!f.nom) f.nom = (f.a[0] && f.a[0].nom) || '';
       f.est = !f.a.length ? 'FALTA EN ARCA' : (!f.l.length ? 'FALTA EN LIBRO' : (Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA'));
       f.obs = '';
     });
-    // Mismo CUIT y fecha del otro lado: casi siempre es el mismo comprobante informado con otra numeración (ej. MAPFRE, FARMCITY).
+    // Mismo CUIT+fecha e mismo importe (al centavo): se concilian solas aunque la numeración difiera (verdes del estudio).
     const cf = (f) => f.cuit + '|' + f.fecha;
-    filas.filter(f => f.op === 'Percepción' && f.est.startsWith('FALTA')).forEach(f => {
-      const otro = filas.find(o => o !== f && o.op === 'Percepción' && o.est.startsWith('FALTA') && o.est !== f.est && cf(o) === cf(f));
+    const usados = new Set();
+    filas.filter(f => f.op === 'Percepción' && f.est === 'FALTA EN ARCA').forEach(f => {
+      const otro = filas.find(o => !usados.has(o) && o !== f && o.op === 'Percepción' && o.est === 'FALTA EN LIBRO' && cf(o) === cf(f) && Math.abs(r2(f.impL - o.impA)) <= TOL);
       if (!otro) return;
-      f.obs = f.est === 'FALTA EN ARCA'
-        ? 'Posible coincidencia en ARCA por CUIT+fecha: comp. ' + otro.a.map(a => a.comp).join(', ') + ' — revisar numeración'
-        : 'Posible coincidencia en IVA Compras por CUIT+fecha: ' + otro.l.map(c => c.x.pv + '-' + c.x.nro).join(', ') + ' — revisar numeración';
+      usados.add(otro);
+      f.a = f.a.concat(otro.a); f.impA = r2(f.a.reduce((s, a) => s + a.imp, 0)); f.dif = r2(f.impL - f.impA);
+      f.est = Math.abs(f.dif) <= TOL ? 'OK' : 'DIFERENCIA';
+      f.obs = 'Conciliado automáticamente (CUIT+fecha+importe; numeración distinta en ARCA: ' + otro.a.map(a => a.comp).join(', ') + ')';
     });
+    // Varios del mismo CUIT+fecha cuyo total libro = total ARCA (ej. 2 FC del libro ↔ 1 renglón en Mis Retenciones).
+    const porCf = new Map();
+    filas.filter(f => f.op === 'Percepción' && f.est.startsWith('FALTA') && !usados.has(f)).forEach(f => {
+      const k = cf(f); if (!porCf.has(k)) porCf.set(k, { L: [], A: [] });
+      (f.est === 'FALTA EN ARCA' ? porCf.get(k).L : porCf.get(k).A).push(f);
+    });
+    porCf.forEach(({ L, A }) => {
+      if (!L.length || !A.length) return;
+      const sumL = r2(L.reduce((s, f) => s + f.impL, 0)), sumA = r2(A.reduce((s, f) => s + f.impA, 0));
+      if (Math.abs(sumL - sumA) > TOL) {
+        L.concat(A).forEach(f => {
+          if (f.obs) return;
+          const otro = f.est === 'FALTA EN ARCA' ? A : L;
+          f.obs = f.est === 'FALTA EN ARCA'
+            ? 'Posible coincidencia en ARCA por CUIT+fecha: comp. ' + otro.flatMap(o => o.a.map(a => a.comp)).join(', ') + ' — revisar numeración'
+            : 'Posible coincidencia en IVA Compras por CUIT+fecha: ' + otro.flatMap(o => o.l.map(c => c.x.pv + '-' + c.x.nro)).join(', ') + ' — revisar numeración';
+        });
+        return;
+      }
+      const base = L[0];
+      L.slice(1).forEach(f => { base.l = base.l.concat(f.l); usados.add(f); });
+      A.forEach(f => { base.a = base.a.concat(f.a); usados.add(f); });
+      base.impL = r2(base.l.reduce((s, c) => s + c.imp, 0)); base.impA = r2(base.a.reduce((s, a) => s + a.imp, 0)); base.dif = r2(base.impL - base.impA);
+      base.est = 'OK';
+      base.obs = 'Conciliado automáticamente (CUIT+fecha; importes agrupados ' + L.length + ' en libro y ' + A.length + ' en ARCA; numeración distinta)';
+    });
+    filas = filas.filter(f => !usados.has(f));
     filas.filter(f => f.op === 'Retención' && f.l.length && f.a.length).forEach(f => {
       const nl = f.l.map(c => String(c.x.nro)), na = f.a.map(a => String(parseInt(dig(a.cert || a.comp) || '0', 10)));
       const res = nl.every(n => na.includes(n)) ? 'coincide' : (nl.some(n => na.some(m => n !== '0' && m !== '0' && (m.endsWith(n) || n.endsWith(m)))) ? 'aproximado' : 'distinto');
