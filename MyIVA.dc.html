@@ -4700,8 +4700,8 @@ class Component extends DCLogic {
       const wb = X.utils.book_new();
       // Con el reporte completo guardado: primero la hoja del modelo (una fila por clave), después el resumen y los errores.
       const b = r.rep ? await this.bloqueDe({ runId: r.runId, n: r.n }) : null;
-      if (b) X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
-      X.utils.book_append_sheet(wb, ws, b ? 'Resumen y errores' : 'Cruce');
+      if (b && (b.aoa || b.head)) X.utils.book_append_sheet(wb, this.hojaDeBloque(X, b), (b.hoja || cruce).slice(0, 31));
+      X.utils.book_append_sheet(wb, ws, b && (b.aoa || b.head) ? 'Resumen y errores' : 'Cruce');
       const name = r.cliente + ' - ' + cruce.replace(/[\/\\:*?"<>|·]+/g, '-').replace(/\s+/g, ' ') + ' ' + r.per.replace('/', '-') + '.xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
       this.setState({ toast: { kind: 'ok', t: 'Excel del cruce descargado', d: name } });
@@ -4723,7 +4723,8 @@ class Component extends DCLogic {
       for (const r of rows) {
         if (!r.rep || !r.runId) continue;
         const b = await this.bloqueDe({ runId: r.runId, n: r.n });
-        if (!b || !b.aoa) continue;
+        // Incluye modelo (aoa) y listados simples (head/rows), p. ej. Cruce 1 Base APOC.
+        if (!b || !(b.aoa || (b.head && Array.isArray(b.rows)))) continue;
         const t = r.cruceNombre || r.tipo || ('Cruce ' + r.n);
         const nErr = (r.errs || []).length;
         const res = nErr ? (nErr + (nErr === 1 ? ' diferencia / error' : ' diferencias / errores')) : (r.est || 'Completado');
@@ -4743,7 +4744,7 @@ class Component extends DCLogic {
           this.pintarTitulos(ws, 0, 5);
           X.utils.book_append_sheet(wb, ws, 'Resumen');
         }
-        pares.forEach(({ b }) => X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31)));
+        pares.forEach(({ b }) => X.utils.book_append_sheet(wb, this.hojaDeBloque(X, b), b.hoja.slice(0, 31)));
         const sinRep = rows.filter(r => !pares.some(p => p.r === r));
         if (sinRep.some(r => (r.errs || []).length)) {
           const errs = [['Cliente', 'Período', 'Cruce', 'Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia']];
@@ -4794,7 +4795,7 @@ class Component extends DCLogic {
       this.pintarTitulos(ws, 3, head.length);
       const wb = X.utils.book_new();
       const b = await this.bloqueDe(v.src);
-      if (b) X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
+      if (b && (b.aoa || b.head)) X.utils.book_append_sheet(wb, this.hojaDeBloque(X, b), (b.hoja || 'Cruce').slice(0, 31));
       X.utils.book_append_sheet(wb, ws, 'Errores');
       const name = (cli || 'Cruces') + ' - Reporte de errores.xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
@@ -7325,6 +7326,17 @@ class Component extends DCLogic {
     return { head: ['Resultado', 'Comprobante', 'Fecha ARCA', 'Fecha ' + lblL, 'CUIT', 'Denominación', 'Concepto', 'ARCA', lblL, 'Diferencia'], rows };
   }
 
+  // Hoja de un bloque de reporte: modelo (aoa) o listado simple (head/rows), p. ej. Base APOC.
+  hojaDeBloque(X, b) {
+    if (b && b.aoa) return this.hojaModelo(X, b);
+    const head = (b && b.head) || [], rows = (b && b.rows) || [];
+    const ws = X.utils.aoa_to_sheet([[(b && b.t) || ''], [(b && b.res) || ''], []].concat([head], rows.length ? rows : [['Sin observaciones en este cruce.']]));
+    ws['!cols'] = head.length ? head.map((h, i) => ({ wch: i === 5 || i === 4 ? 34 : (i === 0 ? 26 : 16) })) : [{ wch: 40 }];
+    ws['!pinta'] = [[0, 0, 0, 0, 'tit'], [1, 0, 1, 0, 'sub']];
+    if (head.length) this.pintarTitulos(ws, 3, head.length);
+    return ws;
+  }
+
   // Hoja de un cruce con el modelo de output: importes con formato numérico.
   hojaModelo(X, b) {
     const ws = X.utils.aoa_to_sheet(b.aoa);
@@ -7397,12 +7409,7 @@ class Component extends DCLogic {
         ws['!cols'] = [{ wch: 30 }, { wch: 26 }, { wch: 120 }];
         X.utils.book_append_sheet(wb, ws, 'Resumen');
       }
-      bloques.forEach(b => {
-        if (b.aoa) return X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31));
-        const ws = X.utils.aoa_to_sheet([[b.t], [b.res], []].concat([b.head], b.rows));
-        ws['!cols'] = b.head.map((h, i) => ({ wch: i === 5 || i === 4 ? 34 : (i === 0 ? 26 : 16) }));
-        X.utils.book_append_sheet(wb, ws, b.hoja.slice(0, 31));
-      });
+      bloques.forEach(b => X.utils.book_append_sheet(wb, this.hojaDeBloque(X, b), (b.hoja || b.t || 'Cruce').slice(0, 31)));
       const name = cli + ' - Reporte de diferencias' + (bloques.length === 1 ? ' - ' + bloques[0].hoja : '') + '.xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
       this.setState({ toast: { kind: 'ok', t: 'Reporte de diferencias descargado', d: name } });
