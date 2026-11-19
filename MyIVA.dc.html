@@ -3768,14 +3768,16 @@ class Component extends DCLogic {
       const retPer = sep ? `(${C('AV')}${r}+${C('AVP')}${r})` : `(${rp})`;
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
-      // El CF de Fact. T se compensa 1 a 1 con el débito: no entra al prorrateo (queda 100 % computable).
-      const adProrr = conCfT ? `(${C('AD')}${r}-${C('CFT')}${r})` : `${C('AD')}${r}`;
+      // Prorrateo sólo sobre CF de facturas/ND de compras (AA+AB+AC). El CF de NC de ventas (AH+AI+AJ) y el de Fact. T
+      // quedan 100 % computables (Juli / MyIVA planilla: la base no incluye NC de ventas).
+      const cfCompra = `(${C('AA')}${r}+${C('AB')}${r}+${C('AC')}${r})`;
+      const cfNcV = `(${C('AH')}${r}+${C('AI')}${r}+${C('AJ')}${r})`;
       const f = {
         AM: `${C('I')}${r}+${C('AJD')}${r}`, AN: `${C('AD')}${r}+${C('AJC')}${r}`,
         AO: `1-${ratio}`,
         AP: `$${C('AO')}${r}*${C('AA')}${r}`, AQ: `$${C('AO')}${r}*${C('AB')}${r}`, AR: `$${C('AO')}${r}*${C('AC')}${r}`,
-        AS: conCfT ? `(1-${ratio})*${adProrr}+${C('CFT')}${r}` : `(1-${ratio})*${C('AD')}${r}`,
-        AT: `${ratio}*${adProrr}`,
+        AS: conCfT ? `(1-${ratio})*${cfCompra}+${cfNcV}+${C('CFT')}${r}` : `(1-${ratio})*${cfCompra}+${cfNcV}`,
+        AT: `${ratio}*${cfCompra}`,
         AW: `IF(${C('AW')}${p}>0,${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r}+${C('AW')}${p},${C('AN')}${r}-${C('AT')}${r}-${C('AM')}${r})`,
         AX: `IF(${axAnt}<=0,IF(${C('AW')}${r}<0,${C('AW')}${r}+${retPer},${retPer}),IF(${C('AW')}${r}<0,${axAnt}+${C('AW')}${r}+${retPer},${retPer}+${axAnt}))`,
         AY: `IF(${C('AX')}${r}<0,${C('AX')}${r},0)`
@@ -3806,7 +3808,7 @@ class Component extends DCLogic {
     const hoja = yrs.length > 1 ? yrs[0] + '-' + yrs[yrs.length - 1].slice(2) : yrs[0];
     // Columnas en cero en todas las liquidaciones: se descargan ocultas (siguen ahí; las fórmulas y los totales no cambian).
     // Las calculadas siguen a la columna de la que salen; los totales, el prorrateo y los saldos siempre se ven.
-    const DEP = { AP: ['AA'], AQ: ['AB'], AR: ['AC'], AT: ['J', 'K'] }, SIEMPRE = ['AM', 'AN', 'AO', 'AS', 'AW', 'AX', 'AY'];
+    const DEP = { AP: ['AA'], AQ: ['AB'], AR: ['AC'], AT: ['J', 'K', 'AA', 'AB', 'AC'], AS: ['AA', 'AB', 'AC', 'AH', 'AI', 'AJ'] }, SIEMPRE = ['AM', 'AN', 'AO', 'AS', 'AW', 'AX', 'AY'];
     const oculta = (o) => !SIEMPRE.includes(o) && !(o === 'AZ' && ant && ant.comp) && !(DEP[o] || [o]).some(x => nz.has(x));
     const cols = `<cols><col min="1" max="1" width="11" customWidth="1"/><col min="2" max="2" width="11" customWidth="1"/>`
       + COLS.map(([o]) => { const n = pos[o] + 3; return `<col min="${n}" max="${n}" width="15.5" customWidth="1"${data.length && oculta(o) ? ' hidden="1"' : ''}/>`; }).join('') + `</cols>`;
@@ -5253,7 +5255,7 @@ class Component extends DCLogic {
         'Crédito fiscal = ' + m(base.cf - (det.cfT || 0)) + (det.cfT ? ' + CF Fact. T ' + m(det.cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
         ...(det.cfT ? ['Facturas letra T (FTT): el IVA se toma como débito y como crédito fiscal a la vez, compensándose (no prorratea).'] : []),
         ...(pv.cfNoComp ? ['Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas) = ' + this.pctProrr(this.prorrRatio(det))
-          + ' · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)] : []),
+          + ' · No computable = ese % × CF de facturas de compra (sin NC de ventas) · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)] : []),
         'Retenciones y percepciones = retenciones ' + m(base.ret) + mas(aj.ret, 'ajuste') + ' + percepciones ' + m(base.perc) + mas(aj.perc, 'ajuste') + ' = ' + m(pv.rp),
         'Saldo 1° párrafo = crédito' + (pv.cfNoComp ? ' computable ' + m(pv.cf - pv.cfNoComp) : ' ' + m(pv.cf)) + ' − débito ' + m(pv.df) + ' + saldo técnico anterior ' + m(arr.tec) + ' = ' + m(pv.s1),
         'Saldo 2° párrafo = ' + (pv.s1 < 0 ? 'libre disponibilidad anterior ' + m(arr.lib) + ' + saldo 1° párrafo ' + m(pv.s1) + ' + retenciones y percepciones ' + m(pv.rp) : 'retenciones y percepciones ' + m(pv.rp) + ' + libre disponibilidad anterior ' + m(arr.lib)) + ' = ' + m(pv.s2)
@@ -6738,15 +6740,23 @@ class Component extends DCLogic {
     return num > 0 && den > 0 ? Math.min(1, num / den) : 0;
   }
 
-  // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica al crédito sin los ajustes manuales
-  // ni el CF de Facturas letra T (ese IVA se compensa 1 a 1 con el débito y queda 100 % computable).
+  // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica sólo al CF de facturas/ND
+  // de compras (Juli / MyIVA planilla). El CF de NC de ventas y el de Facturas letra T quedan 100 % computables.
   // Se calcula del detalle guardado, así también corrige las liquidaciones ya procesadas sin volver a cargarlas.
   cfNoComp(o) {
-    const ali = o && o.ali, r = this.prorrRatio(ali && ali.det);
+    const ali = o && o.ali, det = ali && ali.det, r = this.prorrRatio(det);
     if (!r) return 0;
-    // Sólo se resta cfT si la liquidación lo guardó (ya está dentro de cf); las viejas sin cfT no lo restan.
-    const cfT = ali && ali.det && ali.det.cfT != null ? (+ali.det.cfT || 0) : 0;
-    return Math.round(r * ((+o.cf || 0) - ((ali.aj || {}).cf || 0) - cfT) * 100) / 100;
+    let base;
+    if (det && det.c) {
+      // Solo IVA de compras FC/ND (mismo criterio que columnas AA+AB+AC del papel de trabajo).
+      base = ['i21', 'i105', 'i27', 'i5', 'i25'].reduce((a, k) => a + (+det.c[k] || 0), 0);
+    } else {
+      // Liquidaciones viejas sin detalle por origen: se resta NC de ventas y Fact. T si están guardados.
+      const cfNcV = det && det.vNc ? ['i21', 'i105', 'i27', 'i5', 'i25'].reduce((a, k) => a + (+det.vNc[k] || 0), 0) : 0;
+      const cfT = det && det.cfT != null ? (+det.cfT || 0) : 0;
+      base = (+o.cf || 0) - ((ali.aj || {}).cf || 0) - cfNcV - cfT;
+    }
+    return Math.round(r * Math.max(0, base) * 100) / 100;
   }
 
   pctProrr(r) { return ((1 - r) * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 5 }) + ' %'; }
