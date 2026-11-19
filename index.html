@@ -1954,7 +1954,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ cruHistLabel }} · Los errores de cada cruce se revisan desde la columna Errores.</div>
 </div>
 <div style="display:flex;gap:9px">
-<button onClick="{{ cruExport }}" title="Exporta a Excel los cruces seleccionados (o todos los de la tabla si no hay ninguno seleccionado)" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">{{ cruExportLabel }}</button>
+<button onClick="{{ cruExport }}" title="Exporta los cruces seleccionados (o todos los de la tabla) en formato Reporte de Diferencias" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">{{ cruExportLabel }}</button>
 <button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
 </div>
 </div>
@@ -4708,11 +4708,54 @@ class Component extends DCLogic {
     }
   }
 
-  // Historial de cruces: Excel con los cruces elegidos (hoja Resumen) y todos sus errores (hoja Errores).
+  // Historial de cruces: mismo formato que "Reporte de Diferencias" (hojas modelo por cruce, como al terminar los cruces).
+  // Si algún cruce no tiene el reporte completo guardado, se agrega la hoja Errores con el detalle resumido.
   async exportarCruces(rows) {
     if (!rows || !rows.length) return this.setState({ toast: { kind: 'warn', t: 'No hay cruces para exportar', d: 'Cambiá los filtros o seleccioná cruces de la tabla.' } });
     try {
       const X = await this.xlsxLib();
+      const clis = [...new Set(rows.map(r => r.cliente))];
+      const cliNom = clis.length === 1 ? clis[0] : (clis.length ? 'Varios clientes' : 'Cruces');
+      const pares = [];
+      const usados = new Set();
+      for (const r of rows) {
+        if (!r.rep || !r.runId) continue;
+        const b = await this.bloqueDe({ runId: r.runId, n: r.n });
+        if (!b || !b.aoa) continue;
+        const t = r.cruceNombre || r.tipo || ('Cruce ' + r.n);
+        const nErr = (r.errs || []).length;
+        const res = nErr ? (nErr + (nErr === 1 ? ' diferencia / error' : ' diferencias / errores')) : (r.est || 'Completado');
+        const hojaBase = String(b.hoja || t).slice(0, 22);
+        const suf = String(r.per || '').replace('/', '-');
+        let hoja = (hojaBase + (suf ? ' ' + suf : '')).slice(0, 31), i = 2;
+        while (usados.has(hoja)) { hoja = (hojaBase.slice(0, 27) + ' ' + i).slice(0, 31); i++; }
+        usados.add(hoja);
+        pares.push({ r, b: Object.assign({}, b, { t, hoja, est: r.est || '', res }) });
+      }
+      if (pares.length) {
+        const wb = X.utils.book_new();
+        if (pares.length > 1 || rows.length > 1) {
+          const ws = X.utils.aoa_to_sheet([['Cruce', 'Cliente', 'Período', 'Estado', 'Resumen']].concat(
+            pares.map(({ r, b }) => [b.t, r.cliente, r.per, b.est, b.res])));
+          ws['!cols'] = [{ wch: 36 }, { wch: 28 }, { wch: 10 }, { wch: 26 }, { wch: 80 }];
+          this.pintarTitulos(ws, 0, 5);
+          X.utils.book_append_sheet(wb, ws, 'Resumen');
+        }
+        pares.forEach(({ b }) => X.utils.book_append_sheet(wb, this.hojaModelo(X, b), b.hoja.slice(0, 31)));
+        const sinRep = rows.filter(r => !pares.some(p => p.r === r));
+        if (sinRep.some(r => (r.errs || []).length)) {
+          const errs = [['Cliente', 'Período', 'Cruce', 'Tipo de error', 'Comprobante / archivo', 'Tercero', 'Detalle', 'Diferencia']];
+          sinRep.forEach(r => (r.errs || []).forEach(e => errs.push([r.cliente, r.per, r.cruceNombre || r.tipo, e.k, e.comp, e.ter, e.det, e.imp])));
+          const wE = X.utils.aoa_to_sheet(errs);
+          wE['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 44 }, { wch: 28 }, { wch: 30 }, { wch: 36 }, { wch: 80 }, { wch: 16 }];
+          this.pintarTitulos(wE, 0, errs[0].length);
+          X.utils.book_append_sheet(wb, wE, 'Errores (sin reporte)');
+        }
+        const name = cliNom + ' - Reporte de diferencias.xlsx';
+        this.descargar(name, this.xlsxBytes(X, wb));
+        return this.setState({ toast: { kind: 'ok', t: 'Reporte de diferencias descargado', d: pares.length + (pares.length === 1 ? ' cruce' : ' cruces') + ' · ' + name } });
+      }
+      // Sin reporte completo guardado (cruces viejos / demo): Excel resumido Resumen + Errores.
       const num = (v) => ({ t: 'n', v: +String(v ?? '').replace(/\./g, '') || 0, z: '#,##0' });
       const res = [['Cliente', 'Cruce', 'Período', 'Secuencia', 'Ejecutado', 'Usuario', 'Estado', 'Registros', 'Diferencias', 'Errores']]
         .concat(rows.map(r => [r.cliente, r.cruceNombre || r.tipo, r.per, this.seqTxt(r.seq || 0), r.fecha, r.user, r.est, num(r.regs), num(r.dif), { t: 'n', v: (r.errs || []).length, z: '#,##0' }]));
@@ -4730,7 +4773,6 @@ class Component extends DCLogic {
       if (errs[1].length > 1) w2['!autofilter'] = { ref: 'A1:' + this.colLet(errs[0].length) + errs.length };
       X.utils.book_append_sheet(wb, w1, 'Resumen');
       X.utils.book_append_sheet(wb, w2, 'Errores');
-      const clis = [...new Set(rows.map(r => r.cliente))];
       const name = (clis.length === 1 ? clis[0] + ' - ' : '') + 'Historial de cruces (' + rows.length + ').xlsx';
       this.descargar(name, this.xlsxBytes(X, wb));
       this.setState({ toast: { kind: 'ok', t: 'Excel descargado', d: rows.length + (rows.length === 1 ? ' cruce' : ' cruces') + ' · ' + name } });
