@@ -5819,14 +5819,19 @@ class Component extends DCLogic {
       }
       // Subdiarios: un comprobante con importes negativos (total, o IVA si el total viene vacío) es una nota de crédito
       // aunque el TC diga FC / ND (hay sistemas que las cargan así). Se toma como NC y se avisa en las incidencias.
+      // Excepción (Novalux / Bejerman): certificados de retención IIBB u otros regímenes vienen a veces con TC de
+      // factura (p. ej. "1") e importe negativo sólo en "Otros regímenes especiales", sin neto ni IVA — no son NC.
+      const soloOregNeg = libro && !v.ngt && !v.ivt && Math.abs(v.oreg || 0) > 0.005
+        && Math.abs(Math.abs(v.oreg) - Math.abs(v.tot || v.oreg)) <= 0.05;
       let ncNeg = false;
-      if (libro && t.tc !== 'NC' && !this.TC_EXCL.includes(t.tc) && (v.tot < 0 || (!v.tot && v.ivt < 0))) { t = { tc: 'NC', letra: t.letra }; ncNeg = true; }
+      if (libro && !soloOregNeg && t.tc !== 'NC' && !this.TC_EXCL.includes(t.tc) && (v.tot < 0 || (!v.tot && v.ivt < 0))) { t = { tc: 'NC', letra: t.letra }; ncNeg = true; }
       Object.keys(v).forEach(a => { v[a] = r2(t.tc === 'NC' ? Math.abs(v[a]) : v[a]); });
       const nom = g('nom');
       const rec = {
         cuit, tc: t.tc, letra: t.letra, tipo: t.tc + (t.letra ? ' ' + t.letra : ''), desc: libro ? '' : (t.cod ? t.cod + ' - ' : '') + t.desc,
         pv: Math.round(n('pv')), nro: Math.round(n('nro')), fecha, nom: nom == null ? '' : String(nom).trim(),
-        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, ncNeg, excl: libro && (this.TC_EXCL.includes(t.tc) || !this.esComp(t.tc))
+        moneda: f > 1 ? String(g('mon')).trim() + ' × ' + f : '', v, hasAli, fila: i + 1, ncNeg,
+        excl: libro && (soloOregNeg || this.TC_EXCL.includes(t.tc) || !this.esComp(t.tc))
       };
       recs.push(rec);
       const pk = fecha.slice(3);
