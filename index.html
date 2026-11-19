@@ -5185,9 +5185,9 @@ class Component extends DCLogic {
     rows.push(filaRes(lTotal, '', m(total), 1));
     const pr = k === 'c' ? this.prorrRatio(det) : 0;
     if (pr) {
-      // El CF de Fact. T no prorratea (queda 100 % computable).
-      const cfT = det.cfT != null ? (+det.cfT || 0) : 0;
-      const noC = Math.round(pr * (total - (aj || 0) - cfT) * 100) / 100;
+      // Misma base que cfNoComp / papel de trabajo: sólo CF de facturas/ND de compras (ivt = AA+AB+AC).
+      // NC de ventas y Fact. T no entran a la base (quedan 100 % computables).
+      const noC = Math.round(pr * ivt * 100) / 100;
       rows.push(filaRes('Menos: crédito fiscal no computable por prorrateo (' + (pr * 100).toLocaleString('es-AR', { maximumFractionDigits: 5 }) + ' % de ventas exentas y no gravadas)', '', m(-noC), 0));
       rows.push(filaRes('Crédito fiscal computable (prorrateo ' + this.pctProrr(pr) + ')', '', m(total - noC), 1));
     }
