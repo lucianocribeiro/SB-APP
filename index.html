@@ -3881,17 +3881,39 @@ class Component extends DCLogic {
       else tc.push(cell(ref, ST.totMoney, { f: `SUM(${L}${first}:${L}${last})` }));
     });
     rowsXml.push(`<row r="${tot}">${tc.join('')}</row>`);
+    // Debajo del Total General, en Total CF Computable / No Computable (AS / AT; en el adjunto caen en AZ / BA):
+    // Acumulado Computable = Total Crédito × Alícuota Prorrateo; Acumulado No Computable = Total Crédito × (1 − alícuota).
+    const acumL = tot + 1, acumV = tot + 2;
+    const acumLab = [], acumVal = [];
+    for (let n = 1; n <= this.colNum(lastCol); n++) {
+      const L = this.colLet(n);
+      if (L === C('AS')) {
+        acumLab.push(cell(L + acumL, ST.totLabel, { t: 'Acumulado Computable' }));
+        acumVal.push(cell(L + acumV, ST.totMoney, { f: `${C('AD')}${tot}*${C('AO')}${tot}` }));
+      } else if (L === C('AT')) {
+        acumLab.push(cell(L + acumL, ST.totLabel, { t: 'Acumulado No Computable' }));
+        acumVal.push(cell(L + acumV, ST.totMoney, { f: `${C('AD')}${tot}*(1-${C('AO')}${tot})` }));
+      } else if (n === 1) {
+        acumLab.push(cell('A' + acumL, ST.totEmpty));
+        acumVal.push(cell('A' + acumV, ST.totEmpty));
+      } else {
+        acumLab.push(cell(L + acumL, ST.totEmpty));
+        acumVal.push(cell(L + acumV, ST.totEmpty));
+      }
+    }
+    rowsXml.push(`<row r="${acumL}">${acumLab.join('')}</row>`);
+    rowsXml.push(`<row r="${acumV}">${acumVal.join('')}</row>`);
 
     const yrs = [...new Set(data.map(d => d.per.slice(3)))].sort();
     const hoja = yrs.length > 1 ? yrs[0] + '-' + yrs[yrs.length - 1].slice(2) : yrs[0];
     // Columnas en cero en todas las liquidaciones: se descargan ocultas (siguen ahí; las fórmulas y los totales no cambian).
     // Las calculadas siguen a la columna de la que salen; los totales, el prorrateo y los saldos siempre se ven.
-    const DEP = { AP: ['AA'], AQ: ['AB'], AR: ['AC'], AT: ['J', 'K', 'AA', 'AB', 'AC'], AS: ['AA', 'AB', 'AC', 'AH', 'AI', 'AJ'] }, SIEMPRE = ['AM', 'AN', 'AO', 'AS', 'AW', 'AX', 'AY'];
+    const DEP = { AP: ['AA'], AQ: ['AB'], AR: ['AC'], AT: ['J', 'K', 'AA', 'AB', 'AC'], AS: ['AA', 'AB', 'AC', 'AH', 'AI', 'AJ'] }, SIEMPRE = ['AM', 'AN', 'AO', 'AD', 'AS', 'AT', 'AW', 'AX', 'AY'];
     const oculta = (o) => !SIEMPRE.includes(o) && !(o === 'AZ' && ant && ant.comp) && !(DEP[o] || [o]).some(x => nz.has(x));
     const cols = `<cols><col min="1" max="1" width="11" customWidth="1"/><col min="2" max="2" width="11" customWidth="1"/>`
       + COLS.map(([o]) => { const n = pos[o] + 3; return `<col min="${n}" max="${n}" width="15.5" customWidth="1"${data.length && oculta(o) ? ' hidden="1"' : ''}/>`; }).join('') + `</cols>`;
     const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', RNS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${tot}"/>`
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${NS}" xmlns:r="${RNS}"><dimension ref="A1:${lastCol}${acumV}"/>`
       + `<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="1" topLeftCell="C2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C2" sqref="C2"/></sheetView></sheetViews>`
       + `<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml.join('')}</sheetData>`
       + `</worksheet>`;
