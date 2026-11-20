@@ -845,10 +845,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-for>
 </div>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE;flex-wrap:wrap">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
-<div style="display:flex;align-items:center;gap:14px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ upCountLabel }}</span>
+<button onClick="{{ liqGuardarYSalir }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Guardar y salir</button>
 <button onClick="{{ openUpConfirm }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar cruces</button>
 </div>
 </div>
@@ -970,9 +971,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <button onClick="{{ cruRep }}" style="padding:7px 12px;background:#fff;color:#14395C;border:1px solid #C7E3D6;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;white-space:nowrap" style-hover="border-color:#14395C">Descargar reporte de diferencias</button>
 </div>
 
-<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
+<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE;flex-wrap:wrap">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<button onClick="{{ liqGuardarYSalir }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Guardar y salir</button>
 <button onClick="{{ stepNext }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver vista previa</button>
+</div>
 </div>
 </div>
 </sc-if>
@@ -1069,9 +1073,12 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </table>
 </div>
 
-<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE">
+<div style="display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #E3E8EE;flex-wrap:wrap">
 <button onClick="{{ stepPrev }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Volver</button>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<button onClick="{{ liqGuardarYSalir }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Guardar y salir</button>
 <button onClick="{{ pvProcesar }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Procesar liquidación</button>
+</div>
 </div>
 </div>
 </sc-if>
@@ -3381,9 +3388,14 @@ class Component extends DCLogic {
         return this.setState({ toast: { kind: 'warn', t: 'Cambiá tu contraseña', d: 'Es obligatorio en el primer ingreso antes de usar la app.' } });
       }
       this.tocarActividad();
-      this.setState(st => Object.assign({ screen: key, drawer: false, menuMovil: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null },
-        key === 'liqNueva' && st.step === 5 && st.proc === 'done' ? this.liqVacia() : {},
-        key === 'liqNueva' && (st.step === 1 || st.step === 5) ? { seqElegida: null } : {}));
+      this.setState(st => {
+        // Sin "Guardar y salir", al abandonar cruces/liquidación a mitad de camino se pierde la carga en memoria (el borrador en IndexedDB sólo existe si se guardó).
+        const abandona = st.screen === 'liqNueva' && key !== 'liqNueva' && st.step >= 2 && st.step <= 4 && !st._liqGuardado;
+        return Object.assign({ screen: key, drawer: false, menuMovil: false, modal: false, notif: false, confirm: false, upConfirm: false, liqConfirm: false, cruSolo: null, liqResVer: false, liqVer: null, _liqGuardado: false },
+          abandona ? this.liqVacia() : {},
+          key === 'liqNueva' && st.step === 5 && st.proc === 'done' ? this.liqVacia() : {},
+          key === 'liqNueva' && (st.step === 1 || st.step === 5) ? { seqElegida: null } : {});
+      });
       if (['inicio', 'liqNueva', 'liqHistorial', 'crucesHistorial', 'liqDashboard', 'liqCompensaciones', 'clientes', 'clienteFicha'].includes(key))
         this.refrescar().catch(e => this.setState({ toast: { kind: 'err', t: 'No se pudieron leer los datos de la base', d: String(e && e.message || e) } }));
       if (key === 'liqCompensaciones') this.compsBajar().catch(e => this.db(Promise.resolve({ error: e }), 'Compensaciones'));
@@ -4239,21 +4251,108 @@ class Component extends DCLogic {
     return v;
   }
 
-  pdfDb(modo, fn) {
+  // IndexedDB local del navegador: DDJJ (pdf) + borradores de liquidación (archivos).
+  idb(store, modo, fn) {
     if (typeof indexedDB === 'undefined') {
-      const m = this._pdfMem || (this._pdfMem = new Map());
+      const all = this._idbMem || (this._idbMem = {});
+      const m = all[store] || (all[store] = new Map());
       const r = fn({ put: (v, k) => m.set(k, v), get: k => ({ result: m.get(k) }), delete: k => m.delete(k) });
       return Promise.resolve(r && r.result);
     }
     return new Promise((ok, ko) => {
-      const rq = indexedDB.open('myiva', 1);
-      rq.onupgradeneeded = () => rq.result.createObjectStore('ddjj');
+      const rq = indexedDB.open('myiva', 2);
+      rq.onupgradeneeded = () => {
+        const db = rq.result;
+        if (!db.objectStoreNames.contains('ddjj')) db.createObjectStore('ddjj');
+        if (!db.objectStoreNames.contains('borrador')) db.createObjectStore('borrador');
+      };
       rq.onerror = () => ko(rq.error);
       rq.onsuccess = () => {
-        const tx = rq.result.transaction('ddjj', modo), r = fn(tx.objectStore('ddjj'));
-        tx.oncomplete = () => { ok(r && r.result); rq.result.close(); };
+        const db = rq.result;
+        if (!db.objectStoreNames.contains(store)) { db.close(); return ko(new Error('Sin almacén ' + store)); }
+        const tx = db.transaction(store, modo), r = fn(tx.objectStore(store));
+        tx.oncomplete = () => { ok(r && r.result); db.close(); };
         tx.onerror = () => ko(tx.error);
       };
+    });
+  }
+  pdfDb(modo, fn) { return this.idb('ddjj', modo, fn); }
+
+  liqBorradorKey(cli, per, seq) { return String(cli || '') + '|' + String(per || '') + '|' + String(seq); }
+
+  async liqBorradorGet(key) {
+    try { return await this.idb('borrador', 'readonly', st => st.get(key)) || null; } catch (e) { return null; }
+  }
+  async liqBorradorDel(key) {
+    try { await this.idb('borrador', 'readwrite', st => st.delete(key)); } catch (e) { }
+  }
+
+  async liqBorradorArchivos(R) {
+    const out = {};
+    for (const k of Object.keys(R || {})) {
+      const x = R[k];
+      if (!x) continue;
+      const fs = x.files && x.files.length ? x.files
+        : (x.partes && x.partes.length ? x.partes.map(p => p.file).filter(Boolean)
+          : (x.file ? [x.file] : []));
+      if (!fs.length) continue;
+      out[k] = [];
+      for (const f of fs) {
+        out[k].push({ name: f.name, type: f.type || '', blob: f instanceof Blob ? f : new Blob([await f.arrayBuffer()], { type: f.type || '' }) });
+      }
+    }
+    return out;
+  }
+
+  async liqGuardarYSalir(seqSel) {
+    const cli = this.liqCli(), per = this.perLiq(), s = this.state;
+    if (seqSel === null || seqSel === undefined) {
+      return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar', d: 'Elegí una secuencia antes de guardar el borrador.' } });
+    }
+    try {
+      const key = this.liqBorradorKey(cli, per, seqSel);
+      const archivos = await this.liqBorradorArchivos(s.real || {});
+      const nArch = Object.keys(archivos).reduce((a, k) => a + archivos[k].length, 0);
+      const draft = {
+        v: 1, key, cli, per, seq: seqSel, step: Math.min(4, Math.max(2, s.step || 2)),
+        liqMes: s.liqMes, liqAnio: s.liqAnio, seqElegida: s.seqElegida, liqAj: s.liqAj || {},
+        up: s.up, dz: s.dz, cruSaved: !!s.cruSaved, prevSaldo: s.prevSaldo || 'favor',
+        fecha: this.ahora(), nArch, archivos
+      };
+      await this.idb('borrador', 'readwrite', st => st.put(draft, key));
+      this.setState(Object.assign(this.liqVacia(), {
+        screen: 'liqHistorial', drawer: false, menuMovil: false, seqElegida: null, _liqGuardado: true,
+        toast: { kind: 'ok', t: 'Borrador guardado', d: nArch
+          ? ('Quedaron ' + nArch + (nArch === 1 ? ' archivo' : ' archivos') + ' de ' + cli + ' · ' + per + ' · ' + this.seqTxt(seqSel) + ' en este navegador. Al continuar la misma liquidación se recuperan.')
+          : ('El avance de ' + cli + ' · ' + per + ' · ' + this.seqTxt(seqSel) + ' quedó guardado en este navegador.') }
+      }));
+      this.refrescar().catch(() => { });
+    } catch (e) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar el borrador', d: String(e && e.message || e) } });
+    }
+  }
+
+  async liqBorradorRestaurar(draft) {
+    if (!draft) return;
+    const vacio = this.liqVacia();
+    this.setState(Object.assign(vacio, {
+      step: 2, liqMes: draft.liqMes || this.state.liqMes, liqAnio: draft.liqAnio || this.state.liqAnio,
+      seqElegida: draft.seqElegida != null ? draft.seqElegida : draft.seq,
+      liqAj: draft.liqAj || {}, prevSaldo: draft.prevSaldo || 'favor',
+      upBusy: {}, _liqBorradorKey: draft.key
+    }));
+    const arch = draft.archivos || {};
+    for (const k of Object.keys(arch)) {
+      const items = arch[k] || [];
+      if (!items.length) continue;
+      const files = items.map(it => new File([it.blob], it.name, { type: it.type || (it.blob && it.blob.type) || '' }));
+      await this.cargarArchivo(k, { target: { files, value: '' } }, false);
+    }
+    this.setState({
+      step: Math.min(4, Math.max(2, draft.step || 2)),
+      cruSaved: !!draft.cruSaved,
+      liqAj: draft.liqAj || {},
+      toast: { kind: 'ok', t: 'Borrador recuperado', d: 'Se restauraron los archivos guardados de ' + draft.cli + ' · ' + draft.per + ' · ' + this.seqTxt(draft.seq) + '.' }
     });
   }
 
@@ -8486,6 +8585,7 @@ class Component extends DCLogic {
             // Esperar la subida: si Mis Comprobantes / Retenciones fallan, el papel de trabajo sale incompleto.
             await this.crudosSubir(id, R);
           }
+          this.liqBorradorDel(this.liqBorradorKey(cli, perL, seqSel));
           this.setState(st => {
             const le = Object.assign({}, st.liqEst), bo = Object.assign({}, st.ddjjBorradas);
             delete le[id]; delete bo[id];
@@ -8497,7 +8597,7 @@ class Component extends DCLogic {
             const runs = st.cruRuns.map(r => (r.cliente === cli && r.per === perL && !r.liq ? Object.assign({}, r, { liq: true }) : r));
             return {
               liqsDb: liqs, liqRes: res, liqErrTxt: '', liqSaved: true, liqSeqN: seqSel, liqCliN: cli, seqElegida: null, liqEg: eg,
-              liqEst: le, ddjjBorradas: bo, cruRuns: runs,
+              liqEst: le, ddjjBorradas: bo, cruRuns: runs, _liqBorradorKey: null,
               audExtra: pisadas.length ? [{ f: this.ahora(), u: me.short, a: 'Borrador sobrescrito', c: cli, p: perL, r: 'Sec. ' + seqSel, ip: '190.15.44.12' }].concat(st.audExtra) : st.audExtra,
               toast: sb && this._user ? { kind: 'ok', t: 'Liquidación guardada en el historial', d: cli + ' · ' + perL + ' · ' + this.seqTxt(seqSel) } : st.toast
             };
@@ -8554,10 +8654,19 @@ class Component extends DCLogic {
           pick: () => this.setState({ seqElegida: n })
         };
       }),
-      step1Next: () => seqSel === null
-        ? this.setState({ toast: { kind: 'err', t: 'No hay secuencias disponibles', d: 'El período ya tiene 9 rectificativas. Para reliquidar, eliminá primero la secuencia en Historial de liquidaciones.' } })
-        : (seqPisa ? this.setState({ toast: { kind: 'err', t: 'Esa secuencia está cerrada', d: this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' está cerrada. Para rectificar, elegí la secuencia siguiente (o abrí el borrador si todavía no la cerraron).' } })
-          : this.setState({ step: 2 })),
+      step1Next: () => {
+        if (seqSel === null) return this.setState({ toast: { kind: 'err', t: 'No hay secuencias disponibles', d: 'El período ya tiene 9 rectificativas. Para reliquidar, eliminá primero la secuencia en Historial de liquidaciones.' } });
+        if (seqPisa) return this.setState({ toast: { kind: 'err', t: 'Esa secuencia está cerrada', d: this.seqTxt(seqSel) + ' de ' + cli + ' · ' + perL + ' está cerrada. Para rectificar, elegí la secuencia siguiente (o abrí el borrador si todavía no la cerraron).' } });
+        const key = this.liqBorradorKey(cli, perL, seqSel);
+        const hayMem = Object.values(this.state.real || {}).some(Boolean);
+        // Si ya hay archivos en esta sesión, se siguen usando. Si no, se recupera el borrador guardado con "Guardar y salir".
+        if (hayMem) return this.setState({ step: 2, _liqBorradorKey: key });
+        this.liqBorradorGet(key).then(draft => {
+          if (draft) return this.liqBorradorRestaurar(draft);
+          this.setState(Object.assign(this.liqVacia(), { step: 2, liqMes: s.liqMes, liqAnio: s.liqAnio, seqElegida: s.seqElegida, _liqBorradorKey: key }));
+        }).catch(() => this.setState({ step: 2, _liqBorradorKey: key }));
+      },
+      liqGuardarYSalir: () => this.liqGuardarYSalir(seqSel),
       seqPrevFecha: s.liqSaved ? fechaHoraN : '04/09/2026 14:22',
       seqPrevLabel: liqDone.length === 1 ? '1 secuencia liquidada' : (liqDone.length ? liqDone.length + ' secuencias liquidadas' : 'ninguna secuencia liquidada'),
       seqUltLine: liqDone.length ? 'La última fue la ' + this.seqTxt(seqLast) + ', procesada el ' + ultFecha + '.' : (hasHist ? 'Las declaraciones juradas de este período fueron borradas.' : 'Todavía no hay declaraciones juradas liquidadas para este período.'),
