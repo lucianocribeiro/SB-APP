@@ -3871,7 +3871,7 @@ class Component extends DCLogic {
       });
       rowsXml.push(`<row r="${r}">${cs.join('')}</row>`);
     });
-    const tc = [cell('A' + tot, ST.totLabel, { t: 'Total año fiscal' }), cell('B' + tot, ST.totEmpty)];
+    const tc = [cell('A' + tot, ST.totLabel, { t: 'Total General' }), cell('B' + tot, ST.totEmpty)];
     const tRatio = `IFERROR((${C('J')}${tot}+${C('K')}${tot})/(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot}),0)`;
     COLS.forEach(([o]) => {
       const L = C(o), ref = L + tot, n = pos[o];
