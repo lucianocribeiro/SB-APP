@@ -3698,8 +3698,8 @@ class Component extends DCLogic {
     return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
   }
 
-  // Hoja "asientos" del reporte de liquidación: un asiento por período (adjunto Juli).
-  // Debe / Haber según el adjunto; el saldo cierra con IVA A FAVOR (Debe) o IVA A PAGAR (Haber).
+  // Hoja "Asiento contable" del reporte de liquidación: un asiento por período (adjunto Juli).
+  // BH / BI del papel = Saldo 1er / 2do párrafo del período (AW / AX; con Fact. T caen en columnas físicas BH / BI).
   asientosFilas(rows) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const byPer = {};
@@ -3714,7 +3714,7 @@ class Component extends DCLogic {
       const d = byPer[per], n = d.n || {}, ali = n.ali || {}, det = ali.det || {}, aj = ali.aj || {};
       const df = r2(n.df != null ? +n.df : this.numAr(d.df));
       const cf = r2(n.cf != null ? +n.cf : this.numAr(d.cf));
-      // Crédito del asiento = CF computable (equiv. columna AS del papel; el ticket cita AW del adjunto Novalux).
+      // Crédito del asiento = CF computable (columna AS del papel).
       const cfComp = r2(cf - this.cfNoComp({ cf, ali }));
       let perc = 0, ret = 0;
       if (typeof det.perc === 'number' && typeof det.ret === 'number') {
@@ -3724,15 +3724,29 @@ class Component extends DCLogic {
         // Liquidaciones viejas sin detalle: el total de retenciones y percepciones va a RETENCIONES.
         ret = r2(n.rp != null ? +n.rp : this.numAr(d.rp));
       }
-      // BH del adjunto: CF computable + perc + ret − débito (positivo = a favor, negativo = a pagar).
-      const bh = r2(cfComp + perc + ret - df);
-      out.push([this.ultimoDiaPer(per), '', '']);
-      out.push(['IVA DEBITO', df, '']);
-      out.push(['IVA CREDITO', '', cfComp]);
-      out.push(['PERCEPCIONES', '', perc]);
-      out.push(['RETENCIONES', '', ret]);
-      if (bh > 0) out.push(['IVA A FAVOR', bh, '']);
-      else if (bh < 0) out.push(['IVA A PAGAR', '', r2(-bh)]);
+      // 1er / 2do párrafo del período (misma lógica que AW / AX del papel, sin arrastre previo en el asiento).
+      const bh = r2(cfComp - df);
+      const bi = r2(bh < 0 ? bh + perc + ret : perc + ret);
+      const block = [];
+      block.push([this.ultimoDiaPer(per), '', '']);
+      block.push(['IVA DEBITO', df, '']);
+      block.push(['IVA CREDITO', '', cfComp]);
+      block.push(['PERCEPCIONES', '', perc]);
+      block.push(['RETENCIONES', '', ret]);
+      // Favor: BH y BI positivos → técnico (Debe) + libre disponibilidad (Debe). Pagar: sólo BI negativa → Haber.
+      if (bh > 0) block.push(['IVA SALDO TÉCNICO', bh, '']);
+      if (bi > 0) block.push(['IVA LIBRE DISPONIBILIDAD', bi, '']);
+      else if (bi < 0) block.push(['IVA SALDO A PAGAR', '', r2(-bi)]);
+      let debe = 0, haber = 0;
+      block.forEach(fila => {
+        if (typeof fila[1] === 'number') debe = r2(debe + fila[1]);
+        if (typeof fila[2] === 'number') haber = r2(haber + fila[2]);
+      });
+      if (Math.abs(debe - haber) > 0.009) {
+        throw new Error('Asiento contable desbalanceado en ' + per + ': Debe $ ' + this.ars(debe) + ' ≠ Haber $ ' + this.ars(haber) + '. Revisá débito, crédito, percepciones y retenciones de la liquidación.');
+      }
+      block.push(['Total', debe, haber]);
+      block.forEach(fila => out.push(fila));
       out.push(['', '', '']);
     });
     if (out.length > 1 && out[out.length - 1].every(c => c === '')) out.pop();
@@ -3907,9 +3921,9 @@ class Component extends DCLogic {
       + xf(166, 2, 3)
       + fmts.map((z, i) => `<xf numFmtId="${170 + i}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`).join('')
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-    // Hojas extra: "asientos" primero (un asiento por período), después los archivos crudos.
+    // Hojas extra: archivos crudos primero; "Asiento contable" al final (última hoja).
     // sheet2.xml en adelante; rId2 queda para styles.
-    const extrasAll = [{ name: 'asientos', rows: this.asientosFilas(data) }].concat(extras);
+    const extrasAll = extras.concat([{ name: 'Asiento contable', rows: this.asientosFilas(data) }]);
     const ex = extrasAll.map((e, i) => {
       const misComp = /\bEmitidos\b|\bRecibidos\b/i.test(e.name);
       return { n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS, estiloDe, misComp ? ['A1:AD1'] : null) };
