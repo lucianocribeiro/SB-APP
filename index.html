@@ -3690,6 +3690,55 @@ class Component extends DCLogic {
 
   colLet(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
+  // Último día calendario del período MM/YYYY (fecha del asiento).
+  ultimoDiaPer(per) {
+    const m = +String(per || '').slice(0, 2), y = +String(per || '').slice(3);
+    if (!(m >= 1 && m <= 12 && y > 1900)) return '';
+    const d = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
+  }
+
+  // Hoja "asientos" del reporte de liquidación: un asiento por período (adjunto Juli).
+  // Debe / Haber según el adjunto; el saldo cierra con IVA A FAVOR (Debe) o IVA A PAGAR (Haber).
+  asientosFilas(rows) {
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const byPer = {};
+    (rows || []).forEach(r => {
+      if (!r || !r.per) return;
+      const cur = byPer[r.per];
+      if (!cur || Number(r.seq) > Number(cur.seq)) byPer[r.per] = r;
+    });
+    const pers = Object.keys(byPer).sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2)));
+    const out = [['', 'Debe', 'Haber']];
+    pers.forEach(per => {
+      const d = byPer[per], n = d.n || {}, ali = n.ali || {}, det = ali.det || {}, aj = ali.aj || {};
+      const df = r2(n.df != null ? +n.df : this.numAr(d.df));
+      const cf = r2(n.cf != null ? +n.cf : this.numAr(d.cf));
+      // Crédito del asiento = CF computable (equiv. columna AS del papel; el ticket cita AW del adjunto Novalux).
+      const cfComp = r2(cf - this.cfNoComp({ cf, ali }));
+      let perc = 0, ret = 0;
+      if (typeof det.perc === 'number' && typeof det.ret === 'number') {
+        perc = r2(det.perc + (aj.perc || 0));
+        ret = r2(det.ret + (aj.ret || 0));
+      } else {
+        // Liquidaciones viejas sin detalle: el total de retenciones y percepciones va a RETENCIONES.
+        ret = r2(n.rp != null ? +n.rp : this.numAr(d.rp));
+      }
+      // BH del adjunto: CF computable + perc + ret − débito (positivo = a favor, negativo = a pagar).
+      const bh = r2(cfComp + perc + ret - df);
+      out.push([this.ultimoDiaPer(per), '', '']);
+      out.push(['IVA DEBITO', df, '']);
+      out.push(['IVA CREDITO', '', cfComp]);
+      out.push(['PERCEPCIONES', '', perc]);
+      out.push(['RETENCIONES', '', ret]);
+      if (bh > 0) out.push(['IVA A FAVOR', bh, '']);
+      else if (bh < 0) out.push(['IVA A PAGAR', '', r2(-bh)]);
+      out.push(['', '', '']);
+    });
+    if (out.length > 1 && out[out.length - 1].every(c => c === '')) out.pop();
+    return out;
+  }
+
   novaluxXlsx(cliente, rows, extras = []) {
     const num = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -3858,8 +3907,10 @@ class Component extends DCLogic {
       + xf(166, 2, 3)
       + fmts.map((z, i) => `<xf numFmtId="${170 + i}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`).join('')
       + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-    // Hojas extra (archivos crudos): sheet2.xml en adelante; rId2 queda para styles.
-    const ex = extras.map((e, i) => {
+    // Hojas extra: "asientos" primero (un asiento por período), después los archivos crudos.
+    // sheet2.xml en adelante; rId2 queda para styles.
+    const extrasAll = [{ name: 'asientos', rows: this.asientosFilas(data) }].concat(extras);
+    const ex = extrasAll.map((e, i) => {
       const misComp = /\bEmitidos\b|\bRecibidos\b/i.test(e.name);
       return { n: i + 2, rid: 'rId' + (i + 3), name: e.name, xml: this.hojaXml(e.rows, NS, estiloDe, misComp ? ['A1:AD1'] : null) };
     });
