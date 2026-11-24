@@ -313,9 +313,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ cliF.est }}" onChange="{{ cliFiltroEst }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Último período</span><select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cierre de ejercicio</span><select value="{{ cliF.cierre }}" onChange="{{ cliFiltroCierre }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliCierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Sistema</span><select value="{{ cliF.sis }}" onChange="{{ cliFiltroSis }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cierre de ejercicio</span><select value="{{ cliF.cierre }}" onChange="{{ cliFiltroCierre }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliCierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Último período</span><select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario asignado</span><select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
@@ -326,6 +326,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">CUIT</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Condición IVA</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Sistema</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cierre de ejercicio</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Último período</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Usuarios asignados</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Estado</th>
@@ -333,7 +334,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ cliVacio }}">
-<tr><td colspan="8" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
+<tr><td colspan="9" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
 </sc-if>
 <sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -341,6 +342,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;color:#5A6B7B">{{ c.cond }}</td>
 <td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></td>
+<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cierre }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ c.per }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ c.users }}</td>
 <td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span></td>
@@ -7932,7 +7934,6 @@ class Component extends DCLogic {
       (!F.usr || c.users === F.usr));
     const setF = (k) => (e) => { const val = e.target.value; this.setState(st => ({ cliF: Object.assign({}, st.cliF, { [k]: val }) })); };
     const pers = [...new Set(clientes.map(c => c.per))].sort((a, b) => (a === '—') - (b === '—') || b.slice(3).localeCompare(a.slice(3)) || b.localeCompare(a));
-    const cierresUsados = [...new Set(clientes.map(c => c.cierre))].sort((a, b) => a.slice(3).localeCompare(b.slice(3)) || a.localeCompare(b));
 
     const isAdmin = s.role === 'admin', me = this.me();
     const procesosDemo = [
@@ -8139,7 +8140,8 @@ class Component extends DCLogic {
       cliFiltroCierre: setF('cierre'), cliFiltroSis: setF('sis'),
       cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '' } }),
       cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
-      cliCierreOpts: (cierresUsados.length ? cierresUsados : this.CIERRE_OPTS).map(p => ({ v: p, l: p })),
+      // Siempre las 12 fechas de cierre: si sólo listáramos las usadas, filtrar 31/12 con todos en 31/12 parecía “no filtrar”.
+      cliCierreOpts: this.CIERRE_OPTS.map(p => ({ v: p, l: p })),
       usrResumen: usuarios.length + ' usuarios · ' + usrNombres.length + ' con clientes asignados',
       meMail: me.mail,
       inicioScope: 'Período en curso ' + PC + ' · ' + (((s.venc || {}).pers || {})[PC] ? 'vencimiento de presentación del ' + s.venc.pers[PC][0] + ' al ' + s.venc.pers[PC][4] + ' según terminación de CUIT' : 'sin agenda de vencimientos cargada') + (isAdmin ? '' : ' · Mostrando sólo tus operaciones'),
