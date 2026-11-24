@@ -4572,7 +4572,15 @@ class Component extends DCLogic {
       const dl = await sb.storage.from('crudos').download(this.reporteRuta(runId));
       if (dl.error || !dl.data) return null;
       const j = JSON.parse(await dl.data.text());
-      return (j && j.bloques && j.bloques[n]) || null;
+      const bloques = j && j.bloques;
+      if (!bloques) return null;
+      // n puede venir como "1" o 1 según cómo se guardó el JSON en la DB / Storage.
+      if (bloques[n] != null) return bloques[n];
+      if (bloques[String(n)] != null) return bloques[String(n)];
+      const num = Number(n);
+      if (!Number.isNaN(num) && bloques[num] != null) return bloques[num];
+      const k = Object.keys(bloques).find(x => String(x) === String(n));
+      return k != null ? bloques[k] : null;
     } catch (e) { return null; }
   }
 
@@ -4901,23 +4909,57 @@ class Component extends DCLogic {
 
   // Historial de cruces: mismo formato que "Reporte de Diferencias" (hojas modelo por cruce, como al terminar los cruces).
   // Si algún cruce no tiene el reporte completo guardado, se agrega la hoja Errores con el detalle resumido.
+  // Base APOC (Cruce 1) se incluye siempre para cada cliente/período/secuencia exportado.
   async exportarCruces(rows) {
     if (!rows || !rows.length) return this.setState({ toast: { kind: 'warn', t: 'No hay cruces para exportar', d: 'Cambiá los filtros o seleccioná cruces de la tabla.' } });
     try {
       const X = await this.xlsxLib();
-      const clis = [...new Set(rows.map(r => r.cliente))];
+      const esApoc = r => Number(r.n) === 1 || /APOC/i.test(String(r.tipo || r.cruceNombre || r.t || ''));
+      const clave = r => r.cliente + '|' + r.per + '|' + (r.seq || 0);
+      const keys = new Set(rows.map(clave));
+      const porId = new Map();
+      const add = r => {
+        const id = String(r.runId || '') + '|' + String(r.n) + '|' + clave(r) + '|' + String(r.fecha || '');
+        if (!porId.has(id)) porId.set(id, r);
+      };
+      rows.forEach(add);
+      // Si exportan cruces 2–6 de un cliente/período, metemos igual la Base APOC de ese mismo corrido.
+      (this.state.cruRuns || []).forEach(run => {
+        if (!keys.has(run.cliente + '|' + run.per + '|' + (run.seq || 0))) return;
+        (run.cruces || []).forEach(c => {
+          if (!(Number(c.n) === 1 || /APOC/i.test(String(c.tipo || c.t || '')))) return;
+          add({
+            cliente: run.cliente, tipo: c.tipo || c.t || 'IVA Compras vs Base APOC', n: c.n != null ? c.n : 1,
+            per: run.per, seq: run.seq, fecha: run.fecha, user: run.user,
+            regs: c.regs, dif: c.dif, est: c.est, errs: c.errs || [], runId: run.id, rep: !!c.rep,
+            cruceNombre: 'Cruce ' + (c.n != null ? c.n : 1) + ' · ' + (c.tipo || c.t || 'IVA Compras vs Base APOC')
+          });
+        });
+      });
+      const lista = [...porId.values()].sort((a, b) => {
+        const d = clave(a).localeCompare(clave(b), 'es');
+        return d || (Number(a.n) || 99) - (Number(b.n) || 99);
+      });
+      const clis = [...new Set(lista.map(r => r.cliente))];
       const cliNom = clis.length === 1 ? clis[0] : (clis.length ? 'Varios clientes' : 'Cruces');
       const pares = [];
       const usados = new Set();
-      for (const r of rows) {
-        if (!r.rep || !r.runId) continue;
-        const b = await this.bloqueDe({ runId: r.runId, n: r.n });
+      const apocHead = ['Resultado', 'Comprobante', 'Fecha', 'CUIT', 'Denominación', 'Fecha condición apócrifo', 'Fecha publicación', 'IVA', 'Importe total'];
+      for (const r of lista) {
+        const apoc = esApoc(r);
+        // APOC se intenta siempre (aunque rep esté en false); el resto sigue pidiendo reporte completo.
+        if (!apoc && (!r.rep || !r.runId)) continue;
+        let b = r.runId ? await this.bloqueDe({ runId: r.runId, n: r.n }) : null;
         // Incluye modelo (aoa) y listados simples (head/rows), p. ej. Cruce 1 Base APOC.
+        if ((!b || !(b.aoa || (b.head && Array.isArray(b.rows)))) && apoc) {
+          const rowsAp = (r.errs || []).map(e => [e.k || 'Error: proveedor en Base APOC', e.comp || '', '', '', e.ter || '', '', '', '', e.imp || '']);
+          b = { t: '1 - IVA Compras vs Base APOC', hoja: 'Base APOC', head: apocHead, rows: rowsAp };
+        }
         if (!b || !(b.aoa || (b.head && Array.isArray(b.rows)))) continue;
         const t = r.cruceNombre || r.tipo || ('Cruce ' + r.n);
         const nErr = (r.errs || []).length;
         const res = nErr ? (nErr + (nErr === 1 ? ' diferencia / error' : ' diferencias / errores')) : (r.est || 'Completado');
-        const hojaBase = String(b.hoja || t).slice(0, 22);
+        const hojaBase = String(b.hoja || (apoc ? 'Base APOC' : t)).slice(0, 22);
         const suf = String(r.per || '').replace('/', '-');
         let hoja = (hojaBase + (suf ? ' ' + suf : '')).slice(0, 31), i = 2;
         while (usados.has(hoja)) { hoja = (hojaBase.slice(0, 27) + ' ' + i).slice(0, 31); i++; }
