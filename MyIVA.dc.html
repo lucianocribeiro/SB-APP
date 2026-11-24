@@ -5637,7 +5637,7 @@ class Component extends DCLogic {
 
   // ===== IDEA 2 SA (Estudio Blasco): IVA COMPRAS / IVA VENTAS Excel casero =====
   // Comprobante en una sola columna ("FC A 0006-00002771"); alícuota y IVA en columnas separadas;
-  // filas "NO GRAVADO" / "P. IIBB …" sin fecha se suman al comprobante anterior.
+  // filas hijas sin fecha se suman al comprobante anterior: 2ª alícuota, "NO GRAVADO", "P. IVA", "P. IIBB …".
   convertirIdeaEstudio(aoa, k) {
     if (!aoa || !aoa.length) return null;
     const hk = (h) => this.hkey(h), r2 = (v) => Math.round(v * 100) / 100, num = (v) => this.numAr(v), txt = (v) => (v == null ? '' : String(v).trim());
@@ -5728,14 +5728,28 @@ class Component extends DCLogic {
       const comp = parseComp(r[cComp]);
       const nomCel = cNom >= 0 ? txt(r[cNom]) : '';
       const regCel = cReg >= 0 ? txt(r[cReg]) : '';
-      // Continuación: NO GRAVADO / mono / percepción IIBB del comprobante anterior.
+      // Continuación sin fecha/comprobante: 2ª alícuota, NO GRAVADO, P. IVA, P. IIBB, mono.
       if (!fecha || !comp) {
         if (!cur) continue;
         if (/NO\s*GRAV|EXENT|NO\s*ALCANZ/i.test(nomCel) || /NO\s*GRAV/i.test(txt(r[cComp]))) {
           const v = cMono >= 0 && num(r[cMono]) ? num(r[cMono]) : (cNeto >= 0 ? num(r[cNeto]) : 0);
           cur.ngr += Math.abs(v);
+        } else if (/\bP\.?\s*IVA\b|PERC(EP(CION(ES)?)?)?\.?\s*IVA/i.test(regCel) || /\bP\.?\s*IVA\b/i.test(nomCel)) {
+          // "P. IVA" en REG. ESPECIALES (Juli / IDEA 2): va a Percepciones IVA del comprobante.
+          cur.piva += Math.abs(cPerc >= 0 ? num(r[cPerc]) : (cNeto >= 0 ? num(r[cNeto]) : 0));
         } else if (/IIBB|ING\.?\s*BRUT/i.test(regCel) || /IIBB|ING\.?\s*BRUT/i.test(nomCel)) {
           cur.piibb += Math.abs(cPerc >= 0 ? num(r[cPerc]) : (cNeto >= 0 ? num(r[cNeto]) : 0));
+        } else if (cPorc >= 0) {
+          // Segunda (o N-ésima) alícuota del mismo comprobante: sólo neto + % + IVA, sin encabezado.
+          let rate = num(String(r[cPorc] == null ? '' : r[cPorc]).replace('%', ''));
+          if (rate !== null && rate > 0 && rate < 1) rate = r2(rate * 100);
+          const iva2 = cIva >= 0 ? num(r[cIva]) : 0, neto2 = cNeto >= 0 ? num(r[cNeto]) : 0;
+          if (rate != null && rate >= 0 && (iva2 || neto2)) {
+            cur.iva[rate] = (cur.iva[rate] || 0) + iva2;
+            if (neto2) cur.netoAli[rate] = (cur.netoAli[rate] || 0) + neto2;
+          } else if (cMono >= 0 && num(r[cMono])) {
+            cur.mono += Math.abs(num(r[cMono]));
+          }
         } else if (cMono >= 0 && num(r[cMono])) {
           cur.mono += Math.abs(num(r[cMono]));
         }
@@ -6109,15 +6123,17 @@ class Component extends DCLogic {
     const idx = (fn) => { const m = new Map(); L.forEach((x, i) => { const k = fn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(i); }); return m; };
     const take = (m, k) => { const q = m.get(k) || []; const i = q.find(j => !used.has(j)); if (i === undefined) return -1; used.add(i); return i; };
     // Clave de cruce: CUIT + Tipo + Letra + Pto.Vta. + Número (también en exportación / letra E).
-    // Fallbacks: CUIT+PV+Nro, y CUIT+Fecha+Importe.
+    // Fallbacks: CUIT+PV+Nro, CUIT+Fecha+Importe, y Tipo+Letra+PV+Nro (libro sin CUIT / consumidor final, IDEA 2).
     const k1 = (x) => [x.cuit, x.tc, x.letra, x.pv, x.nro].join('|');
     const k2 = (x) => [x.cuit, x.pv, x.nro].join('|');
     const k3 = (x) => [x.cuit, x.fecha, Math.round(x.v.tot)].join('|');
-    const m1 = idx(k1), m2 = idx(k2), m3 = idx(k3);
-    const pares = [], resto1 = [], resto2 = [], faltL = [];
+    const k4 = (x) => [x.tc, x.letra, x.pv, x.nro].join('|');
+    const m1 = idx(k1), m2 = idx(k2), m3 = idx(k3), m4 = idx(k4);
+    const pares = [], resto1 = [], resto2 = [], resto3 = [], faltL = [];
     A.forEach(a => { const i = take(m1, k1(a)); if (i >= 0) pares.push([a, L[i], 1]); else resto1.push(a); });
     resto1.forEach(a => { const i = take(m2, k2(a)); if (i >= 0) pares.push([a, L[i], 2]); else resto2.push(a); });
-    resto2.forEach(a => { const i = take(m3, k3(a)); if (i >= 0) pares.push([a, L[i], 3]); else faltL.push(a); });
+    resto2.forEach(a => { const i = take(m3, k3(a)); if (i >= 0) pares.push([a, L[i], 3]); else resto3.push(a); });
+    resto3.forEach(a => { const i = take(m4, k4(a)); if (i >= 0) pares.push([a, L[i], 4]); else faltL.push(a); });
     const filas = pares.map(([a, l, st]) => {
       const dif = [];
       if (a.tc !== l.tc || a.letra !== l.letra) dif.push({ l: 'Tipo de comprobante', a: a.tipo, b: l.tipo, d: null });
