@@ -7592,10 +7592,13 @@ class Component extends DCLogic {
   pintarTitulos(ws, fila, n) { ws['!pinta'] = (ws['!pinta'] || []).concat([[fila, 0, fila, n - 1, 'nav']]); ws['!fijar'] = { x: 0, y: fila + 1 }; return ws; }
 
   // Bloque con el reporte completo: el de la pantalla de cruces (función) o el guardado en Storage (historial).
+  // Cruce 1 Base APOC se guarda como head/rows (sin aoa); el resto de cruces usa el modelo aoa.
   async bloqueDe(src) {
     if (!src) return null;
     const b = src.blk ? src.blk() : await this.reporteBajar(src.runId, src.n);
-    return b && b.aoa ? b : null;
+    if (!b) return null;
+    if (b.aoa || (b.head && Array.isArray(b.rows))) return b;
+    return null;
   }
 
   descargarReporte(bloques, cli) {
