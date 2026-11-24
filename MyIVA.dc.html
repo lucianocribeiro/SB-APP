@@ -1122,9 +1122,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-for>
 </div>
 <div style="font:400 13px 'Open Sans';color:#5A6B7B">Quedó en estado <b style="font-weight:600;color:#1B2733">Borrador</b> en el Historial de liquidaciones: desde ahí podés cerrarla o eliminarla.</div>
-<div style="display:flex;gap:10px;margin-top:6px">
+<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center">
 <button onClick="{{ liqOtra }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Nueva liquidación</button>
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer">Ir al historial</button>
+<button onClick="{{ descargarPptLiq }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C" title="Mismo Excel del Historial (papel de trabajo)">Descargar PPT</button>
 <button onClick="{{ verResultadoReal }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Ver resultado</button>
 </div>
 </div>
@@ -4063,6 +4064,26 @@ class Component extends DCLogic {
       if (up && up.error) malos.push((this.UP_LBL[k] || k) + ': ' + String(up.error.message || up.error));
     }
     if (malos.length) this.setState({ toast: { kind: 'err', t: 'No se pudieron guardar algunos archivos crudos', d: malos.join(' · ') + '. La liquidación quedó guardada, pero esos archivos no van a salir en el Excel exportable.' } });
+  }
+
+  // Papel de trabajo (PPT de liquidación): mismo Excel del Historial, con crudos si están guardados.
+  exportarPapelTrabajo(rows) {
+    const warn = (t, d) => this.setState({ toast: { kind: 'warn', t, d } });
+    if (!rows || !rows.length) return warn('No hay liquidación para exportar', 'Procesá o seleccioná al menos un período.');
+    const clis = [...new Set(rows.map(r => r.cliente))];
+    if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
+    const sinDatos = rows.filter(r => r.df === '—');
+    if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar.');
+    this.setState({ toast: { kind: 'info', t: 'Generando el Excel', d: 'Se están juntando los archivos crudos de ' + (rows.length === 1 ? 'la liquidación' : 'las ' + rows.length + ' liquidaciones') + '…' } });
+    (async () => {
+      const cr = await this.crudosHojas(rows);
+      const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })), cr.hojas);
+      this.descargar(x.name, x.bytes);
+      const sin = cr.sin.length ? ' Sin archivos crudos guardados: ' + cr.sin.join(', ') + '.' : '';
+      this.setState({ toast: { kind: sin ? 'warn' : 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con archivos crudos.' + sin } });
+    })().catch(err => {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
+    });
   }
 
   async crudosHojas(rows) {
@@ -8407,22 +8428,8 @@ class Component extends DCLogic {
     const sel = s.histSel;
     const histPick = histFilas.filter(r => sel[rid(r)]);
     const exportar = (rows) => {
-      const warn = (t, d) => this.setState({ toast: { kind: 'warn', t, d } });
-      if (!rows.length) return warn('Seleccioná al menos un período', 'Marcá uno o más períodos de un mismo cliente para exportar el Excel.');
-      const clis = [...new Set(rows.map(r => r.cliente))];
-      if (clis.length > 1) return warn('Seleccioná un único cliente', 'Elegiste períodos de ' + clis.join(', ') + '. El Excel se exporta por cliente.');
-      const sinDatos = rows.filter(r => r.df === '—');
-      if (sinDatos.length) return warn('Hay períodos sin valores', sinDatos.map(r => r.per + ' Sec. ' + r.seq + ' (' + r.est + ')').join(', ') + ' no tiene liquidación para exportar.' + (rows.length > 1 ? ' Quitalo de la selección.' : ''));
-      this.setState({ toast: { kind: 'info', t: 'Generando el Excel', d: 'Se están juntando los archivos crudos de ' + (rows.length === 1 ? 'la liquidación' : 'las ' + rows.length + ' liquidaciones') + '…' } });
-      (async () => {
-        const cr = await this.crudosHojas(rows);
-        const x = this.novaluxXlsx(clis[0], rows.map(r => Object.assign({}, r, { comp: this.compSum(r.cliente, r.per, r.seq) })), cr.hojas);
-        this.descargar(x.name, x.bytes);
-        const sin = cr.sin.length ? ' Sin archivos crudos guardados: ' + cr.sin.join(', ') + '.' : '';
-        this.setState({ toast: { kind: sin ? 'warn' : 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' con su secuencia y el total por columna · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con los archivos crudos.' + sin } });
-      })().catch(err => {
-        this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
-      });
+      if (!rows.length) return this.setState({ toast: { kind: 'warn', t: 'Seleccioná al menos un período', d: 'Marcá uno o más períodos de un mismo cliente para exportar el Excel.' } });
+      this.exportarPapelTrabajo(rows);
     };
     const HF = s.histF, perH = (p) => p.slice(3) + p.slice(0, 2);
     const setHF = (k) => (e) => this.setState(st => ({ histF: Object.assign({}, st.histF, { [k]: e.target.value }) }));
@@ -8852,6 +8859,20 @@ class Component extends DCLogic {
         + (resShow.ali && resShow.ali.venc ? (resShow.ali.venc.vencida ? ' · Fuera de término (venció el ' + resShow.ali.venc.f + ')' : ' · En término (vencía el ' + resShow.ali.venc.f + ')') : '')
         + (verRes ? ' · Datos guardados de la liquidación' : ' · Calculado con los subdiarios cargados') : '',
       liqResSeq: this.seqTxt(resReal ? resShow.seq : (s.liqSaved ? s.liqSeqN : seqLast)),
+      // Paso 5: bajar el PPT (papel de trabajo) de la liquidación recién procesada, sin ir al Historial.
+      descargarPptLiq: () => {
+        const res = s.liqRes;
+        if (!res) return this.setState({ toast: { kind: 'warn', t: 'No hay liquidación para descargar', d: 'Procesá la liquidación primero.' } });
+        const cli = s.liqCliN || res.cli, seq = res.seq != null ? res.seq : s.liqSeqN;
+        const id = cli + '|' + res.per + '|' + seq + '|' + res.fecha;
+        const db = (s.liqsDb || []).find(r => r.id === id || (r.cliente === cli && r.per === res.per && r.seq === seq && r.fecha === res.fecha));
+        const row = db || {
+          id, cliente: cli, per: res.per, seq, fecha: res.fecha, user: me.short,
+          df: this.ars(res.df), cf: this.ars(res.cf), rp: this.ars(res.rp), est: 'Completado', eg: s.liqEg || [],
+          n: { df: res.df, cf: res.cf, rp: res.rp, s1: res.s1, s2: res.s2, regs: res.regs, ali: res.ali, a1: res.a1, a2: res.a2 }
+        };
+        this.exportarPapelTrabajo([row]);
+      },
       verResultadoReal: () => this.setState({ screen: 'liqResultado', liqResVer: true, drawer: false, modal: false, notif: false }),
       liqTabs: tabsVer.map(([k, label]) => ({
         label, go: this.tset('liqTab', k),
