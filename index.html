@@ -3845,7 +3845,9 @@ class Component extends DCLogic {
       }
       const retPer = sep ? `(${C('AV')}${r}+${C('AVP')}${r})` : `(${rp})`;
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
-      const ratio = `IFERROR((${C('J')}${r}+${C('K')}${r})/(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r}),0)`;
+      // Denominador del prorrateo; si es ≤ 0 (sin ventas gravadas/exentas/export), ratio = 1 → todo el CF de compras no computable.
+      const denPr = `(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r})`;
+      const ratio = `IF(${denPr}<=0,1,IFERROR((${C('J')}${r}+${C('K')}${r})/${denPr},1))`;
       // Prorrateo sólo sobre CF de facturas/ND de compras (AA+AB+AC). El CF de NC de ventas (AH+AI+AJ) y el de Fact. T
       // quedan 100 % computables (Juli / MyIVA planilla: la base no incluye NC de ventas).
       const cfCompra = `(${C('AA')}${r}+${C('AB')}${r}+${C('AC')}${r})`;
@@ -3872,7 +3874,8 @@ class Component extends DCLogic {
       rowsXml.push(`<row r="${r}">${cs.join('')}</row>`);
     });
     const tc = [cell('A' + tot, ST.totLabel, { t: 'Total General' }), cell('B' + tot, ST.totEmpty)];
-    const tRatio = `IFERROR((${C('J')}${tot}+${C('K')}${tot})/(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot}),0)`;
+    const tDenPr = `(${C('E')}${tot}+${C('J')}${tot}+${C('K')}${tot}+${C('M')}${tot}-${C('AE')}${tot}-${C('AF')}${tot}-${C('AG')}${tot})`;
+    const tRatio = `IF(${tDenPr}<=0,1,IFERROR((${C('J')}${tot}+${C('K')}${tot})/${tDenPr},1))`;
     COLS.forEach(([o]) => {
       const L = C(o), ref = L + tot, n = pos[o];
       if (o === 'AO') tc.push(cell(ref, ST.totPct, { f: `1-${tRatio}` }));
@@ -5454,7 +5457,7 @@ class Component extends DCLogic {
         'Débito fiscal = ' + m(base.df) + mas(aj.df, 'ajuste') + ' = ' + m(pv.df),
         'Crédito fiscal = ' + m(base.cf - cfT) + (cfT ? ' + CF Fact. T ' + m(cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
         ...(cfT ? ['Facturas letra T (FTT): el IVA se toma como débito y como crédito fiscal a la vez, compensándose (no prorratea).'] : []),
-        ...(pv.cfNoComp ? ['Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas) = ' + this.pctProrr(this.prorrRatio(det))
+        ...(pv.cfNoComp ? ['Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas); si no hay base de ventas, 100 % no computable = ' + this.pctProrr(this.prorrRatio(det))
           + ' · No computable = ese % × CF de facturas de compra (sin NC de ventas) · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)] : []),
         'Retenciones y percepciones = retenciones ' + m(base.ret) + mas(aj.ret, 'ajuste') + ' + percepciones ' + m(base.perc) + mas(aj.perc, 'ajuste') + ' = ' + m(pv.rp),
         'Saldo 1° párrafo = crédito' + (pv.cfNoComp ? ' computable ' + m(pv.cf - pv.cfNoComp) : ' ' + m(pv.cf)) + ' − débito ' + m(pv.df) + ' + saldo técnico anterior ' + m(arr.tec) + ' = ' + m(pv.s1),
@@ -6931,13 +6934,17 @@ class Component extends DCLogic {
   // Prorrateo del crédito fiscal (fórmula acordada con Julieta Díaz, Estudio Blasco, dic. 2025; la misma de la columna AO del papel de trabajo):
   // proporción no computable = (Venta exenta + Venta no gravada) / (Ventas netas gravadas + Exenta + No gravada + Exportaciones − NC de ventas gravadas).
   // Exenta, no gravada y exportaciones van netas de sus notas de crédito. El no alcanzado (recupero de gastos) no entra.
+  // Sin base de ventas (den ≤ 0: mes sin ventas, o sólo no alcanzado / recupero): 100 % no computable
+  // (Fabialva / Zagar — actividad exenta, p. ej. alquiler de campo: todos los gastos son no computables).
   prorrRatio(det) {
     if (!det || !det.v) return 0;
     const z = (o, k) => (o && o[k]) || 0, nv = (k) => z(det.v, k) - z(det.vNc, k);
     const grav = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0'].reduce((a, k) => a + z(det.v, k), 0);
     const ncGrav = z(det.vNc, 'n21') + z(det.vNc, 'n105') + z(det.vNc, 'n27');
     const num = nv('exe') + nv('ngr'), den = grav + num + nv('exp') - ncGrav;
-    return num > 0 && den > 0 ? Math.min(1, num / den) : 0;
+    if (den <= 0) return 1;
+    if (num <= 0) return 0;
+    return Math.min(1, num / den);
   }
 
   // Crédito fiscal no computable de una liquidación ({ cf, ali }): el prorrateo se aplica sólo al CF de facturas/ND
