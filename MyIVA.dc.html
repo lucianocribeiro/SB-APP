@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 <script src="./support.js"></script>
 </head>
@@ -3888,7 +3891,7 @@ class Component extends DCLogic {
       const axAnt = `(${C('AX')}${p}-${C('AZ')}${p})`;
       // Denominador del prorrateo; si es ≤ 0 (sin ventas gravadas/exentas/export), ratio = 1 → todo el CF de compras no computable.
       // Modo de la ficha (ali.prorr): full = computa 100 %; no = CF computable 0; general = fórmula.
-      const modoP = ali.prorr || det.prorr || 'general';
+      const modoP = (ali && ali.prorr) || (det && det.prorr) || 'general';
       const denPr = `(${C('E')}${r}+${C('J')}${r}+${C('K')}${r}+${C('M')}${r}-${C('AE')}${r}-${C('AF')}${r}-${C('AG')}${r})`;
       const ratio = modoP === 'full' ? '0' : (modoP === 'no' ? '1' : `IF(${denPr}<=0,1,IFERROR((${C('J')}${r}+${C('K')}${r})/${denPr},1))`);
       // Régimen general: prorrateo sólo sobre CF de facturas/ND de compras (AA+AB+AC). NC de ventas y Fact. T 100 % computables.
@@ -4126,7 +4129,7 @@ class Component extends DCLogic {
       const sin = cr.sin.length ? ' Sin archivos crudos guardados: ' + cr.sin.join(', ') + '.' : '';
       this.setState({ toast: { kind: sin ? 'warn' : 'ok', t: 'Excel descargado', d: x.name + ' · ' + rows.length + (rows.length === 1 ? ' período' : ' períodos') + ' · ' + cr.hojas.length + (cr.hojas.length === 1 ? ' hoja' : ' hojas') + ' con archivos crudos.' + sin } });
     })().catch(err => {
-      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) } });
+      this.setState({ toast: { kind: 'err', t: 'No se pudo generar el Excel', d: String(err && err.message || err) + ' · build ' + this.APP_BUILD } });
     });
   }
 
@@ -5236,6 +5239,9 @@ class Component extends DCLogic {
 
   // Cómo se computa el crédito fiscal (ficha / columna Prorrateo). Default: régimen general.
   // no = Computa 0 % (Zagar / Fabialva); full = Computa 100 % (Clamaco); general = Novalux / resto.
+  // Versión de front (para confirmar que el navegador no tiene HTML cacheado).
+  APP_BUILD = '2026-11-25c';
+
   PRORR_OPTS = [
     { v: 'general', l: 'Régimen general' },
     { v: 'no', l: 'Computa 0%' },
