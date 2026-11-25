@@ -314,18 +314,20 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Estado</span><select value="{{ cliF.est }}" onChange="{{ cliFiltroEst }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Sistema</span><select value="{{ cliF.sis }}" onChange="{{ cliFiltroSis }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Prorrateo</span><select value="{{ cliF.prorr }}" onChange="{{ cliFiltroProrr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cierre de ejercicio</span><select value="{{ cliF.cierre }}" onChange="{{ cliFiltroCierre }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliCierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Último período</span><select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario asignado</span><select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></div>
 </div>
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
 <div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:900px">
+<table style="width:100%;border-collapse:collapse;min-width:1040px">
 <thead><tr>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Razón social</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">CUIT</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Condición IVA</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Sistema</th>
+<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Prorrateo</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cierre de ejercicio</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Último período</th>
 <th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Usuarios asignados</th>
@@ -334,7 +336,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </tr></thead>
 <tbody>
 <sc-if value="{{ cliVacio }}">
-<tr><td colspan="9" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
+<tr><td colspan="10" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
 </sc-if>
 <sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
 <tr style-hover="background:#FAFBFD">
@@ -342,6 +344,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;color:#5A6B7B">{{ c.cond }}</td>
 <td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></td>
+<td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.prorr }}" onChange="{{ c.prorrSet }}" title="Cómo se computa el crédito fiscal (prorrateo)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff;max-width:150px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cierre }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ c.per }}</td>
 <td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ c.users }}</td>
@@ -2312,9 +2315,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <select value="{{ nc.cond }}" onChange="{{ ncSet.cond }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
 </div>
 <div style="grid-column:span 2">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Cálculo de prorrateo (crédito fiscal)</div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Prorrateo (crédito fiscal)</div>
 <select value="{{ nc.prorr }}" onChange="{{ ncSet.prorr }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
-<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">No computa = CF computable 0 · Computa 100% = sin prorrateo · Régimen general = fórmula por ventas exentas / no gravadas.</div>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Régimen general = fórmula actual · Computa 0% = CF computable 0 (todo no computable) · Computa 100% = todo el CF computable.</div>
 </div>
 <div style="grid-column:span 2">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Sistema contable</div>
@@ -2754,7 +2757,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, idleAviso: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
+    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
@@ -5217,11 +5220,11 @@ class Component extends DCLogic {
 
   COND_IVA = ['Responsable Inscripto', 'Exento', 'Monotributo', 'Consumidor Final', 'No alcanzado'];
 
-  // Cómo se computa el crédito fiscal (ficha del cliente). Default: régimen general (fórmula de prorrateo).
-  // no = CF computable 0 (Zagar / Fabialva); full = computa 100 % (Clamaco); general = Novalux / resto.
+  // Cómo se computa el crédito fiscal (ficha / columna Prorrateo). Default: régimen general.
+  // no = Computa 0 % (Zagar / Fabialva); full = Computa 100 % (Clamaco); general = Novalux / resto.
   PRORR_OPTS = [
     { v: 'general', l: 'Régimen general' },
-    { v: 'no', l: 'No computa' },
+    { v: 'no', l: 'Computa 0%' },
     { v: 'full', l: 'Computa 100%' }
   ];
 
@@ -5363,6 +5366,18 @@ class Component extends DCLogic {
     if (!silencioso) this.setState({ toast: { kind: 'ok', t: 'Sistema actualizado', d: rz + ' usa ' + sis + '.' } });
   }
 
+  // Columna Prorrateo de la grilla de clientes: actualiza sólo el modo en clientes_ficha.
+  async guardarProrr(rz, prorr, silencioso) {
+    const modo = this.PRORR_OPTS.some(o => o.v === prorr) ? prorr : 'general';
+    const prev = (this.state.cliFicha || {})[rz] || {};
+    try {
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prev, { prorr: modo }) }));
+      if (!silencioso) this.setState({ toast: { kind: 'ok', t: 'Prorrateo actualizado', d: rz + ': ' + this.prorrModoLbl(modo) + '.' } });
+    } catch (e) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar el prorrateo', d: String(e && e.message || e) } });
+    }
+  }
+
   // Agenda de vencimientos de IVA: { pers: { 'mm/aaaa': [dd/mm/aaaa × 5 (CUIT 0-1, 2-3, 4-5, 6-7, 8-9)] }, fecha, origen }.
   // Viene precargada con las agendas 2024, 2025 y 2026 de ARCA (Agenda de Vencimientos, IVA, presentación de la DJ mensual RG 715 / RG 4010);
   // se amplía o corrige desde Configuración → Vencimientos. Período 10/2025: ARCA fijó una sola fecha para CUIT 6 a 9.
@@ -5485,12 +5500,12 @@ class Component extends DCLogic {
     const modo = (det && det.prorr) || this.prorrModo(this.liqCli());
     const pr = k === 'c' ? this.prorrRatio(det, modo === 'general' ? 'general' : modo) : 0;
     if (k === 'c' && (modo === 'no' || modo === 'full' || pr)) {
-      // Misma base que cfNoComp: en régimen general sólo CF de compras FC/ND; en "No computa" / "Computa 100%" aplica el modo de la ficha.
+      // Misma base que cfNoComp: en régimen general sólo CF de compras FC/ND; en Computa 0% / 100% aplica el modo de la ficha.
       const noC = modo === 'no' ? Math.round((total || 0) * 100) / 100
         : (modo === 'full' ? 0 : Math.round(pr * ivt * 100) / 100);
       if (modo === 'no') {
-        rows.push(filaRes('Menos: crédito fiscal no computable (ficha: No computa)', '', m(-noC), 0));
-        rows.push(filaRes('Crédito fiscal computable (No computa)', '', m(0), 1));
+        rows.push(filaRes('Menos: crédito fiscal no computable (ficha: Computa 0%)', '', m(-noC), 0));
+        rows.push(filaRes('Crédito fiscal computable (Computa 0%)', '', m(0), 1));
       } else if (modo === 'full') {
         rows.push(filaRes('Crédito fiscal computable (ficha: Computa 100%)', '', m(total), 1));
       } else {
@@ -5563,8 +5578,8 @@ class Component extends DCLogic {
         'Crédito fiscal = ' + m(base.cf - cfT) + (cfT ? ' + CF Fact. T ' + m(cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
         ...(cfT ? ['Facturas letra T (FTT): el IVA se toma como débito y como crédito fiscal a la vez, compensándose (no prorratea).'] : []),
         ...(pv.cfNoComp || (det && det.prorr && det.prorr !== 'general') ? [
-          det && det.prorr === 'no' ? 'Crédito fiscal computable = 0 (ficha del cliente: No computa). El detalle del CF se conserva.'
-            : (det && det.prorr === 'full' ? 'Crédito fiscal computable = 100 % del CF (ficha del cliente: Computa 100%).'
+          det && det.prorr === 'no' ? 'Crédito fiscal computable = 0 (ficha: Computa 0%). El total del CF queda como no computable; el detalle se conserva.'
+            : (det && det.prorr === 'full' ? 'Crédito fiscal computable = total del CF (ficha: Computa 100%); no computable = 0.'
               : ('Prorrateo = 1 − (exenta + no gravada) / (gravadas + exenta + no gravada + exportaciones − NC de ventas gravadas); si no hay base de ventas, 100 % no computable = ' + this.pctProrr(this.prorrRatio(det, 'general'))
                 + ' · No computable = ese % × CF de facturas de compra (sin NC de ventas) · Crédito fiscal computable = ' + m(pv.cf) + ' − no computable ' + m(pv.cfNoComp) + ' = ' + m(pv.cf - pv.cfNoComp)))
         ] : []),
@@ -7134,9 +7149,9 @@ class Component extends DCLogic {
   }
 
   // Crédito fiscal no computable de una liquidación ({ cf, ali, cli }):
-  // - Computa 100 %: 0
-  // - No computa: todo el CF de la liquidación (el detalle CF se conserva; el computable queda en 0)
-  // - Régimen general: sólo sobre facturas/ND de compras (Juli / MyIVA planilla); NC de ventas y Fact. T 100 % computables
+  // - Computa 100%: no computable = 0 (todo el CF es computable)
+  // - Computa 0%: no computable = total del CF (computable = 0; el detalle del CF se conserva)
+  // - Régimen general: sólo sobre facturas/ND de compras; NC de ventas y Fact. T 100 % computables
   cfNoComp(o) {
     const ali = o && o.ali, det = ali && ali.det, modo = this.prorrModoDe(o);
     if (modo === 'full') return 0;
@@ -7294,7 +7309,7 @@ class Component extends DCLogic {
     const saldos = [sd('Saldo 1° párrafo', res.s1), sd('Saldo 2° párrafo', res.s2)];
     const noC = this.cfNoComp(res), modo = this.prorrModoDe(res), pr = this.prorrRatio(res.ali && res.ali.det, modo);
     const kComp = (noC || modo === 'full' || modo === 'no') ? [{
-      label: modo === 'no' ? 'Crédito fiscal computable (No computa)'
+      label: modo === 'no' ? 'Crédito fiscal computable (Computa 0%)'
         : (modo === 'full' ? 'Crédito fiscal computable (Computa 100%)'
           : ('Crédito fiscal computable (prorrateo ' + this.pctProrr(pr) + ')')),
       value: fmt(Math.round((res.cf - noC) * 100) / 100), color: '#1B2733'
@@ -8108,6 +8123,7 @@ class Component extends DCLogic {
       const cierre = this.cierreDe((s.cliFicha || {})[rz]);
       return { rz, cuit: f.cuit, cond: f.cond, per, cierre, users: owner[rz], est: 'Activo', st: E['Activo'],
         sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
+        prorr: this.prorrModo(rz), prorrSet: (e) => this.guardarProrr(rz, e.target.value),
         abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
     });
 
@@ -8119,6 +8135,7 @@ class Component extends DCLogic {
       (!F.per || c.per === F.per) &&
       (!F.cierre || c.cierre === F.cierre) &&
       (!F.sis || c.sis === F.sis) &&
+      (!F.prorr || c.prorr === F.prorr) &&
       (!F.usr || c.users === F.usr));
     const setF = (k) => (e) => { const val = e.target.value; this.setState(st => ({ cliF: Object.assign({}, st.cliF, { [k]: val }) })); };
     const pers = [...new Set(clientes.map(c => c.per))].sort((a, b) => (a === '—') - (b === '—') || b.slice(3).localeCompare(a.slice(3)) || b.localeCompare(a));
@@ -8327,8 +8344,8 @@ class Component extends DCLogic {
         : 'Mostrando ' + clientesVis.length + ' de ' + clientes.length + ' (filtrado)',
       clientesVis, cliVacio: clientesVis.length === 0, cliF: F,
       cliBuscar: setF('q'), cliFiltroEst: setF('est'), cliFiltroPer: setF('per'), cliFiltroUsr: setF('usr'),
-      cliFiltroCierre: setF('cierre'), cliFiltroSis: setF('sis'),
-      cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '' } }),
+      cliFiltroCierre: setF('cierre'), cliFiltroSis: setF('sis'), cliFiltroProrr: setF('prorr'),
+      cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '' } }),
       cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
       // Siempre las 12 fechas de cierre: si sólo listáramos las usadas, filtrar 31/12 con todos en 31/12 parecía “no filtrar”.
       cliCierreOpts: this.CIERRE_OPTS.map(p => ({ v: p, l: p })),
@@ -8388,7 +8405,7 @@ class Component extends DCLogic {
           datosFiscales: [
             { k: 'CUIT', v: f.cuit || '—' },
             { k: 'Condición frente al IVA', v: cond },
-            { k: 'Cálculo de prorrateo', v: this.prorrModoLbl(prorr) },
+            { k: 'Prorrateo', v: this.prorrModoLbl(prorr) },
             { k: 'Sistema contable', v: sis },
             { k: 'Fecha de cierre de ejercicio', v: cierre },
             { k: 'Mails de notificación', v: mails.length ? mails.length + (mails.length === 1 ? ' destinatario' : ' destinatarios') : 'Sin mails' },
