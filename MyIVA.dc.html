@@ -6359,7 +6359,12 @@ class Component extends DCLogic {
     ['cCom', 'Crédito Fiscal Computable', /^credito fiscal computable(?! a restituir)\b/, 1]
   ];
 
-  // Lee la vista previa del Libro IVA Digital en PDF o en imagen (JPG, PNG…). Las imágenes, y los PDF escaneados sin texto, se leen con OCR.
+  // ¿El parseo trajo los renglones de 3 importes (neto / exento / IVA)? Si sólo hay títulos, el PDF viene incompleto y hace falta OCR.
+  libroDigTriOk(v) {
+    return ['vOp', 'vNc', 'cOp', 'cNc'].filter(k => v && v[k] && typeof v[k] === 'object' && Number.isFinite(v[k].neto) && Number.isFinite(v[k].iva)).length;
+  }
+
+  // Lee la vista previa / borrador del Portal IVA (Libro IVA Digital) en PDF o imagen. Si el PDF trae títulos pero no los importes, reintenta con OCR.
   async leerLibroDig(f) {
     const esImg = /^image\//.test(f.type) || /\.(jpe?g|png|webp|bmp|gif)$/i.test(f.name);
     if (!esImg && !/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') throw new Error('El archivo debe ser la vista previa del Libro IVA Digital en PDF o en imagen (JPG, PNG).');
@@ -6369,10 +6374,16 @@ class Component extends DCLogic {
       return Object.assign(this.parseLibroDig(f.name, { lineas: await this.ocrLineas([this.ocrCanvas(img, img.width, img.height, (c, w, h) => c.drawImage(img, 0, 0, w, h))]), paginas: 1, ocr: true }), { ocr: true });
     }
     const bytes = new Uint8Array(await f.arrayBuffer()), pdf = await this.textoPdf(bytes);
-    if (/libro iva (ventas|compras)/.test(this.fold(pdf.lineas.join(' ')))) return this.parseLibroDig(f.name, pdf);
-    // PDF sin texto (escaneado o impreso como imagen): se renderizan las páginas y se leen con OCR.
+    if (/libro iva (ventas|compras)/.test(this.fold(pdf.lineas.join(' ')))) {
+      try {
+        const parsed = this.parseLibroDig(f.name, pdf);
+        // Borrador del portal a veces trae capa de texto con los rótulos y los importes como imagen / otra capa: OCR.
+        if (this.libroDigTriOk(parsed.v) >= 2) return parsed;
+      } catch (e) { /* texto incompleto: se reintenta con OCR abajo */ }
+    }
+    // PDF sin texto útil (escaneado, impreso como imagen, o texto parcial): se renderizan las páginas y se leen con OCR.
     const P = await this.pdfLib(), doc = await P.getDocument({ data: bytes.slice() }).promise, telas = [];
-    for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+    for (let p = 1; p <= Math.min(doc.numPages, 6); p++) {
       const pg = await doc.getPage(p), vp = pg.getViewport({ scale: 1 });
       telas.push(this.ocrCanvas(null, vp.width, vp.height, null, pg));
     }
@@ -6446,18 +6457,37 @@ class Component extends DCLogic {
     return out;
   }
 
+  // Importes del Libro IVA Digital: formato AR ($ 1.234,56) y variantes con espacios o punto decimal.
+  numsLibro(t, ocr) {
+    if (ocr) return this.numsOcr(t);
+    const classic = [...String(t).matchAll(/-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g)].map(m => this.numAr(m[0]));
+    if (classic.length) return classic;
+    // Texto del PDF a veces separa miles con espacio ("1 234,56") o usa punto decimal.
+    const spaced = this.numsOcr(t);
+    if (spaced.length) return spaced;
+    return [...String(t).matchAll(/-?(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}/g)].map(m => Number(m[0].replace(/,/g, '')));
+  }
+
   parseLibroDig(name, pdf) {
-    const L = pdf.lineas.map(l => this.fold(l).replace(/\s+/g, ' ').trim());
+    const L = pdf.lineas.map(l => this.fold(l).replace(/\s+/g, ' ').trim()).filter(Boolean);
     const todo = L.join(' ');
     if (!/libro iva (ventas|compras)/.test(todo)) throw new Error('No se encontraron las secciones "Libro IVA Ventas" / "Libro IVA Compras". Verificá que sea la vista previa del Libro IVA Digital (si es una foto, que se vea nítida y completa).');
-    const nums = pdf.ocr ? (t) => this.numsOcr(t) : (t) => [...t.matchAll(/-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g)].map(m => this.numAr(m[0]));
+    const nums = (t) => this.numsLibro(t, pdf.ocr);
+    const otroConcepto = (ln) => this.LIB_CONC.some(([, , re]) => re.test(ln));
     const v = {};
     this.LIB_CONC.forEach(([k, , re, cant]) => {
       for (let i = 0; i < L.length && v[k] === undefined; i++) {
         const m = L[i].match(re);
         if (!m) continue;
         let xs = nums(L[i].slice(m[0].length));
-        for (let j = 1; xs.length < cant && j <= 2 && i + j < L.length && !/[a-z]{4,}/.test(L[i + j]); j++) xs = xs.concat(nums(L[i + j]));
+        // Borrador / presentación del portal: los 3 importes pueden ir en las líneas de abajo,
+        // con encabezados de columna ("Neto Gravado", "Exento o No Gravado", …) en el medio.
+        for (let j = 1; xs.length < cant && j <= 8 && i + j < L.length; j++) {
+          const ln = L[i + j];
+          if (otroConcepto(ln)) break;
+          const more = nums(ln);
+          if (more.length) xs = xs.concat(more);
+        }
         if (xs.length >= cant) v[k] = cant === 3 ? { neto: xs[0], exn: xs[1], iva: xs[2] } : xs[0];
       }
     });
@@ -6468,7 +6498,7 @@ class Component extends DCLogic {
       if (i >= 0) { const xs = nums(L[i].replace(re, '')); if (xs.length) tot[k] = xs[0]; }
     });
     let per = '';
-    const mp = todo.match(/vista previa\s*\|?\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/presentacion\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/periodo[^0-9]{0,25}(\d{2})\s*\/\s*(\d{4})/);
+    const mp = todo.match(/vista previa\s*\|?\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/borrador\s*\|?\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/presentacion\s*(\d{2})\s*\/\s*(\d{4})/) || todo.match(/periodo[^0-9]{0,25}(\d{2})\s*\/\s*(\d{4})/);
     // Con OCR un dígito puede leerse mal (09/2026 → 09/2076): sólo se toma si el año es razonable.
     const anioOk = (a) => a >= 2015 && a <= new Date().getFullYear() + 1;
     if (mp && +mp[1] >= 1 && +mp[1] <= 12 && (!pdf.ocr || anioOk(+mp[2]))) per = mp[1] + '/' + mp[2];
