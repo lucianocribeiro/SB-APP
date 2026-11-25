@@ -997,6 +997,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 13.5px 'Open Sans';color:#1B2733">{{ liqCli }} · {{ liqPer }} · {{ seqNextTxt }}</div>
 </div>
 <div style="font:400 12.5px/1.5 'Open Sans';color:#5A6B7B">Así va a quedar la liquidación con los archivos cargados. Todavía no se guardó: revisala y, si hace falta, cargá ajustes antes de procesarla.</div>
+<sc-if value="{{ liqAliBloqueo }}">
+<div style="margin-top:12px;padding:10px 12px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqAliBloqueoTxt }}</div>
+</sc-if>
 
 <div style="margin-top:16px;padding:14px 16px;border:1px solid #E3E8EE;border-radius:6px;background:#FAFBFC">
 <div style="font:600 13px 'Open Sans';color:#14395C">Ajustes manuales</div>
@@ -1163,6 +1166,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <sc-if value="{{ liqResReal }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">{{ liqResSub }}</div></sc-if>
 <sc-if value="{{ liqResDemo }}"><div style="font:400 13px/1.6 'Open Sans';color:#5A6B7B;margin-top:5px">CUIT 30-71234567-8 · Período 08/2026 · {{ seqPrevTxt }} · Procesado por Administrador el {{ seqPrevFecha }}</div></sc-if>
+<sc-if value="{{ liqAliHist }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqAliHistTxt }}</div>
+</sc-if>
 </div>
 <div style="display:flex;gap:9px;flex-wrap:wrap">
 <button onClick="{{ go.liqHistorial }}" style="padding:9px 13px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al historial</button>
@@ -2596,6 +2602,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </sc-if>
 <sc-if value="{{ liqFueraPer }}">
 <div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqFueraPerTxt }}</div>
+</sc-if>
+<sc-if value="{{ liqAliBloqueo }}">
+<div style="margin-top:8px;padding:8px 11px;background:#FBE9E7;border:1px solid #F3CFCB;border-radius:6px;font:600 12.5px/1.45 'Open Sans';color:#B3261E">{{ liqAliBloqueoTxt }}</div>
 </sc-if>
 <sc-if value="{{ cruArr.sinDj }}">
 <div style="margin-top:10px;font:400 12.5px/1.45 'Open Sans';color:#5A6B7B">No hay DJ de {{ cruArr.per }}: si es la primera liquidación, ingresá a mano los saldos a favor (vacío = $ 0).</div>
@@ -5558,18 +5567,40 @@ class Component extends DCLogic {
         set: (e) => { const t = e.target.value; this.setState(st => ({ liqAj: Object.assign({}, st.liqAj, { [k]: t }) })); }
       };
     });
-    const pvProcesar = () => malos.length
-      ? this.setState({ toast: { kind: 'err', t: 'Revisá los ajustes', d: malos.map(([, l]) => l).join(', ') + ': el importe no es válido.' } })
-      : this.setState({ liqConfirm: true });
-    if (s.step !== 4) return { ajCampos, pvProcesar, pvKpis: [], pvSaldos: [], pvCalc: [], pvVentas: [], pvCompras: [], pvRet: [] };
+    const aliMsg = (nC, nV, sinRec, sinEmi) => {
+      const partes = [];
+      if (nC) partes.push(nC + (nC === 1 ? ' comprobante de IVA Compras' : ' comprobantes de IVA Compras'));
+      if (nV) partes.push(nV + (nV === 1 ? ' comprobante de IVA Ventas' : ' comprobantes de IVA Ventas'));
+      const quien = partes.join(' y ');
+      if ((nC && sinRec) || (nV && sinEmi)) {
+        const falta = [nC && sinRec ? 'Mis Comprobantes Recibidos' : '', nV && sinEmi ? 'Mis Comprobantes Emitidos' : ''].filter(Boolean).join(' y ');
+        return 'No se puede liquidar: ' + quien + ' con neto × alícuota ≠ IVA (el subdiario colapsó multi-alícuota). Cargá ' + falta + ' para corregir la apertura antes de procesar.';
+      }
+      return 'No se puede liquidar: quedan ' + quien + ' con neto × alícuota ≠ IVA después de cruzar con Mis Comprobantes. Revisá Recibidos / Emitidos o el subdiario.';
+    };
+    if (s.step !== 4) {
+      const pvProcesar0 = () => malos.length
+        ? this.setState({ toast: { kind: 'err', t: 'Revisá los ajustes', d: malos.map(([, l]) => l).join(', ') + ': el importe no es válido.' } })
+        : this.setState({ liqConfirm: true });
+      return { ajCampos, pvProcesar: pvProcesar0, pvKpis: [], pvSaldos: [], pvCalc: [], pvVentas: [], pvCompras: [], pvRet: [], liqAliBloqueo: false, liqAliBloqueoTxt: '' };
+    }
     const R = s.real || {}, sub = (k) => this.liqSub(k, R);
+    const mapE = this.mapaMisComp((R.emitidos && R.emitidos.recs) || []), mapR = this.mapaMisComp((R.recibidos && R.recibidos.recs) || []);
+    const nAliC = this.aliPendientes(sub('compras').recs, mapR).length, nAliV = this.aliPendientes(sub('ventas').recs, mapE).length;
+    const sinRec = !(R.recibidos && R.recibidos.recs && R.recibidos.recs.length), sinEmi = !(R.emitidos && R.emitidos.recs && R.emitidos.recs.length);
+    const liqAliBloqueo = !!(nAliC || nAliV), liqAliBloqueoTxt = liqAliBloqueo ? aliMsg(nAliC, nAliV, sinRec, sinEmi) : '';
+    const pvProcesar = () => {
+      if (malos.length) return this.setState({ toast: { kind: 'err', t: 'Revisá los ajustes', d: malos.map(([, l]) => l).join(', ') + ': el importe no es válido.' } });
+      if (liqAliBloqueo) return this.setState({ toast: { kind: 'err', t: 'Apertura por alícuota inconsistente', d: liqAliBloqueoTxt } });
+      this.setState({ liqConfirm: true });
+    };
     const base = this.liqCalc(sub('ventas'), sub('compras'), arr, R), aj = this.liqAjVals(), pv = this.liqAjustar(base, aj, arr);
     const sd = (label, v) => v < 0 ? { label, value: m(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' } : { label, value: m(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const mas = (v, t) => (v ? (v > 0 ? ' + ' : ' − ') + t + ' ' + m(Math.abs(v)) : '');
     const det = pv.ali.det;
     const cfT = det.cfT != null ? +det.cfT : ((det.vL && det.vL.T && det.vL.T.iva) || 0);
     return {
-      ajCampos, pvProcesar,
+      ajCampos, pvProcesar, liqAliBloqueo, liqAliBloqueoTxt,
       pvKpis: [{ label: 'Total débito fiscal', value: m(pv.df) }, { label: 'Total crédito fiscal', value: m(pv.cf) }]
         .concat(pv.cfNoComp ? [{ label: 'Crédito fiscal computable', value: m(pv.cf - pv.cfNoComp) }] : [], [{ label: 'Retenciones y percepciones', value: m(pv.rp) }]),
       pvSaldos: [sd('Saldo 1° párrafo (técnico)', pv.s1), sd('Saldo 2° párrafo (libre disponibilidad)', pv.s2)],
@@ -7227,7 +7258,24 @@ class Component extends DCLogic {
     return m;
   }
 
-  // ¿Mis Comp trae apertura por alícuota útil (más de una tasa, o distinta a la del subdiario)?
+  // ¿Neto × alícuota ≠ IVA en alguna tasa? Típico de Catedral cuando colapsa multi-alícuota en una sola fila.
+  aliInconsistente(v) {
+    if (!v) return false;
+    const RATES = [['21', 0.21], ['105', 0.105], ['27', 0.27], ['5', 0.05], ['25', 0.025]];
+    return RATES.some(([k, r]) => {
+      const n = +v['n' + k] || 0, i = +v['i' + k] || 0;
+      if (Math.abs(n) < 0.005 && Math.abs(i) < 0.005) return false;
+      const esp = Math.round(n * r * 100) / 100;
+      return Math.abs(esp - i) > Math.max(0.05, Math.abs(i || esp) * 0.005);
+    });
+  }
+
+  // Comprobantes del subdiario cuya apertura neto/IVA no cuadra (antes o después de enriquecer con Mis Comp).
+  aliPendientes(recs, mapa) {
+    return (recs || []).filter(x => !x.excl && x.tc !== 'CR' && this.aliInconsistente(mapa ? this.vAli(x, mapa) : x.v));
+  }
+
+  // ¿Mis Comp trae apertura por alícuota útil (más de una tasa, o distinta / consistente frente al subdiario)?
   // Sólo se acepta si el IVA total de Mis Comp cuadra con el del subdiario: evita reemplazar
   // por montos en otra moneda / clave ambigua (Clamaco tenía FCs con Mis Comp en centavos).
   misCompMejoraAli(libroV, misV) {
@@ -7241,6 +7289,8 @@ class Component extends DCLogic {
     if (Math.abs(ivMis - ivLib) > Math.max(0.05, Math.abs(ivLib) * 0.001)) return false;
     if (rm.length > 1 && rl.length <= 1) return true;   // subdiario colapsó multi-alícuota (ej. FAC B 21%+27%)
     if (rm.length === 1 && rl.length === 1 && rm[0] !== rl[0]) return true;   // tasa asignada mal por IVA/neto
+    // Misma tasa pero el subdiario tiene neto×alícuota ≠ IVA y Mis Comp sí cuadra (Clamaco / Catedral).
+    if (this.aliInconsistente(libroV) && !this.aliInconsistente(misV)) return true;
     return false;
   }
 
@@ -8462,8 +8512,8 @@ class Component extends DCLogic {
       ['compras', 'IVA Compras', '.xls / .xlsx', 'Opcional · cruces 1, 3, 4, 5 y 6 · se pueden sumar varios archivos', 'CAZATUR_IVA_COMPRAS_082026.xlsx', '0,9 MB · 1.284 filas detectadas', 'El archivo debe ser .xls o .xlsx exportado del subdiario de IVA Compras.'],
       ['aflMenos', 'Compras AFL a restar (anticipadas)', '.xls / .xlsx', 'Sólo LHS · se restan de IVA Compras al liquidar', 'iva0826 en 0926 AFL.xls', 'Compras del mes anterior tomadas anticipadas', 'El archivo debe ser el Excel de compras AFL a restar (mismo formato que el subdiario de compras).'],
       ['aflMas', 'Compras AFL a sumar (diferidas)', '.xls / .xlsx', 'Sólo LHS · se suman a IVA Compras al liquidar', 'iva0926 en 1026 AFL.xls', 'Compras del mes tomadas en el mes siguiente', 'El archivo debe ser el Excel de compras AFL a sumar (mismo formato que el subdiario de compras).'],
-      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2 · también sirve para liquidar si no hay IVA Ventas', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
-      ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
+      ['emitidos', 'Mis Comprobantes Emitidos', '.xls / .xlsx / .csv', 'Opcional · cruce 2 · también sirve para liquidar si no hay IVA Ventas · obligatorio si IVA Ventas trae neto × alícuota ≠ IVA', 'CAZATUR_MIS_COMPROBANTES_EMITIDOS_082026.xlsx', '0,6 MB · 2.117 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Emitidos de ARCA.'],
+      ['recibidos', 'Mis Comprobantes Recibidos', '.xls / .xlsx / .csv', 'Opcional · cruce 3 · obligatorio si IVA Compras trae neto × alícuota ≠ IVA (Catedral / multi-alícuota)', 'CAZATUR_MIS_COMPROBANTES_RECIBIDOS_082026.xlsx', '0,4 MB · 1.279 comprobantes', 'El archivo debe ser el export de Mis Comprobantes Recibidos de ARCA.'],
       ['percep', 'Mis Retenciones', '.xls / .xlsx / .csv', 'Opcional · cruce 4 · se pueden subir varios archivos', 'CAZATUR_MIS_RETENCIONES_082026.xlsx', '48 KB · 96 registros', 'El archivo debe ser el export de Mis Retenciones de ARCA (retenciones y percepciones).'],
       ['aduana', 'Mis Percepciones Aduaneras', '.xls / .xlsx / .csv', 'Opcional · cruce 5', 'CAZATUR_PERCEPCIONES_ADUANERAS_082026.xlsx', '22 KB · 9 registros', 'El archivo debe ser el export de Percepciones Aduaneras de ARCA.'],
       ['ivadig', 'Libro IVA Digital (vista previa)', '.pdf / .jpg / .png', 'Opcional · cruce 6', 'CAZATUR_LIBRO_IVA_DIGITAL_082026.pdf', '120 KB · 1 página', 'El archivo debe ser la vista previa del Libro IVA Digital en PDF o en imagen (JPG, PNG).'],
@@ -8843,6 +8893,12 @@ class Component extends DCLogic {
     const filaRes = (c, n, d, b) => ({ c, n, d, b, bgr: b ? '#F5F7FA' : '#FFFFFF', w: b ? '600' : '400' });
     const det = resShow && resShow.ali && resShow.ali.det;
     const detFilas = (k, src, kNc, lNc, total, lTotal) => this.detFilasDe(det, k, src, kNc, lNc, total, lTotal, ((resShow.ali || {}).aj || {})[k === 'v' ? 'df' : 'cf']);
+    const aliHistC = det && this.aliInconsistente(det.c), aliHistV = det && this.aliInconsistente(det.v);
+    const liqAliHist = !!(aliHistC || aliHistV);
+    const liqAliHistTxt = liqAliHist
+      ? 'Esta liquidación tiene apertura con neto × alícuota ≠ IVA' + (aliHistC && aliHistV ? ' en compras y ventas' : (aliHistC ? ' en compras' : ' en ventas'))
+        + '. Volvé a liquidar el período con Mis Comprobantes Recibidos / Emitidos cargados para corregir el desglose (caso Catedral / Clamaco).'
+      : '';
     const V = {
       ...compVals,
       steps: stepDef.map(([n, label]) => ({
@@ -8904,6 +8960,22 @@ class Component extends DCLogic {
             liqErrTxt: 'No se puede liquidar ' + cli + ' · ' + perL + ': ' + fpTxt + ' (por ejemplo, ' + fpEj + '). Corregí los subdiarios y volvé a procesar. El detalle está en los errores de los cruces 2 y 3.'
           });
           return fin('error');
+        }
+        // No dejar guardar una apertura con neto×alícuota ≠ IVA (Catedral / Clamaco): exige Mis Comp o subdiario corregido.
+        {
+          const mapE = this.mapaMisComp((R.emitidos && R.emitidos.recs) || []), mapR = this.mapaMisComp((R.recibidos && R.recibidos.recs) || []);
+          const nC = this.aliPendientes(sub('compras').recs, mapR).length, nV = this.aliPendientes(sub('ventas').recs, mapE).length;
+          if (nC || nV) {
+            const sinRec = !(R.recibidos && R.recibidos.recs && R.recibidos.recs.length), sinEmi = !(R.emitidos && R.emitidos.recs && R.emitidos.recs.length);
+            const partes = [];
+            if (nC) partes.push(nC + (nC === 1 ? ' comprobante de IVA Compras' : ' comprobantes de IVA Compras'));
+            if (nV) partes.push(nV + (nV === 1 ? ' comprobante de IVA Ventas' : ' comprobantes de IVA Ventas'));
+            const falta = [nC && sinRec ? 'Mis Comprobantes Recibidos' : '', nV && sinEmi ? 'Mis Comprobantes Emitidos' : ''].filter(Boolean).join(' y ');
+            const d = falta
+              ? partes.join(' y ') + ' con neto × alícuota ≠ IVA. Cargá ' + falta + ' y volvé a procesar.'
+              : 'Quedan ' + partes.join(' y ') + ' con neto × alícuota ≠ IVA después de Mis Comprobantes. Revisá los archivos.';
+            return this.setState({ liqConfirm: false, toast: { kind: 'err', t: 'Apertura por alícuota inconsistente', d } });
+          }
         }
         const ahora = this.ahora();
         // Sin IVA Ventas se usa Mis Comprobantes Emitidos (LHS). Sin IVA Compras, crédito fiscal en 0.
@@ -9098,7 +9170,7 @@ class Component extends DCLogic {
         toast: { kind: 'warn', t: 'Revisá los archivos', d: 'Cargá los subdiarios de IVA Ventas e IVA Compras y volvé a procesar.' }
       }),
       procErrTxt: s.liqErrTxt,
-      ...resV, liqResReal: resReal, liqResDemo: !resReal, liqResCli: resReal ? resShow.cli : 'CAZATUR SA',
+      ...resV, liqResReal: resReal, liqResDemo: !resReal, liqAliHist, liqAliHistTxt, liqResCli: resReal ? resShow.cli : 'CAZATUR SA',
       liqResSub: resReal ? 'Período ' + resShow.per + ' · ' + this.seqTxt(resShow.seq) + ' · Procesado por ' + (verRes ? verRes.user : me.short) + ' el ' + resShow.fechaHora
         + (resShow.ali && resShow.ali.venc ? (resShow.ali.venc.vencida ? ' · Fuera de término (venció el ' + resShow.ali.venc.f + ')' : ' · En término (vencía el ' + resShow.ali.venc.f + ')') : '')
         + (verRes ? ' · Datos guardados de la liquidación' : ' · Calculado con los subdiarios cargados') : '',
