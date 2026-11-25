@@ -3837,10 +3837,10 @@ class Component extends DCLogic {
       // las NC de Compras suman al débito (T/U) y las de Ventas al crédito (AE-AJ), como en liqCalc. Así, por fila:
       // I = F + G + H + U y AD = AA + AB + AC + AH + AI + AJ + CFT (salvo IVA al 5 % / 2,5 %, que no tiene columna propia).
       // Las liquidaciones viejas sin det dejan esas columnas vacías: no se inventan importes; los totales I / AD / AM / AN se mantienen.
-      const det = d.n && d.n.ali && d.n.ali.det;
+      const ali = (d.n && d.n.ali) || {}, det = ali.det || null;
       const sep = det && typeof det.perc === 'number' && typeof det.ret === 'number';
       // Ajustes manuales del paso 4: el débito / crédito guardado ya los incluye; acá se muestran aparte y el total los suma.
-      const aj = (d.n && d.n.ali && d.n.ali.aj) || {}, ajD = r2(aj.df || 0), ajC = r2(aj.cf || 0);
+      const aj = ali.aj || {}, ajD = r2(aj.df || 0), ajC = r2(aj.cf || 0);
       const v = { I: r2(df - ajD), J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, P: 0, Q: 0, R: 0, S: 0, V: 0, W: 0, AD: r2(cf - ajC), AJD: ajD, AJC: ajC, AZ: r2(d.comp || 0) };
       if (det && det.v && det.c) {
         const z = (o, k) => r2((o && o[k]) || 0), sum = (o, ks) => r2(ks.reduce((a, k) => a + z(o, k), 0));
