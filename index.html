@@ -3701,7 +3701,8 @@ class Component extends DCLogic {
     return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
   }
 
-  // Hoja "Asiento contable" del reporte de liquidación: un asiento por período (adjunto Juli).
+  // Hoja "Asiento contable" del reporte de liquidación: un asiento por período (adjunto Juli / Candelaria).
+  // Con prorrateo: se asienta el CF total al Haber y el CF no computable al Debe (resultado), según mail Estudio Blasco.
   // BH / BI del papel = Saldo 1er / 2do párrafo del período (AW / AX; con Fact. T caen en columnas físicas BH / BI).
   asientosFilas(rows) {
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -3712,13 +3713,13 @@ class Component extends DCLogic {
       if (!cur || Number(r.seq) > Number(cur.seq)) byPer[r.per] = r;
     });
     const pers = Object.keys(byPer).sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2)));
-    const out = [['', 'Debe', 'Haber']];
+    const out = [];
     pers.forEach(per => {
       const d = byPer[per], n = d.n || {}, ali = n.ali || {}, det = ali.det || {}, aj = ali.aj || {};
       const df = r2(n.df != null ? +n.df : this.numAr(d.df));
       const cf = r2(n.cf != null ? +n.cf : this.numAr(d.cf));
-      // Crédito del asiento = CF computable (columna AS del papel).
-      const cfComp = r2(cf - this.cfNoComp({ cf, ali }));
+      const cfNo = r2(this.cfNoComp({ cf, ali }));
+      const cfComp = r2(cf - cfNo);
       let perc = 0, ret = 0;
       if (typeof det.perc === 'number' && typeof det.ret === 'number') {
         perc = r2(det.perc + (aj.perc || 0));
@@ -3727,21 +3728,36 @@ class Component extends DCLogic {
         // Liquidaciones viejas sin detalle: el total de retenciones y percepciones va a RETENCIONES.
         ret = r2(n.rp != null ? +n.rp : this.numAr(d.rp));
       }
-      // 1er / 2do párrafo del período (misma lógica que AW / AX del papel, sin arrastre previo en el asiento).
+      // Saldo técnico / a pagar se calcula con el CF computable (mismo resultado económico).
       const bh = r2(cfComp - df);
       const bi = r2(bh < 0 ? bh + perc + ret : perc + ret);
       const block = [];
+      // Con prorrateo: cuadro de CF total / computable / no computable (pedido Candelaria / Dani).
+      if (cfNo > 0.009) {
+        block.push(['Total Crédito Fiscal', 'Total Crédito Fiscal Computable', 'Total Crédito Fiscal No Computable']);
+        block.push([cf, cfComp, cfNo]);
+        block.push(['', '', '']);
+      }
+      block.push(['', 'Debe', 'Haber']);
       block.push([this.ultimoDiaPer(per), '', '']);
       block.push(['IVA DEBITO', df, '']);
-      block.push(['IVA CREDITO', '', cfComp]);
+      if (cfNo > 0.009) {
+        // CF total al Haber + CF no computable al Debe (resultado); el neto sigue siendo cfComp.
+        block.push(['IVA CREDITO', '', cf]);
+        block.push(['IVA CREDITO NO COMP', cfNo, '']);
+      } else {
+        block.push(['IVA CREDITO', '', cfComp]);
+      }
       block.push(['PERCEPCIONES', '', perc]);
       block.push(['RETENCIONES', '', ret]);
       // Favor: BH y BI positivos → técnico (Debe) + libre disponibilidad (Debe). Pagar: sólo BI negativa → Haber.
       if (bh > 0) block.push(['IVA SALDO TÉCNICO', bh, '']);
       if (bi > 0) block.push(['IVA LIBRE DISPONIBILIDAD', bi, '']);
       else if (bi < 0) block.push(['IVA SALDO A PAGAR', '', r2(-bi)]);
+      // Totales sólo de las líneas del asiento (después del encabezado Debe/Haber), no del cuadro de CF.
+      const iHead = block.findIndex(f => f[0] === '' && f[1] === 'Debe' && f[2] === 'Haber');
       let debe = 0, haber = 0;
-      block.forEach(fila => {
+      block.slice(iHead + 1).forEach(fila => {
         if (typeof fila[1] === 'number') debe = r2(debe + fila[1]);
         if (typeof fila[2] === 'number') haber = r2(haber + fila[2]);
       });
