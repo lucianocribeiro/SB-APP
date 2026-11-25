@@ -5505,7 +5505,7 @@ class Component extends DCLogic {
       : this.setState({ liqConfirm: true });
     if (s.step !== 4) return { ajCampos, pvProcesar, pvKpis: [], pvSaldos: [], pvCalc: [], pvVentas: [], pvCompras: [], pvRet: [] };
     const R = s.real || {}, sub = (k) => this.liqSub(k, R);
-    const base = this.liqCalc(sub('ventas'), sub('compras'), arr), aj = this.liqAjVals(), pv = this.liqAjustar(base, aj, arr);
+    const base = this.liqCalc(sub('ventas'), sub('compras'), arr, R), aj = this.liqAjVals(), pv = this.liqAjustar(base, aj, arr);
     const sd = (label, v) => v < 0 ? { label, value: m(v), tag: 'A pagar', bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' } : { label, value: m(v), tag: 'A favor', bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' };
     const mas = (v, t) => (v ? (v > 0 ? ' + ' : ' − ') + t + ' ' + m(Math.abs(v)) : '');
     const det = pv.ali.det;
@@ -7141,7 +7141,50 @@ class Component extends DCLogic {
     return { recs: [] };
   }
 
-  liqCalc(ventas, compras, arr) {
+  // Clave de cruce subdiario ↔ Mis Comprobantes (pv + número + TC/letra).
+  compClave(x) {
+    return [x.tc || '', x.letra || '', String(+(x.pv || 0)), String(+(x.nro || 0))].join('|');
+  }
+
+  // Mapa Mis Comprobantes por clave. Catedral (y similares) traen un solo neto/IVA: la apertura por alícuota
+  // se completa con Emitidos / Recibidos cuando el comprobante coincide (caso Clamaco FAC B multi-alícuota).
+  mapaMisComp(recs) {
+    const m = new Map();
+    (recs || []).forEach(x => {
+      const k = this.compClave(x);
+      if (!m.has(k)) m.set(k, x);
+    });
+    return m;
+  }
+
+  // ¿Mis Comp trae apertura por alícuota útil (más de una tasa, o distinta a la del subdiario)?
+  // Sólo se acepta si el IVA total de Mis Comp cuadra con el del subdiario: evita reemplazar
+  // por montos en otra moneda / clave ambigua (Clamaco tenía FCs con Mis Comp en centavos).
+  misCompMejoraAli(libroV, misV) {
+    if (!misV || !libroV) return false;
+    const RATES = ['21', '105', '27', '5', '25'];
+    const rates = (v) => RATES.filter(a => Math.abs(v['i' + a] || 0) > 0.005 || Math.abs(v['n' + a] || 0) > 0.005);
+    const sumI = (v) => RATES.reduce((a, r) => a + (v['i' + r] || 0), 0);
+    const rm = rates(misV), rl = rates(libroV);
+    if (!rm.length) return false;
+    const ivMis = sumI(misV), ivLib = (libroV.ivt != null && Math.abs(libroV.ivt) > 0.005) ? libroV.ivt : sumI(libroV);
+    if (Math.abs(ivMis - ivLib) > Math.max(0.05, Math.abs(ivLib) * 0.001)) return false;
+    if (rm.length > 1 && rl.length <= 1) return true;   // subdiario colapsó multi-alícuota (ej. FAC B 21%+27%)
+    if (rm.length === 1 && rl.length === 1 && rm[0] !== rl[0]) return true;   // tasa asignada mal por IVA/neto
+    return false;
+  }
+
+  // Campos de alícuota: si hay match en Mis Comp con mejor apertura, se usan esos; el resto del comprobante sigue del subdiario.
+  // Los totales df/cf NO cambian (siguen saliendo de ivt del subdiario).
+  vAli(x, mapa) {
+    const m = mapa && mapa.get(this.compClave(x));
+    if (!m || !this.misCompMejoraAli(x.v, m.v)) return x.v;
+    const v = Object.assign({}, x.v);
+    ['n21', 'i21', 'n105', 'i105', 'n27', 'i27', 'n5', 'i5', 'n25', 'i25', 'n0'].forEach(k => { v[k] = m.v[k] || 0; });
+    return v;
+  }
+
+  liqCalc(ventas, compras, arr, real) {
     const r2 = (v) => Math.round(v * 100) / 100;
     const iva = (xs) => r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0));
     // La liquidación suma el IVA de todo lo que no es retención/percepción (igual que antes); el filtro por tabla de comprobantes es sólo para los cruces.
@@ -7158,12 +7201,22 @@ class Component extends DCLogic {
     const crs = ventas.recs.filter(x => x.tc === 'CR'), crPer = crs.filter(x => x.fecha.slice(3) === per);
     const ret = r2(crPer.reduce((a, x) => a + Math.abs(x.v.tot), 0));
     const rp = r2(perc + ret);
-    const aliV = (k) => r2(V.filter(x => x.tc !== 'NC').reduce((a, x) => a + (x.v[k] || 0), 0));
-    // Detalle para el "ojito" del historial: cada columna de los subdiarios, separando FC / ND de NC. Se guarda junto a las alícuotas.
+    const R = real || {}, mapE = this.mapaMisComp((R.emitidos && R.emitidos.recs) || []), mapR = this.mapaMisComp((R.recibidos && R.recibidos.recs) || []);
+    const aliV = (k) => r2(V.filter(x => x.tc !== 'NC').reduce((a, x) => a + (this.vAli(x, mapE)[k] || 0), 0));
+    // Detalle para el "ojito" / papel: apertura por alícuota enriquecida con Mis Comprobantes cuando el subdiario la trae colapsada.
     const K = ['n21', 'i21', 'n105', 'i105', 'n27', 'i27', 'n5', 'i5', 'n25', 'i25', 'n0', 'exe', 'nal', 'ngr', 'exp', 'mono', 'iin', 'piibb', 'piva', 'potr', 'oreg', 'tot'];
-    const tot = (xs) => { const o = { q: xs.length }; K.forEach(k => { const v = r2(xs.reduce((a, x) => a + (x.v[k] || 0), 0)); if (v) o[k] = v; }); return o; };
+    const RATE = { n21: 1, i21: 1, n105: 1, i105: 1, n27: 1, i27: 1, n5: 1, i5: 1, n25: 1, i25: 1, n0: 1 };
+    const tot = (xs, mapa) => {
+      const o = { q: xs.length };
+      K.forEach(k => {
+        const v = r2(xs.reduce((a, x) => a + ((RATE[k] ? this.vAli(x, mapa) : x.v)[k] || 0), 0));
+        if (v) o[k] = v;
+      });
+      return o;
+    };
     const det = {
-      v: tot(V.filter(x => x.tc !== 'NC')), vNc: tot(V.filter(x => x.tc === 'NC')), c: tot(C.filter(x => x.tc !== 'NC')), cNc: tot(C.filter(x => x.tc === 'NC')),
+      v: tot(V.filter(x => x.tc !== 'NC'), mapE), vNc: tot(V.filter(x => x.tc === 'NC'), mapE),
+      c: tot(C.filter(x => x.tc !== 'NC'), mapR), cNc: tot(C.filter(x => x.tc === 'NC'), mapR),
       // Ventas (FC / ND) por tipo de factura, para abrir el papel de trabajo en Fact. A / B / T.
       vL: ['A', 'B', 'T'].reduce((o, l) => { const xs = V.filter(x => x.tc !== 'NC' && x.letra === l); if (xs.length) o[l] = { q: xs.length, neto: r2(xs.reduce((a, x) => a + (x.v.ngt || 0), 0)), iva: r2(xs.reduce((a, x) => a + (x.v.ivt || 0), 0)) }; return o; }, {}),
       cfT, perc, ret, qPerc: compras.recs.filter(x => x.v.piva).length, qRet: crPer.length
@@ -8772,7 +8825,7 @@ class Component extends DCLogic {
         }
         const ahora = this.ahora();
         // Sin IVA Ventas se usa Mis Comprobantes Emitidos (LHS). Sin IVA Compras, crédito fiscal en 0.
-        const res = Object.assign(this.liqAjustar(this.liqCalc(sub('ventas'), sub('compras'), arr), this.liqAjVals(), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
+        const res = Object.assign(this.liqAjustar(this.liqCalc(sub('ventas'), sub('compras'), arr, R), this.liqAjVals(), arr), { fecha: ahora.slice(0, 10), fechaHora: ahora, cli, seq: seqSel, per: perL });
         if (sub('ventas').desde === 'emitidos') res.ali.ventasDe = 'emitidos';
         // Se guarda si se liquidó en término o vencida (va junto a las alícuotas de la liquidación).
         res.ali.ivadig = R.ivadig && R.ivadig.name ? R.ivadig.name : null;
