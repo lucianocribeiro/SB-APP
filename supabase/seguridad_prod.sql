@@ -2,16 +2,12 @@
 -- Supabase → SQL Editor → Run completo.
 -- Después: Authentication → Multi-Factor → habilitar TOTP.
 --
--- Credenciales que crea/activa este script:
---   Daniela    danielac@blasco.com.ar       / MyIVA-Daniela-2026!   (Administradora)
---   Demo       usuario.myiva@blasco.com.ar  / MyIVA-User-2026!
---   Julieta    julietad@blasco.com.ar       / MyIVA-Julieta-2026!
---   Agustín    agustinm@blasco.com.ar       / MyIVA-Agustin-2026!
---   Candelaria candelariam@blasco.com.ar    / MyIVA-Candelaria-2026!
---   Ivanna     ivannav@blasco.com.ar        / MyIVA-Ivanna-2026!
---   Rubén      ruben@blasco.com.ar          / MyIVA-Ruben-2026!
---   Sistemas   sistemas.myiva@blasco.com.ar / MyIVA-Sistemas-2026!  (rol sistemas = poder admin)
---   (legacy)   admin.myiva@blasco.com.ar / victoria@… → desactivados (Victoria no es usuaria del estudio)
+-- Altas de usuarios: NO incluir contraseñas en este archivo.
+-- Crear/rotar claves solo desde Supabase Auth / SQL Editor con valores fuera de git
+-- (o vía admin_set_password en la app).
+-- Usuarios esperados: danielac@ (admin), sistemas.myiva@ (sistemas), julietad@, agustinm@,
+-- candelariam@, ivannav@, ruben@, usuario.myiva@ (demo). Desactivar victoria@ / admin.myiva@ legacy.
+
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -137,17 +133,12 @@ begin
   return uid;
 end $$;
 
-select public.asegurar_usuario('danielac@blasco.com.ar', 'MyIVA-Daniela-2026!', 'Daniela', 'admin');
-select public.asegurar_usuario('admin.myiva@blasco.com.ar', 'MyIVA-Admin-2026!', 'Administrador', 'admin');
-select public.asegurar_usuario('usuario.myiva@blasco.com.ar', 'MyIVA-User-2026!', 'UsuarioDemo', 'empleado');
-select public.asegurar_usuario('julietad@blasco.com.ar', 'MyIVA-Julieta-2026!', 'Julieta', 'empleado');
-select public.asegurar_usuario('agustinm@blasco.com.ar', 'MyIVA-Agustin-2026!', 'Agustín', 'empleado');
-select public.asegurar_usuario('candelariam@blasco.com.ar', 'MyIVA-Candelaria-2026!', 'Candelaria', 'empleado');
-select public.asegurar_usuario('ivannav@blasco.com.ar', 'MyIVA-Ivanna-2026!', 'Ivanna', 'empleado');
+-- Altas con password: ejecutar FUERA de git, p.ej.
+--   select public.asegurar_usuario('danielac@blasco.com.ar', '<pw>', 'Daniela', 'admin');
+--   select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', '<pw>', 'Sistemas', 'sistemas');
+-- (y el resto del equipo con rol empleado). No dejar contraseñas en el repo.
 update public.perfiles set activo = false
 where lower(email) in ('agustin@blasco.com.ar', 'candelaria@blasco.com.ar', 'ivanna@blasco.com.ar');
-select public.asegurar_usuario('ruben@blasco.com.ar', 'MyIVA-Ruben-2026!', 'Rubén', 'empleado');
-select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', 'MyIVA-Sistemas-2026!', 'Sistemas', 'sistemas');
 update public.perfiles set debe_cambiar_pw = false, activo = true where lower(email) in (
   'danielac@blasco.com.ar', 'sistemas.myiva@blasco.com.ar'
 );
