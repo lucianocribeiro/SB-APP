@@ -36,16 +36,10 @@ begin
   return new;
 end $$;
 
--- 4) Usuario de acceso Sistemas / Agencia Kairos
---    Mail: sistemas.myiva@blasco.com.ar
---    Clave: MyIVA-Sistemas-2026!
---    Rol: sistemas (mismo poder que admin)
-select public.asegurar_usuario(
-  'sistemas.myiva@blasco.com.ar',
-  'MyIVA-Sistemas-2026!',
-  'Sistemas',
-  'sistemas'
-);
+-- 4) Usuario Sistemas / Agencia Kairos (mail: sistemas.myiva@blasco.com.ar, rol sistemas).
+-- Crear/rotar clave FUERA de git:
+--   select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', '<password_rotada>', 'Sistemas', 'sistemas');
+
 
 -- Primer ingreso sin forzar cambio de clave (acceso de agencia)
 update public.perfiles

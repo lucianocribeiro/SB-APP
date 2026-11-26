@@ -5099,7 +5099,10 @@ class Component extends DCLogic {
   ARCA_BEJ = '1:FC A|2:ND A|3:NC A|4:FC A|6:FC B|7:ND B|8:NC B|9:FC B|11:FC C|12:ND C|13:NC C|15:FC C|'
     + '201:FC A|202:ND A|203:NC A|206:FC B|207:ND B|208:NC B|211:FC C|212:ND C|213:NC C|19:FC E|20:ND E|21:NC E|'
     + '51:FC M|52:ND M|53:NC M|54:RC M|251:FC M|252:ND M|253:NC M|195:FC T|196:ND T|197:NC T|'
-    + '81:TK A|82:TK B|83:TK C|111:TK A|115:TK B|119:TK C|22:FC E|33:LP|60:LQ A|61:LQ B|63:FC A|64:FC B|17:FC A|18:FC B|66:DI';
+    // Tiques (COMP_TAB): 81/82 factura A/B; 83 y 109 tique genérico → B (CF); 111 factura C;
+    // 112-114 NC; 115-117 ND; 118-120 M.
+    + '81:TK A|82:TK B|83:TK B|109:TK C|111:TK C|112:NC A|113:NC B|114:NC C|115:ND A|116:ND B|117:ND C|118:TK M|119:NC M|120:ND M|'
+    + '22:FC E|33:LP|60:LQ A|61:LQ B|63:FC A|64:FC B|17:FC A|18:FC B|66:DI';
 
   arcaBej() {
     if (this._arcaBej) return this._arcaBej;
@@ -6291,6 +6294,12 @@ class Component extends DCLogic {
     return libro.recs.filter(x => !x.excl).filter(x => { const k = perK(x.fecha.slice(3)); return regla === 'hasta' ? k > pk : k !== pk; });
   }
 
+  // CUIT/CUIL argentino válido (11 dígitos, no todo cero). DNI de CF, "0" o vacío → no válido.
+  cuitValido(c) {
+    const d = String(c == null ? '' : c).replace(/\D/g, '');
+    return d.length === 11 && !/^0+$/.test(d);
+  }
+
   // Ticket (TK/TKB) ≡ Factura misma letra (FCB): ARCA suele informar "Factura B" y el libro Lanes "TICKET"/"TICKET-FACTURA B".
   canonComp(x) {
     let tc = x && x.tc || '', letra = x && x.letra || '';
@@ -6317,6 +6326,7 @@ class Component extends DCLogic {
     // Clave de cruce: CUIT + Tipo + Letra + Pto.Vta. + Número (también en exportación / letra E).
     // Fallbacks: CUIT+PV+Nro, CUIT+Fecha+Importe, y Tipo+Letra+PV+Nro (libro sin CUIT / consumidor final, IDEA 2).
     // Tipo canónico: TK≡FC (Lanes tickets vs ARCA Factura B/A).
+    // k4 (sin CUIT) solo si al menos un lado no tiene CUIT válido: evita cruzar compras de distintos proveedores.
     const k1 = (x) => { const c = this.canonComp(x); return [x.cuit, c.tc, c.letra, x.pv, x.nro].join('|'); };
     const k2 = (x) => [x.cuit, x.pv, x.nro].join('|');
     const k3 = (x) => [x.cuit, x.fecha, Math.round(x.v.tot)].join('|');
@@ -6326,7 +6336,17 @@ class Component extends DCLogic {
     A.forEach(a => { const i = take(m1, k1(a)); if (i >= 0) pares.push([a, L[i], 1]); else resto1.push(a); });
     resto1.forEach(a => { const i = take(m2, k2(a)); if (i >= 0) pares.push([a, L[i], 2]); else resto2.push(a); });
     resto2.forEach(a => { const i = take(m3, k3(a)); if (i >= 0) pares.push([a, L[i], 3]); else resto3.push(a); });
-    resto3.forEach(a => { const i = take(m4, k4(a)); if (i >= 0) pares.push([a, L[i], 4]); else faltL.push(a); });
+    resto3.forEach(a => {
+      const i = take(m4, k4(a));
+      if (i < 0) { faltL.push(a); return; }
+      const l = L[i], aOk = this.cuitValido(a.cuit), lOk = this.cuitValido(l.cuit);
+      if (aOk && lOk && String(a.cuit) !== String(l.cuit)) {
+        used.delete(i);   // no emparejar dos CUIT válidos distintos por PV+nro
+        faltL.push(a);
+        return;
+      }
+      pares.push([a, l, 4]);
+    });
     const filas = pares.map(([a, l, st]) => {
       const dif = [];
       // TK vs FC misma letra no es diferencia: es el mismo comprobante con distinto rótulo (Lanes / ARCA).
