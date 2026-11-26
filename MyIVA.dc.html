@@ -5614,6 +5614,9 @@ class Component extends DCLogic {
     const mas = (v, t) => (v ? (v > 0 ? ' + ' : ' − ') + t + ' ' + m(Math.abs(v)) : '');
     const det = pv.ali.det;
     const cfT = det.cfT != null ? +det.cfT : ((det.vL && det.vL.T && det.vL.T.iva) || 0);
+    const sumI = (o) => !o ? 0 : ['i21', 'i105', 'i27', 'i5', 'i25'].reduce((a, k) => a + (o[k] || 0), 0);
+    const cfNcV = Math.round(sumI(det.vNc) * 100) / 100;
+    const cfCompras = Math.round((base.cf - cfT - cfNcV) * 100) / 100;
     return {
       ajCampos, pvProcesar, liqAliBloqueo, liqAliBloqueoTxt,
       pvKpis: [{ label: 'Total débito fiscal', value: m(pv.df) }, { label: 'Total crédito fiscal', value: m(pv.cf) }]
@@ -5621,7 +5624,7 @@ class Component extends DCLogic {
       pvSaldos: [sd('Saldo 1° párrafo (técnico)', pv.s1), sd('Saldo 2° párrafo (libre disponibilidad)', pv.s2)],
       pvCalc: [
         'Débito fiscal = ' + m(base.df) + mas(aj.df, 'ajuste') + ' = ' + m(pv.df),
-        'Crédito fiscal = ' + m(base.cf - cfT) + (cfT ? ' + CF Fact. T ' + m(cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
+        'Crédito fiscal = IVA compras ' + m(cfCompras) + (cfNcV ? ' + NC emitidas ' + m(cfNcV) : '') + (cfT ? ' + CF Fact. T ' + m(cfT) : '') + mas(aj.cf, 'ajuste') + ' = ' + m(pv.cf),
         ...(cfT ? ['Facturas letra T (FTT): el IVA se toma como débito y como crédito fiscal a la vez, compensándose (no prorratea).'] : []),
         ...(pv.cfNoComp || (det && det.prorr && det.prorr !== 'general') ? [
           det && det.prorr === 'no' ? 'Crédito fiscal computable = 0 (ficha: Computa 0%). El total del CF queda como no computable; el detalle se conserva.'
@@ -5752,7 +5755,7 @@ class Component extends DCLogic {
       const key = [t.tc, t.letra, pv, nro, cuit].join('|');
       let G = grupos.get(key);
       if (!G) grupos.set(key, G = { fecha, tc: t.tc, letra: t.letra, pv, nro, cuit, nom: txt(g('nom')), cond: this.fold(txt(g('cond'))).toUpperCase(),
-        neto: 0, iva: {}, ivaSin: 0, piva: 0, exe: 0, ngr: 0, nal: 0, exp: 0, mono: 0, iin: 0, piibb: 0, potr: 0, oreg: 0, tot: 0, ali: {}, mainR: null, mainN: 0 });
+        neto: 0, n0neto: 0, iva: {}, ivaSin: 0, piva: 0, exe: 0, ngr: 0, nal: 0, exp: 0, mono: 0, iin: 0, piibb: 0, potr: 0, oreg: 0, tot: 0, ali: {}, mainR: null, mainN: 0 });
       ['exe', 'ngr', 'nal', 'exp', 'mono', 'iin', 'piibb', 'potr', 'oreg', 'tot'].forEach(f => { G[f] += num(g(f)); });
       G.piva += num(g('piva'));
       // Lanes: perc_muni / perc_n_cat se suman a otras percepciones (no tienen columna propia en Bejerman).
@@ -5761,11 +5764,17 @@ class Component extends DCLogic {
       const neto = num(g('neto')), iva = num(g('iva'));
       let rate = C.porc >= 0 && g('porc') !== null && g('porc') !== '' ? num(String(g('porc')).replace('%', '')) : null;
       if (rate !== null && rate > 0 && rate < 1) rate = r2(rate * 100);
-      G.neto += neto;
-      if (rate === null || (rate === 0 && iva)) { if (iva) { G.ivaSin += iva; rate = null; } }   // alícuota 0 con IVA: se deduce del importe
-      else if (rate > 0 && !STD.includes(rate)) G.piva += iva;            // 3 %, 1,5 %…: percepción de IVA (Tango)
-      else if (rate > 0) G.iva[rate] = (G.iva[rate] || 0) + iva;
-      if (Math.abs(neto) > Math.abs(G.mainN)) { G.mainN = neto; G.mainR = rate; }
+      // Lanes multi-línea: fila con alícuota 0 y sin IVA = neto no gravado de ese comprobante.
+      // No debe sumarse a la base de las tasas gravadas (si no, neto×alícuota ≠ IVA y bloquea la liquidación).
+      if (rate === 0 && !iva) {
+        G.n0neto += neto;
+      } else {
+        G.neto += neto;
+        if (rate === null || (rate === 0 && iva)) { if (iva) { G.ivaSin += iva; rate = null; } }   // alícuota 0 con IVA: se deduce del importe
+        else if (rate > 0 && !STD.includes(rate)) G.piva += iva;            // 3 %, 1,5 %…: percepción de IVA (Tango)
+        else if (rate > 0) G.iva[rate] = (G.iva[rate] || 0) + iva;
+        if (Math.abs(neto) > Math.abs(G.mainN)) { G.mainN = neto; G.mainR = rate; }
+      }
     }
     if (!grupos.size) return null;
     const venta = k === 'ventas';
@@ -5786,6 +5795,7 @@ class Component extends DCLogic {
         rates.filter(r => r !== main).forEach(r => { const n = r2(G.iva[r] / (r / 100)); A['n' + ak(r)] += n; A['i' + ak(r)] += G.iva[r]; resto -= n; });
         if (main !== null) { const n = r2(resto) || r2(G.iva[main] / (main / 100)); A['n' + ak(main)] += n; A['i' + ak(main)] += G.iva[main]; resto = 0; }
         if (r2(resto)) A.n0 += r2(resto);   // neto sin IVA: al 0 %
+        if (G.n0neto) A.n0 += r2(G.n0neto);   // filas Lanes con alícuota 0
       }
       let { exe, ngr, nal, exp, mono } = G;
       const monoProv = /^(RS|MT|MONO|EX|EXE|EXENTO|IVA EXENTO)/.test(G.cond) || G.letra === 'C';
