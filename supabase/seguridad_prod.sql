@@ -66,7 +66,7 @@ language plpgsql security definer set search_path = public as $$
 begin
   update public.perfiles set debe_cambiar_pw = false where id = auth.uid();
 end $$;
-revoke all on function public.marcar_pw_ok() from public;
+revoke all on function public.marcar_pw_ok() from public, anon;
 grant execute on function public.marcar_pw_ok() to authenticated;
 
 -- 5) Alta / confirmación de usuarios del estudio
@@ -133,6 +133,11 @@ begin
   return uid;
 end $$;
 
+-- SUP-01: asegurar_usuario SOLO desde SQL Editor (postgres). Nunca vía anon/API.
+revoke execute on function public.asegurar_usuario(text, text, text, text)
+  from public, anon, authenticated;
+grant execute on function public.asegurar_usuario(text, text, text, text) to postgres;
+
 -- Altas con password: ejecutar FUERA de git, p.ej.
 --   select public.asegurar_usuario('danielac@blasco.com.ar', '<pw>', 'Daniela', 'admin');
 --   select public.asegurar_usuario('sistemas.myiva@blasco.com.ar', '<pw>', 'Sistemas', 'sistemas');
@@ -183,8 +188,17 @@ begin
   update public.perfiles set debe_cambiar_pw = coalesce(p_forzar, true) where id = uid;
   return true;
 end $$;
-revoke all on function public.admin_set_password(text, text, boolean) from public;
+revoke all on function public.admin_set_password(text, text, boolean) from public, anon;
 grant execute on function public.admin_set_password(text, text, boolean) to authenticated;
+
+-- SUP-07: estas no deben ser ejecutables por anon (sí por authenticated).
+revoke execute on function public.es_admin() from public, anon;
+grant execute on function public.es_admin() to authenticated;
+revoke execute on function public.mi_nombre() from public, anon;
+grant execute on function public.mi_nombre() to authenticated;
+revoke execute on function public.cliente_mio(text) from public, anon;
+grant execute on function public.cliente_mio(text) to authenticated;
+revoke all on function public.nuevo_usuario() from public, anon, authenticated;
 
 -- Victoria no es usuaria del estudio (si existía en Auth, queda desactivada arriba).
 -- Cartera real: schema.sql / CARTERA_DEF (Julieta, Candelaria, Ivanna, Agustín, Rubén).

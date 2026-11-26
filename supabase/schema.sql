@@ -24,17 +24,20 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
+-- SUP-02: no confiar en raw_user_meta_data (el signup lo controla el cliente).
+-- Siempre empleado inactivo; el admin activa y asigna nombre/rol desde la app.
 create or replace function public.nuevo_usuario() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.perfiles (id, email, nombre, rol)
-  values (new.id, new.email,
-          coalesce(nullif(new.raw_user_meta_data->>'nombre', ''), split_part(new.email, '@', 1)),
-          case
-            when new.raw_user_meta_data->>'rol' in ('admin', 'sistemas')
-              then new.raw_user_meta_data->>'rol'
-            else 'empleado'
-          end)
+  insert into public.perfiles (id, email, nombre, rol, activo, debe_cambiar_pw)
+  values (
+    new.id,
+    new.email,
+    split_part(new.email, '@', 1),
+    'empleado',
+    false,
+    true
+  )
   on conflict (id) do nothing;
   return new;
 end $$;
