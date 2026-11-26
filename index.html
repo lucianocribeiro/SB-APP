@@ -5807,7 +5807,9 @@ class Component extends DCLogic {
         mono += exe + ngr + A.n0 + A.n21 + A.n105 + A.n27 + A.n5 + A.n25; exe = 0; ngr = 0; Object.keys(A).forEach(x => { A[x] = 0; });
         if (!mono && G.tot) mono = G.tot - (G.iin + G.piibb + G.piva + G.potr + G.oreg);   // sólo viene el total
       }
-      if (venta && G.letra === 'E') { exp += exe + A.n0; exe = 0; A.n0 = 0; }   // Factura E: exportación
+      // Factura / NC letra E: Lanes (y similares) ponen el importe en no_grav/exento/neto 0%, no en "exportación".
+      // Hay que llevarlo a exp (como ya hace el conversor IDEA 2); si no, Portal IVA muestra expo y el liquidador "no gravado".
+      if (venta && G.letra === 'E') { exp += exe + ngr + nal + A.n0; exe = 0; ngr = 0; nal = 0; A.n0 = 0; }
       const tot = G.tot || (Object.values(A).reduce((a, b) => a + b, 0) + exe + ngr + nal + exp + mono + G.iin + G.piibb + G.piva + G.potr + G.oreg);
       const R = (x) => r2(x);
       out.push([G.fecha, G.tc, G.letra, G.pv || '', G.nro || '', '', G.nom, G.cuit, R(A.n21), R(A.i21), R(A.n105), R(A.i105), R(A.n27), R(A.i27), R(A.n0), R(A.i0), R(A.n25), R(A.i25), R(A.n5), R(A.i5)]
