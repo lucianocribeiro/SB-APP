@@ -72,5 +72,16 @@ ok(ARCA_TIQ[119].tc === 'NC' && ARCA_TIQ[119].letra === 'M', '119 → NC M');
 ok(ARCA_TIQ[83].letra === 'B', '83 → TK B');
 ok(canonComp(ARCA_TIQ[115]).tc === 'ND', 'ND tique no se vuelve FC por canonComp');
 
+// Lanes Factura E / NC E: no_grav → exportación (letra E)
+function expoDesdeE({ exe = 0, ngr = 0, nal = 0, n0 = 0, letra }) {
+  let exp = 0;
+  if (letra === 'E') { exp += exe + ngr + nal + n0; }
+  return exp;
+}
+ok(expoDesdeE({ ngr: 176662893, letra: 'E' }) === 176662893, 'Factura E: no_grav → exp');
+ok(expoDesdeE({ ngr: -47347275, letra: 'E' }) === -47347275, 'NC E: no_grav → exp');
+ok(expoDesdeE({ ngr: 176662893, letra: 'E' }) + expoDesdeE({ ngr: -47347275, letra: 'E' }) === 129315618, 'Neto expo Lanes 129.315.618');
+ok(expoDesdeE({ ngr: 100, letra: 'B' }) === 0, 'Letra B no mueve no_grav a exp');
+
 if (failed) { console.error('\n' + failed + ' fallos'); process.exit(1); }
 console.log('\nTodos los tests OK');
