@@ -3659,7 +3659,8 @@ class Component extends DCLogic {
         if (error) return err('No se pudo crear el usuario: ' + error.message);
         if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) return err('El mail ' + mail + ' ya tiene usuario en MyIVA.');
         if (data.user) {
-          try { await sb.from('perfiles').update({ debe_cambiar_pw: true, nombre, rol }).eq('id', data.user.id); } catch (e) { }
+          // SUP-02: el trigger deja empleado inactivo; el admin activa y fija nombre/rol acá.
+          try { await sb.from('perfiles').update({ debe_cambiar_pw: true, nombre, rol, activo: true }).eq('id', data.user.id); } catch (e) { }
         }
         if (data.session) {
           const r = await sb.auth.resetPasswordForEmail(mail, { redirectTo: volver });
