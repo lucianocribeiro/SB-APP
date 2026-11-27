@@ -338,97 +338,127 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="background:#fff;border:1px solid #E3E8EE;border-radius:8px;padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></div>
 </sc-if>
 <sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="5">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:8px;overflow:hidden">
-<div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:14px 16px 10px">
+<div style="background:#fff;border:1px solid {{ c.bd }};box-shadow:{{ c.sh }};border-radius:8px;overflow:hidden">
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:14px 16px 12px">
 <div style="flex:1 1 220px;min-width:0">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Razón social</div>
 <div onClick="{{ c.abrir }}" title="Abrir la ficha del cliente" style="font:700 14.5px/1.3 'Open Sans';color:#14395C;cursor:pointer;overflow-wrap:anywhere" style-hover="text-decoration:underline">{{ c.rz }}</div>
 </div>
 <div style="flex:0 0 140px">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">CUIT</div>
-<input value="{{ c.cuitIn }}" onChange="{{ c.cuitSet }}" onBlur="{{ c.cuitFin }}" onKeyDown="{{ c.enter }}" placeholder="00-00000000-0" inputmode="numeric" maxlength="13" title="11 dígitos, con o sin guiones (siempre se muestra con guiones)" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums">
+<sc-if value="{{ c.ed }}"><input value="{{ c.d.cuit }}" onChange="{{ c.set.cuit }}" placeholder="00-00000000-0" inputmode="numeric" maxlength="13" title="11 dígitos, con o sin guiones (siempre se muestra con guiones)" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums"></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0;font-variant-numeric:tabular-nums">{{ c.cuit }}</div></sc-if>
 </div>
 <div style="flex:0 0 auto">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Cierre de ejercicio</div>
-<select value="{{ c.cierre }}" onChange="{{ c.cierreSet }}" title="Último día del mes de cierre" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ cierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.cierre }}" onChange="{{ c.set.cierre }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ cierreOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.cierre }}</div></sc-if>
 </div>
 <div style="flex:0 0 auto">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Sistema</div>
-<select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.sis }}" onChange="{{ c.set.sis }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.sis }}</div></sc-if>
 </div>
 <div style="flex:0 0 auto">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Usuario</div>
-<select value="{{ c.usr }}" onChange="{{ c.usrSet }}" title="Usuario del estudio que liquida este cliente" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:150px;color:{{ c.usrFg }}"><option value="">Pendiente de asignación</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.usr }}" onChange="{{ c.set.usr }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:150px"><option value="">Pendiente de asignación</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0;color:{{ c.usrFg }}">{{ c.users }}</div></sc-if>
 </div>
 <div style="flex:0 0 auto">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Estado</div>
 <span style="display:inline-block;padding:4px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span>
 </div>
-<div style="flex:0 0 auto;display:flex;gap:10px;padding-bottom:6px">
-<span onClick="{{ c.abrir }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Abrir ficha</span>
-<span onClick="{{ openConfirm }}" style="font:600 12.5px 'Open Sans';color:#5A6B7B;cursor:pointer">Desactivar</span>
+<div style="flex:0 0 auto;display:flex;gap:8px;align-items:center;margin-left:auto">
+<sc-if value="{{ c.ver }}">
+<span onClick="{{ c.abrir }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;margin-right:4px">Abrir ficha</span>
+<button onClick="{{ c.editar }}" style="padding:7px 13px;background:#fff;color:#14395C;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#F4F9FD">Editar</button>
+</sc-if>
+<sc-if value="{{ c.ed }}">
+<button onClick="{{ c.cancelar }}" style="padding:7px 13px;background:#fff;color:#5A6B7B;border:1px solid #D5DEE7;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="border-color:#5A6B7B">Cancelar</button>
+<button onClick="{{ c.guardar }}" style="padding:7px 15px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer;opacity:{{ c.gOp }}" style-hover="background:#0E2A45">{{ c.gTxt }}</button>
+</sc-if>
 </div>
 </div>
-<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 13px">
-<sc-for list="{{ c.secs }}" as="x" hint-placeholder-count="3">
-<div onClick="{{ x.toggle }}" title="{{ x.tip }}" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:5px 11px 5px 6px;border:1px solid {{ x.bd }};background:{{ x.bg }};border-radius:999px;cursor:pointer;user-select:none" style-hover="border-color:#14395C">
-<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ x.ico }}</span>
-<span style="font:600 12.5px 'Open Sans';color:#14395C;white-space:nowrap">{{ x.t }}</span>
-<span style="font:400 12px 'Open Sans';color:{{ x.rc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ x.res }}</span>
-</div>
-</sc-for>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sAct.toggle }}" title="{{ c.sAct.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sAct.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sAct.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sAct.t }}</span>
+<span style="font:400 12.5px 'Open Sans';color:{{ c.sAct.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sAct.res }}</span>
 </div>
 <sc-if value="{{ c.abAct }}">
-<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">Actividades</div>
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<sc-if value="{{ c.sinActs }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7;padding:6px 0">Sin actividades cargadas.</div></sc-if>
 <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 24px;gap:7px 12px;align-items:center;max-width:820px">
-<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Código actividad</div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Actividad</div><div></div>
 <sc-for list="{{ c.acts }}" as="a" hint-placeholder-count="2">
-<input value="{{ a.cod }}" onChange="{{ a.set }}" onBlur="{{ a.fin }}" onKeyDown="{{ c.enter }}" placeholder="{{ a.ph }}" inputmode="numeric" maxlength="6" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums">
+<sc-if value="{{ a.ed }}"><input value="{{ a.cod }}" onChange="{{ a.set }}" placeholder="{{ a.ph }}" inputmode="numeric" maxlength="6" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums"></sc-if>
+<sc-if value="{{ a.ver }}"><div style="font:600 13px 'Open Sans';color:#1B2733;font-variant-numeric:tabular-nums">{{ a.cod }}</div></sc-if>
 <div style="font:400 13px/1.35 'Open Sans';color:{{ a.dc }}">{{ a.desc }}</div>
 <span onClick="{{ a.quitar }}" title="Quitar esta actividad" style="visibility:{{ a.xv }};font:600 16px/1 'Open Sans';color:#9AA9B7;cursor:pointer;text-align:center" style-hover="color:#B3261E">×</span>
 </sc-for>
 </div>
-<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:9px">{{ c.actHint }}</div>
+<sc-if value="{{ c.ed }}"><div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:9px">{{ c.actHint }}</div></sc-if>
 </div>
 </sc-if>
+</div>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sIva.toggle }}" title="{{ c.sIva.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sIva.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sIva.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sIva.t }}</span>
+<span style="font:400 12.5px 'Open Sans';color:{{ c.sIva.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sIva.res }}</span>
+</div>
 <sc-if value="{{ c.abIva }}">
-<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">IVA</div>
-<div style="display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end">
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Condición IVA</div>
-<select value="{{ c.cond }}" onChange="{{ c.condSet }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:190px"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div>
-<div style="font:600 13.5px 'Open Sans';color:#1B2733;padding:6px 0">{{ c.perTxt }}</div></div>
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Prorrateo</div>
-<select value="{{ c.prorr }}" onChange="{{ c.prorrSet }}" title="Cómo se computa el crédito fiscal (prorrateo)" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:160px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<div style="display:flex;flex-wrap:wrap;gap:12px 26px;align-items:flex-end">
+<div style="">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Condición IVA</div>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.cond }}" onChange="{{ c.set.cond }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:190px"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.condTxt }}</div></sc-if>
 </div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.ivaNotaC }};margin-top:10px">{{ c.ivaNota }}</div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.perTxt }}</div></div>
+<div style="">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Prorrateo</div>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.prorr }}" onChange="{{ c.set.prorr }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:160px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.prorrTxt }}</div></sc-if>
+</div>
+</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.ivaNotaC }};margin-top:8px">{{ c.ivaNota }}</div>
 </div>
 </sc-if>
-<sc-if value="{{ c.abIibb }}">
-<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
-<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">Ingresos Brutos</div>
-<div style="display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end">
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Tipo</div>
-<select value="{{ c.iibb }}" onChange="{{ c.iibbSet }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:200px"><sc-for list="{{ iibbOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div>
-<div title="Último período liquidado en el módulo de Ingresos Brutos" style="font:600 13.5px 'Open Sans';color:#1B2733;padding:6px 0">{{ c.iibbPer }}</div></div>
 </div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.iibbNotaC }};margin-top:10px">{{ c.iibbNota }}</div>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sIibb.toggle }}" title="{{ c.sIibb.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sIibb.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sIibb.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sIibb.t }}</span>
+<span style="font:400 12.5px 'Open Sans';color:{{ c.sIibb.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sIibb.res }}</span>
+</div>
+<sc-if value="{{ c.abIibb }}">
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<div style="display:flex;flex-wrap:wrap;gap:12px 26px;align-items:flex-end">
+<div style="">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Tipo</div>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.iibb }}" onChange="{{ c.set.iibb }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:200px"><sc-for list="{{ iibbOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.iibbTxt }}</div></sc-if>
+</div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div><div title="Último período liquidado en el módulo de Ingresos Brutos" style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.iibbPer }}</div></div>
+</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.iibbNotaC }};margin-top:8px">{{ c.iibbNota }}</div>
 <sc-if value="{{ c.jurOn }}">
-<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0 8px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0 8px">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Jurisdicciones · {{ c.jurN }}</div>
 <div style="font:600 12.5px 'Open Sans';color:{{ c.jurValC }}">{{ c.jurVal }}</div>
 </div>
+<sc-if value="{{ c.ver }}"><div style="font:400 13px/1.5 'Open Sans';color:#1B2733">{{ c.jurTxt }}</div></sc-if>
+<sc-if value="{{ c.ed }}">
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 14px">
 <sc-for list="{{ c.jurs }}" as="j" hint-placeholder-count="24">
 <label style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:5px;cursor:pointer;font:400 13px 'Open Sans';color:{{ j.fg }};background:{{ j.bg }}" style-hover="background:#EEF3F8"><input type="checkbox" checked="{{ j.on }}" onChange="{{ j.toggle }}" style="accent-color:#14395C;width:15px;height:15px;margin:0;cursor:pointer">{{ j.l }}</label>
 </sc-for>
 </div>
 </sc-if>
+</sc-if>
 </div>
 </sc-if>
+</div>
 </div>
 </sc-for>
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;padding:2px 2px 0">{{ cliMostrando }}</div>
@@ -2887,7 +2917,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, idleAviso: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '', iibb: '' }, cliAb: {}, cliEd: {}, histSeq: '', histSel: {}, seqElegida: null, liqProrrSel: {}, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
+    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '', iibb: '' }, cliAb: {}, cliEdit: {}, histSeq: '', histSel: {}, seqElegida: null, liqProrrSel: {}, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
@@ -5365,7 +5395,7 @@ class Component extends DCLogic {
   // Cómo se computa el crédito fiscal (ficha / columna Prorrateo). Default: régimen general.
   // no = Computa 0 % (Zagar / Fabialva); full = Computa 100 % (Clamaco); general = Novalux / resto.
   // Versión de front (para confirmar que el navegador no tiene HTML cacheado).
-  APP_BUILD = '2026-11-27a';
+  APP_BUILD = '2026-11-27b';
 
   PRORR_OPTS = [
     { v: 'general', l: 'Régimen general' },
@@ -5543,84 +5573,71 @@ class Component extends DCLogic {
   // Sólo Local y Convenio Multilateral (con sus jurisdicciones bien cargadas) pasan al Liquidador de Ingresos Brutos.
   puedeLiquidarIibb(rz) { const t = this.iibbDe(rz); return (t === 'Local' || t === 'Convenio Multilateral') && this.iibbValida(t, this.jurisDe(rz)).ok; }
 
-  // Cambia algunos campos de la ficha de un cliente (config clientes_ficha) y avisa.
-  async fichaSet(rz, cambios, okT, okD) {
-    const prev = (this.state.cliFicha || {})[rz] || {};
-    try {
-      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prev, cambios) }));
-      if (okT) this.setState({ toast: { kind: 'ok', t: okT, d: okD || rz } });
-    } catch (e) {
-      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar la ficha de ' + rz, d: String(e && e.message || e) } });
-    }
-  }
+  // Dueño actual del cliente en la cartera ('' = pendiente de asignación).
+  duenoDe(rz) { return (this.CARTERA.find(([, cs]) => cs.includes(rz)) || [])[0] || ''; }
 
   // CUIT: 11 dígitos; se puede escribir con o sin guiones, siempre se guarda y se muestra 00-00000000-0.
   cuitParse(t) {
     const raw = String(t || '').trim(), d = raw.replace(/\D/g, '');
-    if (!raw) return { ok: true, d: '' };
+    if (!raw || raw === '—') return { ok: true, d: '' };
     if (/[^\d\s.-]/.test(raw) || d.length !== 11) return { ok: false };
     return { ok: true, d };
   }
 
-  async guardarCuit(rz, txt) {
-    const p = this.cuitParse(txt);
-    if (!p.ok) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT tiene que tener 11 dígitos numéricos (con o sin guiones). ' + rz + ' queda como estaba.' } });
-    const cuitF = p.d ? this.cuitFmt(p.d) : '—', antes = ((this.state.cliFiscal || {})[rz] || {}).cuit || '—';
-    if (cuitF === antes) return;
-    const sb = this.sb();
-    if (sb && this._user) {
-      const r = await sb.from('clientes').update({ cuit: p.d ? cuitF : null }).eq('nombre', rz);
-      if (r.error) return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar el CUIT', d: r.error.message } });
+  // Tarjeta de Clientes: «Editar» copia los datos a un borrador; «Guardar» valida todo y lo graba de una vez.
+  cliEditar(rz, datos) { this.setState(st => ({ cliEdit: Object.assign({}, st.cliEdit, { [rz]: datos }) })); }
+
+  cliCancelar(rz) { this.setState(st => { const x = Object.assign({}, st.cliEdit); delete x[rz]; return { cliEdit: x }; }); }
+
+  cliBorrador(rz, fn) {
+    this.setState(st => {
+      const d = (st.cliEdit || {})[rz];
+      return d ? { cliEdit: Object.assign({}, st.cliEdit, { [rz]: Object.assign({}, d, fn(d)) }) } : {};
+    });
+  }
+
+  cliJur(rz, cod, on) {
+    const d = (this.state.cliEdit || {})[rz];
+    if (!d) return;
+    if (on && d.iibb === 'Local' && d.jur.length >= 1 && !d.jur.includes(cod)) {
+      const nom = (c) => c + ' - ' + ((this.JURIS.find(([k]) => k === c) || [])[1] || '');
+      return this.setState({ toast: { kind: 'warn', t: 'Contribuyente local: sólo 1 jurisdicción', d: rz + ' ya tiene ' + d.jur.map(nom).join(', ') + '. Destildala para elegir otra, o cambiá el tipo a Convenio Multilateral.' } });
     }
-    this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ cond: '—', per: '—' }, st.cliFiscal[rz], { cuit: cuitF }) })), toast: { kind: 'ok', t: 'CUIT actualizado', d: rz + ': ' + cuitF + '.' } }));
+    this.cliBorrador(rz, (x) => ({ jur: (on ? [...new Set(x.jur.concat([cod]))] : x.jur.filter(c => c !== cod)).sort() }));
   }
 
-  async guardarCond(rz, cond) {
-    const c = this.COND_IVA.includes(cond) ? cond : '—';
-    this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ cuit: '—', per: '—' }, st.cliFiscal[rz], { cond: c }) })) }));
-    await this.fichaSet(rz, { cond: c }, 'Condición IVA actualizada', rz + ': ' + (c === '—' ? 'sin definir' : c) + (c === 'Responsable Inscripto' ? '. Aparece en el Liquidador IVA.' : '. No aparece en el Liquidador IVA.'));
-  }
-
-  async guardarIibb(rz, tipo) {
-    const t = this.IIBB_TIPOS.includes(tipo) ? tipo : '';
-    const v = this.iibbValida(t, this.jurisDe(rz));
-    await this.fichaSet(rz, { iibb: t }, 'Ingresos Brutos actualizado', rz + ': ' + (t || 'sin definir') + (v.ok ? '.' : '. ' + v.t));
-  }
-
-  async toggleJur(rz, cod, on) {
-    const tipo = this.iibbDe(rz), jur = this.jurisDe(rz), nom = (c) => c + ' - ' + ((this.JURIS.find(([k]) => k === c) || [])[1] || '');
-    if (on && tipo === 'Local' && jur.length >= 1 && !jur.includes(cod))
-      return this.setState({ toast: { kind: 'warn', t: 'Contribuyente local: sólo 1 jurisdicción', d: rz + ' ya tiene ' + jur.map(nom).join(', ') + '. Destildala para elegir otra, o cambiá el tipo a Convenio Multilateral.' } });
-    const nueva = (on ? [...new Set(jur.concat([cod]))] : jur.filter(c => c !== cod)).sort();
-    await this.fichaSet(rz, { jur: nueva });
-  }
-
-  // Actividad i de la tarjeta (i = largo de la lista → agregar una nueva). Código vacío = quitarla.
-  async actCommit(rz, i, txt) {
-    const acts = (((this.state.cliFicha || {})[rz] || {}).act || []).slice(), cod = String(txt || '').replace(/\D/g, '');
-    if (!cod) { if (i >= acts.length) return; acts.splice(i, 1); }
-    else {
-      if (acts[i] === cod) return;
-      const p = this.actParse(cod);
-      if (p.malos.length) return this.setState({ toast: { kind: 'warn', t: 'Código de actividad inexistente', d: cod + ' no está en el nomenclador NAES.' } });
-      if (acts.includes(cod)) return this.setState({ toast: { kind: 'warn', t: 'Actividad repetida', d: rz + ' ya tiene la actividad ' + cod + '.' } });
-      if (i < acts.length) acts[i] = cod; else acts.push(cod);
+  async cliGuardar(rz) {
+    const s = this.state, d = (s.cliEdit || {})[rz];
+    if (!d || d.busy) return;
+    const warn = (t, dd) => this.setState({ toast: { kind: 'warn', t, d: dd } });
+    const cp = this.cuitParse(d.cuit);
+    if (!cp.ok) return warn('CUIT inválido', 'El CUIT tiene que tener 11 dígitos numéricos (con o sin guiones).');
+    if (this.CIERRE_OPTS.indexOf(d.cierre) < 0) return warn('Cierre de ejercicio inválido', 'Elegí el último día de un mes.');
+    const acts = [...new Set(d.acts.map(x => String(x || '').replace(/\D/g, '')).filter(Boolean))], ap = this.actParse(acts.join(','));
+    if (ap.malos.length) return warn('Código de actividad inexistente', ap.malos.join(', ') + ' no está en el nomenclador NAES.');
+    const iibb = this.IIBB_TIPOS.includes(d.iibb) ? d.iibb : '', jur = iibb && iibb !== 'No inscripto' ? d.jur.slice().sort() : [];
+    const v = this.iibbValida(iibb, jur);
+    if (!v.ok) return warn('Revisá Ingresos Brutos', v.t);
+    const cond = this.COND_IVA.includes(d.cond) ? d.cond : '—', prorr = this.PRORR_OPTS.some(o => o.v === d.prorr) ? d.prorr : 'general';
+    this.cliBorrador(rz, () => ({ busy: true }));
+    try {
+      const cuitF = cp.d ? this.cuitFmt(cp.d) : '—', antes = ((s.cliFiscal || {})[rz] || {}).cuit || '—', sb = this.sb();
+      if (cuitF !== antes && sb && this._user) { const r = await sb.from('clientes').update({ cuit: cp.d ? cuitF : null }).eq('nombre', rz); if (r.error) throw r.error; }
+      this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ per: '—' }, st.cliFiscal[rz], { cuit: cuitF, cond }) })) }));
+      const prev = (this.state.cliFicha || {})[rz] || {};
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prev, { cierre: d.cierre, cond, prorr, act: acts, iibb, jur }) }));
+      if (((this.state.cliSistema || {})[rz] || 'Bejerman') !== d.sis) await this.guardarSistema(rz, d.sis, true);
+      if (this.duenoDe(rz) !== (d.usr || '')) this.cartMover(rz, d.usr || null);
+      const me = this.me();
+      this.cliCancelar(rz);
+      this.setState(st => ({
+        audExtra: [{ f: this.ahora(), u: me.short, a: 'Ficha de cliente editada', c: rz, p: '—', r: 'Desde Clientes', ip: '—' }].concat(st.audExtra),
+        toast: { kind: 'ok', t: 'Cliente guardado', d: rz + ': datos actualizados.' + (cond === 'Responsable Inscripto' ? '' : ' No aparece en el Liquidador IVA (no es Responsable Inscripto).') }
+      }));
+    } catch (e) {
+      this.cliBorrador(rz, () => ({ busy: false }));
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar ' + rz, d: String(e && e.message || e) } });
     }
-    await this.fichaSet(rz, { act: acts }, 'Actividades actualizadas', rz + ': ' + (acts.length ? acts.join(', ') : 'sin actividades') + '.');
-  }
-
-  // Borrador de un campo de texto de la tarjeta (CUIT, códigos de actividad): se guarda al salir del campo o con Enter.
-  cliEdSet(k) { return (e) => { const v = e.target.value; this.setState(st => ({ cliEd: Object.assign({}, st.cliEd, { [k]: v }) })); }; }
-
-  cliEdFin(k, fn) {
-    return () => {
-      const ed = this.state.cliEd || {};
-      if (!(k in ed)) return;
-      const v = ed[k], resto = Object.assign({}, ed);
-      delete resto[k];
-      this.setState({ cliEd: resto });
-      fn(v);
-    };
   }
 
   actDesc(cod) { return (this.state.naes || {})[String(cod).trim()] || ''; }
@@ -8654,42 +8671,50 @@ class Component extends DCLogic {
       const per = ult ? ult.per : (this._user ? '—' : (f.per || '—'));
       const fi = (s.cliFicha || {})[rz] || {}, cierre = this.cierreDe(fi);
       const cd = String(f.cuit || '').replace(/\D/g, ''), cuit = cd.length === 11 ? this.cuitFmt(cd) : (f.cuit || '—');
-      const cond = this.condEf(rz) !== '—' ? this.condEf(rz) : (f.cond || '—'), iibb = this.iibbDe(rz), jur = this.jurisDe(rz);
-      const ab = s.cliAb || {}, ed = s.cliEd || {}, kAb = (x) => rz + '|' + x;
-      const togg = (x) => () => this.setState(st => ({ cliAb: Object.assign({}, st.cliAb, { [kAb(x)]: !(st.cliAb || {})[kAb(x)] }) }));
-      // Actividades: una fila por código (editable) + una vacía para agregar; la descripción sale del nomenclador NAES.
+      const cond = this.condEf(rz) !== '—' ? this.condEf(rz) : (f.cond || '—'), iibb = this.iibbDe(rz), jurG = this.jurisDe(rz);
+      const sis = (s.cliSistema || {})[rz] || 'Bejerman', prorr = this.prorrModo(rz), usr = owner[rz] || '';
       const actsL = (fi.act || []).map(String), hayNaes = Object.keys(s.naes || {}).length > 0;
-      const acts = actsL.concat(['']).map((cod0, i) => {
-        const k = 'act|' + rz + '|' + i, cod = k in ed ? ed[k] : cod0, d = cod ? this.actDesc(cod.replace(/\D/g, '')) : '';
-        return { cod, ph: i < actsL.length ? '' : 'Agregar…', set: this.cliEdSet(k), fin: this.cliEdFin(k, (v) => this.actCommit(rz, i, v)),
-          desc: !cod ? (i < actsL.length ? 'Sin código: se quita al salir del campo' : 'Escribí el código y aparece la actividad') : (d || (hayNaes ? 'No existe en el nomenclador NAES' : 'Sin nomenclador NAES cargado')),
-          dc: !cod ? '#9AA9B7' : (d ? '#1B2733' : '#B3261E'), xv: i < actsL.length ? 'visible' : 'hidden',
-          quitar: () => this.actCommit(rz, i, '') };
+      // Borrador de edición (null = sólo lectura). V = lo que se muestra: el borrador o lo guardado.
+      const dr = (s.cliEdit || {})[rz], ed = !!dr;
+      const V = ed ? dr : { cuit, cierre, sis, usr, cond, prorr, iibb, jur: jurG, acts: actsL };
+      const jur = V.jur, tipo = V.iibb;
+      const set = ['cuit', 'cierre', 'sis', 'usr', 'cond', 'prorr', 'iibb'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.cliBorrador(rz, () => ({ [k]: v })); } }), {});
+      const ab = s.cliAb || {}, kAb = (x) => rz + '|' + x;
+      const togg = (x) => () => this.setState(st => ({ cliAb: Object.assign({}, st.cliAb, { [kAb(x)]: !(st.cliAb || {})[kAb(x)] }) }));
+      const abre = (x) => ed || !!ab[kAb(x)];
+      const nomJ = (c) => (this.JURIS.find(([k]) => k === c) || [])[1] || '';
+      const descAct = (cod) => { const c = String(cod || '').replace(/\D/g, ''), d = c ? this.actDesc(c) : ''; return { d, txt: !c ? (ed ? 'Escribí el código y aparece la actividad' : '') : (d || (hayNaes ? 'No existe en el nomenclador NAES' : 'Sin nomenclador NAES cargado')), col: !c ? '#9AA9B7' : (d ? '#1B2733' : '#B3261E') }; };
+      const acts = (ed ? V.acts.concat(['']) : actsL).map((cod, i) => {
+        const x = descAct(cod), nueva = ed && i === V.acts.length;
+        return { cod, ed, ver: !ed, ph: nueva ? 'Agregar…' : '', desc: x.txt, dc: x.col, xv: ed && !nueva ? 'visible' : 'hidden',
+          set: (e) => { const v = e.target.value; this.cliBorrador(rz, (b) => { const a = b.acts.slice(); a[i] = v; while (a.length && !a[a.length - 1]) a.pop(); return { acts: a }; }); },
+          quitar: () => this.cliBorrador(rz, (b) => { const a = b.acts.slice(); a.splice(i, 1); return { acts: a }; }) };
       });
-      const iv = this.iibbValida(iibb, jur), liqIibb = iibb === 'Local' || iibb === 'Convenio Multilateral';
-      const ri = cond === 'Responsable Inscripto';
-      const sec = (x, t, res, rc) => ({ t, res, rc: rc || '#5A6B7B', ico: ab[kAb(x)] ? '−' : '+', bg: ab[kAb(x)] ? '#EEF3F8' : '#fff', bd: ab[kAb(x)] ? '#14395C' : '#D5DEE7', toggle: togg(x), tip: (ab[kAb(x)] ? 'Ocultar ' : 'Ver ') + t });
-      return { rz, cuit, cond, per, cierre, users: owner[rz] || 'Pendiente de asignación', est: 'Activo', st: E['Activo'],
-        sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
-        prorr: this.prorrModo(rz), prorrSet: (e) => this.guardarProrr(rz, e.target.value),
-        cuitIn: ('cuit|' + rz) in ed ? ed['cuit|' + rz] : (cuit === '—' ? '' : cuit), cuitSet: this.cliEdSet('cuit|' + rz), cuitFin: this.cliEdFin('cuit|' + rz, (v) => this.guardarCuit(rz, v)),
-        enter: (e) => { if (e.key === 'Enter') e.target.blur(); },
-        cierreSet: (e) => this.fichaSet(rz, { cierre: e.target.value }, 'Cierre de ejercicio actualizado', rz + ': ' + e.target.value + '.'),
-        usr: owner[rz] || '', usrFg: owner[rz] ? '#1B2733' : '#B7791F', usrSet: (e) => this.cartMover(rz, e.target.value || null),
-        condSet: (e) => this.guardarCond(rz, e.target.value), perTxt: per === '—' ? 'Sin liquidar' : per,
+      const iv = this.iibbValida(tipo, jur), liqIibb = tipo === 'Local' || tipo === 'Convenio Multilateral';
+      const ri = V.cond === 'Responsable Inscripto';
+      const sec = (x, t, res, rc) => ({ t, res, rc: rc || '#5A6B7B', ico: abre(x) ? '−' : '+', bg: abre(x) ? '#F7F9FB' : '#fff', toggle: togg(x), tip: (abre(x) ? 'Ocultar ' : 'Ver ') + t });
+      const actsR = actsL;
+      return { rz, cuit, cond, per, cierre, sis, prorr, iibb, users: owner[rz] || 'Pendiente de asignación', usrFg: owner[rz] ? '#1B2733' : '#B7791F', est: 'Activo', st: E['Activo'],
+        ed, ver: !ed, d: V, set, bd: ed ? '#14395C' : '#E3E8EE', sh: ed ? '0 0 0 3px rgba(20,57,92,.08)' : 'none',
+        editar: () => this.cliEditar(rz, { cuit: cuit === '—' ? '' : cuit, cierre, sis, usr, cond, prorr, iibb, jur: jurG.slice(), acts: actsL.slice() }),
+        cancelar: () => this.cliCancelar(rz), guardar: () => this.cliGuardar(rz),
+        gTxt: dr && dr.busy ? 'Guardando…' : 'Guardar', gOp: dr && dr.busy ? .6 : 1,
+        condTxt: cond === '—' ? 'Sin definir' : cond, prorrTxt: this.prorrModoLbl(prorr), iibbTxt: iibb === '—' ? 'Sin definir' : iibb,
+        perTxt: per === '—' ? 'Sin liquidar' : per,
         ivaNota: ri ? 'Pasa al Liquidador IVA.' : 'No aparece en el Liquidador IVA: sólo se liquidan los Responsables Inscriptos.', ivaNotaC: ri ? '#2E7D5B' : '#B7791F',
-        iibb, iibbSet: (e) => this.guardarIibb(rz, e.target.value), iibbPer: fi.iibbPer || 'Sin liquidar',
-        iibbNota: liqIibb ? (iv.ok ? 'Pasa al Liquidador de Ingresos Brutos.' : 'Todavía no pasa al Liquidador de Ingresos Brutos: corregí las jurisdicciones.') : 'No aparece en el Liquidador de Ingresos Brutos: sólo se liquidan Local y Convenio Multilateral.', iibbNotaC: liqIibb && iv.ok ? '#2E7D5B' : '#B7791F',
-        jurOn: iibb !== '—' && iibb !== 'No inscripto', jurN: jur.length === 1 ? '1 tildada' : jur.length + ' tildadas',
+        iibbPer: fi.iibbPer || 'Sin liquidar',
+        iibbNota: liqIibb ? (iv.ok ? 'Pasa al Liquidador de Ingresos Brutos.' : 'Todavía no pasa al Liquidador de Ingresos Brutos: corregí las jurisdicciones.') : 'No aparece en el Liquidador de Ingresos Brutos: sólo se liquidan Local y Convenio Multilateral.',
+        iibbNotaC: liqIibb && iv.ok ? '#2E7D5B' : '#B7791F',
+        jurOn: tipo !== '—' && tipo !== '' && tipo !== 'No inscripto', jurN: jur.length === 1 ? '1 tildada' : jur.length + ' tildadas',
         jurVal: iv.ok ? (liqIibb ? 'OK' : '') : iv.t, jurValC: iv.ok ? '#2E7D5B' : '#B3261E',
-        jurs: this.JURIS.map(([k, n]) => { const on = jur.includes(k); return { l: k + ' - ' + n, on, fg: on ? '#14395C' : '#1B2733', bg: on ? '#EEF3F8' : 'transparent', toggle: (e) => this.toggleJur(rz, k, e.target.checked) }; }),
-        acts, actHint: hayNaes ? 'Escribí el código NAES: la descripción sale sola del nomenclador (no se edita). Borrá el código para quitar la actividad.' : 'Para ver las descripciones cargá el nomenclador NAES con «Importar tabla de clientes» (hoja NAES).',
-        abAct: !!ab[kAb('act')], abIva: !!ab[kAb('iva')], abIibb: !!ab[kAb('iibb')],
-        secs: [
-          sec('act', 'Actividades', actsL.length ? actsL.length + ' · ' + actsL[0] + (this.actDesc(actsL[0]) ? ' ' + this.actDesc(actsL[0]) : '') + (actsL.length > 1 ? ' y ' + (actsL.length - 1) + ' más' : '') : 'Sin actividades', actsL.length ? '' : '#B7791F'),
-          sec('iva', 'IVA', (cond === '—' ? 'Sin condición' : cond) + ' · ' + (per === '—' ? 'sin liquidar' : 'últ. ' + per), ri ? '' : '#B7791F'),
-          sec('iibb', 'Ingresos Brutos', iibb === '—' ? 'Sin definir' : iibb + (jur.length ? ' · ' + (jur.length === 1 ? (this.JURIS.find(([k]) => k === jur[0]) || [])[1] : jur.length + ' jurisdicciones') : '') + (iv.ok ? '' : ' · revisar'), iibb === '—' || !iv.ok ? '#B7791F' : '')
-        ],
+        jurTxt: jur.length ? jur.map(c => c + ' - ' + nomJ(c)).join(' · ') : 'Ninguna tildada. Tocá «Editar» para elegirlas.',
+        jurs: this.JURIS.map(([k, n]) => { const on = jur.includes(k); return { l: k + ' - ' + n, on, fg: on ? '#14395C' : '#1B2733', bg: on ? '#EEF3F8' : 'transparent', toggle: (e) => this.cliJur(rz, k, e.target.checked) }; }),
+        acts, sinActs: !ed && !actsL.length,
+        actHint: hayNaes ? 'Escribí el código NAES: la descripción sale sola del nomenclador (no se edita). Con × se quita la actividad.' : 'Para ver las descripciones cargá el nomenclador NAES con «Importar tabla de clientes» (hoja NAES).',
+        abAct: abre('act'), abIva: abre('iva'), abIibb: abre('iibb'),
+        sAct: sec('act', 'Actividades', actsR.length ? actsR.length + ' · ' + actsR[0] + (this.actDesc(actsR[0]) ? ' ' + this.actDesc(actsR[0]) : '') + (actsR.length > 1 ? ' y ' + (actsR.length - 1) + ' más' : '') : 'Sin actividades', actsR.length ? '' : '#B7791F'),
+        sIva: sec('iva', 'IVA', (cond === '—' ? 'Sin condición' : cond) + ' · ' + (per === '—' ? 'sin liquidar' : 'últ. ' + per) + ' · ' + this.prorrModoLbl(prorr), cond === 'Responsable Inscripto' ? '' : '#B7791F'),
+        sIibb: sec('iibb', 'Ingresos Brutos', iibb === '—' ? 'Sin definir' : iibb + (jurG.length ? ' · ' + (jurG.length === 1 ? nomJ(jurG[0]) : jurG.length + ' jurisdicciones') : '') + (this.iibbValida(iibb, jurG).ok ? '' : ' · revisar'), iibb === '—' || !this.iibbValida(iibb, jurG).ok ? '#B7791F' : ''),
         abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
     });
 
@@ -8936,7 +8961,7 @@ class Component extends DCLogic {
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
       cliMostrando: clientesVis.length === clientes.length
-        ? 'Mostrando los ' + clientes.length + ' clientes · tocá «+» para ver Actividades, IVA e Ingresos Brutos'
+        ? 'Mostrando los ' + clientes.length + ' clientes · tocá «+» para ver Actividades, IVA e Ingresos Brutos y «Editar» para cambiar los datos'
         : 'Mostrando ' + clientesVis.length + ' de ' + clientes.length + ' (filtrado)',
       clientesVis, cliVacio: clientesVis.length === 0, cliF: F,
       cliBuscar: setF('q'), cliFiltroEst: setF('est'), cliFiltroPer: setF('per'), cliFiltroUsr: setF('usr'),
