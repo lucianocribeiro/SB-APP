@@ -342,7 +342,8 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:14px 16px 12px">
 <div style="flex:1 1 220px;min-width:0">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Razón social</div>
-<div onClick="{{ c.abrir }}" title="Abrir la ficha del cliente" style="font:700 14.5px/1.3 'Open Sans';color:#14395C;cursor:pointer;overflow-wrap:anywhere" style-hover="text-decoration:underline">{{ c.rz }}</div>
+<sc-if value="{{ c.ed }}"><input value="{{ c.d.rz }}" onChange="{{ c.set.rz }}" placeholder="Razón social" title="Si cambiás la razón social se actualiza en todo el historial" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-weight:600"></sc-if>
+<sc-if value="{{ c.ver }}"><div style="font:700 14.5px/1.3 'Open Sans';color:#14395C;overflow-wrap:anywhere">{{ c.rz }}</div></sc-if>
 </div>
 <div style="flex:0 0 140px">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">CUIT</div>
@@ -366,11 +367,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div style="flex:0 0 auto">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Estado</div>
-<span style="display:inline-block;padding:4px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span>
+<sc-if value="{{ c.ed }}"><select value="{{ c.d.est }}" onChange="{{ c.set.est }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></sc-if>
+<sc-if value="{{ c.ver }}"><span style="display:inline-block;margin:3px 0;padding:4px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span></sc-if>
 </div>
 <div style="flex:0 0 auto;display:flex;gap:8px;align-items:center;margin-left:auto">
 <sc-if value="{{ c.ver }}">
-<span onClick="{{ c.abrir }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer;margin-right:4px">Abrir ficha</span>
 <button onClick="{{ c.editar }}" style="padding:7px 13px;background:#fff;color:#14395C;border:1px solid #14395C;border-radius:6px;font:600 12.5px 'Open Sans';cursor:pointer" style-hover="background:#F4F9FD">Editar</button>
 </sc-if>
 <sc-if value="{{ c.ed }}">
@@ -382,8 +383,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="border-top:1px solid #EEF1F4">
 <div onClick="{{ c.sAct.toggle }}" title="{{ c.sAct.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sAct.bg }};user-select:none" style-hover="background:#F4F7FA">
 <span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sAct.ico }}</span>
-<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sAct.t }}</span>
-<span style="font:400 12.5px 'Open Sans';color:{{ c.sAct.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sAct.res }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sAct.t }}</span>
 </div>
 <sc-if value="{{ c.abAct }}">
 <div style="padding:4px 16px 15px 46px;background:#FAFBFD">
@@ -391,9 +391,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 24px;gap:7px 12px;align-items:center;max-width:820px">
 <sc-for list="{{ c.acts }}" as="a" hint-placeholder-count="2">
 <sc-if value="{{ a.ed }}"><input value="{{ a.cod }}" onChange="{{ a.set }}" placeholder="{{ a.ph }}" inputmode="numeric" maxlength="6" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums"></sc-if>
-<sc-if value="{{ a.ver }}"><div style="font:600 13px 'Open Sans';color:#1B2733;font-variant-numeric:tabular-nums">{{ a.cod }}</div></sc-if>
+<sc-if value="{{ a.ver }}"><div style="font:600 13px 'Open Sans';color:#1B2733;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">{{ a.cod }}</div></sc-if>
 <div style="font:400 13px/1.35 'Open Sans';color:{{ a.dc }}">{{ a.desc }}</div>
-<span onClick="{{ a.quitar }}" title="Quitar esta actividad" style="visibility:{{ a.xv }};font:600 16px/1 'Open Sans';color:#9AA9B7;cursor:pointer;text-align:center" style-hover="color:#B3261E">×</span>
+<span onClick="{{ a.quitar }}" title="Quitar" style="visibility:{{ a.xv }};font:600 16px/1 'Open Sans';color:#9AA9B7;cursor:pointer;text-align:center" style-hover="color:#B3261E">×</span>
 </sc-for>
 </div>
 <sc-if value="{{ c.ed }}"><div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:9px">{{ c.actHint }}</div></sc-if>
@@ -403,8 +403,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="border-top:1px solid #EEF1F4">
 <div onClick="{{ c.sIva.toggle }}" title="{{ c.sIva.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sIva.bg }};user-select:none" style-hover="background:#F4F7FA">
 <span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sIva.ico }}</span>
-<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sIva.t }}</span>
-<span style="font:400 12.5px 'Open Sans';color:{{ c.sIva.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sIva.res }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sIva.t }}</span>
 </div>
 <sc-if value="{{ c.abIva }}">
 <div style="padding:4px 16px 15px 46px;background:#FAFBFD">
@@ -414,22 +413,21 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <sc-if value="{{ c.ed }}"><select value="{{ c.d.cond }}" onChange="{{ c.set.cond }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:190px"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
 <sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.condTxt }}</div></sc-if>
 </div>
-<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.perTxt }}</div></div>
 <div style="">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Prorrateo</div>
 <sc-if value="{{ c.ed }}"><select value="{{ c.d.prorr }}" onChange="{{ c.set.prorr }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:160px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if>
 <sc-if value="{{ c.ver }}"><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.prorrTxt }}</div></sc-if>
 </div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.perTxt }}</div></div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Saldo</div><div style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0;display:flex;align-items:center;gap:8px"><sc-if value="{{ c.saldo.hay }}"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.saldo.bg }};color:{{ c.saldo.fg }};border:1px solid {{ c.saldo.bd }}">{{ c.saldo.tag }}</span></sc-if><span style="font-weight:600;color:{{ c.saldo.fg }};font-variant-numeric:tabular-nums">{{ c.saldo.v }}</span></div></div>
 </div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.ivaNotaC }};margin-top:8px">{{ c.ivaNota }}</div>
 </div>
 </sc-if>
 </div>
 <div style="border-top:1px solid #EEF1F4">
 <div onClick="{{ c.sIibb.toggle }}" title="{{ c.sIibb.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sIibb.bg }};user-select:none" style-hover="background:#F4F7FA">
 <span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sIibb.ico }}</span>
-<span style="font:600 13px 'Open Sans';color:#14395C;flex:0 0 130px">{{ c.sIibb.t }}</span>
-<span style="font:400 12.5px 'Open Sans';color:{{ c.sIibb.rc }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.sIibb.res }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sIibb.t }}</span>
 </div>
 <sc-if value="{{ c.abIibb }}">
 <div style="padding:4px 16px 15px 46px;background:#FAFBFD">
@@ -441,11 +439,10 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div><div title="Último período liquidado en el módulo de Ingresos Brutos" style="font:400 13.5px/1.3 'Open Sans';color:#1B2733;padding:6px 0">{{ c.iibbPer }}</div></div>
 </div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.iibbNotaC }};margin-top:8px">{{ c.iibbNota }}</div>
 <sc-if value="{{ c.jurOn }}">
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0 8px">
 <div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Jurisdicciones · {{ c.jurN }}</div>
-<div style="font:600 12.5px 'Open Sans';color:{{ c.jurValC }}">{{ c.jurVal }}</div>
+<div style="font:600 12.5px 'Open Sans';color:#B3261E">{{ c.jurVal }}</div>
 </div>
 <sc-if value="{{ c.ver }}"><div style="font:400 13px/1.5 'Open Sans';color:#1B2733">{{ c.jurTxt }}</div></sc-if>
 <sc-if value="{{ c.ed }}">
@@ -459,148 +456,76 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 </sc-if>
 </div>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sLiq.toggle }}" title="{{ c.sLiq.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sLiq.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sLiq.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sLiq.t }}</span>
+</div>
+<sc-if value="{{ c.abLiq }}">
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<sc-if value="{{ c.sinLiqs }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7;padding:6px 0">Todavía no hay liquidaciones de este cliente.</div></sc-if>
+<sc-if value="{{ c.hayLiqs }}">
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:720px">
+<thead><tr><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Período</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Secuencia</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Fecha</th><th style="text-align:right;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Débito fiscal</th><th style="text-align:right;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Crédito fiscal</th><th style="text-align:right;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2° párrafo</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Estado</th></tr></thead>
+<tbody><sc-for list="{{ c.liqs }}" as="r" hint-placeholder-count="3"><tr style-hover="background:#F4F7FA">
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap"><span onClick="{{ r.ver }}" title="Ver la liquidación" style="font-weight:600;color:#14395C;cursor:pointer">{{ r.per }}</span></td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;color:#5A6B7B">{{ r.fecha }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{{ r.sc }}">{{ r.saldo }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }}">{{ r.st.label }}</span></td>
+</tr></sc-for></tbody></table></div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sCru.toggle }}" title="{{ c.sCru.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sCru.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sCru.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sCru.t }}</span>
+</div>
+<sc-if value="{{ c.abCru }}">
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<sc-if value="{{ c.sinCrus }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7;padding:6px 0">Todavía no hay cruces de este cliente.</div></sc-if>
+<sc-if value="{{ c.hayCrus }}">
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:680px">
+<thead><tr><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Tipo de cruce</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Período</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Fecha</th><th style="text-align:right;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Registros</th><th style="text-align:right;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Con diferencias</th><th style="text-align:left;font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;padding:8px 10px;border-bottom:1px solid #E3E8EE;white-space:nowrap">Estado</th></tr></thead>
+<tbody><sc-for list="{{ c.crus }}" as="r" hint-placeholder-count="3"><tr>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;font-weight:600;color:#14395C;white-space:normal">{{ r.tipo }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap">{{ r.per }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;color:#5A6B7B">{{ r.fecha }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums">{{ r.regs }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{{ r.difC }}">{{ r.dif }}</td>
+<td style="font:400 13px 'Open Sans';padding:8px 10px;border-bottom:1px solid #EEF1F4;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }}">{{ r.st.label }}</span></td>
+</tr></sc-for></tbody></table></div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<div style="border-top:1px solid #EEF1F4">
+<div onClick="{{ c.sMail.toggle }}" title="{{ c.sMail.tip }}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:{{ c.sMail.bg }};user-select:none" style-hover="background:#F4F7FA">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ c.sMail.ico }}</span>
+<span style="font:600 13px 'Open Sans';color:#14395C">{{ c.sMail.t }}</span>
+</div>
+<sc-if value="{{ c.abMail }}">
+<div style="padding:4px 16px 15px 46px;background:#FAFBFD">
+<sc-if value="{{ c.sinMails }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7;padding:6px 0">Sin mails de contacto. Tocá «Editar» para agregarlos.</div></sc-if>
+<div style="display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr) 24px;gap:7px 12px;align-items:center;max-width:820px">
+<sc-for list="{{ c.mails }}" as="a" hint-placeholder-count="2">
+<sc-if value="{{ a.ed }}"><input value="{{ a.cod }}" onChange="{{ a.set }}" placeholder="{{ a.ph }}" type="email" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums"></sc-if>
+<sc-if value="{{ a.ver }}"><div style="font:600 13px 'Open Sans';color:#1B2733;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">{{ a.cod }}</div></sc-if>
+<div style="font:400 13px/1.35 'Open Sans';color:{{ a.dc }}">{{ a.desc }}</div>
+<span onClick="{{ a.quitar }}" title="Quitar" style="visibility:{{ a.xv }};font:600 16px/1 'Open Sans';color:#9AA9B7;cursor:pointer;text-align:center" style-hover="color:#B3261E">×</span>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
 </div>
 </sc-for>
 <div style="font:400 12.5px 'Open Sans';color:#5A6B7B;padding:2px 2px 0">{{ cliMostrando }}</div>
 </div>
-</sc-if>
-
-<sc-if value="{{ scr.clienteFicha }}">
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
-<div>
-<div style="display:flex;align-items:center;gap:10px">
-<div style="font:600 22px/1.2 'Open Sans'">{{ fichaRz }}</div>
-<span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:#E8F3EE;color:#2E7D5B;border:1px solid #C7E3D6">Activo</span>
-</div>
-<div style="font:400 13.5px/1.5 'Open Sans';color:#5A6B7B;margin-top:4px">{{ fichaSub }}</div>
-</div>
-<div style="display:flex;gap:9px;flex-wrap:wrap">
-<sc-if value="{{ fichaPuedeEditar }}">
-<button onClick="{{ fichaEditar }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#F4F9FD">Editar ficha</button>
-</sc-if>
-<button onClick="{{ go.clientes }}" style="padding:9px 14px;background:#fff;color:#14395C;border:1px solid #D5DEE7;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="border-color:#14395C">Volver al listado</button>
-<button onClick="{{ go.liqNueva }}" style="padding:9px 14px;background:#14395C;color:#fff;border:1px solid #14395C;border-radius:6px;font:600 13px 'Open Sans';cursor:pointer" style-hover="background:#0E2A45">Nueva liquidación</button>
-</div>
-</div>
-<div style="display:flex;gap:2px;border-bottom:1px solid #E3E8EE">
-<sc-for list="{{ cliTabs }}" as="t" hint-placeholder-count="4">
-<div onClick="{{ t.go }}" style="padding:10px 15px;cursor:pointer;font:600 13.5px 'Open Sans';color:{{ t.fg }};border-bottom:2px solid {{ t.bar }};margin-bottom:-1px" style-hover="color:#14395C">{{ t.label }}</div>
-</sc-for>
-</div>
-<sc-if value="{{ cliTab.resumen }}">
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px">
-<sc-for list="{{ kpisCliente }}" as="k" hint-placeholder-count="4">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:15px 16px">
-<div style="font:600 11px/1.3 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#5A6B7B;min-height:28px">{{ k.label }}</div>
-<div style="font:600 26px/1 'Open Sans';margin-top:8px;color:{{ k.color }}">{{ k.value }}</div>
-</div>
-</sc-for>
-</div>
-<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px">
-<div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Datos fiscales</div>
-<div style="padding:4px 16px 12px">
-<sc-for list="{{ datosFiscales }}" as="d" hint-placeholder-count="5">
-<div style="display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #EEF1F4">
-<span style="font:400 13px 'Open Sans';color:#5A6B7B">{{ d.k }}</span>
-<span style="font:600 13px 'Open Sans';text-align:right">{{ d.v }}</span>
-</div>
-</sc-for>
-</div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px">
-<div style="padding:13px 16px;border-bottom:1px solid #E3E8EE;font:600 14.5px 'Open Sans'">Actividad reciente</div>
-<div>
-<sc-for list="{{ actividadCliente }}" as="a" hint-placeholder-count="5">
-<div style="padding:11px 16px;border-bottom:1px solid #EEF1F4;display:flex;justify-content:space-between;gap:12px">
-<span style="font:400 13px/1.4 'Open Sans'">{{ a.t }}</span>
-<span style="font:400 12.5px 'Open Sans';color:#9AA9B7;white-space:nowrap">{{ a.when }}</span>
-</div>
-</sc-for>
-</div>
-</div>
-</div>
-</sc-if>
-<sc-if value="{{ cliTab.liquidaciones }}">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:760px">
-<thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Secuencia</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Débito fiscal</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Crédito fiscal</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Saldo 2do párrafo</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
-</tr></thead>
-<tbody>
-<sc-for list="{{ liqCliente }}" as="r" hint-placeholder-count="5">
-<tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span onClick="{{ r.ver }}" style="cursor:pointer;color:#14395C">{{ r.per }}</span></td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font:600 11.5px/1.5 'Open Sans';background:{{ r.seqBg }};color:{{ r.seqFg }};border:1px solid {{ r.seqBd }}">Sec. {{ r.seq }} · {{ r.seqTipo }}</span></td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.df }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.cf }}</td>
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:{{ r.sc }}">{{ r.saldo }}</td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }}">{{ r.st.label }}</span></td>
-</tr>
-</sc-for>
-</tbody>
-</table>
-</div>
-</sc-if>
-<sc-if value="{{ cliTab.cruces }}">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:720px">
-<thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Tipo de cruce</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Fecha</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Registros</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Con diferencias</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE">Estado</th>
-</tr></thead>
-<tbody>
-<sc-for list="{{ crucesCliente }}" as="r" hint-placeholder-count="3">
-<tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="color:#14395C">{{ r.tipo }}</span></td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE">{{ r.per }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ r.fecha }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums">{{ r.regs }}</td>
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;font-variant-numeric:tabular-nums;color:#B7791F">{{ r.dif }}</td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ r.st.bg }};color:{{ r.st.fg }};border:1px solid {{ r.st.bd }}">{{ r.st.label }}</span></td>
-</tr>
-</sc-for>
-</tbody>
-</table>
-</div>
-</sc-if>
-<sc-if value="{{ cliTab.config }}">
-<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
-<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Mails de notificación</div>
-<div style="display:flex;flex-direction:column;gap:7px">
-<sc-for list="{{ fichaMails }}" as="m" hint-placeholder-count="2">
-<div style="font:400 13px 'Open Sans';color:#1B2733">{{ m.m }}</div>
-</sc-for>
-<sc-if value="{{ fichaSinMails }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7">Sin mails cargados. Agregalos con «Editar ficha».</div></sc-if>
-</div>
-</div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;padding:16px">
-<div style="font:600 14.5px 'Open Sans';margin-bottom:12px">Usuario asignado</div>
-<div style="font:400 12.5px/1.45 'Open Sans';color:#5A6B7B;margin-bottom:10px">La asignación se gestiona en Usuarios y roles.</div>
-<sc-for list="{{ asignados }}" as="u" hint-placeholder-count="3">
-<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #EEF1F4">
-<div style="width:27px;height:27px;border-radius:6px;background:#EEF1F4;color:#14395C;display:flex;align-items:center;justify-content:center;font:600 11px 'Open Sans'">{{ u.ini }}</div>
-<div style="font:600 13px 'Open Sans'">{{ u.nombre }}</div>
-<div style="flex:1"></div>
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ u.rol }}</div>
-</div>
-</sc-for>
-<sc-if value="{{ fichaSinAsignado }}"><div style="font:400 13px 'Open Sans';color:#9AA9B7">Pendiente de asignación.</div></sc-if>
-</div>
-</div>
-</sc-if>
 </sc-if>
 
 <sc-if value="{{ scr.usuarios }}">
@@ -2451,9 +2376,9 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div>
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.07em;text-transform:uppercase;color:#14395C;padding-bottom:9px;border-bottom:1px solid #E3E8EE">Notificaciones</div>
 <div style="margin-top:13px">
-<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mails destinatarios</div>
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Mails de contacto</div>
 <input placeholder="mail@cliente.com.ar, contador@blasco.com.ar" value="{{ nc.mails }}" onChange="{{ ncSet.mails }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
-<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios destinatarios con coma. Por ahora sólo se guardan los mails @blasco.com.ar: los demás se borran al guardar.</div>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Separá varios mails con coma.</div>
 </div>
 </div>
 </div>
@@ -5395,7 +5320,7 @@ class Component extends DCLogic {
   // Cómo se computa el crédito fiscal (ficha / columna Prorrateo). Default: régimen general.
   // no = Computa 0 % (Zagar / Fabialva); full = Computa 100 % (Clamaco); general = Novalux / resto.
   // Versión de front (para confirmar que el navegador no tiene HTML cacheado).
-  APP_BUILD = '2026-11-27b';
+  APP_BUILD = '2026-11-27c';
 
   PRORR_OPTS = [
     { v: 'general', l: 'Régimen general' },
@@ -5454,10 +5379,10 @@ class Component extends DCLogic {
     return this.prorrModo((o && o.cli) || this.liqCli());
   }
 
-  // Por ahora sólo se notifica al estudio: quedan los mails @blasco.com.ar.
+  // Mails de contacto del cliente (varios): quedan los que tienen formato de mail válido.
   mailsBlasco(t) {
-    const todos = String(t || '').split(/[,;\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
-    const ok = [...new Set(todos.filter(x => /^[^@\s]+@blasco\.com\.ar$/.test(x)))];
+    const todos = (Array.isArray(t) ? t : String(t || '').split(/[,;\s]+/)).map(x => String(x || '').trim().toLowerCase()).filter(Boolean);
+    const ok = [...new Set(todos.filter(x => /^[^@\s,;]+@[^@\s,;]+\.[a-z]{2,}$/.test(x)))];
     return { ok, fuera: todos.filter(x => !ok.includes(x)) };
   }
 
@@ -5529,7 +5454,7 @@ class Component extends DCLogic {
       this.setState(st => ({
         drawer: false, ncEdit: null, ncGuardando: false, fichaCli: rz,
         audExtra: [{ f: this.ahora(), u: me.short, a: renombra ? 'Cliente renombrado' : 'Ficha de cliente editada', c: rz, p: '—', r: renombra ? 'Antes: ' + viejo : 'Datos de la ficha', ip: '190.15.44.12' }].concat(st.audExtra),
-        toast: { kind: 'ok', t: 'Ficha guardada', d: (renombra ? viejo + ' ahora se llama ' + rz + (n ? ' (' + n + (n === 1 ? ' liquidación actualizada' : ' liquidaciones actualizadas') + ')' : '') + '. ' : '') + (m.fuera.length ? 'No se guardaron ' + m.fuera.join(', ') + ': por ahora sólo mails @blasco.com.ar.' : 'Datos actualizados.') }
+        toast: { kind: 'ok', t: 'Ficha guardada', d: (renombra ? viejo + ' ahora se llama ' + rz + (n ? ' (' + n + (n === 1 ? ' liquidación actualizada' : ' liquidaciones actualizadas') + ')' : '') + '. ' : '') + (m.fuera.length ? 'No se guardaron ' + m.fuera.join(', ') + ': no son mails válidos.' : 'Datos actualizados.') }
       }));
     } catch (e) {
       this.setState({ ncGuardando: false, toast: { kind: 'err', t: 'No se pudo guardar la ficha', d: String(e && e.message || e) + '. Volvé a intentar: lo que ya se cambió queda con el nombre nuevo.' } });
@@ -5548,7 +5473,9 @@ class Component extends DCLogic {
   // Sólo los Responsables Inscriptos pasan al Liquidador IVA: el resto (y los que no tienen condición cargada) no aparece como opción.
   // Sin sesión (demo) se usa la condición de ejemplo.
   condEf(rz) { const c = this.condDe(rz); return c !== '—' ? c : (this._user ? '—' : ((this.FISCAL_DEMO[rz] || {}).cond || '—')); }
-  puedeLiquidar(rz) { return this.condEf(rz) === 'Responsable Inscripto'; }
+  estadoDe(rz) { return ((this.state.cliFicha || {})[rz] || {}).estado === 'Inactivo' ? 'Inactivo' : 'Activo'; }
+
+  puedeLiquidar(rz) { return this.condEf(rz) === 'Responsable Inscripto' && this.estadoDe(rz) === 'Activo'; }
 
   // ===== Ingresos Brutos: tipo de inscripción y jurisdicciones (ficha compartida, config clientes_ficha) =====
   IIBB_TIPOS = ['Local', 'Convenio Multilateral', 'Régimen Simplificado', 'No inscripto'];
@@ -5571,7 +5498,7 @@ class Component extends DCLogic {
   }
 
   // Sólo Local y Convenio Multilateral (con sus jurisdicciones bien cargadas) pasan al Liquidador de Ingresos Brutos.
-  puedeLiquidarIibb(rz) { const t = this.iibbDe(rz); return (t === 'Local' || t === 'Convenio Multilateral') && this.iibbValida(t, this.jurisDe(rz)).ok; }
+  puedeLiquidarIibb(rz) { const t = this.iibbDe(rz); return this.estadoDe(rz) === 'Activo' && (t === 'Local' || t === 'Convenio Multilateral') && this.iibbValida(t, this.jurisDe(rz)).ok; }
 
   // Dueño actual del cliente en la cartera ('' = pendiente de asignación).
   duenoDe(rz) { return (this.CARTERA.find(([, cs]) => cs.includes(rz)) || [])[0] || ''; }
@@ -5610,6 +5537,12 @@ class Component extends DCLogic {
     const s = this.state, d = (s.cliEdit || {})[rz];
     if (!d || d.busy) return;
     const warn = (t, dd) => this.setState({ toast: { kind: 'warn', t, d: dd } });
+    const nuevo = String(d.rz || '').trim().replace(/\s+/g, ' ').toUpperCase(), renombra = nuevo !== rz;
+    if (!nuevo) return warn('Escribí la razón social', 'La razón social no puede quedar vacía.');
+    if (renombra) {
+      const existe = [].concat(...this.CARTERA.map(([, cs]) => cs), s.cartPend).find(c => c !== rz && this.fold(c) === this.fold(nuevo));
+      if (existe) return warn('Ya existe un cliente con ese nombre', existe + ' ya está cargado.');
+    }
     const cp = this.cuitParse(d.cuit);
     if (!cp.ok) return warn('CUIT inválido', 'El CUIT tiene que tener 11 dígitos numéricos (con o sin guiones).');
     if (this.CIERRE_OPTS.indexOf(d.cierre) < 0) return warn('Cierre de ejercicio inválido', 'Elegí el último día de un mes.');
@@ -5618,25 +5551,31 @@ class Component extends DCLogic {
     const iibb = this.IIBB_TIPOS.includes(d.iibb) ? d.iibb : '', jur = iibb && iibb !== 'No inscripto' ? d.jur.slice().sort() : [];
     const v = this.iibbValida(iibb, jur);
     if (!v.ok) return warn('Revisá Ingresos Brutos', v.t);
+    const ml = this.mailsBlasco(d.mails);
+    if (ml.fuera.length) return warn('Mail inválido', ml.fuera.join(', ') + ' no es un mail válido.');
     const cond = this.COND_IVA.includes(d.cond) ? d.cond : '—', prorr = this.PRORR_OPTS.some(o => o.v === d.prorr) ? d.prorr : 'general';
+    const est = d.est === 'Inactivo' ? 'Inactivo' : 'Activo';
+    if (renombra && !window.confirm('¿Cambiar el nombre de ' + rz + ' a ' + nuevo + '?\n\nSe actualizan sus liquidaciones, cruces, compensaciones y DDJJ con el nombre nuevo.')) return;
     this.cliBorrador(rz, () => ({ busy: true }));
     try {
-      const cuitF = cp.d ? this.cuitFmt(cp.d) : '—', antes = ((s.cliFiscal || {})[rz] || {}).cuit || '—', sb = this.sb();
-      if (cuitF !== antes && sb && this._user) { const r = await sb.from('clientes').update({ cuit: cp.d ? cuitF : null }).eq('nombre', rz); if (r.error) throw r.error; }
-      this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ per: '—' }, st.cliFiscal[rz], { cuit: cuitF, cond }) })) }));
-      const prev = (this.state.cliFicha || {})[rz] || {};
-      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prev, { cierre: d.cierre, cond, prorr, act: acts, iibb, jur }) }));
-      if (((this.state.cliSistema || {})[rz] || 'Bejerman') !== d.sis) await this.guardarSistema(rz, d.sis, true);
-      if (this.duenoDe(rz) !== (d.usr || '')) this.cartMover(rz, d.usr || null);
+      let R = rz, n = 0;
+      if (renombra) { n = await this.renombrarCliente(rz, nuevo); R = nuevo; }
+      const cuitF = cp.d ? this.cuitFmt(cp.d) : '—', antes = ((this.state.cliFiscal || {})[R] || {}).cuit || '—', sb = this.sb();
+      if (cuitF !== antes && sb && this._user) { const r = await sb.from('clientes').update({ cuit: cp.d ? cuitF : null }).eq('nombre', R); if (r.error) throw r.error; }
+      this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [R]: Object.assign({ per: '—' }, st.cliFiscal[R], { cuit: cuitF, cond }) })) }));
+      const prev = (this.state.cliFicha || {})[R] || {};
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [R]: Object.assign({}, prev, { cierre: d.cierre, cond, prorr, act: acts, iibb, jur, mails: ml.ok, estado: est }) }));
+      if (((this.state.cliSistema || {})[R] || 'Bejerman') !== d.sis) await this.guardarSistema(R, d.sis, true);
+      if (this.duenoDe(R) !== (d.usr || '')) this.cartMover(R, d.usr || null);
       const me = this.me();
       this.cliCancelar(rz);
       this.setState(st => ({
-        audExtra: [{ f: this.ahora(), u: me.short, a: 'Ficha de cliente editada', c: rz, p: '—', r: 'Desde Clientes', ip: '—' }].concat(st.audExtra),
-        toast: { kind: 'ok', t: 'Cliente guardado', d: rz + ': datos actualizados.' + (cond === 'Responsable Inscripto' ? '' : ' No aparece en el Liquidador IVA (no es Responsable Inscripto).') }
+        audExtra: [{ f: this.ahora(), u: me.short, a: renombra ? 'Cliente renombrado' : 'Ficha de cliente editada', c: R, p: '—', r: renombra ? 'Antes: ' + rz : 'Desde Clientes', ip: '—' }].concat(st.audExtra),
+        toast: { kind: 'ok', t: 'Cliente guardado', d: (renombra ? rz + ' ahora se llama ' + R + (n ? ' (' + n + (n === 1 ? ' liquidación actualizada' : ' liquidaciones actualizadas') + ')' : '') + '. ' : R + ': ') + 'datos actualizados.' }
       }));
     } catch (e) {
       this.cliBorrador(rz, () => ({ busy: false }));
-      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar ' + rz, d: String(e && e.message || e) } });
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar ' + rz, d: String(e && e.message || e) + (renombra ? '. Volvé a intentar: lo que ya se cambió queda con el nombre nuevo.' : '') } });
     }
   }
 
@@ -8664,6 +8603,11 @@ class Component extends DCLogic {
       const prev = ultPerCli[r.cliente];
       if (!prev || pkPer(r.per) > pkPer(prev.per) || (pkPer(r.per) === pkPer(prev.per) && r.seq > prev.seq)) ultPerCli[r.cliente] = r;
     });
+    const idDeL = (r) => r.cliente + '|' + r.per + '|' + r.seq + '|' + r.fecha;
+    const todasL = this.baseRows().filter(r => !(s.ddjjBorradas || {})[idDeL(r)]), liqsPorCli = {}, runsPorCli = {};
+    todasL.filter(r => r.df !== '—').forEach(r => (liqsPorCli[r.cliente] = liqsPorCli[r.cliente] || []).push(r));
+    Object.values(liqsPorCli).forEach(a => a.sort((x, y) => pkPer(y.per).localeCompare(pkPer(x.per)) || y.seq - x.seq));
+    (s.cruRuns || []).forEach(r => (runsPorCli[r.cliente] = runsPorCli[r.cliente] || []).push(r));
     const clientes = Object.keys(owner).sort((a, b) => a.localeCompare(b, 'es')).map(rz => {
       const f = s.cliFiscal[rz] || fiscal[rz] || { cuit: '—', cond: '—', per: '—' };
       const ult = ultPerCli[rz];
@@ -8672,50 +8616,60 @@ class Component extends DCLogic {
       const fi = (s.cliFicha || {})[rz] || {}, cierre = this.cierreDe(fi);
       const cd = String(f.cuit || '').replace(/\D/g, ''), cuit = cd.length === 11 ? this.cuitFmt(cd) : (f.cuit || '—');
       const cond = this.condEf(rz) !== '—' ? this.condEf(rz) : (f.cond || '—'), iibb = this.iibbDe(rz), jurG = this.jurisDe(rz);
-      const sis = (s.cliSistema || {})[rz] || 'Bejerman', prorr = this.prorrModo(rz), usr = owner[rz] || '';
-      const actsL = (fi.act || []).map(String), hayNaes = Object.keys(s.naes || {}).length > 0;
+      const sis = (s.cliSistema || {})[rz] || 'Bejerman', prorr = this.prorrModo(rz), usr = owner[rz] || '', est = this.estadoDe(rz);
+      const actsL = (fi.act || []).map(String), mailsL = (fi.mails || []).map(String), hayNaes = Object.keys(s.naes || {}).length > 0;
       // Borrador de edición (null = sólo lectura). V = lo que se muestra: el borrador o lo guardado.
       const dr = (s.cliEdit || {})[rz], ed = !!dr;
-      const V = ed ? dr : { cuit, cierre, sis, usr, cond, prorr, iibb, jur: jurG, acts: actsL };
+      const V = ed ? dr : { rz, cuit, cierre, sis, usr, est, cond, prorr, iibb, jur: jurG, acts: actsL, mails: mailsL };
       const jur = V.jur, tipo = V.iibb;
-      const set = ['cuit', 'cierre', 'sis', 'usr', 'cond', 'prorr', 'iibb'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.cliBorrador(rz, () => ({ [k]: v })); } }), {});
+      const set = ['rz', 'cuit', 'cierre', 'sis', 'usr', 'est', 'cond', 'prorr', 'iibb'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.cliBorrador(rz, () => ({ [k]: v })); } }), {});
       const ab = s.cliAb || {}, kAb = (x) => rz + '|' + x;
       const togg = (x) => () => this.setState(st => ({ cliAb: Object.assign({}, st.cliAb, { [kAb(x)]: !(st.cliAb || {})[kAb(x)] }) }));
-      const abre = (x) => ed || !!ab[kAb(x)];
+      // Al editar se abren las secciones que se pueden cambiar; liquidaciones y cruces quedan como estaban.
+      const abre = (x) => (ed && ['act', 'iva', 'iibb', 'mail'].includes(x)) || !!ab[kAb(x)];
       const nomJ = (c) => (this.JURIS.find(([k]) => k === c) || [])[1] || '';
-      const descAct = (cod) => { const c = String(cod || '').replace(/\D/g, ''), d = c ? this.actDesc(c) : ''; return { d, txt: !c ? (ed ? 'Escribí el código y aparece la actividad' : '') : (d || (hayNaes ? 'No existe en el nomenclador NAES' : 'Sin nomenclador NAES cargado')), col: !c ? '#9AA9B7' : (d ? '#1B2733' : '#B3261E') }; };
-      const acts = (ed ? V.acts.concat(['']) : actsL).map((cod, i) => {
-        const x = descAct(cod), nueva = ed && i === V.acts.length;
+      // Filas editables de una lista (actividades o mails): en edición, una fila vacía al final para agregar.
+      const filas = (campo, guardadas, desc) => (ed ? V[campo].concat(['']) : guardadas).map((cod, i) => {
+        const x = desc(cod), nueva = ed && i === V[campo].length;
         return { cod, ed, ver: !ed, ph: nueva ? 'Agregar…' : '', desc: x.txt, dc: x.col, xv: ed && !nueva ? 'visible' : 'hidden',
-          set: (e) => { const v = e.target.value; this.cliBorrador(rz, (b) => { const a = b.acts.slice(); a[i] = v; while (a.length && !a[a.length - 1]) a.pop(); return { acts: a }; }); },
-          quitar: () => this.cliBorrador(rz, (b) => { const a = b.acts.slice(); a.splice(i, 1); return { acts: a }; }) };
+          set: (e) => { const v = e.target.value; this.cliBorrador(rz, (b) => { const a = b[campo].slice(); a[i] = v; while (a.length && !a[a.length - 1]) a.pop(); return { [campo]: a }; }); },
+          quitar: () => this.cliBorrador(rz, (b) => { const a = b[campo].slice(); a.splice(i, 1); return { [campo]: a }; }) };
       });
-      const iv = this.iibbValida(tipo, jur), liqIibb = tipo === 'Local' || tipo === 'Convenio Multilateral';
-      const ri = V.cond === 'Responsable Inscripto';
-      const sec = (x, t, res, rc) => ({ t, res, rc: rc || '#5A6B7B', ico: abre(x) ? '−' : '+', bg: abre(x) ? '#F7F9FB' : '#fff', toggle: togg(x), tip: (abre(x) ? 'Ocultar ' : 'Ver ') + t });
-      const actsR = actsL;
-      return { rz, cuit, cond, per, cierre, sis, prorr, iibb, users: owner[rz] || 'Pendiente de asignación', usrFg: owner[rz] ? '#1B2733' : '#B7791F', est: 'Activo', st: E['Activo'],
+      const acts = filas('acts', actsL, (cod) => { const c = String(cod || '').replace(/\D/g, ''), d = c ? this.actDesc(c) : ''; return { txt: !c ? (ed ? 'Escribí el código y aparece la actividad' : '') : (d || (hayNaes ? 'No existe en el nomenclador NAES' : 'Sin nomenclador NAES cargado')), col: !c ? '#9AA9B7' : (d ? '#1B2733' : '#B3261E') }; });
+      const mails = filas('mails', mailsL, (m) => { const t = String(m || '').trim(); return { txt: !t ? (ed ? 'Escribí un mail y se agrega otra fila' : '') : (this.mailsBlasco(t).ok.length ? '' : 'No es un mail válido'), col: t ? '#B3261E' : '#9AA9B7' }; });
+      const iv = this.iibbValida(tipo, jur);
+      const sec = (x, t) => ({ t, ico: abre(x) ? '−' : '+', bg: abre(x) ? '#F7F9FB' : '#fff', toggle: togg(x), tip: (abre(x) ? 'Ocultar ' : 'Ver ') + t });
+      // Liquidaciones y cruces del cliente: se arman sólo con la sección abierta.
+      const lq = liqsPorCli[rz] || [], rn = runsPorCli[rz] || [];
+      const sdUlt = abre('iva') && lq[0] ? this.saldosDj(todasL, rz, lq[0].per, lq[0].seq) : null;
+      const saldo = sdUlt ? (sdUlt.s2 < 0 ? { hay: true, tag: 'A pagar', v: this.ars(Math.abs(sdUlt.s2)), bg: '#FDF5F4', bd: '#F3CFCB', fg: '#B3261E' } : { hay: true, tag: 'A favor', v: this.ars(sdUlt.s2), bg: '#F3FAF6', bd: '#C7E3D6', fg: '#2E7D5B' })
+        : { hay: false, v: 'Sin liquidar', fg: '#1B2733' };
+      const liqs = abre('liq') ? lq.map(r => {
+        const x = this.saldosDj(todasL, r.cliente, r.per, r.seq), le = this.liqEstado(r) || 'Borrador', id = idDeL(r);
+        return Object.assign({ per: r.per, fecha: r.fecha, df: r.df, cf: r.cf, saldo: x ? this.ars(x.s2) : '-', sc: x && x.s2 < 0 ? '#B3261E' : '#2E7D5B', st: E[le] || E['Borrador'],
+          ver: () => { this.nav('liqResultado')(); this.setState({ liqVer: id }); } }, this.seqChip(r.seq));
+      }) : [];
+      const crus = abre('cru') ? [].concat(...rn.map(r => (r.cruces || []).map(c => ({
+        tipo: c.cruce || c.tipo || c.t || 'Cruce', per: r.per, fecha: r.fecha, regs: c.regs || '-', dif: c.dif || '0', difC: String(c.dif || '0') !== '0' ? '#B7791F' : '#5A6B7B', st: E[c.est] || E['Completado']
+      })))) : [];
+      return { rz, cuit, cond, per, cierre, sis, prorr, iibb, users: owner[rz] || 'Pendiente de asignación', usrFg: owner[rz] ? '#1B2733' : '#B7791F', est, st: E[est],
         ed, ver: !ed, d: V, set, bd: ed ? '#14395C' : '#E3E8EE', sh: ed ? '0 0 0 3px rgba(20,57,92,.08)' : 'none',
-        editar: () => this.cliEditar(rz, { cuit: cuit === '—' ? '' : cuit, cierre, sis, usr, cond, prorr, iibb, jur: jurG.slice(), acts: actsL.slice() }),
+        editar: () => this.cliEditar(rz, { rz, cuit: cuit === '—' ? '' : cuit, cierre, sis, usr, est, cond, prorr, iibb, jur: jurG.slice(), acts: actsL.slice(), mails: mailsL.slice() }),
         cancelar: () => this.cliCancelar(rz), guardar: () => this.cliGuardar(rz),
         gTxt: dr && dr.busy ? 'Guardando…' : 'Guardar', gOp: dr && dr.busy ? .6 : 1,
         condTxt: cond === '—' ? 'Sin definir' : cond, prorrTxt: this.prorrModoLbl(prorr), iibbTxt: iibb === '—' ? 'Sin definir' : iibb,
-        perTxt: per === '—' ? 'Sin liquidar' : per,
-        ivaNota: ri ? 'Pasa al Liquidador IVA.' : 'No aparece en el Liquidador IVA: sólo se liquidan los Responsables Inscriptos.', ivaNotaC: ri ? '#2E7D5B' : '#B7791F',
+        perTxt: per === '—' ? 'Sin liquidar' : per, saldo,
         iibbPer: fi.iibbPer || 'Sin liquidar',
-        iibbNota: liqIibb ? (iv.ok ? 'Pasa al Liquidador de Ingresos Brutos.' : 'Todavía no pasa al Liquidador de Ingresos Brutos: corregí las jurisdicciones.') : 'No aparece en el Liquidador de Ingresos Brutos: sólo se liquidan Local y Convenio Multilateral.',
-        iibbNotaC: liqIibb && iv.ok ? '#2E7D5B' : '#B7791F',
         jurOn: tipo !== '—' && tipo !== '' && tipo !== 'No inscripto', jurN: jur.length === 1 ? '1 tildada' : jur.length + ' tildadas',
-        jurVal: iv.ok ? (liqIibb ? 'OK' : '') : iv.t, jurValC: iv.ok ? '#2E7D5B' : '#B3261E',
+        jurVal: iv.ok ? '' : iv.t,
         jurTxt: jur.length ? jur.map(c => c + ' - ' + nomJ(c)).join(' · ') : 'Ninguna tildada. Tocá «Editar» para elegirlas.',
         jurs: this.JURIS.map(([k, n]) => { const on = jur.includes(k); return { l: k + ' - ' + n, on, fg: on ? '#14395C' : '#1B2733', bg: on ? '#EEF3F8' : 'transparent', toggle: (e) => this.cliJur(rz, k, e.target.checked) }; }),
-        acts, sinActs: !ed && !actsL.length,
+        acts, sinActs: !ed && !actsL.length, mails, sinMails: !ed && !mailsL.length,
         actHint: hayNaes ? 'Escribí el código NAES: la descripción sale sola del nomenclador (no se edita). Con × se quita la actividad.' : 'Para ver las descripciones cargá el nomenclador NAES con «Importar tabla de clientes» (hoja NAES).',
-        abAct: abre('act'), abIva: abre('iva'), abIibb: abre('iibb'),
-        sAct: sec('act', 'Actividades', actsR.length ? actsR.length + ' · ' + actsR[0] + (this.actDesc(actsR[0]) ? ' ' + this.actDesc(actsR[0]) : '') + (actsR.length > 1 ? ' y ' + (actsR.length - 1) + ' más' : '') : 'Sin actividades', actsR.length ? '' : '#B7791F'),
-        sIva: sec('iva', 'IVA', (cond === '—' ? 'Sin condición' : cond) + ' · ' + (per === '—' ? 'sin liquidar' : 'últ. ' + per) + ' · ' + this.prorrModoLbl(prorr), cond === 'Responsable Inscripto' ? '' : '#B7791F'),
-        sIibb: sec('iibb', 'Ingresos Brutos', iibb === '—' ? 'Sin definir' : iibb + (jurG.length ? ' · ' + (jurG.length === 1 ? nomJ(jurG[0]) : jurG.length + ' jurisdicciones') : '') + (this.iibbValida(iibb, jurG).ok ? '' : ' · revisar'), iibb === '—' || !this.iibbValida(iibb, jurG).ok ? '#B7791F' : ''),
-        abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
+        liqs, hayLiqs: liqs.length > 0, sinLiqs: abre('liq') && !lq.length, crus, hayCrus: crus.length > 0, sinCrus: abre('cru') && !crus.length,
+        abAct: abre('act'), abIva: abre('iva'), abIibb: abre('iibb'), abLiq: abre('liq'), abCru: abre('cru'), abMail: abre('mail'),
+        sAct: sec('act', 'Actividades'), sIva: sec('iva', 'IVA'), sIibb: sec('iibb', 'Ingresos Brutos'),
+        sLiq: sec('liq', 'Liquidaciones'), sCru: sec('cru', 'Cruces'), sMail: sec('mail', 'Mails de contacto') };
     });
 
     const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
