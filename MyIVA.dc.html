@@ -146,6 +146,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">{{ it.label }}</div>
 </div>
 </sc-if>
+<sc-if value="{{ it.isSoon }}">
+<div onClick="{{ it.go }}" title="Próximamente" style="display:flex;align-items:center;gap:10px;padding:14px 18px 7px;cursor:pointer;flex-wrap:wrap" style-hover="opacity:.9">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round"><path d="{{ it.icon }}"></path></svg>
+<div style="font:600 11px/1.35 'Open Sans';letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">{{ it.label }}</div>
+<span style="padding:2px 8px;border-radius:999px;background:#F2B544;color:#14395C;font:700 10px/1.4 'Open Sans';letter-spacing:.04em;text-transform:uppercase">Próximamente</span>
+</div>
+</sc-if>
 <sc-if value="{{ it.isLink }}">
 <div onClick="{{ it.go }}" style="display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;background:{{ it.bg }};border-left:3px solid {{ it.bar }};color:{{ it.fg }};font:600 13.5px/1.3 'Open Sans'" style-hover="background:#0E2A45;color:#ffffff">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="{{ it.icon }}"></path></svg>
@@ -2775,6 +2782,13 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 11px/1 'Open Sans';letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">{{ it.label }}</div>
 </div>
 </sc-if>
+<sc-if value="{{ it.isSoon }}">
+<div onClick="{{ it.go }}" title="Próximamente" style="display:flex;align-items:center;gap:10px;padding:14px 18px 7px;cursor:pointer;flex-wrap:wrap" style-hover="opacity:.9">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round"><path d="{{ it.icon }}"></path></svg>
+<div style="font:600 11px/1.35 'Open Sans';letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">{{ it.label }}</div>
+<span style="padding:2px 8px;border-radius:999px;background:#F2B544;color:#14395C;font:700 10px/1.4 'Open Sans';letter-spacing:.04em;text-transform:uppercase">Próximamente</span>
+</div>
+</sc-if>
 <sc-if value="{{ it.isLink }}">
 <div onClick="{{ it.go }}" style="display:flex;align-items:center;gap:10px;padding:12px 18px;cursor:pointer;background:{{ it.bg }};border-left:3px solid {{ it.bar }};color:{{ it.fg }};font:600 14.5px/1.3 'Open Sans'">
 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="{{ it.icon }}"></path></svg>
@@ -2861,8 +2875,14 @@ class Component extends DCLogic {
     users: 'M3.5 20.5v-2a4 4 0 014-4h5a4 4 0 014 4v2M10 3.5a4 4 0 100 8 4 4 0 000-8M18 14.5a3.5 3.5 0 012.5 3.4v2.6',
     shield: 'M12 3l8 3.2v5.3c0 4.8-3.3 8-8 9.5-4.7-1.5-8-4.7-8-9.5V6.2zM9 12l2.2 2.2L15.5 10',
     gear: 'M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M18.9 5.1l-1.8 1.8M6.9 17.1l-1.8 1.8',
-    audit: 'M5 3.5h14v17H5zM8.5 8h7M8.5 12h7M8.5 16h4'
+    audit: 'M5 3.5h14v17H5zM8.5 8h7M8.5 12h7M8.5 16h4',
+    iibb: 'M4 20V10M9.5 20V4M15 20v-7M20.5 20V7M2.5 20.5h19'
   };
+
+  // Módulo que todavía no está: se muestra en el menú con la etiqueta "Próximamente" (pedido de Agencia Kairos, nov. 2026).
+  proximamente(nombre) {
+    return () => this.setState({ toast: { kind: 'info', t: nombre + ' · Próximamente', d: 'Estamos trabajando en este módulo. Muy pronto vas a poder liquidar Ingresos Brutos desde MyIVA, igual que IVA.' } });
+  }
 
   CRUMB = {
     inicio: ['MyIVA', 'Inicio'],
@@ -8396,7 +8416,8 @@ class Component extends DCLogic {
       { k: 'sub', label: 'Historial de cruces', key: 'crucesHistorial' },
       { k: 'sub', label: 'Historial de liquidaciones', key: 'liqHistorial' },
       { k: 'sub', label: 'Compensaciones', key: 'liqCompensaciones' },
-      { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' }
+      { k: 'sub', label: 'Dashboard de liquidaciones', key: 'liqDashboard' },
+      { k: 'group', label: 'Liquidador Ingresos Brutos', icon: I.iibb, soon: true }
     ];
     if (admin) raw.push(
       { k: 'group', label: 'Configuración', icon: I.gear },
@@ -8409,11 +8430,11 @@ class Component extends DCLogic {
       const on = it.key && it.key === active;
       return {
         label: it.label, icon: it.icon || '',
-        isGroup: it.k === 'group', isLink: it.k === 'link', isSub: it.k === 'sub',
+        isGroup: it.k === 'group' && !it.soon, isLink: it.k === 'link', isSub: it.k === 'sub', isSoon: !!it.soon,
         bg: on ? '#0E2A45' : 'transparent',
         bar: on ? '#2F80B7' : 'transparent',
         fg: on ? '#FFFFFF' : 'rgba(255,255,255,.74)',
-        go: it.key ? this.nav(it.key) : null
+        go: it.key ? this.nav(it.key) : (it.soon ? this.proximamente(it.label) : null)
       };
     });
   }
@@ -8423,7 +8444,8 @@ class Component extends DCLogic {
     const active = this.ALIAS[s.screen] || s.screen;
     const items = [
       { label: 'Inicio', key: 'inicio', icon: I.home },
-      { label: 'Liquidador IVA', key: 'liqHistorial', icon: I.file }
+      { label: 'Liquidador IVA', key: 'liqHistorial', icon: I.file },
+      { label: 'Liquidador Ingresos Brutos · Próximamente', icon: I.iibb, soon: true }
     ];
     if (s.role === 'admin') items.push(
       { label: 'Configuración', key: 'config', icon: I.gear },
@@ -8432,7 +8454,7 @@ class Component extends DCLogic {
     const fam = { usuarios: 'config', clientes: 'config', liqNueva: 'liqHistorial', liqCompensaciones: 'liqHistorial', liqDashboard: 'liqHistorial', liqResultado: 'liqHistorial', crucesHistorial: 'liqHistorial', cruceResultado: 'liqHistorial', clienteFicha: 'config' };
     const act = fam[active] || active;
     return items.map(it => ({
-      label: it.label, icon: it.icon, go: this.nav(it.key),
+      label: it.label, icon: it.icon, go: it.soon ? this.proximamente('Liquidador Ingresos Brutos') : this.nav(it.key),
       bg: it.key === act ? '#0E2A45' : 'transparent',
       fg: it.key === act ? '#FFFFFF' : 'rgba(255,255,255,.7)'
     }));
