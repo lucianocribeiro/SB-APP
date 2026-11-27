@@ -8474,6 +8474,8 @@ class Component extends DCLogic {
 
     const owner = {};
     this.CARTERA.forEach(([u, cs]) => cs.forEach(c => { owner[c] = u; }));
+    // Los clientes sin usuario asignado (por ejemplo, los nuevos de la importación) también se listan, como pendientes.
+    (s.cartPend || []).forEach(c => { if (owner[c] === undefined) owner[c] = ''; });
     const fiscal = this.FISCAL_DEMO;
     // Último período = la liquidación más reciente del cliente (no el valor fijo de cliFiscal / demo, que quedaba trabado).
     const pkPer = (per) => String(per || '').slice(3) + String(per || '').slice(0, 2);
@@ -8490,7 +8492,7 @@ class Component extends DCLogic {
       // Con sesión real: período de la última liquidación (o —). En demo sin login se deja el de FISCAL_DEMO.
       const per = ult ? ult.per : (this._user ? '—' : (f.per || '—'));
       const cierre = this.cierreDe((s.cliFicha || {})[rz]);
-      return { rz, cuit: f.cuit, cond: this.condDe(rz) !== '—' ? this.condDe(rz) : f.cond, per, cierre, users: owner[rz], est: 'Activo', st: E['Activo'],
+      return { rz, cuit: f.cuit, cond: this.condDe(rz) !== '—' ? this.condDe(rz) : f.cond, per, cierre, users: owner[rz] || 'Pendiente de asignación', est: 'Activo', st: E['Activo'],
         sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
         prorr: this.prorrModo(rz), prorrSet: (e) => this.guardarProrr(rz, e.target.value),
         abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
