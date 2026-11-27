@@ -7004,6 +7004,8 @@ class Component extends DCLogic {
     });
     const noCF = (xs) => sum(xs.filter(sinIva), x => (x.v.ngt || 0) + (x.v.exn || 0) + (x.v.mono || 0));
     const S = { vOp: tri(op(V)), vNc: tri(nc(V)), cOp: triC(op(C)), cNc: triC(nc(C)) };
+    // Facturas letra T de ventas (FTT): mismo criterio que liqCalc — su IVA entra como débito y también como crédito fiscal.
+    const cfT = sum(op(V).filter(x => x.letra === 'T'), x => x.v.ivt);
     // Crédito fiscal computable según modo de prorrateo de la ficha (misma lógica que la liquidación).
     const K = ['n21', 'n105', 'n27', 'n5', 'n25', 'n0', 'exe', 'ngr', 'exp'], tk = (xs) => Object.fromEntries(K.map(k => [k, sum(xs, x => x.v[k])]));
     const modo = this.prorrModo(this.liqCli()), detPr = { v: tk(op(V)), vNc: tk(nc(V)) };
@@ -7032,8 +7034,8 @@ class Component extends DCLogic {
     // Sólo en la presentación enviada: totales para la DJ contra el débito y crédito de la liquidación.
     L.tdf = 'Total del Débito Fiscal (DJ)'; L.tcf = 'Total del Crédito Fiscal (DJ)';
     if (lib.v.tdf !== undefined) fila('tdf', '', lib.v.tdf, r2(S.vOp.iva + S.cNc.iva), 'IVA Ventas (FC / ND) + NC de IVA Compras');
-    if (lib.v.tcf !== undefined) fila('tcf', '', lib.v.tcf, r2(S.cOp.iva + S.vNc.iva - noComp), 'IVA Compras (FC / ND) + NC de IVA Ventas' + prTxt);
-    return { filas, per: lib.per };
+    if (lib.v.tcf !== undefined) fila('tcf', '', lib.v.tcf, r2(S.cOp.iva + S.vNc.iva - noComp + cfT), 'IVA Compras (FC / ND) + NC de IVA Ventas' + (cfT ? ' + Fact. T de IVA Ventas ' + this.ars(cfT) : '') + prTxt);
+    return { filas, per: lib.per, cfT };
   }
 
   cruLibVista(x) {
