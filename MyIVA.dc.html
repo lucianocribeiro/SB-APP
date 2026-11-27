@@ -330,57 +330,108 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Prorrateo</span><select value="{{ cliF.prorr }}" onChange="{{ cliFiltroProrr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Cierre de ejercicio</span><select value="{{ cliF.cierre }}" onChange="{{ cliFiltroCierre }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliCierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
 <div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Último período</span><select value="{{ cliF.per }}" onChange="{{ cliFiltroPer }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ cliPerOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
-<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario asignado</span><select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Ingresos Brutos</span><select value="{{ cliF.iibb }}" onChange="{{ cliFiltroIibb }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><sc-for list="{{ iibbOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B">Usuario asignado</span><select value="{{ cliF.usr }}" onChange="{{ cliFiltroUsr }}" style="padding:8px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><option value="">Todos</option><option value="Pendiente de asignación">Pendiente de asignación</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select></div>
 </div>
-<div style="background:#fff;border:1px solid #E3E8EE;border-radius:6px;overflow:hidden">
-<div style="overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;min-width:1040px">
-<thead><tr>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Razón social</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">CUIT</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Condición IVA</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Sistema</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Prorrateo</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Cierre de ejercicio</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Último período</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Usuarios asignados</th>
-<th style="text-align:left;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Estado</th>
-<th style="text-align:right;font:600 11px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;padding:10px 14px;background:#F5F7FA;border-bottom:1px solid #E3E8EE;white-space:nowrap">Acciones</th>
-</tr></thead>
-<tbody>
+<div style="display:flex;flex-direction:column;gap:10px">
 <sc-if value="{{ cliVacio }}">
-<tr><td colspan="10" style="padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></td></tr>
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:8px;padding:28px 14px;text-align:center;font:400 13.5px/1.5 'Open Sans';color:#5A6B7B">No hay clientes que coincidan con la búsqueda. <span onClick="{{ cliLimpiar }}" style="font-weight:600;color:#2F80B7;cursor:pointer">Limpiar filtros</span></div>
 </sc-if>
-<sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="7">
-<tr style-hover="background:#FAFBFD">
-<td style="font:600 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><span onClick="{{ c.abrir }}" style="cursor:pointer;color:#14395C">{{ c.rz }}</span></td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cuit }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;color:#5A6B7B">{{ c.cond }}</td>
-<td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select></td>
-<td style="padding:6px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap"><select value="{{ c.prorr }}" onChange="{{ c.prorrSet }}" title="Cómo se computa el crédito fiscal (prorrateo)" style="padding:5px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';background:#fff;max-width:150px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap;font-variant-numeric:tabular-nums">{{ c.cierre }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;white-space:nowrap">{{ c.per }}</td>
-<td style="font:400 13px 'Open Sans';padding:10px 14px;border-bottom:1px solid #E3E8EE;color:#5A6B7B">{{ c.users }}</td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE"><span style="display:inline-block;padding:3px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span></td>
-<td style="padding:10px 14px;border-bottom:1px solid #E3E8EE;text-align:right;white-space:nowrap">
-<div style="display:inline-flex;gap:8px">
+<sc-for list="{{ clientesVis }}" as="c" hint-placeholder-count="5">
+<div style="background:#fff;border:1px solid #E3E8EE;border-radius:8px;overflow:hidden">
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:14px 16px 10px">
+<div style="flex:1 1 220px;min-width:0">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Razón social</div>
+<div onClick="{{ c.abrir }}" title="Abrir la ficha del cliente" style="font:700 14.5px/1.3 'Open Sans';color:#14395C;cursor:pointer;overflow-wrap:anywhere" style-hover="text-decoration:underline">{{ c.rz }}</div>
+</div>
+<div style="flex:0 0 140px">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">CUIT</div>
+<input value="{{ c.cuitIn }}" onChange="{{ c.cuitSet }}" onBlur="{{ c.cuitFin }}" onKeyDown="{{ c.enter }}" placeholder="00-00000000-0" inputmode="numeric" maxlength="13" title="11 dígitos, con o sin guiones (siempre se muestra con guiones)" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums">
+</div>
+<div style="flex:0 0 auto">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Cierre de ejercicio</div>
+<select value="{{ c.cierre }}" onChange="{{ c.cierreSet }}" title="Último día del mes de cierre" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ cierreOpts }}" as="o" hint-placeholder-count="12"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+</div>
+<div style="flex:0 0 auto">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Sistema</div>
+<select value="{{ c.sis }}" onChange="{{ c.sisSet }}" title="Sistema contable del cliente (define el formato de los archivos)" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff"><sc-for list="{{ sistemasOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
+</div>
+<div style="flex:0 0 auto">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Usuario</div>
+<select value="{{ c.usr }}" onChange="{{ c.usrSet }}" title="Usuario del estudio que liquida este cliente" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:150px;color:{{ c.usrFg }}"><option value="">Pendiente de asignación</option><sc-for list="{{ usrOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.n }}">{{ o.n }}</option></sc-for></select>
+</div>
+<div style="flex:0 0 auto">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Estado</div>
+<span style="display:inline-block;padding:4px 9px;border-radius:6px;font:600 11px/1.5 'Open Sans';background:{{ c.st.bg }};color:{{ c.st.fg }};border:1px solid {{ c.st.bd }}">{{ c.st.label }}</span>
+</div>
+<div style="flex:0 0 auto;display:flex;gap:10px;padding-bottom:6px">
 <span onClick="{{ c.abrir }}" style="font:600 12.5px 'Open Sans';color:#2F80B7;cursor:pointer">Abrir ficha</span>
 <span onClick="{{ openConfirm }}" style="font:600 12.5px 'Open Sans';color:#5A6B7B;cursor:pointer">Desactivar</span>
 </div>
-</td>
-</tr>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 13px">
+<sc-for list="{{ c.secs }}" as="x" hint-placeholder-count="3">
+<div onClick="{{ x.toggle }}" title="{{ x.tip }}" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:5px 11px 5px 6px;border:1px solid {{ x.bd }};background:{{ x.bg }};border-radius:999px;cursor:pointer;user-select:none" style-hover="border-color:#14395C">
+<span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#14395C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 'Open Sans'">{{ x.ico }}</span>
+<span style="font:600 12.5px 'Open Sans';color:#14395C;white-space:nowrap">{{ x.t }}</span>
+<span style="font:400 12px 'Open Sans';color:{{ x.rc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ x.res }}</span>
+</div>
 </sc-for>
-</tbody>
-</table>
 </div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid #E3E8EE">
-<div style="font:400 12.5px 'Open Sans';color:#5A6B7B">{{ cliMostrando }}</div>
-<div style="display:flex;gap:6px">
-<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Anterior</div>
-<div style="padding:6px 11px;border:1px solid #14395C;background:#14395C;color:#fff;border-radius:6px;font:600 12.5px 'Open Sans'">1</div>
-<div style="padding:6px 10px;border:1px solid #E3E8EE;border-radius:6px;font:400 12.5px 'Open Sans';color:#9AA9B7">Siguiente</div>
+<sc-if value="{{ c.abAct }}">
+<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">Actividades</div>
+<div style="display:grid;grid-template-columns:130px minmax(0,1fr) 24px;gap:7px 12px;align-items:center;max-width:820px">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Código actividad</div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Actividad</div><div></div>
+<sc-for list="{{ c.acts }}" as="a" hint-placeholder-count="2">
+<input value="{{ a.cod }}" onChange="{{ a.set }}" onBlur="{{ a.fin }}" onKeyDown="{{ c.enter }}" placeholder="{{ a.ph }}" inputmode="numeric" maxlength="6" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;font-variant-numeric:tabular-nums">
+<div style="font:400 13px/1.35 'Open Sans';color:{{ a.dc }}">{{ a.desc }}</div>
+<span onClick="{{ a.quitar }}" title="Quitar esta actividad" style="visibility:{{ a.xv }};font:600 16px/1 'Open Sans';color:#9AA9B7;cursor:pointer;text-align:center" style-hover="color:#B3261E">×</span>
+</sc-for>
 </div>
+<div style="font:400 12px/1.45 'Open Sans';color:#9AA9B7;margin-top:9px">{{ c.actHint }}</div>
 </div>
+</sc-if>
+<sc-if value="{{ c.abIva }}">
+<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">IVA</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end">
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Condición IVA</div>
+<select value="{{ c.cond }}" onChange="{{ c.condSet }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:190px"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div>
+<div style="font:600 13.5px 'Open Sans';color:#1B2733;padding:6px 0">{{ c.perTxt }}</div></div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Prorrateo</div>
+<select value="{{ c.prorr }}" onChange="{{ c.prorrSet }}" title="Cómo se computa el crédito fiscal (prorrateo)" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:160px"><sc-for list="{{ prorrOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.ivaNotaC }};margin-top:10px">{{ c.ivaNota }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ c.abIibb }}">
+<div style="border-top:1px solid #EEF1F4;background:#FAFBFD;padding:13px 16px 15px">
+<div style="font:600 11px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#14395C;margin-bottom:10px">Ingresos Brutos</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end">
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Tipo</div>
+<select value="{{ c.iibb }}" onChange="{{ c.iibbSet }}" style="padding:6px 8px;border:1px solid #E3E8EE;border-radius:6px;font:400 13px 'Open Sans';color:#1B2733;background:#fff;min-width:200px"><sc-for list="{{ iibbOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<div><div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px">Último período</div>
+<div title="Último período liquidado en el módulo de Ingresos Brutos" style="font:600 13.5px 'Open Sans';color:#1B2733;padding:6px 0">{{ c.iibbPer }}</div></div>
+</div>
+<div style="font:400 12.5px/1.45 'Open Sans';color:{{ c.iibbNotaC }};margin-top:10px">{{ c.iibbNota }}</div>
+<sc-if value="{{ c.jurOn }}">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0 8px">
+<div style="font:600 10.5px/1 'Open Sans';letter-spacing:.06em;text-transform:uppercase;color:#9AA9B7;margin-bottom:6px;margin:0">Jurisdicciones · {{ c.jurN }}</div>
+<div style="font:600 12.5px 'Open Sans';color:{{ c.jurValC }}">{{ c.jurVal }}</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 14px">
+<sc-for list="{{ c.jurs }}" as="j" hint-placeholder-count="24">
+<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:5px;cursor:pointer;font:400 13px 'Open Sans';color:{{ j.fg }};background:{{ j.bg }}" style-hover="background:#EEF3F8"><input type="checkbox" checked="{{ j.on }}" onChange="{{ j.toggle }}" style="accent-color:#14395C;width:15px;height:15px;margin:0;cursor:pointer">{{ j.l }}</label>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<div style="font:400 12.5px 'Open Sans';color:#5A6B7B;padding:2px 2px 0">{{ cliMostrando }}</div>
 </div>
 </sc-if>
 
@@ -2329,7 +2380,7 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">CUIT</div>
-<input placeholder="30-00000000-0" value="{{ nc.cuit }}" onChange="{{ ncSet.cuit }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
+<input placeholder="30-00000000-0" inputmode="numeric" maxlength="13" value="{{ nc.cuit }}" onChange="{{ ncSet.cuit }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans'">
 </div>
 <div>
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Fecha de cierre de ejercicio</div>
@@ -2344,6 +2395,11 @@ input,select,textarea,button{font-family:'Open Sans',system-ui,sans-serif}
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Condición frente al IVA</div>
 <select value="{{ nc.cond }}" onChange="{{ ncSet.cond }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ condIvaOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
 <div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Sólo los Responsables Inscriptos pueden cargar una liquidación de IVA.</div>
+</div>
+<div style="grid-column:span 2">
+<div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Ingresos Brutos</div>
+<select value="{{ nc.iibb }}" onChange="{{ ncSet.iibb }}" style="width:100%;padding:9px 11px;border:1px solid #E3E8EE;border-radius:6px;font:400 13.5px 'Open Sans';background:#fff"><sc-for list="{{ iibbOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<div style="font:400 12px 'Open Sans';color:#9AA9B7;margin-top:6px">Sólo Local y Convenio Multilateral pasan al Liquidador de Ingresos Brutos. Las jurisdicciones se tildan en Clientes → «+ Ingresos Brutos».</div>
 </div>
 <div style="grid-column:span 2">
 <div style="font:600 12px/1 'Open Sans';letter-spacing:.05em;text-transform:uppercase;color:#5A6B7B;margin-bottom:6px">Código de actividad (NAES)</div>
@@ -2831,7 +2887,7 @@ class Component extends DCLogic {
     dashEmpty: false, indSel: null, cfgTab: 'params',
     drawer: false, menuMovil: false, modal: false, confirm: false, upConfirm: false, liqConfirm: false, idleAviso: false, notif: false, toast: null,
     prevSaldo: 'favor', arrMan: {}, apocVer: null, dashF: null, dashCliSel: '', dashDesdeSel: '', dashHastaSel: '', cruSaved: false, liqSaved: false, dashHover: null, errView: null,
-    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '' }, histSeq: '', histSel: {}, seqElegida: null, liqProrrSel: {}, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
+    cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '', iibb: '' }, cliAb: {}, cliEd: {}, histSeq: '', histSel: {}, seqElegida: null, liqProrrSel: {}, liqSeqN: 1, liqMes: this.perCurso().slice(0, 2), liqAnio: this.perCurso().slice(3), perOpen: false, perVista: null, perAnioTxt: null,
     cruF: { cli: '', tipo: '', est: '', seq: '', desde: '', hasta: '' }, cruSolo: null,
     ddjjBorradas: this.lsGet('myiva.liqBorradas', {}), ddjjDel: null, ddjjMotivo: '', audExtra: [],
     liqEst: this.lsGet('myiva.liqEst', {}), liqCierre: null, histEst: '', cruRuns: this.lsGet('myiva.cruRuns', []), liqEg: [], cartTxt: '', cartU: '', cartC: '', cartV: 0, cartPend: this.cartPendInit(), cartDrag: null, cartSobre: null, ddjjPdf: this.lsGet('myiva.ddjjPdf', {}),
@@ -2840,7 +2896,7 @@ class Component extends DCLogic {
     apoc: this.apocInit(), apocRun: false, apocQ: '', venc: this.vencConHistoria(this.lsGet('myiva.venc', null)), vencAnio: null, vencAniosExtra: [],
     up: { ventas: 'empty', aflMenos: 'empty', aflMas: 'empty', emitidos: 'empty', recibidos: 'empty', percep: 'empty', aduana: 'empty', ivadig: 'empty', respaldo: 'empty' },
     real: {}, upErr: {}, upBusy: {},
-    asign: {}, nc: { rz: '', cuit: '', cierre: '31/12', cond: '—', prorr: 'general', mails: '', sis: 'Bejerman', persona: '', act: '' }, naes: this.lsGet('myiva.naes', {}), cliImp: null, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}), cliFicha: this.lsGet('myiva.cliFicha', {}), fichaCli: null, ncEdit: null, ncGuardando: false,
+    asign: {}, nc: { rz: '', cuit: '', cierre: '31/12', cond: '—', prorr: 'general', mails: '', sis: 'Bejerman', persona: '', act: '', iibb: '' }, naes: this.lsGet('myiva.naes', {}), cliImp: null, cliSistema: this.lsGet('myiva.cliSistema', {}), cliFiscal: this.lsGet('myiva.cliFiscal', {}), cliFicha: this.lsGet('myiva.cliFicha', {}), fichaCli: null, ncEdit: null, ncGuardando: false,
     cliSel: { 'CAZATUR SA': 1, 'DACKET SA': 1 }, inv: { nombre: '', mail: '', rol: 'empleado', cs: {}, busy: false, err: '' }
   };
 
@@ -4416,7 +4472,7 @@ class Component extends DCLogic {
 
   liqCli() {
     const s = this.state, me = this.me();
-    const mine = s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1]);
+    const mine = (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).filter(c => this.puedeLiquidar(c));
     if (s.liqCliSel && mine.includes(s.liqCliSel)) return s.liqCliSel;
     return mine.includes('CAZATUR SA') ? 'CAZATUR SA' : ([...mine].sort((a, b) => a.localeCompare(b, 'es'))[0] || '');
   }
@@ -5309,7 +5365,7 @@ class Component extends DCLogic {
   // Cómo se computa el crédito fiscal (ficha / columna Prorrateo). Default: régimen general.
   // no = Computa 0 % (Zagar / Fabialva); full = Computa 100 % (Clamaco); general = Novalux / resto.
   // Versión de front (para confirmar que el navegador no tiene HTML cacheado).
-  APP_BUILD = '2026-11-25c';
+  APP_BUILD = '2026-11-27a';
 
   PRORR_OPTS = [
     { v: 'general', l: 'Régimen general' },
@@ -5414,7 +5470,7 @@ class Component extends DCLogic {
     const s = this.state, viejo = s.ncEdit, nc = s.nc;
     const rz = nc.rz.trim().replace(/\s+/g, ' ').toUpperCase(), cuit = nc.cuit.replace(/\D/g, '');
     if (!rz) return this.setState({ toast: { kind: 'warn', t: 'Escribí la razón social', d: 'La razón social no puede quedar vacía.' } });
-    if (cuit && cuit.length !== 11) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
+    if (!this.cuitParse(nc.cuit).ok) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
     const cierre = this.CIERRE_OPTS.indexOf(nc.cierre) >= 0 ? nc.cierre : this.cierreDe({ cierre: nc.cierre });
     if (this.CIERRE_OPTS.indexOf(cierre) < 0) return this.setState({ toast: { kind: 'warn', t: 'Cierre de ejercicio inválido', d: 'Elegí el último día de un mes (por ejemplo 31/12).' } });
     const renombra = rz !== viejo;
@@ -5437,7 +5493,7 @@ class Component extends DCLogic {
       const prevFi = (this.state.cliFicha || {})[rz] || {};
       const prorr = this.PRORR_OPTS.some(o => o.v === nc.prorr) ? nc.prorr : (prevFi.prorr || 'general');
       const ac = this.actParse(nc.act);
-      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prevFi, { cierre, mails: m.ok, ini: prevFi.ini, prorr, cond, persona: this.PERSONAS.includes(nc.persona) ? nc.persona : (prevFi.persona || ''), act: ac.ok }) }));
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prevFi, { cierre, mails: m.ok, ini: prevFi.ini, prorr, cond, persona: this.PERSONAS.includes(nc.persona) ? nc.persona : (prevFi.persona || ''), act: ac.ok, iibb: this.IIBB_TIPOS.includes(nc.iibb) ? nc.iibb : '' }) }));
       if ((this.state.cliSistema || {})[rz] !== nc.sis) await this.guardarSistema(rz, nc.sis || 'Bejerman', true);
       const me = this.me();
       this.setState(st => ({
@@ -5459,8 +5515,113 @@ class Component extends DCLogic {
     return this.COND_IVA.includes(fi) ? fi : (this.COND_IVA.includes(lo) ? lo : '—');
   }
 
-  // Sólo los Responsables Inscriptos liquidan IVA. Sin condición cargada no se bloquea (se avisa en el paso 1).
-  puedeLiquidar(rz) { const c = this.condDe(rz); return c === '—' || c === 'Responsable Inscripto'; }
+  // Sólo los Responsables Inscriptos pasan al Liquidador IVA: el resto (y los que no tienen condición cargada) no aparece como opción.
+  // Sin sesión (demo) se usa la condición de ejemplo.
+  condEf(rz) { const c = this.condDe(rz); return c !== '—' ? c : (this._user ? '—' : ((this.FISCAL_DEMO[rz] || {}).cond || '—')); }
+  puedeLiquidar(rz) { return this.condEf(rz) === 'Responsable Inscripto'; }
+
+  // ===== Ingresos Brutos: tipo de inscripción y jurisdicciones (ficha compartida, config clientes_ficha) =====
+  IIBB_TIPOS = ['Local', 'Convenio Multilateral', 'Régimen Simplificado', 'No inscripto'];
+
+  JURIS = [['901', 'Capital Federal'], ['902', 'Buenos Aires'], ['903', 'Catamarca'], ['904', 'Córdoba'], ['905', 'Corrientes'], ['906', 'Chaco'],
+    ['907', 'Chubut'], ['908', 'Entre Ríos'], ['909', 'Formosa'], ['910', 'Jujuy'], ['911', 'La Pampa'], ['912', 'La Rioja'],
+    ['913', 'Mendoza'], ['914', 'Misiones'], ['915', 'Neuquén'], ['916', 'Río Negro'], ['917', 'Salta'], ['918', 'San Juan'],
+    ['919', 'San Luis'], ['920', 'Santa Cruz'], ['921', 'Santa Fe'], ['922', 'Santiago del Estero'], ['923', 'Tierra del Fuego'], ['924', 'Tucumán']];
+
+  iibbDe(rz) { const t = ((this.state.cliFicha || {})[rz] || {}).iibb; return this.IIBB_TIPOS.includes(t) ? t : '—'; }
+
+  jurisDe(rz) { const j = ((this.state.cliFicha || {})[rz] || {}).jur; return Array.isArray(j) ? j.filter(c => this.JURIS.some(([k]) => k === c)) : []; }
+
+  // Local: exactamente 1 jurisdicción. Convenio Multilateral: por lo menos 2.
+  iibbValida(tipo, jur) {
+    const n = jur.length;
+    if (tipo === 'Local') return n === 1 ? { ok: true } : { ok: false, t: n ? 'Contribuyente local: sólo puede tener 1 jurisdicción (hay ' + n + ' tildadas).' : 'Contribuyente local: tildá su jurisdicción.' };
+    if (tipo === 'Convenio Multilateral') return n >= 2 ? { ok: true } : { ok: false, t: 'Convenio Multilateral: tildá por lo menos 2 jurisdicciones' + (n ? ' (hay 1).' : '.') };
+    return { ok: true };
+  }
+
+  // Sólo Local y Convenio Multilateral (con sus jurisdicciones bien cargadas) pasan al Liquidador de Ingresos Brutos.
+  puedeLiquidarIibb(rz) { const t = this.iibbDe(rz); return (t === 'Local' || t === 'Convenio Multilateral') && this.iibbValida(t, this.jurisDe(rz)).ok; }
+
+  // Cambia algunos campos de la ficha de un cliente (config clientes_ficha) y avisa.
+  async fichaSet(rz, cambios, okT, okD) {
+    const prev = (this.state.cliFicha || {})[rz] || {};
+    try {
+      await this.guardarFicha(Object.assign({}, this.state.cliFicha, { [rz]: Object.assign({}, prev, cambios) }));
+      if (okT) this.setState({ toast: { kind: 'ok', t: okT, d: okD || rz } });
+    } catch (e) {
+      this.setState({ toast: { kind: 'err', t: 'No se pudo guardar la ficha de ' + rz, d: String(e && e.message || e) } });
+    }
+  }
+
+  // CUIT: 11 dígitos; se puede escribir con o sin guiones, siempre se guarda y se muestra 00-00000000-0.
+  cuitParse(t) {
+    const raw = String(t || '').trim(), d = raw.replace(/\D/g, '');
+    if (!raw) return { ok: true, d: '' };
+    if (/[^\d\s.-]/.test(raw) || d.length !== 11) return { ok: false };
+    return { ok: true, d };
+  }
+
+  async guardarCuit(rz, txt) {
+    const p = this.cuitParse(txt);
+    if (!p.ok) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT tiene que tener 11 dígitos numéricos (con o sin guiones). ' + rz + ' queda como estaba.' } });
+    const cuitF = p.d ? this.cuitFmt(p.d) : '—', antes = ((this.state.cliFiscal || {})[rz] || {}).cuit || '—';
+    if (cuitF === antes) return;
+    const sb = this.sb();
+    if (sb && this._user) {
+      const r = await sb.from('clientes').update({ cuit: p.d ? cuitF : null }).eq('nombre', rz);
+      if (r.error) return this.setState({ toast: { kind: 'err', t: 'No se pudo guardar el CUIT', d: r.error.message } });
+    }
+    this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ cond: '—', per: '—' }, st.cliFiscal[rz], { cuit: cuitF }) })), toast: { kind: 'ok', t: 'CUIT actualizado', d: rz + ': ' + cuitF + '.' } }));
+  }
+
+  async guardarCond(rz, cond) {
+    const c = this.COND_IVA.includes(cond) ? cond : '—';
+    this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: Object.assign({ cuit: '—', per: '—' }, st.cliFiscal[rz], { cond: c }) })) }));
+    await this.fichaSet(rz, { cond: c }, 'Condición IVA actualizada', rz + ': ' + (c === '—' ? 'sin definir' : c) + (c === 'Responsable Inscripto' ? '. Aparece en el Liquidador IVA.' : '. No aparece en el Liquidador IVA.'));
+  }
+
+  async guardarIibb(rz, tipo) {
+    const t = this.IIBB_TIPOS.includes(tipo) ? tipo : '';
+    const v = this.iibbValida(t, this.jurisDe(rz));
+    await this.fichaSet(rz, { iibb: t }, 'Ingresos Brutos actualizado', rz + ': ' + (t || 'sin definir') + (v.ok ? '.' : '. ' + v.t));
+  }
+
+  async toggleJur(rz, cod, on) {
+    const tipo = this.iibbDe(rz), jur = this.jurisDe(rz), nom = (c) => c + ' - ' + ((this.JURIS.find(([k]) => k === c) || [])[1] || '');
+    if (on && tipo === 'Local' && jur.length >= 1 && !jur.includes(cod))
+      return this.setState({ toast: { kind: 'warn', t: 'Contribuyente local: sólo 1 jurisdicción', d: rz + ' ya tiene ' + jur.map(nom).join(', ') + '. Destildala para elegir otra, o cambiá el tipo a Convenio Multilateral.' } });
+    const nueva = (on ? [...new Set(jur.concat([cod]))] : jur.filter(c => c !== cod)).sort();
+    await this.fichaSet(rz, { jur: nueva });
+  }
+
+  // Actividad i de la tarjeta (i = largo de la lista → agregar una nueva). Código vacío = quitarla.
+  async actCommit(rz, i, txt) {
+    const acts = (((this.state.cliFicha || {})[rz] || {}).act || []).slice(), cod = String(txt || '').replace(/\D/g, '');
+    if (!cod) { if (i >= acts.length) return; acts.splice(i, 1); }
+    else {
+      if (acts[i] === cod) return;
+      const p = this.actParse(cod);
+      if (p.malos.length) return this.setState({ toast: { kind: 'warn', t: 'Código de actividad inexistente', d: cod + ' no está en el nomenclador NAES.' } });
+      if (acts.includes(cod)) return this.setState({ toast: { kind: 'warn', t: 'Actividad repetida', d: rz + ' ya tiene la actividad ' + cod + '.' } });
+      if (i < acts.length) acts[i] = cod; else acts.push(cod);
+    }
+    await this.fichaSet(rz, { act: acts }, 'Actividades actualizadas', rz + ': ' + (acts.length ? acts.join(', ') : 'sin actividades') + '.');
+  }
+
+  // Borrador de un campo de texto de la tarjeta (CUIT, códigos de actividad): se guarda al salir del campo o con Enter.
+  cliEdSet(k) { return (e) => { const v = e.target.value; this.setState(st => ({ cliEd: Object.assign({}, st.cliEd, { [k]: v }) })); }; }
+
+  cliEdFin(k, fn) {
+    return () => {
+      const ed = this.state.cliEd || {};
+      if (!(k in ed)) return;
+      const v = ed[k], resto = Object.assign({}, ed);
+      delete resto[k];
+      this.setState({ cliEd: resto });
+      fn(v);
+    };
+  }
 
   actDesc(cod) { return (this.state.naes || {})[String(cod).trim()] || ''; }
 
@@ -8491,10 +8652,44 @@ class Component extends DCLogic {
       const ult = ultPerCli[rz];
       // Con sesión real: período de la última liquidación (o —). En demo sin login se deja el de FISCAL_DEMO.
       const per = ult ? ult.per : (this._user ? '—' : (f.per || '—'));
-      const cierre = this.cierreDe((s.cliFicha || {})[rz]);
-      return { rz, cuit: f.cuit, cond: this.condDe(rz) !== '—' ? this.condDe(rz) : f.cond, per, cierre, users: owner[rz] || 'Pendiente de asignación', est: 'Activo', st: E['Activo'],
+      const fi = (s.cliFicha || {})[rz] || {}, cierre = this.cierreDe(fi);
+      const cd = String(f.cuit || '').replace(/\D/g, ''), cuit = cd.length === 11 ? this.cuitFmt(cd) : (f.cuit || '—');
+      const cond = this.condEf(rz) !== '—' ? this.condEf(rz) : (f.cond || '—'), iibb = this.iibbDe(rz), jur = this.jurisDe(rz);
+      const ab = s.cliAb || {}, ed = s.cliEd || {}, kAb = (x) => rz + '|' + x;
+      const togg = (x) => () => this.setState(st => ({ cliAb: Object.assign({}, st.cliAb, { [kAb(x)]: !(st.cliAb || {})[kAb(x)] }) }));
+      // Actividades: una fila por código (editable) + una vacía para agregar; la descripción sale del nomenclador NAES.
+      const actsL = (fi.act || []).map(String), hayNaes = Object.keys(s.naes || {}).length > 0;
+      const acts = actsL.concat(['']).map((cod0, i) => {
+        const k = 'act|' + rz + '|' + i, cod = k in ed ? ed[k] : cod0, d = cod ? this.actDesc(cod.replace(/\D/g, '')) : '';
+        return { cod, ph: i < actsL.length ? '' : 'Agregar…', set: this.cliEdSet(k), fin: this.cliEdFin(k, (v) => this.actCommit(rz, i, v)),
+          desc: !cod ? (i < actsL.length ? 'Sin código: se quita al salir del campo' : 'Escribí el código y aparece la actividad') : (d || (hayNaes ? 'No existe en el nomenclador NAES' : 'Sin nomenclador NAES cargado')),
+          dc: !cod ? '#9AA9B7' : (d ? '#1B2733' : '#B3261E'), xv: i < actsL.length ? 'visible' : 'hidden',
+          quitar: () => this.actCommit(rz, i, '') };
+      });
+      const iv = this.iibbValida(iibb, jur), liqIibb = iibb === 'Local' || iibb === 'Convenio Multilateral';
+      const ri = cond === 'Responsable Inscripto';
+      const sec = (x, t, res, rc) => ({ t, res, rc: rc || '#5A6B7B', ico: ab[kAb(x)] ? '−' : '+', bg: ab[kAb(x)] ? '#EEF3F8' : '#fff', bd: ab[kAb(x)] ? '#14395C' : '#D5DEE7', toggle: togg(x), tip: (ab[kAb(x)] ? 'Ocultar ' : 'Ver ') + t });
+      return { rz, cuit, cond, per, cierre, users: owner[rz] || 'Pendiente de asignación', est: 'Activo', st: E['Activo'],
         sis: (s.cliSistema || {})[rz] || 'Bejerman', sisSet: (e) => this.guardarSistema(rz, e.target.value),
         prorr: this.prorrModo(rz), prorrSet: (e) => this.guardarProrr(rz, e.target.value),
+        cuitIn: ('cuit|' + rz) in ed ? ed['cuit|' + rz] : (cuit === '—' ? '' : cuit), cuitSet: this.cliEdSet('cuit|' + rz), cuitFin: this.cliEdFin('cuit|' + rz, (v) => this.guardarCuit(rz, v)),
+        enter: (e) => { if (e.key === 'Enter') e.target.blur(); },
+        cierreSet: (e) => this.fichaSet(rz, { cierre: e.target.value }, 'Cierre de ejercicio actualizado', rz + ': ' + e.target.value + '.'),
+        usr: owner[rz] || '', usrFg: owner[rz] ? '#1B2733' : '#B7791F', usrSet: (e) => this.cartMover(rz, e.target.value || null),
+        condSet: (e) => this.guardarCond(rz, e.target.value), perTxt: per === '—' ? 'Sin liquidar' : per,
+        ivaNota: ri ? 'Pasa al Liquidador IVA.' : 'No aparece en el Liquidador IVA: sólo se liquidan los Responsables Inscriptos.', ivaNotaC: ri ? '#2E7D5B' : '#B7791F',
+        iibb, iibbSet: (e) => this.guardarIibb(rz, e.target.value), iibbPer: fi.iibbPer || 'Sin liquidar',
+        iibbNota: liqIibb ? (iv.ok ? 'Pasa al Liquidador de Ingresos Brutos.' : 'Todavía no pasa al Liquidador de Ingresos Brutos: corregí las jurisdicciones.') : 'No aparece en el Liquidador de Ingresos Brutos: sólo se liquidan Local y Convenio Multilateral.', iibbNotaC: liqIibb && iv.ok ? '#2E7D5B' : '#B7791F',
+        jurOn: iibb !== '—' && iibb !== 'No inscripto', jurN: jur.length === 1 ? '1 tildada' : jur.length + ' tildadas',
+        jurVal: iv.ok ? (liqIibb ? 'OK' : '') : iv.t, jurValC: iv.ok ? '#2E7D5B' : '#B3261E',
+        jurs: this.JURIS.map(([k, n]) => { const on = jur.includes(k); return { l: k + ' - ' + n, on, fg: on ? '#14395C' : '#1B2733', bg: on ? '#EEF3F8' : 'transparent', toggle: (e) => this.toggleJur(rz, k, e.target.checked) }; }),
+        acts, actHint: hayNaes ? 'Escribí el código NAES: la descripción sale sola del nomenclador (no se edita). Borrá el código para quitar la actividad.' : 'Para ver las descripciones cargá el nomenclador NAES con «Importar tabla de clientes» (hoja NAES).',
+        abAct: !!ab[kAb('act')], abIva: !!ab[kAb('iva')], abIibb: !!ab[kAb('iibb')],
+        secs: [
+          sec('act', 'Actividades', actsL.length ? actsL.length + ' · ' + actsL[0] + (this.actDesc(actsL[0]) ? ' ' + this.actDesc(actsL[0]) : '') + (actsL.length > 1 ? ' y ' + (actsL.length - 1) + ' más' : '') : 'Sin actividades', actsL.length ? '' : '#B7791F'),
+          sec('iva', 'IVA', (cond === '—' ? 'Sin condición' : cond) + ' · ' + (per === '—' ? 'sin liquidar' : 'últ. ' + per), ri ? '' : '#B7791F'),
+          sec('iibb', 'Ingresos Brutos', iibb === '—' ? 'Sin definir' : iibb + (jur.length ? ' · ' + (jur.length === 1 ? (this.JURIS.find(([k]) => k === jur[0]) || [])[1] : jur.length + ' jurisdicciones') : '') + (iv.ok ? '' : ' · revisar'), iibb === '—' || !iv.ok ? '#B7791F' : '')
+        ],
         abrir: () => { this.nav('clienteFicha')(); this.setState({ fichaCli: rz, cliTab: 'resumen' }); } };
     });
 
@@ -8507,6 +8702,7 @@ class Component extends DCLogic {
       (!F.cierre || c.cierre === F.cierre) &&
       (!F.sis || c.sis === F.sis) &&
       (!F.prorr || c.prorr === F.prorr) &&
+      (!F.iibb || c.iibb === F.iibb) &&
       (!F.usr || c.users === F.usr));
     const setF = (k) => (e) => { const val = e.target.value; this.setState(st => ({ cliF: Object.assign({}, st.cliF, { [k]: val }) })); };
     const pers = [...new Set(clientes.map(c => c.per))].sort((a, b) => (a === '—') - (b === '—') || b.slice(3).localeCompare(a.slice(3)) || b.localeCompare(a));
@@ -8628,7 +8824,8 @@ class Component extends DCLogic {
       toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })),
       notif: s.notif, drawer: s.drawer, modal: s.modal, confirm: s.confirm,
       idleAviso: !!s.idleAviso, seguirAhi: () => this.seguirAhi(),
-      openDrawer: () => this.setState({ drawer: true, asign: {}, ncEdit: null, nc: { rz: '', cuit: '', cierre: '31/12', cond: 'Responsable Inscripto', prorr: 'general', mails: '', sis: 'Bejerman' } }),
+      openDrawer: () => this.setState({ drawer: true, asign: {}, ncEdit: null, nc: { rz: '', cuit: '', cierre: '31/12', cond: 'Responsable Inscripto', prorr: 'general', mails: '', sis: 'Bejerman', persona: '', act: '', iibb: '' } }),
+      iibbOpts: [{ v: '—', l: 'Sin definir' }].concat(this.IIBB_TIPOS.map(v => ({ v, l: v }))),
       ncTitulo: s.ncEdit ? 'Editar ficha' : 'Nuevo cliente',
       personaOpts: [{ v: '', l: '—' }].concat(this.PERSONAS.map(v => ({ v, l: v }))),
       ncActDesc: (() => {
@@ -8666,7 +8863,7 @@ class Component extends DCLogic {
       ivdPdf: !!(s.ivdVer && s.ivdVer.pdf), ivdImg: !!(s.ivdVer && !s.ivdVer.pdf),
       ivdCerrar: () => { if (s.ivdVer) setTimeout(() => URL.revokeObjectURL(s.ivdVer.url), 1000); this.setState({ ivdVer: null }); },
       nc: s.nc,
-      ncSet: ['rz', 'cuit', 'cierre', 'cond', 'prorr', 'mails', 'sis', 'persona', 'act'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
+      ncSet: ['rz', 'cuit', 'cierre', 'cond', 'prorr', 'mails', 'sis', 'persona', 'act', 'iibb'].reduce((o, k) => Object.assign(o, { [k]: (e) => { const v = e.target.value; this.setState(st => ({ nc: Object.assign({}, st.nc, { [k]: v }) })); } }), {}),
       menuMovil: s.menuMovil, abrirMenuMovil: () => this.setState({ menuMovil: true }), cerrarMenuMovil: () => this.setState({ menuMovil: false }),
       openModal: () => this.setState({ modal: true, inv: this.invVacio(), pwAdmin: null }),
       openConfirm: () => this.setState({ confirm: true }),
@@ -8692,7 +8889,7 @@ class Component extends DCLogic {
         if (s.ncEdit) return this.editarCliente();
         const nc = s.nc, rz = nc.rz.trim().replace(/\s+/g, ' ').toUpperCase(), cuit = nc.cuit.replace(/\D/g, '');
         if (!rz) return this.setState({ toast: { kind: 'warn', t: 'Escribí la razón social', d: 'Completá la razón social del cliente.' } });
-        if (cuit && cuit.length !== 11) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
+        if (!this.cuitParse(nc.cuit).ok) return this.setState({ toast: { kind: 'warn', t: 'CUIT inválido', d: 'El CUIT debe tener 11 dígitos.' } });
         const cierre = this.CIERRE_OPTS.indexOf(nc.cierre) >= 0 ? nc.cierre : '31/12';
         const existe = [].concat(...this.CARTERA.map(([, cs]) => cs), s.cartPend).find(c => this.fold(c) === this.fold(rz));
         if (existe) return this.setState({ toast: { kind: 'warn', t: 'El cliente ya existe', d: existe + ' ya está cargado. Para asignarle usuario usá Usuarios y roles.' } });
@@ -8704,7 +8901,7 @@ class Component extends DCLogic {
         this.setState(st => ({ cliFiscal: this.lsSet('myiva.cliFiscal', Object.assign({}, st.cliFiscal, { [rz]: { cuit: cuitF, cond, per: '—' } })) }));
         this.cartMover(rz, null);
         this.guardarSistema(rz, nc.sis || 'Bejerman', true);
-        this.guardarFicha(Object.assign({}, s.cliFicha, { [rz]: { cierre, mails: this.mailsBlasco(nc.mails).ok, prorr, cond, persona: this.PERSONAS.includes(nc.persona) ? nc.persona : '', act: acN.ok } })).catch(e => this.db(Promise.resolve({ error: e }), 'Clientes'));
+        this.guardarFicha(Object.assign({}, s.cliFicha, { [rz]: { cierre, mails: this.mailsBlasco(nc.mails).ok, prorr, cond, persona: this.PERSONAS.includes(nc.persona) ? nc.persona : '', act: acN.ok, iibb: this.IIBB_TIPOS.includes(nc.iibb) ? nc.iibb : '', jur: [] } })).catch(e => this.db(Promise.resolve({ error: e }), 'Clientes'));
         const sb = this.sb();
         if (sb && this._user) this.db(sb.from('clientes').upsert([{ nombre: rz, usuario: null, cuit: cuit ? cuitF : null }], { onConflict: 'nombre' }), 'Clientes');
         this.setState({ drawer: false, asign: {}, toast: { kind: 'ok', t: 'Cliente guardado', d: rz + ' quedó en Pendientes de asignación. Asignalo desde Usuarios y roles.' } });
@@ -8739,12 +8936,12 @@ class Component extends DCLogic {
       cliOpts, usrOpts: usrNombres.map(n => ({ n })), opUsrOpts: ['Administrador'].concat(usrNombres).map(n => ({ n })),
       cliResumen: clientes.length + ' clientes · ' + clientes.filter(c => c.est === 'Activo').length + ' activos',
       cliMostrando: clientesVis.length === clientes.length
-        ? 'Mostrando 1–' + clientes.length + ' de ' + clientes.length
+        ? 'Mostrando los ' + clientes.length + ' clientes · tocá «+» para ver Actividades, IVA e Ingresos Brutos'
         : 'Mostrando ' + clientesVis.length + ' de ' + clientes.length + ' (filtrado)',
       clientesVis, cliVacio: clientesVis.length === 0, cliF: F,
       cliBuscar: setF('q'), cliFiltroEst: setF('est'), cliFiltroPer: setF('per'), cliFiltroUsr: setF('usr'),
-      cliFiltroCierre: setF('cierre'), cliFiltroSis: setF('sis'), cliFiltroProrr: setF('prorr'),
-      cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '' } }),
+      cliFiltroCierre: setF('cierre'), cliFiltroSis: setF('sis'), cliFiltroProrr: setF('prorr'), cliFiltroIibb: setF('iibb'),
+      cliLimpiar: () => this.setState({ cliF: { q: '', est: '', per: '', usr: '', cierre: '', sis: '', prorr: '', iibb: '' } }),
       cliPerOpts: pers.map(p => ({ v: p, l: p === '—' ? 'Sin liquidar' : p })),
       // Siempre las 12 fechas de cierre: si sólo listáramos las usadas, filtrar 31/12 con todos en 31/12 parecía “no filtrar”.
       cliCierreOpts: this.CIERRE_OPTS.map(p => ({ v: p, l: p })),
@@ -8792,7 +8989,7 @@ class Component extends DCLogic {
           fichaSub: 'CUIT ' + (f.cuit || '—') + ' · Sistema ' + sis + ' · Cierre de ejercicio ' + cierre + ' · Último período liquidado ' + (ult ? ult.per : '—'),
           fichaPuedeEditar: s.role === 'admin' && !!rz,
           fichaEditar: () => {
-            this.setState({ drawer: true, ncEdit: rz, asign: {}, nc: { rz, cuit: f.cuit && f.cuit !== '—' ? f.cuit : '', cierre, cond, prorr, mails: mails.join(', '), sis, persona: fi.persona || '', act: (fi.act || []).join(', ') } });
+            this.setState({ drawer: true, ncEdit: rz, asign: {}, nc: { rz, cuit: f.cuit && f.cuit !== '—' ? f.cuit : '', cierre, cond, prorr, mails: mails.join(', '), sis, persona: fi.persona || '', act: (fi.act || []).join(', '), iibb: this.iibbDe(rz) } });
           },
           fichaMails: mails.map(m => ({ m })), fichaSinMails: !mails.length,
           fichaSinAsignado: !owner[rz],
@@ -8808,6 +9005,8 @@ class Component extends DCLogic {
             { k: 'Condición frente al IVA', v: cond },
             { k: 'Actividad (NAES)', v: acts.length ? acts.join(' · ') : '—' },
             { k: 'Prorrateo', v: this.prorrModoLbl(prorr) },
+            { k: 'Ingresos Brutos', v: this.iibbDe(rz) === '—' ? 'Sin definir' : this.iibbDe(rz) },
+            { k: 'Jurisdicciones', v: this.jurisDe(rz).length ? this.jurisDe(rz).map(c => c + ' - ' + ((this.JURIS.find(([k]) => k === c) || [])[1] || '')).join(' · ') : '—' },
             { k: 'Sistema contable', v: sis },
             { k: 'Fecha de cierre de ejercicio', v: cierre },
             { k: 'Mails de notificación', v: mails.length ? mails.length + (mails.length === 1 ? ' destinatario' : ' destinatarios') : 'Sin mails' },
@@ -9393,7 +9592,7 @@ class Component extends DCLogic {
           fin('done');
         })();
       },
-      liqCli: cli, liqPer: perL, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).slice().sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
+      liqCli: cli, liqPer: perL, liqCliOpts: (s.role === 'admin' ? this.CARTERA.flatMap(([, cs]) => cs) : ((this.CARTERA.find(([u]) => u === me.short) || [0, []])[1])).filter(c => this.puedeLiquidar(c)).sort((a, b) => a.localeCompare(b, 'es')).map(rz => ({ rz })),
       liqProrr: this.prorrModo(cli),
       liqProrrHint: (() => {
         const m = this.prorrModo(cli);
