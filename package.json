@@ -1,0 +1,8 @@
+{
+  "name": "myiva",
+  "private": true,
+  "description": "MyIVA (Estudio Blasco): app de un solo archivo (index.html = MyIVA.dc.html).",
+  "scripts": {
+    "test": "node tests/cruce-clave.test.mjs && node tests/cruce6-facturas-t.test.mjs"
+  }
+}
