@@ -3173,7 +3173,7 @@ class Component extends DCLogic {
     const sb = this.sb(), s = this.state, q = (p) => p.then(r => { if (r.error) throw r.error; return r.data || []; });
     const [perfiles, clientes, liqs, cruces, comps, pdfs, aud, cfg] = await Promise.all([
       q(sb.from('perfiles').select('id,email,nombre,rol,activo')),
-      q(sb.from('clientes').select('nombre,usuario').order('nombre')),
+      q(sb.from('clientes').select('nombre,usuario,cuit').order('nombre')),
       this.todas('liquidaciones', 'procesada'),
       this.todas('cruces', 'fecha'),
       q(sb.from('compensaciones').select('*').order('fecha', { ascending: false })),
